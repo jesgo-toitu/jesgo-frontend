@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
+import "./Login.css"
 
 export interface Jwt {
     token: string,
@@ -25,7 +26,7 @@ export const Login = () => {
                 }
 
                 localStorage.setItem("token", response.data.token);
-                navigate("/registration");
+                navigate("/patients");
                 return;
 
             }).catch((err) => {
@@ -54,49 +55,42 @@ export const Login = () => {
     }
 
     return (
-        <div className='' style={{ display: 'flex', background: 'url(./image/login.png) no-repeat center top', backgroundSize: 'auto 100%', width: '100%', height: '100vh' }}>
-            <div style={{ width: '50%', height: '100%' }}></div>
-            <div style={{ display: 'flex', alignItems: 'center', width: '50%', height: '100%' }}>
-                <div style={{ width: '544px', height: '240px', backgroundColor: '#F3F3F3', padding: '20px' }}>
-                    <div style={{ height: '30px', display: 'flex', alignItems: 'center', fontSize: '1.4em' }} >
+        <div className='login-box'>
+            <div className='login-left'></div>
+            <div className='login-right'>
+                <div className='login-inputarea'>
+                    <div className='login-inputarea-title'>
                         <p>ログイン</p>
-                        <p style={{ marginLeft: '40px' }}>○○病院</p>
+                        <p className='ml40'>○○病院</p>
                     </div>
-                    <div className='' style={{ display: 'flex', padding: '10px', marginTop: '10px' }}>
+                    <div className='login-inputarea-inner'>
                         <form onSubmit={onSubmit}>
-                            <div style={{ display: 'flex' }}>
+                            <div className='flex'>
                                 <div>
-                                    <div className='mt-4' style={{ marginBottom: '10px' }}>
-                                        <label className='' style={{ fontWeight: 'normal', fontSize: '0.8em' }}>
+                                    <div className='mb10'>
+                                        <label className='login-label'>
                                             ユーザ名
                                         </label>
                                         <div>
-                                            <input type='text'
-                                                style={{ width: '280px', height: '40px', borderLeft: '0', borderRight: '0', borderTop: '0', backgroundColor: '#F3F3F3' }}
-                                                placeholder='ユーザ名を入力してください' value={username} onChange={onChangeName} />
+                                            <input type='text' className='login-input' placeholder='ユーザ名を入力してください' value={username} onChange={onChangeName} />
                                         </div>
                                     </div>
-                                    <div className='mt-4'>
-                                        <label className='' style={{ fontWeight: 'normal', fontSize: '0.8em' }}>
+                                    <div>
+                                        <label className='login-label'>
                                             パスワード
                                         </label>
                                         <div>
-                                            <input type='password'
-                                                style={{ width: '280px', height: '40px', borderLeft: '0', borderRight: '0', borderTop: '0', backgroundColor: '#F3F3F3' }}
-                                                placeholder='パスワードを入力してください' value={password} onChange={onChangePassword} />
+                                            <input type='password' className='login-input' placeholder='パスワードを入力してください' value={password} onChange={onChangePassword} />
                                         </div>
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'flex-end', marginLeft: '40px' }}>
-                                    <button type='submit'
-                                        style={{ width: '160px', height: '50px', display: 'flex', padding: '1em 1em', color: 'white', backgroundColor: '#383838' }}
-                                    >ログイン</button>
+                                <div className='login-button-outer'>
+                                    <button type='submit' className='login-button'>ログイン</button>
                                 </div>
                             </div>
                         </form>
                     </div>
                 </div>
-
             </div>
         </div >
     );

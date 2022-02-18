@@ -3,10 +3,7 @@ import { JSONSchema7 } from "json-schema";
 // TODO プロトタイプ用jsonSchemaクラス。本来はDBから取得
 export namespace DevSchema {
 
-    //#region CC_root
-    export const CC_root_id : number = 1;
-    export const CC_root_subschema: number[] = [10, 11, 12, 13, 14, 15];
-    
+    //#region CC_root  
     // "$id": "/schema/CC/root"
     export const CC_root: JSONSchema7 = {
         // TODO $schemaがうまく認識されない
@@ -28,6 +25,7 @@ export namespace DevSchema {
                     "JSOG"
                 ],
                 // "const": "子宮頸がん",
+                // ★以下に書き換え
                 "default":"子宮頸がん",
                 "readOnly": true
             },
@@ -52,9 +50,8 @@ export namespace DevSchema {
                 ],
                 "jesgo:required": [
                     "JSOG"
-                ]
+                ],
             },
-            // TODO 一旦非表示
             // "腫瘍登録番号": {
             //     "if": {
             //         "properties": {
@@ -71,7 +68,32 @@ export namespace DevSchema {
             //         "pattern": "^CC20[0-9]{2}-[1-9][0-9]*$"
             //     }
             // }
+            // ★以下に書き換え
          },
+        "dependencies": {
+            "腫瘍登録対象": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "腫瘍登録対象": {
+                                "enum": [
+                                    "はい"
+                                ]
+                            },
+                            "腫瘍登録番号": {
+                                "type": "string",
+                                "jesgo:required": [
+                                    "JSOG"
+                                ],
+                                // TODO Validationにて要対応
+                                "pattern": "^CC20[0-9]{2}-[1-9][0-9]*$"
+                            }
+                        }                       
+                    },
+                ]
+            }
+        },
         "jesgo:subschema": [
             "/schema/CC/staging",
             "/schema/CC/findigns",
@@ -83,10 +105,310 @@ export namespace DevSchema {
     }
     //#endregion
 
-    //#region CC_findigns
-    export const CC_findigns_id : number = 11;
-    export const CC_findigns_subschema: number[] = [];
-    
+    //#region CC_staging
+    // "$id": "/schema/CC/staging"
+    export const CC_staging: JSONSchema7 = {
+        // TODO $schemaがうまく認識されない
+        // "$schema": "../jesgo.json",
+        "$id": "/schema/CC/staging",
+        "type": "object",
+        "title": "病期診断",
+        "$comment": "子宮頸がんの病期診断.",
+        "properties": {
+            "進行期分類の選択": {
+                "type": "string",
+                "oneOf": [
+                    {
+                        "const": "手術により進行期を決定した症例"
+                    },
+                    {
+                        "const": "治療開始前に進行期を決定した症例",
+                        "description": "根治的放射線療法、術前化学療法・術前放射線療法実施例など"
+                    }
+                ],
+                "description": "術前に放射線治療や化学療法を施行した症例は「術前治療施行例」となり、pTNM欄は術後所見、ypTNMとして手術時所見に即してpTNM分類を入力する。"
+            },
+            "FIGO": {
+                "type": "string",
+                "title": "FIGO分類(FIGO2018, 日産婦2020)",
+                "enum": [
+                    "I期(亜分類不明)",
+                    "IA1期",
+                    "IA2期",
+                    "IA期(亜分類不明)",
+                    "IB1期",
+                    "IB2期",
+                    "IB3期",
+                    "IB期(亜分類不明)",
+                    "II期(亜分類不明)",
+                    "IIA1期",
+                    "IIA2期",
+                    "IIA期(亜分類不明)",
+                    "IIB期",
+                    "III期(亜分類不明)",
+                    "IIIA期",
+                    "IIIB期",
+                    "IIIC期(亜分類不明)",
+                    "IIIC1r期",
+                    "IIIC1p期",
+                    "IIIC2r期",
+                    "IIIC2p期",
+                    "IV期(亜分類不明)",
+                    "IVA期",
+                    "IVB期"
+                ]
+            },
+            "cTNM": {
+                "type": "object",
+                "title": "cTMN分類(日産婦2020暫定版)",
+                "description": "cTNM分類は、治療を開始する前に、内診・直腸診による局所所見に画像所見を加味して総合的に判断し報告する。\n子宮頸部円錐切除術は臨床検査とみなし,これによる組織検査の結果は原則としてcTNM分類に入れる。",
+                "properties": {
+                    "cT": {
+                        // "$ref": "#T" // ★以下に書き換え
+                        "$ref": "#/$defs/T"
+                    },
+                    "cN": {
+                        // "$ref": "#cN" // ★以下に書き換え
+                        "$ref": "#/$defs/cN"
+                    },
+                    "cM": {
+                        // "$ref": "#cM" // ★以下に書き換え
+                        "$ref": "#/$defs/cM"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "pTNM": {
+                "type": "object",
+                "title": "pTNM分類(手術を実施した症例のみ)",
+                "properties": {
+                    "pT": {
+                        // "$ref": "#T" // ★以下に書き換え
+                        "$ref": "#/$defs/T"
+                    },
+                    "pN": {
+                        // "$ref": "#pN" // ★以下に書き換え
+                        "$ref": "#/$defs/pN"
+                    },
+                    "pM": {
+                        // "$ref": "#pM" // ★以下に書き換え
+                        "$ref": "#/$defs/pM"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ypTNM": {
+                "type": "object",
+                "title": "ypTNM分類(手術前に放射線治療や化学療法を実施した症例)",
+                "properties": {
+                    "ypT": {
+                        // "$ref": "#T" // ★以下に書き換え
+                        "$ref": "#/$defs/T"
+                    },
+                    "ypN": {
+                        // "$ref": "#pN"    // ★以下に書き換え
+                        "$ref": "#/$defs/pN"
+                    },
+                    "ypM": {
+                        // "$ref": "#pM"    // ★以下に書き換え
+                        "$ref": "#/$defs/pM"
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "additionalProperties": true,
+        "$defs": {
+            "T": {
+                "$id": "#T",
+                "type": "object",
+                "title": "T分類",
+                "properties": {
+                    "T": {
+                        "type": "string",
+                        "title": "T分類",
+                        "enum": [
+                            "TX",
+                            "T0",
+                            "Tis",
+                            "T1(亜分類不明)",
+                            "T1a1:脈管侵襲なし",
+                            "T1a1:脈管侵襲あり",
+                            "T1a2:脈管侵襲なし",
+                            "T1a2:脈管侵襲あり",
+                            "T1a(亜分類不明):脈管侵襲なし",
+                            "T1a(亜分類不明):脈管侵襲あり",
+                            "T1b1",
+                            "T1b2",
+                            "T1b3",
+                            "T1b(亜分類不明)",
+                            "T2(亜分類不明)",
+                            "T2a1",
+                            "T2a2",
+                            "T2a(亜分類不明)",
+                            "T2b",
+                            "T3(亜分類不明)",
+                            "T3a",
+                            "T3b",
+                            "T4"
+                        ]
+                    },
+                    "T1a期の広がり": {
+                        // "type": "string",    // ★不要定義の削除
+                        "title": "T1a期の腫瘍の水平方向の広がり",
+                        // TODO 反映されていない。要実装。
+                        "oneOf": [
+                            {
+                                "type": "number",
+                                "minimum": 0,
+                                "units": "mm"
+                            },
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "7mm以下",
+                                    "7mmを超える",
+                                    "不明"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                // TODO 反映されていない。要実装。
+                "if": {
+                    "properties": {
+                        "T": {
+                            "pattern": "^T1a"
+                        }
+                    }
+                },
+                "then": {
+                    "required": [
+                        "T",
+                        "T1a期の広がり"
+                    ]
+                },
+                "else": {
+                    "required": [
+                        "T"
+                    ]
+                }
+            },
+            "cN": {
+                "$id": "cN",
+                "title": "N分類",
+                "type": "string",
+                "enum": [
+                    "領域リンパ節転移なし",
+                    "骨盤リンパ節のみに転移を認める",
+                    "傍大動脈リンパ節のみに転移を認める",
+                    "骨盤および傍大動脈リンパ節転移を認める",
+                    "画像診断をしなかった"
+                ]
+            },
+            "pN": {
+                "$id": "#pN",
+                "title": "N分類",
+                "type": "object",
+                "$comment": "手術評価としてのN分類",
+                "properties": {
+                    "RP": {
+                        "title": "骨盤リンパ節に対する処置",
+                        "type": "string",
+                        "enum": [
+                            "骨盤リンパ節を摘出しなかった(病理学的索が行われなかった)",
+                            "骨盤リンパ節の選択的郭清(生検)を行った",
+                            "骨盤リンパ節の系統的郭清(すべての所属リンパ節)を行った",
+                            "センチネルリンパ節生検を行った"
+                        ]
+                    },
+                    "RPX": {
+                        "title": "骨盤リンパ節の所見",
+                        "type": "string",
+                        "enum": [
+                            "RP1: 骨盤リンパ節の病理学的検索が行われなかったが、明らかな腫大を認めない",
+                            "RP2: 骨盤リンパ節の病理学的検索が行われなかったが、明らかな腫大を認める",
+                            "RP3: 骨盤リンパ節を摘出し、病理学的に転移を認めない",
+                            "RP4: 骨盤リンパ節を摘出し、転移を認める"
+                        ]
+                    },
+                    "RA": {
+                        "title": "傍大動脈リンパ節に対する処置",
+                        "type": "string",
+                        "enum": [
+                            "傍大動脈リンパ節を摘出しなかった(病理学的索が行われなかった)",
+                            "傍大動脈リンパ節の選択的郭清(生検)を行った",
+                            "傍大動脈リンパ節の系統的郭清(すべての所属リンパ節)を行った",
+                            "センチネルリンパ節生検を行った"
+                        ]
+                    },
+                    "RAX": {
+                        "title": "傍大動脈リンパ節の所見",
+                        "type": "string",
+                        "enum": [
+                            "RA1: 傍大動脈リンパ節の病理学的検索が行われなかったが、明らかな腫大を認めない",
+                            "RA2: 傍大動脈リンパ節の病理学的検索が行われなかったが、明らかな腫大を認める",
+                            "RA3: 傍大動脈リンパ節を摘出し、病理学的に転移を認めない",
+                            "RA4: 傍大動脈リンパ節を摘出し、転移を認める"
+                        ]
+                    }
+                }
+            },
+            "cM": {
+                "$id": "#M",
+                "type": "object",
+                "properties": {
+                    "M": {
+                        "type": "string",
+                        "title": "M分類",
+                        "description": "鼠径リンパ節転移や腹腔内病変は遠隔転移に含む。腟,骨盤漿膜,付属器への転移は遠隔転移から除外する。",
+                        "enum": [
+                            "遠隔転移なし",
+                            "遠隔転移あり",
+                            "遠隔転移の判定不十分なとき"
+                        ]
+                    },
+                    "L": {
+                        "type": "array",
+                        "title": "遠隔転移部位",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "L1: 縦隔リンパ節",
+                                "L2: 鎖骨上(下)リンパ節",
+                                "L3: 鼠径リンパ節",
+                                "L9: 上記以外のリンパ節",
+                                "M1: 肺",
+                                "M2: 肝臓",
+                                "M3: 腹膜播種",
+                                "M4: 脳",
+                                "M5: 骨",
+                                "M9: 上記以外の実質臓器・組織"
+                            ]
+                        }
+                    }
+                }
+            },
+            "pM": {
+                "$id": "#pM",
+                "title": "M分類",
+                "type": "string",
+                "description": "腟、骨盤漿膜、付属器への転移は除外する。",
+                "enum": [
+                    "M0: 遠隔転移なし",
+                    "MA1: 傍大動脈リンパ節の明らかな腫大を認めるが、病理学的検索が行われなかった",
+                    "MA2: 傍大動脈リンパ節の明らかな腫大は認めないが、病理学的検索にて転移を認める",
+                    "MA3: 傍大動脈リンパ節の明らかな腫大を認め、病理学的検索にて転移を認める",
+                    "M1: その他の遠隔転移の存在",
+                    "M9: 遠隔転移の判定不十分なとき"
+                ]
+            }
+        }
+    }
+   //#endregion
+   
+
+    //#region CC_findigns   
     // "$id": "/schema/CC/findigns"
     export const CC_findigns:JSONSchema7 = {
         // TODO $schemaがうまく認識されない
@@ -302,9 +624,6 @@ export namespace DevSchema {
     //#endregion
     
     //#region CC_findigns
-    export const CC_pathology_id : number = 12;
-    export const CC_pathology_subschema: number[] = [];
-    
     // "$id": "/schema/CC/pathology"
     export const CC_pathology:JSONSchema7 = {
         // "$schema": "../jesgo.json",
@@ -411,11 +730,7 @@ export namespace DevSchema {
     }
     //#endregion
 
-    //#region treatment_operation
-    // TODO 仮の値。本来はDBから取得
-    export const treatment_operation_id : number = 13;
-    export const treatment_operation_subschema: number[] = [131, 132];
-    
+    //#region treatment_operation   
     // "$id": "/schema/CC/pathology"
     export const treatment_operation:JSONSchema7 = {
         // "$schema": "../jesgo.json",
@@ -430,6 +745,8 @@ export namespace DevSchema {
             },
             "手術時間": {
                 "description": "加刀~終刀までの時間(分)",
+                // TODO：integer、もしくはstringの99:59みたいな書き方を許可している
+                // UIではどう表現すべき？
                 "oneOf": [
                     {
                         "type": "integer",
@@ -462,6 +779,7 @@ export namespace DevSchema {
                 "items": {
                     "oneOf": [
                         {
+                            "title":"通常入力",
                             "type": "object",
                             "properties": {
                                 "name": {
@@ -483,6 +801,7 @@ export namespace DevSchema {
                             }        
                         },
                         {
+                            "title":"自由入力",
                             "type": "string"
                         }
                     ]
@@ -498,11 +817,519 @@ export namespace DevSchema {
     
     //#endregion
 
-    //#region treatment_operation_procedures
-    // TODO 仮の値。本来はDBから取得
-    export const treatment_operation_procedures_id : number = 131;
-    export const treatment_operation_procedures_subschema: number[] = [];
-    
+    //#region treatment_chemotharapy
+    // "$id": "/schema/treatment/chemotharapy"
+    export const treatment_chemotharapy:JSONSchema7 = {
+        // "$schema": "../jesgo.json",
+        "$id": "/schema/treatment/chemotharapy",
+        "title": "化学療法",
+        "type": "object",
+        "required": [
+            "投与開始日"
+        ],
+        "properties": {
+            "投与開始日": {
+                "type": "string",
+                "format": "date",
+                "jesgo:set": "eventdate"
+            },
+            "投与終了日": {
+                "type": "string",
+                "format": "date"
+            },
+            "治療区分": {
+                "type": "string",
+                "enum": [
+                    "化学療法",
+                    "分子標的薬",
+                    "化学療法+分子標的治療",
+                    "その他の治療"
+                ]
+            },
+            "レジメン名称": {
+                "type": "string"
+            },
+            "治療情報": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "薬剤名": {
+                            // "$ref": "#drugs" // ★以下に書き換え
+                            "$ref": "#/$defs/drugs"
+                        },
+                        "投与量": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "投与量の単位": {
+                            "type": "string",
+                            "enum": [
+                                "AUC",
+                                "mg/m<SUP>2</SUP>",
+                                "mg/kg",
+                                "mg/日"
+                            ]
+                        }
+                    },
+                    // TODO 要求仕様に"column"の定義はない。要確認
+                    "jesgo:ui:subschemastyle": "column"
+                }
+            }
+        },
+        "$defs": {
+            "drugs": {
+                "$id": "#drugs",
+                // "type": "string",    // ★以下に書きかえ
+                "oneOf": [
+                    {
+                        "title": "白金製剤",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "シスプラチン",
+                            "カルボプラチン",
+                            "ネダプラチン",
+                            "オキサリプラチン"
+                        ]
+                    },
+                    {
+                        "title": "アルキル化薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "シクロホスファミド",
+                            "イホスファミド",
+                            "メルファラン",
+                            "ニムスチン",
+                            "テモゾロミド",
+                            "ブレオマイシン",
+                            ",マイトマイシンC",
+                            "アクチノマイシンD"
+                        ]
+                    },
+                    {
+                        "title": "微小管阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "パクリタキセル",
+                            "ドセタキセル",
+                            "ビンクリスチン",
+                            "ビンデシン",
+                            "ビノレルビン"
+                        ]
+                    },
+                    {
+                        "title": "トポイソメラーぜ阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "イリノテカン",
+                            "ノギテカン",
+                            "エトポシド",
+                            "ゾブゾキサシン"
+                        ]
+                    },
+                    {
+                        "title": "代謝拮抗薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "ゲムシタビン",
+                            "メトトレキサート",
+                            "ペメトレキセド",
+                            "フルオロウラシル",
+                            "テガフール・ウラシル(UFT)",
+                            "テガフール・ギメラシル・オテラシル(TS-1)",
+                            "カペシタビン",
+                            "シタラビン(Ara-C)",
+                            "メルカプトプリン(6-MP)"
+                        ]
+                    },
+                    {
+                        "title": "抗がん性抗生物質",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "ドキソルビシン",
+                            "リポソーマルドキソルビシン",
+                            "ダウノルビシン",
+                            "ピラルビシン",
+                            "エピルビシン",
+                            "イダルビシン",
+                            "アクラルビシン",
+                            "アムルビシン",
+                            "ミトキサトロン",
+                            "マイトマイシンC",
+                            "アクチノマイシンD",
+                            "ブレオマイシン"
+                        ]
+                    },
+                    {
+                        "title": "分子標的治療",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "血管新生阻害薬",
+                            "免疫チェックポイント阻害薬",
+                            "PARP阻害薬",
+                            "チロシンキナーゼ阻害薬"
+                        ]
+                    },
+                    {
+                        "title": "血管新生阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "ベバシズマブ"
+                        ]
+                    },
+                    {
+                        "title": "免疫チェックポイント阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "ニボルブマブ",
+                            "ペムブロリズマブ",
+                            "アテゾリズマブ"
+                        ]
+                    },
+                    {
+                        "title": "PARP阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "オラパリブ",
+                            "ニラパリブ",
+                            "ルカパリブ"
+                        ]
+                    },
+                    {
+                        "title": "チロシンキナーゼ阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "パゾパニブ",
+                            "ゲフィチニブ",
+                            "エルロチニブ",
+                            "アファチニブ",
+                            "オシメルチニブ",
+                            "ダコミチニブ",
+                            "ラパチニブ",
+                            "アキシチニブ",
+                            "スニチニブ",
+                            "パゾパニブ",
+                            "パンデタニブ",
+                            "レゴラフェニブ",
+                            "カボザンチニブ",
+                            "レンバチニブ",
+                            "ラロトレクチニブ",
+                            "ギルテリチニブ",
+                            "カプマチニブ",
+                            "ペミガチニブ",
+                            "テポチニブ",
+                            "イブルチニブ",
+                            "アカラブルチニブ",
+                            "チラブルチニブ",
+                            "イマチニブ",
+                            "ダサチニブ",
+                            "ニロチニブ",
+                            "ポナチニブ",
+                            "クリゾチニブ",
+                            "セリチニブ",
+                            "ブリグチニブ",
+                            "ロルラチニブ",
+                            "ソラフェニブ"
+                        ]
+                    },
+                    {
+                        "title": "ホルモン治療",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "メドロキシプロゲステロン酢酸エステル(MPA)",
+                            "アナストロゾール",
+                            "タモキシフェン"
+                        ]
+                    }
+                ]
+            }
+        }
+    }       
+    //#endregion
+
+    //#region treatment_radiotherapy
+    // "$id": "/schema/treatment/radiotherapy"
+    export const treatment_radiotherapy:JSONSchema7 = {
+        // "$schema": "../jesgo.json",
+        "$id": "/schema/treatment/radiotherapy",
+        "title": "放射線療法",
+        "type": "object",
+        "required": [
+            "治療開始日"
+        ],
+        "properties": {
+            "治療開始日": {
+                "type": "string",
+                "format": "date",
+                "jesgo:set": "eventdate"
+            },
+            "治療終了日": {
+                "type": "string",
+                "format": "date"
+            },
+            "治療区分": {
+                "type": "string",
+                "enum": [
+                    "腔内照射",
+                    "体外照射",
+                    "同時化学放射線治療(腔内照射)",
+                    "同時化学放射線治療(体外照射)",
+                    "核医学治療"
+                ]
+            },
+            "照射内容": {
+                "type": "array",
+                "items": {
+                    // "$ref": "#radiotherapy"  // ★以下に書き換え
+                    "$ref": "#/$defs/radiotherapy"
+                }
+            },
+            "同時化学療法": {
+                "type": "object",
+                "properties": {
+                    "レジメン": {
+                        "type": "string"
+                    },
+                    "治療情報": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "薬剤名": {
+                                    // "$ref": "#drugs" // ★以下に書き換え
+                                    "$ref": "#/$defs/drugs"
+                                },
+                                "投与量": {
+                                    "type": "number",
+                                    "minimum": 0
+                                },
+                                "投与量の単位": {
+                                    "type": "string",
+                                    "enum": [
+                                        "AUC",
+                                        "mg/m<SUP>2</SUP>",
+                                        "mg/kg",
+                                        "mg/日"
+                                    ]
+                                }
+                            },
+                            // TODO columnは要求仕様に記載がない
+                            "jesgo:ui:subschemastyle": "column"
+                        }
+                    }
+                }
+            }
+        },
+        "$defs": {
+            "radiotherapy": {
+                "$id": "#radiotherapy",
+                "type": "object",
+                "properties": {
+                    "照射開始日": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "照射終了日": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "照射方法": {
+                        "type": "string",
+                        "enum": [
+                            "全骨盤照射",
+                            "全骨盤照射(中央遮蔽あり)",
+                            "3DCRT, IMRT, VMRTなど",
+                            "組織内照射",
+                            "核医学治療"
+                        ]
+                    },
+                    "照射線量": {
+                        "type": "number",
+                        "units": "Gy"
+                    },
+                    "核種": {
+                        "type": "string",
+                        // TODO 要求仕様に記載なし。要確認
+                        // "jesgo:when": {
+                        //     "properties": {
+                        //         "照射方法": {
+                        //             "const": "核医学治療"
+                        //         }
+                        //     }
+                        // }
+                    }
+                }
+            },
+            "drugs": {
+                "$id": "#drugs",
+                // "type": "string",    // ★以下に書き換え
+                "oneOf": [
+                    {
+                        "title": "白金製剤",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "シスプラチン",
+                            "カルボプラチン",
+                            "ネダプラチン",
+                            "オキサリプラチン"
+                        ]
+                    },
+                    {
+                        "title": "アルキル化薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "シクロホスファミド",
+                            "イホスファミド",
+                            "メルファラン",
+                            "ニムスチン",
+                            "テモゾロミド",
+                            "ブレオマイシン",
+                            "マイトマイシンC",
+                            "アクチノマイシンD"
+                        ]
+                    },
+                    {
+                        "title": "微小管阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "パクリタキセル",
+                            "ドセタキセル",
+                            "ビンクリスチン",
+                            "ビンデシン",
+                            "ビノレルビン"
+                        ]
+                    },
+                    {
+                        "title": "トポイソメラーぜ阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "イリノテカン",
+                            "ノギテカン",
+                            "エトポシド",
+                            "ゾブゾキサシン"
+                        ]
+                    },
+                    {
+                        "title": "代謝拮抗薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "ゲムシタビン",
+                            "メトトレキサート",
+                            "ペメトレキセド",
+                            "フルオロウラシル",
+                            "テガフール・ウラシル(UFT)",
+                            "テガフール・ギメラシル・オテラシル(TS-1)",
+                            "カペシタビン",
+                            "シタラビン(Ara-C)",
+                            "メルカプトプリン(6-MP)"
+                        ]
+                    },
+                    {
+                        "title": "抗がん性抗生物質",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "ドキソルビシン",
+                            "リポソーマルドキソルビシン",
+                            "ダウノルビシン",
+                            "ピラルビシン",
+                            "エピルビシン",
+                            "イダルビシン",
+                            "アクラルビシン",
+                            "アムルビシン",
+                            "ミトキサトロン",
+                            "マイトマイシンC",
+                            "アクチノマイシンD",
+                            "ブレオマイシン"
+                        ]
+                    },
+                    {
+                        "title": "分子標的治療",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "血管新生阻害薬",
+                            "免疫チェックポイント阻害薬",
+                            "PARP阻害薬",
+                            "チロシンキナーゼ阻害薬"
+                        ]
+                    },
+                    {
+                        "title": "血管新生阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "ベバシズマブ"
+                        ]
+                    },
+                    {
+                        "title": "免疫チェックポイント阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "ニボルブマブ",
+                            "ペムブロリズマブ",
+                            "アテゾリズマブ"
+                        ]
+                    },
+                    {
+                        "title": "PARP阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "オラパリブ",
+                            "ニラパリブ",
+                            "ルカパリブ"
+                        ]
+                    },
+                    {
+                        "title": "チロシンキナーゼ阻害薬",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "パゾパニブ",
+                            "ゲフィチニブ",
+                            "エルロチニブ",
+                            "アファチニブ",
+                            "オシメルチニブ",
+                            "ダコミチニブ",
+                            "ラパチニブ",
+                            "アキシチニブ",
+                            "スニチニブ",
+                            "パゾパニブ",
+                            "パンデタニブ",
+                            "レゴラフェニブ",
+                            "カボザンチニブ",
+                            "レンバチニブ",
+                            "ラロトレクチニブ",
+                            "ギルテリチニブ",
+                            "カプマチニブ",
+                            "ペミガチニブ",
+                            "テポチニブ",
+                            "イブルチニブ",
+                            "アカラブルチニブ",
+                            "チラブルチニブ",
+                            "イマチニブ",
+                            "ダサチニブ",
+                            "ニロチニブ",
+                            "ポナチニブ",
+                            "クリゾチニブ",
+                            "セリチニブ",
+                            "ブリグチニブ",
+                            "ロルラチニブ",
+                            "ソラフェニブ"
+                        ]
+                    },
+                    {
+                        "title": "ホルモン治療",
+                        "type": "string",   // ★追記
+                        "enum": [
+                            "メドロキシプロゲステロン酢酸エステル(MPA)",
+                            "アナストロゾール",
+                            "タモキシフェン"
+                        ]
+                    }
+                ]
+            }
+        }
+    } 
+    //#endregion
+
+    //#region treatment_operation_procedures   
     // "$id": "/schema/treatment/operation_procedures/"
     export const treatment_operation_procedures:JSONSchema7 = {
         // "$schema": "../jesgo.json",
@@ -522,13 +1349,14 @@ export namespace DevSchema {
                 ],
                 "properties": {
                     "術式": {
-                        "type": "string",
+                        // "type": "string",    // ★削除
                         "anyOf": [
                             {
                                 "title": "開腹手術",
                                 "anyOf": [
                                     {
                                         "title": "子宮摘出・子宮頸部摘出術式",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "腟上部切断術",
                                             "単純子宮全摘出術(筋膜内)",
@@ -543,6 +1371,7 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "卵巣摘出",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "右側付属器摘出術(嚢腫摘出術含む)",
                                             "左側付属器摘出術(嚢腫摘出術含む)",
@@ -553,6 +1382,7 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "骨盤リンパ節摘出",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "骨盤リンパ節選択的郭清 (生検)",
                                             "骨盤リンパ節系統的郭清",
@@ -561,6 +1391,7 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "傍大動脈リンパ節摘出",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "傍大動脈リンパ節選択的郭清 (生検)",
                                             "傍大動脈リンパ節系統的郭清",
@@ -569,6 +1400,7 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "大網摘出",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "大網生検",
                                             "大網部分切除",
@@ -577,18 +1409,22 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "合併切除",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "腹膜播種切除",
                                             "その他の臓器の切除"
                                         ]
                                     },
                                     {
-                                        "const": "その他の開腹手術"
+                                        // "const": "その他の開腹手術", // ★以下に書き換え
+                                        "title": "その他の開腹手術",
+                                        "type": "string",   // ★追記
                                     }
                                 ]
                             },
                             {
                                 "title": "腟式手術",
+                                "type": "string",   // ★追記
                                 "enum": [
                                     "子宮頸部円錐切除術(本術式のみで治療終了した場合)",
                                     "腟式単純子宮全摘術(筋膜内)",
@@ -603,6 +1439,7 @@ export namespace DevSchema {
                                 "anyOf": [
                                     {
                                         "title": "子宮摘出術式",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "腹腔鏡下単純子宮全摘出術(筋膜内)",
                                             "腹腔鏡下単純子宮全摘出術(筋膜外)",
@@ -614,6 +1451,7 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "卵巣摘出",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "腹腔鏡下右付属器摘出術",
                                             "腹腔鏡下左付属器摘出術",
@@ -628,6 +1466,7 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "リンパ節生検・郭清",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "腹腔鏡下センチネルリンパ節生検",
                                             "腹腔鏡下骨盤内リンパ節郭清",
@@ -636,6 +1475,7 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "大網摘出",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "腹腔鏡下に大網生検",
                                             "腹腔鏡下に大網部分切除",
@@ -644,6 +1484,7 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "その他",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "腹腔鏡下に再発病巣の摘出術",
                                             "腹腔鏡下に他の診療科との合同手術",
@@ -651,7 +1492,9 @@ export namespace DevSchema {
                                         ]
                                     },
                                     {
-                                        "const": "その他の腹腔鏡手術"
+                                        // "const": "その他の腹腔鏡手術",   // ★以下に書き換え
+                                        "title": "その他の腹腔鏡手術",
+                                        "type": "string",   // ★追記
                                     }
                                 ]
                             },
@@ -660,6 +1503,7 @@ export namespace DevSchema {
                                 "anyOf": [
                                     {
                                         "title": "子宮摘出術式",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "ロボット支援下単純子宮全摘出術",
                                             "ロボット支援下準広汎子宮全摘出術",
@@ -670,6 +1514,7 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "リンパ節生検・郭清",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "ロボット支援下センチネルリンパ節生検",
                                             "ロボット支援下骨盤内リンパ節郭清",
@@ -678,13 +1523,16 @@ export namespace DevSchema {
                                     },
                                     {
                                         "title": "その他",
+                                        "type": "string",   // ★追記
                                         "enum": [
                                             "治療のために開腹手術へ移行(合併症を除く)",
                                             "ロボット支援下に術後合併症の修復術"
                                         ]
                                     },
                                     {
-                                        "const": "その他のロボット支援下手術"
+                                        // "const": "その他のロボット支援下手術"    // ★以下に書き換え
+                                        "title": "その他のロボット支援下手術",
+                                        "type": "string",   // ★追記
                                     }
                                 ]
                             }
@@ -708,10 +1556,7 @@ export namespace DevSchema {
     
     //#endregion
 
-    //#region treatment_operation_adverse_events
-    export const treatment_operation_adverse_events_id : number = 132;
-    export const treatment_operation_adverse_events_subschema: number[] = [];
-    
+    //#region treatment_operation_adverse_events   
     // "$id": "/schema/treatment/operation_adverse_events/"
     export const treatment_operation_adverse_events:JSONSchema7 = {
         // "$schema": "../jesgo.json",
@@ -738,74 +1583,129 @@ export namespace DevSchema {
                 "$comment": "JSGOEではAE.*.BloodCountにマップ",
                 "pattern": "(不明|([1-9][0-9]+|[5-9])[0-9][0-9])",
                 "jesgo:ref": "../出血量"
+                // TODO 上位に"jesgo:ref"と同名の項目がいたら、値を連動させる
             },
             "発生した合併症": {
                 "type": "array",
-                "$comment": "JSGOEではAE.*.Titleにマップ"            
+                "$comment": "JSGOEではAE.*.Titleにマップ",
             },
             "関連する機器": {
                 "type": "array",
-                "$comment": "JSGOEではAE.*.Causeにマップ"
+                "$comment": "JSGOEではAE.*.Causeにマップ",
             },
             "発生部位": {
                 "type": "array",
-                "$comment": "JSGOEではAE.*.Locationにマップ"
+                "$comment": "JSGOEではAE.*.Locationにマップ",
             },
             "関連する薬剤": {
                 "type": "array",
-                "$comment": "JSGOEではAE.*.Causeにマップ"
+                "$comment": "JSGOEではAE.*.Causeにマップ",
             },
+            // TODO 複数追加可能なselectの要素？要確認
             "遺残したもの": {
                 "type": "array",
                 "$comment": "JSGOEではAE.*.Titleにマップ",
-                "enum": [
-                    "検体", "器械", "ガーゼなど衛生材料", "針",
-                    "上記にないもの"
-                ]
+                // "enum": [
+                //     "検体", "器械", "ガーゼなど衛生材料", "針",
+                //     "上記にないもの"
+                // ]
+                // ★以下に書き換え
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "検体", "器械", "ガーゼなど衛生材料", "針",
+                        "上記にないもの"
+                    ]
+                }
             },
+            // TODO 複数追加可能なselectの要素？要確認
             "合併症の内容": {
                 "type": "array",
                 "$comment": "JSGOEではAE.*.Titleにマップ",
-                "enum": [
-                    "出血", "血腫",
-                    "創部感染", "創離開", "腟断端部離開",
-                    "メッシュ露出", "腹膜炎", "子宮感染", "卵管・卵巣感染", "メッシュ感染",
-                    "イレウス", "腸閉塞", "消化管穿孔",
-                    "腹壁瘢痕・ポートサイトヘルニア",
-                    "尿管損傷", "尿路閉塞", "膀胱損傷",
-                    "肺動脈血栓塞栓症", "深部静脈血栓症",
-                    "気胸", "心肺停止",
-                    "コンパートメント症候群", "上肢神経障害", "下肢神経障害",
-                    "リンパ浮腫", "非感染性リンパ嚢胞", "感染性リンパ嚢胞・後腹膜膿瘍",
-                    "子宮腔からの出血持続", "子宮腔の癒着", "卵管閉塞"
-                ]
+                // "enum": [
+                //     "出血", "血腫",
+                //     "創部感染", "創離開", "腟断端部離開",
+                //     "メッシュ露出", "腹膜炎", "子宮感染", "卵管・卵巣感染", "メッシュ感染",
+                //     "イレウス", "腸閉塞", "消化管穿孔",
+                //     "腹壁瘢痕・ポートサイトヘルニア",
+                //     "尿管損傷", "尿路閉塞", "膀胱損傷",
+                //     "肺動脈血栓塞栓症", "深部静脈血栓症",
+                //     "気胸", "心肺停止",
+                //     "コンパートメント症候群", "上肢神経障害", "下肢神経障害",
+                //     "リンパ浮腫", "非感染性リンパ嚢胞", "感染性リンパ嚢胞・後腹膜膿瘍",
+                //     "子宮腔からの出血持続", "子宮腔の癒着", "卵管閉塞"
+                // ]
+                // ★以下に書き換え
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "出血", "血腫",
+                        "創部感染", "創離開", "腟断端部離開",
+                        "メッシュ露出", "腹膜炎", "子宮感染", "卵管・卵巣感染", "メッシュ感染",
+                        "イレウス", "腸閉塞", "消化管穿孔",
+                        "腹壁瘢痕・ポートサイトヘルニア",
+                        "尿管損傷", "尿路閉塞", "膀胱損傷",
+                        "肺動脈血栓塞栓症", "深部静脈血栓症",
+                        "気胸", "心肺停止",
+                        "コンパートメント症候群", "上肢神経障害", "下肢神経障害",
+                        "リンパ浮腫", "非感染性リンパ嚢胞", "感染性リンパ嚢胞・後腹膜膿瘍",
+                        "子宮腔からの出血持続", "子宮腔の癒着", "卵管閉塞"
+                    ]
+                }
             },
             "Grade": {
                 "type": "string",
                 "title": "合併症のGrade",
-                "enum": [
+                // "enum": [
+                //     {
+                //         "const": "1",
+                //         "title": "Grade 1: 正常な術後経過からの逸脱"
+                //     },
+                //     {
+                //         "const": "2",
+                //         "title": "Grade 2: 中等症 輸血および中心静脈栄養を要する場合を含む"
+                //     },
+                //     {
+                //         "const": "3a",
+                //         "title": "Grade 3a: 全身麻酔を要さない治療介入を要する"
+                //     },
+                //     {
+                //         "const": "3b",
+                //         "title": "Grade 3b: 全身麻酔下での治療介入を要する"
+                //     },
+                //     {
+                //         "const": "4",
+                //         "title": "Grade 4: ICU管理を要する、合併症により生命を脅かす状態"
+                //     },
+                //     {
+                //         "const": "5",
+                //         "title": "Grade 5: 死亡"
+                //     }
+                // ]
+                // ★以下に書き換え
+                "anyOf": [
                     {
-                        "const": "1",
+                        "enum": ["1"],
                         "title": "Grade 1: 正常な術後経過からの逸脱"
                     },
                     {
-                        "const": "2",
+                        "enum": ["2"],
                         "title": "Grade 2: 中等症 輸血および中心静脈栄養を要する場合を含む"
                     },
                     {
-                        "const": "3a",
+                        "enum": ["3a"],
                         "title": "Grade 3a: 全身麻酔を要さない治療介入を要する"
                     },
                     {
-                        "const": "3b",
+                        "enum": ["3b"],
                         "title": "Grade 3b: 全身麻酔下での治療介入を要する"
                     },
                     {
-                        "const": "4",
+                        "enum": ["4"],
                         "title": "Grade 4: ICU管理を要する、合併症により生命を脅かす状態"
                     },
                     {
-                        "const": "5",
+                        "enum": ["5"],
                         "title": "Grade 5: 死亡"
                     }
                 ]
@@ -830,8 +1730,10 @@ export namespace DevSchema {
                     ]
                 }
             },
+            // TODO 自由入力を想定している？要確認。
             "additionalProperties": false
         },
+        // TODO 独自にプログラムを組む必要があるかもしれない
         "allOf": [
             {
                 "if": {
@@ -1059,15 +1961,111 @@ export namespace DevSchema {
     }
     //#endregion
 
+    //#region recurrence   
+    // "$id": "/schema/CC/root"
+    export const recurrence: JSONSchema7 = {
+        // "$schema": "./jesgo.json",
+        "$id": "/schema/recurrence",
+        "type": "object",
+        "title": "再発",
+        "description": "再発診断に関わる所見情報も併せて設定して下さい.",
+        "jesgo:parentschema": [
+            "/",
+            "/schema/*/root"
+        ],
+        "required": [
+            "再発確認日", "再発したがん種", "再発回数"
+        ],
+        "properties": {
+            "再発確認日": {
+                "type": "string",
+                "format": "date",
+                "jesgo:set": "eventdate"
+            },
+            "再発したがん種": {
+                "type": "string",
+                "enum": [
+                    "子宮頸がん",
+                    "子宮体がん",
+                    "卵巣がん"
+                ]
+            },
+            "再発回数": {
+                "type": "string",
+                "enum": [
+                    "初回",
+                    "2回目",
+                    "3回目",
+                    "4回以上"
+                ]
+            },
+            "腹腔内の再発箇所": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "腟断端",
+                        "骨盤内",
+                        "骨盤外",
+                        "肝転移",
+                        "骨盤内リンパ節",
+                        "傍大動脈リンパ節"
+                    ]
+                }
+            },
+            "腹腔外の再発箇所": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "肺転移",
+                        "骨転移",
+                        "脳転移",
+                        "骨髄転移",
+                        "胸膜転移",
+                        "皮膚転移",
+                        "その他リンパ節転移"
+                    ]
+                }
+            },
+            "その他の再発箇所": {
+                "type": "string"
+            },
+            "測定可能病変": {
+                "type": "string"
+            }
+        },
+        "jesgo:subschema": [
+            "/schema/treatment/chemotharapy",
+            "/schema/treatment/radiotherapy",
+            "/schema/treatment/operation"
+        ]
+    }
+    //#endregion
+    
+    export const temp_record: Schema[] = [
+        // { "id": 1, "subschema": [10, 11, 12, 13, 14, 15], child_schema: [], "schema": CC_root, "title": "患者台帳 子宮頸がん" },
+        { "document_id": 1, "subschema": [10, ], child_schema: [11, 12, 13, 14 ], "document_schema": CC_root, "title": "患者台帳 子宮頸がん" },    // child_Schema検証用
+        { "document_id": 10, "subschema": [], child_schema: [], "document_schema": CC_staging, "title": "病期診断" },
+        { "document_id": 11, "subschema": [], child_schema: [], "document_schema": CC_findigns, "title": "診断所見" },
+        { "document_id": 12, "subschema": [], child_schema: [], "document_schema": CC_pathology, "title": "組織診断" },
+        // { "id": 13, "subschema": [131, 132], child_schema: [], "schema": treatment_operation, "title": "手術療法" },
+        { "document_id": 13, "subschema": [ ], child_schema: [131,132,15], "document_schema": treatment_operation, "title": "手術療法" },    // child_Schema検証用
+        { "document_id": 14, "subschema": [], child_schema: [], "document_schema": treatment_chemotharapy, "title": "化学療法" },
+        { "document_id": 15, "subschema": [],child_schema:[], "document_schema": treatment_radiotherapy, "title": "放射線療法" },
+        { "document_id": 131, "subschema": [],child_schema:[], "document_schema": treatment_operation_procedures, "title": "実施手術" },
+        { "document_id": 132, "subschema": [],child_schema:[], "document_schema": treatment_operation_adverse_events, "title": "手術合併症" },
 
-    export const temp_record = [
-        { "id": CC_root_id, "subschema": CC_root_subschema, "schema": CC_root, "title": "患者台帳 子宮頸がん" },
-        { "id": CC_findigns_id, "subschema": CC_findigns_subschema, "schema": CC_findigns, "title": "診断所見" },
-        { "id": CC_pathology_id, "subschema": CC_pathology_subschema, "schema": CC_pathology, "title": "組織診断" },
-        { "id": treatment_operation_id, "subschema": treatment_operation_subschema, "schema": treatment_operation, "title": "手術療法" },
-        { "id": treatment_operation_procedures_id, "subschema": treatment_operation_procedures_subschema, "schema": treatment_operation_procedures, "title": "実施手術" },
-        { "id": treatment_operation_adverse_events_id, "subschema": treatment_operation_adverse_events_subschema, "schema": treatment_operation_adverse_events, "title": "実施手術" },
+        { "document_id": 2, "subschema": [14, 15, 13], child_schema: [], "document_schema": recurrence, "title": "再発" },
     ]
+}
+
+export type Schema = {
+    document_id: number,
+    subschema: number[],
+    child_schema: number[],
+    document_schema: JSONSchema7,
+    title: string,
 }
 
 

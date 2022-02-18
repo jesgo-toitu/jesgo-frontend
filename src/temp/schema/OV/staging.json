@@ -1,0 +1,239 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/OV/staging",
+    "type": "object",
+    "title": "病期診断",
+    "$comment": "卵巣がんの病期診断.",
+    "jesgo:parentschema": [
+        "/schema/OV/root"
+    ],
+    "jesgo:unique": true,
+
+    "required": [
+        "手術状況"
+    ],
+    "properties": {
+        "手術状況": {
+            "type": "string",
+            "enum": [
+                "手術施行",
+                "術前治療施行",
+                "手術以外の治療のみ施行",
+                "治療施行未施行"
+            ]
+        },
+        "FIGO": {
+            "type": "string",
+            "title": "FIGO分類",
+            "description": "手術進行期分類(日産婦2014、FIGO 2014)",
+            "$comment": "手術状況が 手術施行例 以外の場合はXXでエクスポートする",
+            "enum": [
+                "IA期",
+                "IB期",
+                "IC期",
+                "IIA期",
+                "IIB期",
+                "IIIA1期",
+                "IIIA2期",
+                "IIIB期",
+                "IIIC期",
+                "IVA期",
+                "IVB期",
+                "不明"
+            ]
+        },
+        "IC期の場合": {
+            "type": "string",
+            "enum": [
+                "1C1: 手術操作による被膜破綻",
+                "1C2: 自然被膜破綻あるいは被膜表面への浸潤",
+                "1C3: 腹水または腹腔洗浄細胞診に悪性細胞が認められるもの"
+            ]
+        },
+        "IIIA1期の場合": {
+            "type": "string",
+            "enum": [
+                "3A11: 転移巣最大径10mm以下",
+                "3A12: 転移巣最大径10mmをこえる",
+                "3A1X: 転移巣最大径による分類不能"
+            ]
+        },
+        "pTNM": {},
+        "ypTNM": {},
+        "cTNM": {}
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "手術状況": {
+                        "const": "手術施行"
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "pTNM": {
+                        "$ref": "#/$defs/pTNM"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "手術状況": {
+                        "const": "術前治療施行"
+                    }
+                },
+                "then": {
+                    "properties": {
+                        "ypTNM": {
+                            "$ref": "#/$defs/pTNM"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "手術状況": {
+                        "enum": [
+                            "手術以外の治療のみ施行",
+                            "治療施行未施行"            
+                        ]
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "cTMN": {
+                        "$ref": "#/$defs/cTNM"
+                    }
+                }
+            }
+        }
+    ],
+    "$defs": {
+        "cTNM": {
+            "$id": "#cTNM",
+            "type": "object",
+            "title": "TMN分類(UICC第8版)",
+            "properties": {
+                "T": {
+                    "$ref": "#/$defs/T"
+                },
+                "cN": {
+                    "$ref": "#/$defs/N"
+                },
+                "cM": {
+                    "$ref": "#/$defs/M"
+                }
+            },
+            "additionalProperties": false
+        },
+        "pTNM": {
+            "$id": "#pTNM",
+            "type": "object",
+            "title": "TMN分類(UICC第8版)",
+            "properties": {
+                "T": {
+                    "$ref": "#/$defs/T"
+                },
+                "N": {
+                    "$ref": "#/$defs/N"
+                },
+                "M": {
+                    "$ref": "#/$defs/M"
+                }
+            },
+            "additionalProperties": false
+        },
+        "T": {
+            "$id": "#T",
+            "title": "T分類",
+            "type": "string",
+            "$comment": "XXXX は自動的にエクスポートで生成される.",
+            "enum": [
+                "1a",
+                "1b",
+                "1c1",
+                "1c2",
+                "1c3",
+                "2a",
+                "2b",
+                "3a",
+                "3b",
+                "3c",
+                "不明"
+            ]
+        },
+        "N": {
+            "$id": "#N",
+            "title": "N分類",
+            "description": "pNの決定は細胞診または組織診による。触診や画像診断上、腫大を認めただけではpN1とはしない。",
+            "type": "string",
+            "enum": [
+                "0: 所属リンパ節に転移を認めない",
+                "1a: 所属リンパ節に転移を認める(転移巣最大径10mm以下、組織所見による)",
+                "1b: 所属リンパ節に転移を認める(転移巣最大径10mm超、組織所見による)",
+                "1: 所属リンパ節に転移を認める(転移巣最大径不明)",
+                "X: 所属リンパ節に転移を判定するための病理学的検索が行われなかった"
+            ]
+        },
+        "cN": {
+            "$id": "#cN",
+            "title": "N分類",
+            "type": "string",
+            "enum": [
+                "0: 所属リンパ節に転移を認めない",
+                "1: 所属リンパ節に転移を認める（画像初見などによる）",
+                "X: 所属リンパ節に転移を判定するための病理学的検索が行われなかった"
+            ]
+        },
+        "M": {
+            "$id": "#M",
+            "type": "object",
+            "properties": {
+                "M分類": {
+                    "type": "string",
+                    "enum": [
+                        "0: 遠隔転移を認めない",
+                        "1a: 胸水中に悪性細胞を認める",
+                        "1b: 実質転移ならびに腹腔外臓器(鼠径リンパ節ならびに腹腔外リンパ節を含む)に転移を認めるもの",
+                        "X: 遠隔転移を判定するための検索が行われなかった"
+                    ]
+                },
+                "遠隔転移の部位": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "肺転移",
+                            "胸膜転移",
+                            "リンパ節転移",
+                            "肝転移",
+                            "脳転移",
+                            "骨転移",
+                            "皮膚転移",
+                            "骨髄転移",
+                            "その他"
+                        ]
+                    }
+                }
+            }
+        },
+        "cM": {
+            "$id": "#cM",
+            "type": "string",
+            "title": "M分類",
+            "enum": [
+                "0: 遠隔転移を認めない",
+                "1: 胸水中に悪性細胞を認めるもの(胸水細胞診による)、実質転移ならびに腹腔外臓器(鼠径リンパ節や腹腔外リンパ節を含む)に転移を認めるもの(画像所見による)",
+                "X: 遠隔転移を判定するための検索が行われなかったとき"
+            ]
+        }
+    },
+    "additionalProperties": false
+}

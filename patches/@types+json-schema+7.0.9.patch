@@ -1,8 +1,8 @@
 diff --git a/node_modules/@types/json-schema/index.d.ts b/node_modules/@types/json-schema/index.d.ts
-index 9841de0..ae8568a 100644
+index 9841de0..4c99d10 100644
 --- a/node_modules/@types/json-schema/index.d.ts
 +++ b/node_modules/@types/json-schema/index.d.ts
-@@ -714,6 +714,25 @@ export interface JSONSchema7 {
+@@ -714,6 +714,28 @@ export interface JSONSchema7 {
      readOnly?: boolean | undefined;
      writeOnly?: boolean | undefined;
      examples?: JSONSchema7Type | undefined;
@@ -23,8 +23,11 @@ index 9841de0..ae8568a 100644
 +    'jesgo:parentschema'?: string[] | undefined;
 +    'jesgo:unique'?: boolean | undefined;
 +    'jesgo:subschema'?: string[] | undefined;
-+    'jesgo:ui:visibleWhen'?: JSONSchema7 | undefined;
++    'jesgo:childschema'?: string[] | undefined;
 +    'jesgo:ref'?: string | undefined;
++    'jesgo:ui:visibleWhen'?: JSONSchema7 | undefined;
++    'jesgo:ui:subschemastyle'?:string | undefined;
++    'jesgo:ui:textarea'?: number | boolean | undefined;
  }
  
  export interface ValidationResult {

@@ -1,35 +1,19 @@
 import React, { useState } from "react";
-import { DevSchema, } from "../common/DevSchema";
 import { Button, FormControl, FormGroup, ControlLabel, Label, Grid, Row, Col, Panel, Checkbox } from 'react-bootstrap';
-import "./Registration.css"
+import { ControlButton, COMP_TYPE } from '../components/CaseRegistration/ControlButton';
 import { RootSchema } from '../components/CaseRegistration/RootSchema';
+import { SubmitButton } from "../components/CaseRegistration/SubmitButton"
 
-export type Documents = {
-    document_id: number,
-    document: any,
-}
 
 // 症例入力のおおもとの画面
 export function Registration() {
+    console.log("call Registration");
 
-    const [docInfo, setdocInfo] = useState<Documents[]>();
-    const [childInfo, setChildInfo] = useState<Documents>();
-
-    // ルートのschema情報を取得
-    const schemaId = DevSchema.CC_root_id;
-    const schema = DevSchema.CC_root;
-    const subSchemaIds = DevSchema.CC_root_subschema;
-
-    const clickSubmit = () => {
-        console.log("---docInfo---")
-        console.log(docInfo);
-
-        console.log("---childInfo---")
-        console.log(childInfo);
-    };
+    // 表示中のルートドキュメント
+    const [dispRootSchemaIds, setDispRootSchemaIds] = useState<number[]>([]);
 
     return (
-        <div className="page-style">
+        <div className="page-area">
             {/* 患者情報入力 */}
             <Panel className="panel-style">
                 <Row className="patientInfo user-info-row">
@@ -45,7 +29,7 @@ export function Registration() {
                             <FormControl type="text" />
                         </FormGroup>
                     </Col>
-                    <Col lg={2} md={2}>
+                    <Col lg={2} md={3}>
                         <FormGroup controlId="birthday" >
                             <ControlLabel >生年月日</ControlLabel>
                             <FormControl type="date" />
@@ -67,16 +51,17 @@ export function Registration() {
                             </div>
                         </FormGroup>
                     </Col>
-                    <Col lg={3} md={3} className="user-info-button-col">
-                        <div className="user-info-button-div">
-                            <Button onClick={clickSubmit} bsStyle="primary">保存してリストに戻る</Button>
-                        </div>
-                    </Col>
+                    <SubmitButton />
                 </Row>
             </Panel>
-            <Panel className="panel-style">
-                <RootSchema schemaId={schemaId} schema={schema} subSchemaIds={subSchemaIds} docInfo={docInfo} setdocInfo={setdocInfo} setChildInfo={setChildInfo}></RootSchema>
-            </Panel>
+            <ControlButton schemaId={0} dispSubSchemaIds={dispRootSchemaIds} setDispSubSchemaIds={setDispRootSchemaIds} Type={COMP_TYPE.ROOT}></ControlButton>
+            {
+                dispRootSchemaIds.map((id: number) => {
+                    return (
+                        <RootSchema key={`root-${id}`} schemaId={id} dispSchemaIds={dispRootSchemaIds} setDispSchemaIds={setDispRootSchemaIds}></RootSchema>
+                    )
+                })
+            }
         </div>
     )
 }

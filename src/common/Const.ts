@@ -13,5 +13,6 @@ export namespace Const{
     // 拡張ボキャブラリー
     export const EX_VOCABULARY = {
         REQUIRED: 'jesgo:required',
+        UI_TEXTAREA: 'jesgo:ui:textarea',
     } as const;
 }

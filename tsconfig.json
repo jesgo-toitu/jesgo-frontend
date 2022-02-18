@@ -10,6 +10,8 @@
       //"allowJs": true,
       "moduleResolution": "node",
     //   "noImplicitAny": false,
+      // TODO スキーマの仮宣言のため使用。リリース時要削除。
+      "resolveJsonModule": true,
     },
     "include": [
       "src"

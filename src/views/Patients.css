@@ -1,3 +1,8 @@
+.relative
+{
+    position: relative;
+}
+
 .flex
 {
     display: flex;
@@ -30,7 +35,17 @@
 .search-form-outer
 {
     width: 96%;
-    margin: 0 2%;
+    margin: 120px 2% 0 2%;
+}
+
+.page-menu
+{
+    width: 96%;
+    padding: 10px;
+    margin: 0 2% 0 2%;
+    top: 50px;
+    position: fixed;
+    background-color: white;
 }
 
 .search-form-closed
@@ -40,6 +55,11 @@
     margin:0;
     justify-content: flex-end;
     align-items: center;
+}
+
+.close-icon
+{
+    margin-left:auto;
 }
 
 .search-form-opened

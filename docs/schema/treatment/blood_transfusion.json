@@ -1,0 +1,32 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/treatment/blood_transfusion",
+    "type": "object",
+    "title": "輸血・血液製剤",
+    "jesgo:unique": true,
+    "properties": {
+        "赤血球輸血": {
+            "type": ["string", "number"],
+            "description": "使用量(単位,ml,g)もしくは「なし」が入力できます.",
+            "pattern": "^(なし|[0-9]+(単位|ml|g))$"
+        },
+        "凍結新鮮血漿輸血": {
+            "type": ["string", "number"],
+            "description": "使用量(単位,ml,g)もしくは「なし」が入力できます.",
+            "pattern": "^(なし|[0-9]+(単位|ml|g))$"
+        },
+        "血小板輸血": {
+            "type": ["string", "number"],
+            "description": "使用量(単位,ml,g)もしくは「なし」が入力できます.",
+            "pattern": "^(なし|[0-9]+(単位|ml|g))$"
+        },
+        "術中回収血輸血": {
+            "type": ["string", "number"],
+            "description": "使用量(ml)もしくは「なし」が入力できます.",
+            "pattern": "^(なし|[0-9]+(ml))$"
+        },
+        "その他輸血・血液製剤": {
+            "type": "string"
+        }
+    }
+}

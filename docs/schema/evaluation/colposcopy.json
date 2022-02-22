@@ -1,0 +1,21 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluations/colposcopy",
+    "type": "object",
+    "title": "コルポスコピー",
+    "properties": {
+        "検査実施日": {
+            "type": "string",
+            "format": "date",
+            "jesgo:set": "eventdate"
+        },
+        "コルポスコピー判定": {
+            "type": "string",
+            "enum": ["NCF", "ACF", "UCF"]
+        },
+        "所見": {
+            "type": "string",
+            "$textarea": true
+        }
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluations/cervix",
+    "type": "object",
+    "title": "子宮頸部検査",
+    "jesgo:unique": true,
+    "properties": {
+        "細胞診": {
+            "type": "string",
+            "enum": [
+                "未実施",
+                "NILM",
+                "ASC-US",
+                "LSIL",
+                "HSIL",
+                "ASC-H",
+                "SCC",
+                "AGC",
+                "AIS",
+                "Adenocarcinoma",
+                "other malig."
+            ]
+        },
+        "生検組織診": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "診断的円錐切除": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        }
+    }
+}

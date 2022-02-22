@@ -1,0 +1,33 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluations/corpus",
+    "type": "object",
+    "title": "子宮内膜検査",
+    "jesgo:unique": true,
+    "properties": {
+        "検査実施日": {
+            "type": "string",
+            "format": "date",
+            "jesgo:set": "eventdate"
+        },
+        "細胞診": {
+            "type": "string",
+            "enum": [
+                "未実施",
+                "陰性",
+                "擬陽性",
+                "陽性",
+                "Negative for malignancy",
+                "ATEC-US",
+                "AETC-AE",
+                "Endometrial hyperplasia",
+                "AEH/EIN",
+                "Malignant tumor"
+            ]
+        },
+        "生検組織診": {
+            "type": "string",
+            "$textarea": true
+        }
+    }
+}

@@ -1,0 +1,52 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/summary",
+    "type": "object",
+    "title": "初診時情報",
+    "$comment": "初診時基本的な確認情報.",
+    "jesgo:unique": true,
+    "jesgo:parentschema": [
+        "/"
+    ],
+    "properties": {
+        "初診日": {
+            "type": "string",
+            "description": "カルテ上の患者初診日",
+            "format": "date"
+        },
+        "G": {
+            "type": "integer",
+            "title": "妊娠回数(G)",
+            "default": 0,
+            "minimum": 0
+        },
+        "P": {
+            "type": "integer",
+            "title": "分娩回数(P)",
+            "default": 0,
+            "minimum": 0
+        },
+        "閉経": {
+            "oneOf": [
+                {
+                    "type": "string",
+                    "enum": [
+                        "あり",
+                        "なし"
+                    ]
+                },
+                {
+                    "type": "integer",
+                    "units": "歳",
+                    "minimum": 0
+                }
+            ],
+            "description": "閉経のあり・なしもしくは年齢."
+        }
+    },
+    "additionalProperties": true,
+    "jesgo:subschema": [
+        "/schema/evaluation/physical_status",
+        "/schema/evaluation/performance_status"
+    ]
+}

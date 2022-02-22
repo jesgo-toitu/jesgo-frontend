@@ -1,0 +1,49 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluation/physical_status",
+    "type": "object",
+    "title": "身体所見",
+    "jesgo:unique": true,
+    "jesgo:parentschema": [
+        "/schema/status",
+        ""
+    ],
+    "examples": [
+        {
+            "身長": 150,
+            "体重": 42,
+            "BSA": 1.33,
+            "PS": "0"
+        }
+    ],
+    "properties": {
+        "身長": {
+            "type": "number",
+            "default": 0,
+            "minimum": 0,
+            "units": "cm",
+            "examples": [
+                150
+            ]
+        },
+        "体重": {
+            "type": "number",
+            "default": 0,
+            "minimum": 0,
+            "units": "kg",
+            "examples": [
+                42
+            ]
+        },
+        "BSA": {
+            "type": "number",
+            "title": "体表面積",
+            "default": 0.0,
+            "units": "㎡",
+            "description": "DuBoisの式を推奨 : BSA(cm^2) = 71.84 * HT(cm)^0.725 * BW(kg)^0.425",
+            "examples": [
+                1.33
+            ]
+        }
+    }
+}

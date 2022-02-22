@@ -1,0 +1,17 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluations/regional_lymph_nodes",
+    "type": "object",
+    "title": "所属リンパ節",
+    "properties": {
+        "所見": {
+            "type": "string",
+            "enum": [
+                "腫大なし",
+                "触診もしくは画像診断にて明らかに転移を疑うリンパ節腫大あり",
+                "細胞診にてリンパ節転移と診断",
+                "組織診(郭清or生検)にてリンパ節転移と診断"
+            ]
+        }
+    }
+}

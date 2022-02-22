@@ -1,0 +1,18 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluations/gastroscopy",
+    "type": "object",
+    "title": "上部消化器内視鏡検査",
+    "properties": {
+        "検査実施日": {
+            "type": "string",
+            "format": "date",
+            "jesgo:set": "eventdate"
+        },
+        "所見": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        }
+    },
+    "additionalProperties": true
+}

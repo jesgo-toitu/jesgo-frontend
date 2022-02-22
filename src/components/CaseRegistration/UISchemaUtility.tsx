@@ -67,6 +67,7 @@ export const CreateUISchema = (schema: JSONSchema7) => {
                         if(oneOfItemNames === undefined) continue;
 
                         oneOfItemNames.map((oneOfItemName: string) => {
+                            // TODO dependenciesに同項目に対し条件が複数あるとおかしくなる（uischemaが重複する）。要修正
                             if (oneOfItemName !== depName) {
                                 AddUiSchema(oneOfItemName, oneOfItems, uiSchema, orderList);
                                 CreateOrderList(orderList, oneOfItemName, depName);
@@ -111,7 +112,13 @@ const AddUiSchema = (propName: string, items: { [key: string]: JSONSchema7Defini
     // 日付入力Widget
     const key: keyof JSONSchema7 = "format";
     if (itemPropName.includes(key) && item[key] === "date") {
-        uiSchema[propName][Const.UI_WIDGET.FIELD_TEMPLATE] = JESGOFiledTemplete.inputDateTemplete;
+        uiSchema[propName][Const.UI_WIDGET.CLASS] = "input-date";
+    }
+
+    // 数値入力Widget
+    const kType: keyof JSONSchema7 = "type";
+    if (itemPropName.includes(kType) && ["integer", "number"].includes(item[kType] as string)) {
+        uiSchema[propName][Const.UI_WIDGET.CLASS] = "input-integer";
     }
 
     // oneOf

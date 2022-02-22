@@ -4,12 +4,25 @@ body {
 
 .page-area {
     padding: 15px;
-    /* background: #f9f9f9;
-    height: 100vh; */
+}
+
+/* TODO レスポンシブ未対応 */
+.patient-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    /*余白が入らないように*/
+    margin: 0;
+    padding: 15px;
+    width: 100%;
+    height: 150px;
+    background-color: #f9f9f9;
+    /* 常に最前面に表示 */
+    z-index: 999;
 }
 
 .content-area{
-    /* padding-bottom: 15px; */
+    margin-top: 135px;
 }
 
 .panel-style {
@@ -86,3 +99,31 @@ body {
 .form-group fieldset legend{
     border-bottom: 3px solid #e5e5e5;
 }
+
+/* 数値入力(入力部分のみ) */
+.input-integer input {
+    width: 100px;   
+}
+
+/* 日付入力(入力部分のみ) */
+.input-date input {
+    width: 200px;   
+}
+
+.sidebar {
+    display: none;
+  }
+  
+  @media screen and (min-width: 768px) {
+    .sidebar {
+      position: fixed;
+      top: 211px;
+      bottom: 0;
+      left: 0;
+      display: block;
+      overflow-x: hidden;
+      overflow-y: auto
+    }
+  }
+
+

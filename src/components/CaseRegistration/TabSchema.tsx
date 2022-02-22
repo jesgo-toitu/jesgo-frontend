@@ -24,16 +24,21 @@ export const TabSchema = React.memo((props: Props) => {
     let uiSchema: UiSchema = CreateUISchema(document_schema);
     uiSchema["ui:ObjectFieldTemplate"] = JESGOFiledTemplete.TabItemFieldTemplate;
     
-    // 表示中の子スキーマ
+    // 表示中のchild_schema
     const [dispChildSchemaIds, setDispChildSchemaIds] = useState<number[]>([]);
     const [formData, setFormData] = useState<any>({});
     const dispatch = useDispatch();
+
+    // console.log("---[TabSchema]schema---");
+    // console.log(document_schema);
+    // console.log("---[TabSchema]uiSchema---");
+    // console.log(uiSchema);
 
     return (
         <>
             <ControlButton schemaId={schemaId} Type={COMP_TYPE.TAB}
                 dispSchemaIds={dispSchemaIds} setDispSchemaIds={setDispSchemaIds}
-                dispSubSchemaIds={dispChildSchemaIds} setDispSubSchemaIds={setDispChildSchemaIds} childSchemaIds={child_schema}></ControlButton>
+                dispChildSchemaIds={dispChildSchemaIds} setDispChildSchemaIds={setDispChildSchemaIds} childSchemaIds={child_schema}></ControlButton>
             <CustomDivForm schemaId={schemaId} dispatch={dispatch} setFormData={setFormData}
                 schema={document_schema} uiSchema={uiSchema} formData={formData} />
             {

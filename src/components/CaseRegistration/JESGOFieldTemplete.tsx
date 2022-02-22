@@ -27,26 +27,6 @@ export namespace JESGOFiledTemplete {
         );
     }
 
-    // 日付入力テンプレート
-    export function inputDateTemplete(props: FieldTemplateProps) {
-        const { schema, id, classNames, label, help, required, description, errors, children, hidden } = props;
-        return (
-            <div hidden={hidden} className={classNames} style={{ maxWidth: 200 }}>
-                {label && (
-                    <div>
-                        <label className="label-type" htmlFor={id}>{label}{required ? "*" : null}</label>
-                        <JESGOComp.TypeLabel requireType={schema["jesgo:required"]} pId={props.id} />
-                    </div>
-                )}   
-                {/* TODO markdownで来ている場合の対応 */}
-                {description}
-                {children}
-                {errors}
-                {help}
-            </div>
-        );
-    }
-
     // タブの中身のテンプレート
     export function TabItemFieldTemplate(props: ObjectFieldTemplateProps) {
         const { properties, description } = props;

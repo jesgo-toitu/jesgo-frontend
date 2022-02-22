@@ -51,6 +51,7 @@ export function Patients() {
     const [noSearch, setNoSearch] = useState('table-cell');
     const [search, setSearch] = useState('hidden');
     const [progressAndRecurrenceColumn, setProgressAndRecurrenceColumn] = useState('hidden');
+    const [listMode, setListMode] = useState(['blue', '']);
     const [userListJson, setUserListJson] = useState('');
 
     const setShowProgressAndRecurrence = (check: boolean, searchStyle: string) => {
@@ -68,34 +69,22 @@ export function Patients() {
                 setSearchFormOpen('hidden');
                 setSimpleSearchButtons('hidden');
                 setDetailSearchOpen('hidden');
-                setNoSearch('table-cell');
-                setSearch('hidden');
-                setShowProgressAndRecurrence(searchWord.showProgressAndRecurrence, 'hidden');
                 break;
 
             case "simpleSearch":
                 setSearchFormOpen('search-form-opened block');
                 setSimpleSearchButtons('block');
                 setDetailSearchOpen('hidden');
-                setNoSearch('hidden');
-                setSearch('table-cell');
-                setShowProgressAndRecurrence(searchWord.showProgressAndRecurrence, 'table-cell');
                 break;
 
             case "detailSearch":
                 setSearchFormOpen('search-form-opened block');
                 setSimpleSearchButtons('hidden');
                 setDetailSearchOpen('detail-form-opened block');
-                setNoSearch('hidden');
-                setSearch('table-cell');
-                setShowProgressAndRecurrence(searchWord.showProgressAndRecurrence, 'table-cell');
                 break;
 
             default:
         }
-
-
-
     }
 
     const handleSearchCondition = (event: any) => {
@@ -169,6 +158,20 @@ export function Patients() {
         console.log(searchWord);
     }
 
+    const changeListColumn = (isDetail: boolean) => {
+        if (isDetail) {
+            setListMode(['', 'blue']);
+            setNoSearch('hidden');
+            setSearch('table-cell');
+            setShowProgressAndRecurrence(searchWord.showProgressAndRecurrence, 'table-cell');
+        } else {
+            setListMode(['blue', '']);
+            setNoSearch('table-cell');
+            setSearch('hidden');
+            setShowProgressAndRecurrence(searchWord.showProgressAndRecurrence, 'hidden');
+        }
+    }
+
     const submit = (type: string) => {
         const token = localStorage.getItem("token");
         if (token == null) {
@@ -232,10 +235,10 @@ export function Patients() {
                 </Navbar.Header>
                 <Navbar.Collapse>
                     <Nav>
-                        <Navbar.Text>
+                        <NavItem eventKey={1} href="/patients#" className={listMode[0]} onClick={() => changeListColumn(false)}>
                             患者リスト表示
-                        </Navbar.Text>
-                        <NavItem eventKey={2} href="#">
+                        </NavItem>
+                        <NavItem eventKey={2} href="/patients#" className={listMode[1]} onClick={() => changeListColumn(true)}>
                             腫瘍登録管理表示
                         </NavItem>
                     </Nav>

@@ -56,7 +56,7 @@ export const RootSchema = React.memo((props: Props) => {
         <Panel className="panel-style">
             <ControlButton schemaId={schemaId} Type={COMP_TYPE.ROOT_PANEL}
                 dispSchemaIds={dispSchemaIds} setDispSchemaIds={setDispSchemaIds}
-                dispSubSchemaIds={dispChildSchemaIds} setDispSubSchemaIds={setDispChildSchemaIds} childSchemaIds={child_schema}></ControlButton>
+                dispChildSchemaIds={dispChildSchemaIds} setDispChildSchemaIds={setDispChildSchemaIds} childSchemaIds={child_schema}></ControlButton>
             <CustomDivForm schemaId={schemaId} dispatch={dispatch} setFormData={setFormData} formData={formData} uiSchema={uiSchema} schema={document_schema} />
             {
                 (subschema.length > 0 || dispChildSchemaIds.length > 0) &&

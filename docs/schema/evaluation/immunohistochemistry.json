@@ -1,0 +1,20 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluation/immunohistochemistry",
+    "type": "object",
+    "title": "免疫組織化学",
+    "properties": {
+        "MLH1": {
+            "type": "string"
+        },
+        "MSH2": {
+            "type": "string"
+        },
+        "MSH6": {
+            "type": "string"
+        },
+        "PMS2": {
+            "type": "string"
+        }
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluations/exam",
+    "type": "object",
+    "title": "内診・超音波",
+    "properties": {
+        "検査実施日": {
+            "type": "string",
+            "format": "date",
+            "jesgo:set": "eventdate"
+        },
+        "所見": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        }
+    }
+}

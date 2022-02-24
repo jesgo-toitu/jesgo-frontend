@@ -1,0 +1,43 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/EM/findigns",
+    "type": "object",
+    "title": "診断所見",
+    "properties": {
+        "洗浄細胞診": {
+            "type": "string",
+            "enum": [
+                "陽性",
+                "陰性",
+                "未施行",
+                "不明"
+            ]
+        },
+        "筋層浸潤": {
+            "type": "object",
+            "title": "筋層浸潤の有無",
+            "description": "初回手術未施行例では画像診断での判定所見",
+            "properties": {
+                "所見": {
+                    "type": "string",
+                    "enum": [
+                        "浸潤なし",
+                        "浸潤＜1/2",
+                        "浸潤≧1/2",
+                        "不明"
+                    ]
+                },
+                "診断方法": {
+                    "type": "string",
+                    "enum": [
+                        "初回手術施行による病理学的診断",
+                        "MRI",
+                        "CT",
+                        "PET/CT"
+                    ]
+                }
+            }
+        }
+    },
+    "$defs": {}
+}

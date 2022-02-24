@@ -1,0 +1,84 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/treatment/operation",
+    "type": "object",
+    "title": "手術療法",
+    "properties": {
+        "手術日": {
+            "type": "string",
+            "format": "date",
+            "jesgo:set": "eventdate"
+        },
+        "手術時間": {
+            "description": "加刀~終刀までの時間(分)",
+            "oneOf": [
+                {
+                    "title":"入力形式：XX(分)",
+                    "type": "integer",
+                    "units": "分",
+                    "minimum": 0
+                },
+                {
+                    "type": "string",
+                    "title":"入力形式：XX:XX",
+                    "pattern": "^([1-9][0-9]?:)?[0-5]?[0-9]$"
+                }
+            ]
+        },
+        "出血量": {
+            "description": "加刀~終刀までの出血量(g)",
+            "oneOf": [
+                {
+                    "title":"入力形式：XX(g)",
+                    "type": "integer",
+                    "units": "g",
+                    "minimum": 0
+                },
+                {
+                    "title":"その他",
+                    "type": "string",
+                    "default": "不明"
+                }
+            ]
+        },
+        "術者": {
+            "type": "array",
+            "description": "筆頭に執刀医、以下を助手として入力",
+            "items": {
+                "oneOf": [
+                    {
+                        "title":"入力形式：通常",
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "title": "名前",
+                                "type": "string"
+                            },
+                            "property": {
+                                "title": "資格",
+                                "type": "string",
+                                "enum": [
+                                    "婦人科腫瘍専門医",
+                                    "産婦人科内視鏡技術認定医",
+                                    "婦人科腫瘍専門医+産婦人科内視鏡技術認定医",
+                                    "産婦人科専門医",
+                                    "その他",
+                                    "不明"
+                                ]
+                            }
+                        }        
+                    },
+                    {
+                        "title": "入力形式：自由記述",
+                        "type": "string"
+                    }
+                ]
+            }
+        }
+
+    },
+    "jesgo:subschema": [
+        "/schema/treatment/operation_procedures",
+        "/schema/treatment/operation_adverse_events"
+    ]
+}

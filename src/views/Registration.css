@@ -1,0 +1,129 @@
+body {
+    background: #f9f9f9;
+}
+
+.page-area {
+    padding: 15px;
+}
+
+/* TODO レスポンシブ未対応 */
+.patient-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    /*余白が入らないように*/
+    margin: 0;
+    padding: 15px;
+    width: 100%;
+    height: 150px;
+    background-color: #f9f9f9;
+    /* 常に最前面に表示 */
+    z-index: 999;
+}
+
+.content-area{
+    margin-top: 135px;
+}
+
+.panel-style {
+    padding: 15px;
+    border: 1px solid #a0a0a0
+    
+}
+
+.panel-item-style{
+    padding-top: 10px; 
+    padding-left: 30px; 
+    padding-right: 30px;
+}
+
+.user-info-row{
+    display: flex;
+    flex-wrap: wrap;
+    padding-top: 10px;
+}
+
+.user-info-age{
+    /* 他コントロールと縦位置を揃えるためリセット */
+    padding: 0px;
+    margin: 0px;
+}
+
+.user-info-checkbox{
+    /* 他コントロールと縦位置を揃えるためリセット */
+    padding: 0px;
+    margin: 0px;
+}
+
+.user-info-button-col {
+    display: table;
+}
+
+.user-info-button-div {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: right;
+}
+
+/* ---タブ--- */
+
+/* タブとコンテンツの間が空いてしまう問題を対応 */
+.nav-tabs li{
+    margin-bottom: -2px;
+}
+
+/* タブ（未選択） */
+.nav-tabs li a{
+    background-color: #73a5ce;
+    color: white;
+}
+
+/* タブ（選択） */
+.nav-tabs li.active a {
+    font-weight: bold;
+    border: 1px solid #a0a0a0
+}
+.nav-tabs li.active a:focus {
+    font-weight: bold;
+    border: 1px solid #a0a0a0
+}
+.nav-tabs li.active a:hover {
+    font-weight: bold;
+    border: 1px solid #a0a0a0
+}
+
+.form-group > fieldset > div{
+    margin-left: 5px;
+}
+
+.form-group fieldset legend{
+    border-bottom: 3px solid #e5e5e5;
+}
+
+/* 数値入力(入力部分のみ) */
+.input-integer input {
+    width: 100px;   
+}
+
+/* 日付入力(入力部分のみ) */
+.input-date input {
+    width: 200px;   
+}
+
+.sidebar {
+    display: none;
+  }
+  
+  @media screen and (min-width: 768px) {
+    .sidebar {
+      position: fixed;
+      top: 211px;
+      bottom: 0;
+      left: 0;
+      display: block;
+      overflow-x: hidden;
+      overflow-y: auto
+    }
+  }
+
+

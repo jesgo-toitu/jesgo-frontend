@@ -1,0 +1,32 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluations/ascites",
+    "type": "object",
+    "title": "腹水",
+    "properties": {
+        "有無": {
+            "type": "string",
+            "enum": [
+                "なし",
+                "あり"
+            ]
+        },
+        "量": {
+            "type": "string"
+        },
+        "性状": {
+            "type": "string"
+        },
+        "細胞診実施様式": {
+            "type": "string",
+            "enum": [
+                "吸引",
+                "穿刺吸引",
+                "洗浄"
+            ]
+        },
+        "細胞診結果": {
+            "type": "string"
+        }
+    }
+}

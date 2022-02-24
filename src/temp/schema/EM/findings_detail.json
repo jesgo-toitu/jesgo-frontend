@@ -1,0 +1,94 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/EM/findigns/details",
+    "type": "object",
+    "title": "診断所見 詳細",
+    "properties": {
+        "洗浄細胞診": {
+            "type": "string",
+            "enum": [
+                "陽性",
+                "陰性",
+                "未施行",
+                "不明"
+            ]
+        },
+        "頸管浸潤": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "筋層浸潤": {
+            "type": "object",
+            "title": "筋層浸潤の有無と詳細",
+            "description": "初回手術未施行例では画像診断での判定所見",
+            "properties": {
+                "所見": {
+                    "type": "string",
+                    "enum": [
+                        "浸潤なし",
+                        "浸潤＜1/2",
+                        "浸潤≧1/2",
+                        "不明"
+                    ]
+                },
+                "診断方法": {
+                    "type": "string",
+                    "enum": [
+                        "初回手術施行による病理学的診断",
+                        "MRI",
+                        "CT",
+                        "PET/CT"
+                    ]
+                },
+                "詳細": {
+                    "type": "string",
+                    "jesgo:ui:textarea": true
+                }
+            }
+        },
+        "脈管侵襲": {
+            "type": "object",
+            "title": "脈管侵襲の詳細",
+            "properties": {
+                "リンパ管侵襲": {
+                    "type": "string",
+                    "jesgo:ui:textarea": true
+                },
+                "静脈侵襲": {
+                    "type": "string",
+                    "jesgo:ui:textarea": true
+                }
+            }
+        },
+        "付属器転移": {
+            "title": "付属器転移の詳細",
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "他臓器転移": {
+            "title": "他臓器への転移の詳細",
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "リンパ節転移": {
+            "title": "リンパ節転移の詳細",
+            "type": "object",
+            "properties": {
+                "部位と個数": {
+                    "type": "string",
+                    "jesgo:ui:textarea": true
+                },
+                "詳細": {
+                    "type": "string",
+                    "jesgo:ui:textarea": true
+                }
+            }
+        },
+        "遠隔転移": {
+            "title": "他臓器への転移の詳細",
+            "type": "string",
+            "jesgo:ui:textarea": true
+        }
+    },
+    "$defs": {}
+}

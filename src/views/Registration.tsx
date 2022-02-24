@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Button, FormControl, FormGroup, ControlLabel, Label, Grid, Row, Col, Panel, Checkbox } from 'react-bootstrap';
+import { Tabs, Tab, Button, FormControl, FormGroup, ControlLabel, Label, Grid, Row, Col, Panel, Checkbox } from 'react-bootstrap';
 import { ControlButton, COMP_TYPE } from '../components/CaseRegistration/ControlButton';
 import { RootSchema } from '../components/CaseRegistration/RootSchema';
 import { SubmitButton } from "../components/CaseRegistration/SubmitButton"
-
+import { GetSchemaInfo } from "../common/CaseRegistrationUtility";
+import "./Registration.css"
 
 // 症例入力のおおもとの画面
 export function Registration() {
@@ -57,14 +58,23 @@ export function Registration() {
                 </Panel>
             </div>
             <div className="content-area">
-            <ControlButton schemaId={0} dispChildSchemaIds={dispRootSchemaIds} setDispChildSchemaIds={setDispRootSchemaIds} Type={COMP_TYPE.ROOT}></ControlButton>
-            {
-                dispRootSchemaIds.map((id: number) => {
-                    return (
-                        <RootSchema key={`root-${id}`} schemaId={id} dispSchemaIds={dispRootSchemaIds} setDispSchemaIds={setDispRootSchemaIds}></RootSchema>
-                    )
-                })
-            }
+                <ControlButton schemaId={0} dispChildSchemaIds={dispRootSchemaIds} setDispChildSchemaIds={setDispRootSchemaIds} Type={COMP_TYPE.ROOT}></ControlButton>
+                {
+                    (dispRootSchemaIds.length > 0) &&
+                    <Tabs id="root-tabs">
+                        {dispRootSchemaIds.map((id: number) => {
+                            // TODO 仮。本来はAPI
+                            const subtitle = GetSchemaInfo(id)?.title;
+                            if (subtitle === undefined) return;
+                            return (
+                                // TODO TabSchemaにTabを置くとうまく動作しなくなる
+                                <Tab key={`root-tab-${id}`} className="panel-style" eventKey={id} title={subtitle}>
+                                    <RootSchema key={`root-${id}`} schemaId={id} dispSchemaIds={dispRootSchemaIds} setDispSchemaIds={setDispRootSchemaIds}></RootSchema>
+                                </Tab>
+                            )
+                        })}
+                    </Tabs>
+                }
             </div>
         </div>
     )

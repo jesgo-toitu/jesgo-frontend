@@ -27,8 +27,8 @@ body {
 
 .panel-style {
     padding: 15px;
-    border: 1px solid #a0a0a0
-    
+    border: 1px solid #a0a0a0;
+    background: white;
 }
 
 .panel-item-style{

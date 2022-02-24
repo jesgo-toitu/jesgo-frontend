@@ -6,7 +6,7 @@ import "./ControlButton.css"
 
 export const COMP_TYPE = {
     ROOT: "root",
-    ROOT_PANEL: "rootPanel",
+    ROOT_TAB: "rootTab",
     TAB: "tab",
     PANEL: "panel",
 } as const;
@@ -87,6 +87,7 @@ export const ControlButton = React.memo((props:ControlButtonProps) => {
     const canDelete = dispSchemaIds !== undefined && dispSchemaIds.includes(schemaId);
     const canAdd = canAddSchemas.length > 0;
     const canClear = (!canDelete && Type !== COMP_TYPE.ROOT);
+    const horizontalMoveType: CompType[] = [COMP_TYPE.TAB, COMP_TYPE.ROOT_TAB];
 
     return (
         <div className="control-button-area">
@@ -96,8 +97,8 @@ export const ControlButton = React.memo((props:ControlButtonProps) => {
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
                     {/* 自身の移動 */}
-                    {canMove && <MenuItem eventKey="up">{Type === COMP_TYPE.TAB ? "左" : "上"}に移動</MenuItem>}
-                    {canMove && <MenuItem eventKey="down">{Type === COMP_TYPE.TAB ? "右" : "下"}に移動</MenuItem>}
+                    {canMove && <MenuItem eventKey="up">{horizontalMoveType.includes(Type) ? "左" : "上"}に移動</MenuItem>}
+                    {canMove && <MenuItem eventKey="down">{horizontalMoveType.includes(Type) ? "右" : "下"}に移動</MenuItem>}
                     {/* 自身の削除 */}
                     {canDelete && <MenuItem key="menu-delete" eventKey="delete">ドキュメントの削除</MenuItem> }
                     {canClear && <MenuItem key="menu-clear" eventKey="clear">編集内容の初期化</MenuItem>}

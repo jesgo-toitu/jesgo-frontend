@@ -53,8 +53,8 @@ export const RootSchema = React.memo((props: Props) => {
     }
 
     return (
-        <Panel className="panel-style">
-            <ControlButton schemaId={schemaId} Type={COMP_TYPE.ROOT_PANEL}
+        <>
+            <ControlButton schemaId={schemaId} Type={COMP_TYPE.ROOT_TAB}
                 dispSchemaIds={dispSchemaIds} setDispSchemaIds={setDispSchemaIds}
                 dispChildSchemaIds={dispChildSchemaIds} setDispChildSchemaIds={setDispChildSchemaIds} childSchemaIds={child_schema}></ControlButton>
             <CustomDivForm schemaId={schemaId} dispatch={dispatch} setFormData={setFormData} formData={formData} uiSchema={uiSchema} schema={document_schema} />
@@ -68,6 +68,6 @@ export const RootSchema = React.memo((props: Props) => {
                     {createTab(dispChildSchemaIds)}
                 </Tabs>
             }
-        </Panel>
+        </>
     )
 })

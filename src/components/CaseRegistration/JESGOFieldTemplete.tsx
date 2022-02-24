@@ -3,7 +3,7 @@ import { JSONSchema7 } from "json-schema";
 import { FieldTemplateProps, ObjectFieldTemplateProps, ArrayFieldTemplateProps } from "@rjsf/core";
 import { JESGOComp } from "./JESGOComponent";
 import "./JESGOFieldTemplete.css"
-import { AddButton, ArrayFieldTitle } from './RjsfDefaultComponents';
+import { ArrayFieldTitle } from './RjsfDefaultComponents';
 
 export namespace JESGOFiledTemplete {
 
@@ -112,13 +112,13 @@ export namespace JESGOFiledTemplete {
                     )}
 
                     <div
-                        className="row array-item-list"
+                        className="array-item-list array-item-padding" 
                         key={`array-item-list-${props.idSchema.$id}`}>
                         {props.items && props.items.map(JESGOComp.DefaultArrayItem)}
                     </div>
 
                     {props.canAdd && (
-                        <AddButton
+                        <JESGOComp.AddButton
                             className="array-item-add col-lg-1 col-md-1 col-sm-2 col-lg-offset-11 col-md-offset-11 col-sm-offset-10"
                             onClick={props.onAddClick}
                             disabled={props.disabled || props.readonly}

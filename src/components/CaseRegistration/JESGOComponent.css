@@ -1,3 +1,10 @@
 .label-type {
     margin-right: 5px;
 }
+
+.array-item-border {
+    border-bottom: 2px dotted #a0a0a0;
+    padding-top: 15px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}

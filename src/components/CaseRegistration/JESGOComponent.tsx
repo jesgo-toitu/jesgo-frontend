@@ -1,6 +1,7 @@
 import React from "react";
 import { Label } from 'react-bootstrap';
 import "./JESGOComponent.css"
+import "./JESGOFieldTemplete.css"
 import { IconButton } from './RjsfDefaultComponents';
 export namespace JESGOComp {
     // "jesgo:required"用ラベル
@@ -38,7 +39,7 @@ export namespace JESGOComp {
             fontWeight: "bold",
         };
         return (
-            <div key={props.key} className={props.className}>
+            <div key={props.key} className={`array-item-border row ${props.className}`}>
                 {/* <div className={props.hasToolbar ? "col-xs-9" : "col-xs-12"}></div> */}
                 <div className={props.hasToolbar ?
                     "col-lg-11 col-md-11 col-sm-10 col-xs-9" : "col-xs-12"}>
@@ -89,12 +90,39 @@ export namespace JESGOComp {
                                     tabIndex="-1"
                                     style={btnStyle}
                                     disabled={props.disabled || props.readonly}
-                                    onClick={props.onDropIndexClick(props.index)}
-                                />
-                            )}
+                                        onClick={props.onDropIndexClick(props.index)}
+                                    />
+                                )}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
+        );
+    }
+
+    // 配列object用追加ボタン
+    // https://github.com/rjsf-team/react-jsonschema-form/blob/master/packages/core/src/components/AddButton.js
+    // Latest commit d6f0964
+    type addButtonProp = {
+        className :string,
+        onClick: (event?: any) => void,
+        disabled : boolean,
+    }
+    export function AddButton({ className, onClick, disabled }: addButtonProp) {
+        return (
+            // <div className="row">
+            <div className="row array-item-padding">
+                <p className={`col-xs-3 col-xs-offset-9 text-right ${className}`}>
+                    <IconButton
+                        type="info"
+                        icon="plus"
+                        className="btn-add col-xs-12"
+                        aria-label="Add"
+                        tabIndex="0"
+                        onClick={onClick}
+                        disabled={disabled}
+                    />
+                </p>
             </div>
         );
     }

@@ -1,4 +1,7 @@
-export namespace Const{
+export namespace Const {
+
+    // サーバーIPアドレス
+    export const END_POINT: string = "http://localhost:3000/";
 
     // UiSchemaプロパティ
     export const UI_WIDGET = {
@@ -6,7 +9,7 @@ export namespace Const{
         WIDGET: 'ui:widget',
         OPTIONS: 'ui:options',
         FIELD_TEMPLATE: 'ui:FieldTemplate',
-        OBJECT_FIELD_TEMPLATE:'ui:ObjectFieldTemplate',
+        OBJECT_FIELD_TEMPLATE: 'ui:ObjectFieldTemplate',
         CLASS: 'classNames',
     } as const;
 

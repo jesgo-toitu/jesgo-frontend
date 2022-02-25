@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import "./Login.css"
+import { Const } from '../common/Const';
 
 export interface Jwt {
     token: string,
@@ -17,7 +18,7 @@ export const Login = () => {
 
         let result: Jwt | null = null;
         const loginInfo = { name: username, password: password };
-        axios.post("http://localhost:3000/login/", loginInfo)
+        axios.post(Const.END_POINT + "login/", loginInfo)
             .then((response) => {
                 // エラーが返ってきた時
                 if (response.data.token == "error") {

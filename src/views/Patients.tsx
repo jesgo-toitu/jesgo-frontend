@@ -4,6 +4,7 @@ import axios from "axios";
 import { UserTables } from '../components/Patients/UserTables'
 import "./Patients.css";
 import { Navbar, Button, FormControl, FormGroup, ControlLabel, Label, Grid, Row, Col, Panel, Checkbox, Nav, NavItem, ButtonToolbar, ButtonGroup, Glyphicon, Jumbotron, Table } from 'react-bootstrap';
+import { Const } from '../common/Const';
 
 
 export function Patients() {
@@ -15,7 +16,7 @@ export function Patients() {
             navigate("/login");
             return;
         }
-        axios.get("http://localhost:3000/search/", { headers: { token: token } })
+        axios.get(Const.END_POINT + "search/", { headers: { token: token } })
             .then((response) => {
                 (response);
                 console.log(response.data);
@@ -181,7 +182,7 @@ export function Patients() {
 
         const param: string = makeQueryString(type);
 
-        axios.get("http://localhost:3000/search?" + param, { headers: { token: token } })
+        axios.get(Const.END_POINT + "search?" + param, { headers: { token: token } })
             .then((response) => {
                 (response);
                 console.log(response.data);

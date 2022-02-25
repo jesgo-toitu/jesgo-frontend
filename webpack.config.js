@@ -3,7 +3,7 @@ const path = require('path');  //path モジュールの読み込み
 
 module.exports = {
   mode: 'development',  //モード
-  entry: './src/index.tsx',  //エントリポイント（デフォルトと同じ設定）
+  entry: './src/Index.tsx',  //エントリポイント（デフォルトと同じ設定）
   output: {  //出力先（デフォルトと同じ設定）
     filename: 'main.js',
     path: path.resolve(__dirname, 'dist'),

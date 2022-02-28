@@ -21,7 +21,7 @@ export function Patients() {
                 (response);
                 console.log(response.data);
                 // ★TODO: 仮データ受信
-                setUserListJson('{"data": [{"patientId": "1122-34","patientName": "JSON太郎","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-345","patientName": "JSON花子","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2021-02-05","lastUpdate": "2021-03-04","diagnosis": "子宮頸がん","advancedStage": "AA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "","copilacations": "","progress": "","postRelapseTreatment": "sai","threeYearPrognosis": "","fiveYearPrognosis": "5","status": ["sai","5"]}]}')
+                setUserListJson('{"data": [{"patientId": "1122-34","patientName": "テスト 患者1","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-35","patientName": "テスト 患者2","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2021-02-05","lastUpdate": "2021-03-04","diagnosis": "子宮頸がん","advancedStage": "AA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "","copilacations": "","progress": "","postRelapseTreatment": "sai","threeYearPrognosis": "","fiveYearPrognosis": "5","status": ["sai","5"]},{"patientId": "1122-37","patientName": "テスト 患者3","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3","died"]},{"patientId": "1122-38","patientName": "テスト 患者4","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-39","patientName": "テスト 患者5","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-40","patientName": "テスト 患者6","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-41","patientName": "テスト 患者7","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-42","patientName": "テスト 患者8","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-43","patientName": "テスト 患者9","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-44","patientName": "テスト 患者10","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]}]}')
             }).catch((err) => {
                 navigate("/login");
             });
@@ -187,7 +187,7 @@ export function Patients() {
                 (response);
                 console.log(response.data);
                 // ★TODO: 仮データ受信
-                setUserListJson('{"data": [{"patientId": "1122-34","patientName": "検索済太郎","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-345","patientName": "JSON花子","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2021-02-05","lastUpdate": "2021-03-04","diagnosis": "子宮頸がん","advancedStage": "AA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "","copilacations": "","progress": "","postRelapseTreatment": "sai","threeYearPrognosis": "","fiveYearPrognosis": "5","status": ["sai","5"]}]}');
+                setUserListJson('{"data": [{"patientId": "1122-34","patientName": "テスト 検索1","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-345","patientName": "テスト 検索2","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2021-02-05","lastUpdate": "2021-03-04","diagnosis": "子宮頸がん","advancedStage": "AA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "","copilacations": "","progress": "","postRelapseTreatment": "sai","threeYearPrognosis": "","fiveYearPrognosis": "5","status": ["sai","5"]}]}');
                 navigate("/patients?" + param);
             }).catch((err) => {
                 navigate("/login");
@@ -355,147 +355,6 @@ export function Patients() {
                         <th>編集/削除</th>
                     </tr>
                     <UserTables.makeTable userListJson={userListJson} search={search} noSearch={noSearch} progressAndRecurrenceColumn={progressAndRecurrenceColumn} />
-                    {
-                        [1, 2, 3, 4, 5].map((value) =>
-                            <>
-                                <tr>
-                                    <td>a-3456-7</td>
-                                    <td>北都　太郎</td>
-                                    <td>40</td>
-                                    <td className={search}>子宮頸がん</td>
-                                    <td className={search}>2021-10-10</td>
-                                    <td className={noSearch}>2021-10-10<br />2022-01-05</td>
-                                    <td className={noSearch}>子宮頸がん</td>
-                                    <td>IA</td>
-                                    <td className={search}>角化型扁平上皮癌</td>
-                                    <td className={search}>
-                                        <img src="./image/icon_ope.png" alt="手" />
-                                    </td>
-                                    <td className={search}>なし</td>
-                                    <td className={progressAndRecurrenceColumn}>
-                                        <img src="./image/icon_keika.png" alt="経過" />
-                                        <img src="./image/icon_sai.png" alt="再発" />
-                                    </td>
-                                    <td className={progressAndRecurrenceColumn}>
-
-                                    </td>
-                                    <td className={search}>
-
-                                    </td>
-                                    <td className={search}>
-
-                                    </td>
-                                    <td className={noSearch}>
-                                        <img src="./image/icon_keika.png" alt="経過" />
-                                        <img src="./image/icon_ope.png" alt="手" />
-                                        <img src="./image/icon_up.png" alt="上" />
-                                        <img src="./image/icon_sai.png" alt="再発" />
-                                    </td>
-                                    <td>
-                                        <ButtonToolbar>
-                                            <ButtonGroup>
-                                                <Button href='/registration?id=1'>
-                                                    <Glyphicon glyph="edit" />
-                                                </Button>
-                                                <Button>
-                                                    <Glyphicon glyph="trash" />
-                                                </Button>
-                                            </ButtonGroup>
-                                        </ButtonToolbar>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>12-3456-7</td>
-                                    <td>北都　太郎</td>
-                                    <td>40</td>
-                                    <td className={search}>子宮頸がん</td>
-                                    <td className={search}>2021-10-10</td>
-                                    <td className={noSearch}>2021-10-10<br />2022-01-05</td>
-                                    <td className={noSearch}>子宮頸がん</td>
-                                    <td>IA</td>
-                                    <td className={search}>角化型扁平上皮癌</td>
-                                    <td className={search}>
-                                        <img src="./image/icon_ope.png" alt="手" />
-                                    </td>
-                                    <td className={search}>なし</td>
-                                    <td className={progressAndRecurrenceColumn}>
-                                        <img src="./image/icon_keika.png" alt="経過" />
-                                        <img src="./image/icon_sai.png" alt="再発" />
-                                    </td>
-                                    <td className={progressAndRecurrenceColumn}>
-
-                                    </td>
-                                    <td className={search}>
-
-                                    </td>
-                                    <td className={search}>
-
-                                    </td>
-                                    <td className={noSearch}>
-                                        <img src="./image/icon_mi.png" alt="未" />
-                                        <img src="./image/icon_chem.png" alt="化" />
-                                        <img src="./image/icon_keika.png" alt="経過" />
-                                    </td>
-                                    <td>
-                                        <ButtonToolbar>
-                                            <ButtonGroup>
-                                                <Button href='/registration?id=1'>
-                                                    <Glyphicon glyph="edit" />
-                                                </Button>
-                                                <Button>
-                                                    <Glyphicon glyph="trash" />
-                                                </Button>
-                                            </ButtonGroup>
-                                        </ButtonToolbar>
-                                    </td>
-                                </tr>
-                                <tr className='died'>
-                                    <td>12-3456-7</td>
-                                    <td>北都　太郎</td>
-                                    <td>40</td>
-                                    <td className={search}>子宮頸がん</td>
-                                    <td className={search}>2021-10-10</td>
-                                    <td className={noSearch}>2021-10-10<br />2022-01-05</td>
-                                    <td className={noSearch}>子宮頸がん</td>
-                                    <td>IA</td>
-                                    <td className={search}>角化型扁平上皮癌</td>
-                                    <td className={search}>
-                                        <img src="./image/icon_ope.png" alt="手" />
-                                    </td>
-                                    <td className={search}>なし</td>
-                                    <td className={progressAndRecurrenceColumn}>
-                                        <img src="./image/icon_keika.png" alt="経過" />
-                                        <img src="./image/icon_sai.png" alt="再発" />
-                                    </td>
-                                    <td className={progressAndRecurrenceColumn}>
-
-                                    </td>
-                                    <td className={search}>
-
-                                    </td>
-                                    <td className={search}>
-
-                                    </td>
-                                    <td className={noSearch}>
-                                        <img src="./image/icon_gou.png" alt="合" />
-                                        <img src="./image/icon_3.png" alt="3" />
-                                        <img src="./image/icon_dead.png" alt="死亡" />
-                                    </td>
-                                    <td>
-                                        <ButtonToolbar>
-                                            <ButtonGroup>
-                                                <Button href='/registration?id=1'>
-                                                    <Glyphicon glyph="edit" />
-                                                </Button>
-                                                <Button>
-                                                    <Glyphicon glyph="trash" />
-                                                </Button>
-                                            </ButtonGroup>
-                                        </ButtonToolbar>
-                                    </td>
-                                </tr>
-                            </>
-                        )}
                 </Table>
             </div>
 

@@ -42,7 +42,7 @@ export namespace UserTables {
             <>
                 {
                     userList.map(user => (
-                        <tr>
+                        <tr className={(user.status.includes("died") && "died") as string}>
                             <td>{user.patientId}</td>
                             <td>{user.patientName}</td>
                             <td>{user.age}</td>
@@ -65,6 +65,7 @@ export namespace UserTables {
                                 {user.postRelapseTreatment && <img src="./image/icon_sai.png" alt="再" />}
                                 {user.threeYearPrognosis && <img src="./image/icon_3.png" alt="3" />}
                                 {user.fiveYearPrognosis && <img src="./image/icon_5.png" alt="5" />}
+                                {user.status.includes("died") && <img src="./image/icon_dead.png" alt="died" />}
                             </td >
                             <td>
                                 <ButtonToolbar>

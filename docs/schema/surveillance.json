@@ -30,12 +30,6 @@
                 "生死不明"
             ]
         },
-        "死亡": {
-            "type": "boolean",
-            "defalut": false,
-            "readOnly": true,
-            "jesgo:hidden": true
-        },
         "備考": {
             "type": "string",
             "jesgo:ui:textarea": true
@@ -64,6 +58,16 @@
             "properties": {
                 "死亡": {
                     "const": true,
+                    "jesgo:ui:hidden": true,
+                    "jesgo:set": "death"
+                }
+            }
+        },
+        "else": {
+            "properties": {
+                "死亡": {
+                    "const": false,
+                    "jesgo:ui:hidden": true,
                     "jesgo:set": "death"
                 }
             }

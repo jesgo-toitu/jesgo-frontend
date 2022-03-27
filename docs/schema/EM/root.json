@@ -4,6 +4,7 @@
     "type": "object",
     "title": "患者台帳 子宮体がん",
     "$comment": "患者レコードの最上位に位置する基本情報.",
+    "jesgo:unique": true,
     "jesgo:parentschema": [
         "/"
     ],
@@ -11,11 +12,9 @@
         "/schema/EM/staging",
         "/schema/EM/findigns",
         "/schema/EM/pathology",
-        "/schema/treatment/operation",
-        "/schema/treatment/chemotherapy",
-        "/schema/treatment/radiotherapy"
+        "/schema/treatment/primary_treatment"
     ],
-    "jesgo:unique": true,
+    "jesgo:ui:subschemastyle": "tab",
     "required": [
         "がん種",
         "診断日"

@@ -4,10 +4,17 @@
     "type": "object",
     "title": "患者台帳 卵巣がん",
     "$comment": "患者レコードの最上位に位置する基本情報.",
+    "jesgo:unique": true,
     "jesgo:parentschema": [
         "/"
     ],
-    "jesgo:unique": true,
+    "jesgo:subschema": [
+        "/schema/OV/staging",
+        "/schema/OV/findigns",
+        "/schema/OV/pathology",
+        "/schema/treatment/primary_treatment"
+    ],
+    "jesgo:ui:subschemastyle": "tab",
     "required": [
         "がん種",
         "治療開始年月日"
@@ -57,12 +64,5 @@
                 ]
             }
         }
-    },
-    "jesgo:subschema": [
-        "/schema/OV/staging",
-        "/schema/OV/findigns",
-        "/schema/OV/pathology",
-        "/schema/treatment/operation",
-        "/schema/treatment/chemotherapy"
-    ]
+    }
 }

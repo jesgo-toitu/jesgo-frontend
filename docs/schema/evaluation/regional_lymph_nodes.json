@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/regional_lymph_nodes",
+    "jesgo:unique": true,
     "type": "object",
     "title": "所属リンパ節",
     "properties": {

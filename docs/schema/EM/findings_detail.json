@@ -2,6 +2,7 @@
     "$schema": "../jesgo.json",
     "$id": "/schema/EM/findigns/details",
     "type": "object",
+    "jesgo:unique": true,
     "title": "診断所見 詳細",
     "properties": {
         "洗浄細胞診": {

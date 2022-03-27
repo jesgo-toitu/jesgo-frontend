@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/EM/staging",
+    "jesgo:unique": true,
     "type": "object",
     "title": "病期診断",
     "$comment": "子宮体がんの病期診断.",

@@ -1,12 +1,11 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluation/physical_status",
+    "jesgo:unique": true,
     "type": "object",
     "title": "身体所見",
-    "jesgo:unique": true,
     "jesgo:parentschema": [
-        "/schema/status",
-        ""
+        "/schema/status"
     ],
     "examples": [
         {

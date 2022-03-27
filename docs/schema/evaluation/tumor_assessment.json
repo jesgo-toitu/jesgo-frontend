@@ -1,10 +1,12 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluation/tumor_assessment",
+    "jesgo:unique": true,
     "type": "object",
     "title": "治療効果",
     "jesgo:parentschema": [
-        
+        "/schema/surveillance",
+        "/schema/treatment/summary"
     ],
     "properties": {
         "判定": {

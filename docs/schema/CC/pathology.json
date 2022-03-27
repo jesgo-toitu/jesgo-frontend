@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/CC/pathology",
+    "jesgo:unique": true,
     "type": "object",
     "title": "組織診断",
     "description": "WHO分類2014年",

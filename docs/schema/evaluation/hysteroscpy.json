@@ -1,9 +1,9 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/hysteroscopy",
+    "jesgo:unique": true,
     "type": "object",
     "title": "子宮鏡",
-    "jesgo:unique": true,
     "properties": {
         "検査実施日": {
             "type": "string",

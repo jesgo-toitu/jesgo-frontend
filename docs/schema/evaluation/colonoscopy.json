@@ -1,9 +1,9 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluation/colonoscopy",
+    "jesgo:unique": true,
     "type": "object",
     "title": "大腸内視鏡検査",
-    "jesgo:unique": true,
     "properties": {
         "検査実施日": {
             "type": "string",

@@ -1,0 +1,14 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/treatment/treatment_summary",
+    "type": "object",
+    "title": "治療サマリー",
+    "jesgo:unique": "true",
+    "$comment": "治療に関するドキュメントのサマリーを記載する.将来的にはプラグインで自動サマリー化を検討するがとりあえずはメモ書き程度.",
+    "properties": {
+        "治療サマリー": {
+            "type": "string",
+            "jesgo:ui:textarea": 8
+        }
+    }
+}

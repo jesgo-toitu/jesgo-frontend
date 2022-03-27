@@ -5,8 +5,7 @@
     "title": "身体所見 詳細",
     "jesgo:unique": true,
     "jesgo:parentschema": [
-        "/schema/status",
-        ""
+        "/schema/status"
     ],
     "examples": [
         {

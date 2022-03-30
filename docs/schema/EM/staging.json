@@ -5,16 +5,18 @@
     "type": "object",
     "title": "病期診断",
     "$comment": "子宮体がんの病期診断.",
-    "description": "術前に放射線治療や化学療法を施行した症例は「術前治療施行例」となり、「術前治療施行例」となり、進行期分類(FIGO、TNM)は画像診断を用い、臨床進行期を推定し登録、ypTNMとして手術時所見に即してpTNM分類を入力する。",
+    "description": "術前に放射線治療や化学療法を施行した症例は「術前治療施行例」となり、「術前治療施行例」となり、進行期分類(FIGO TNM)は画像診断を用い、臨床進行期を推定し登録、手術時所見に即してpTNM分類を入力する。",
     "properties": {
         "手術状況": {
             "type": "string",
+            "$comment": "この選択で進行期の記載が動的に変更される.",
             "enum": [
                 "手術施行例", "手術未施行例", "術前治療施行例"
             ]
         },
         "FIGO": {
             "type": "string",
+            "jesgo:ui:listtype": "suggestlist",
             "title": "FIGO分類(FIGO2008, 日産婦2011)",
             "description": "漿膜、付属器浸潤の場合にIIIA期とし、腹水細胞診陽性は進行期分類には用いない。",
             "enum": [
@@ -24,37 +26,6 @@
                 "IIIC期(亜分類不明)", "IIIC1期", "IIIC2期",
                 "IV期(亜分類不明)", "IVA期", "IVB期"
             ]
-        },
-        "TNM": {
-            "if": {
-                "properties": {
-                    "手術状況": {
-                        "const": "手術施行例"
-                    }
-                }
-            },
-            "then": {
-                "$ref": "#pTNM"
-            },
-            "else": {
-                "$ref": "#TNM"
-            }
-        },
-        "ypTNM": {
-            "if": {
-                "properties": {
-                    "手術状況": {
-                        "const": "術前治療施行例"
-                    }
-                }
-            },
-            "then": {
-                "$ref": "#pTNM"
-            },
-            "else": {
-                "type": "object",
-                "additionalProperties": true
-            }
         }
     },
     "allOf": [
@@ -69,14 +40,16 @@
             "then": {
                 "properties":{
                     "TNM": {
-                        "$ref": "#pTNM"
+                        "$ref": "#pTNM",
+                        "$comment": "ステージング手術が実施されたものはpTMN分類でTMNを記載する."
                     }
                 }
             },
             "else": {
                 "properties": {
                     "TNM": {
-                        "$ref": "#TNM"
+                        "$ref": "#TNM",
+                        "$comment": "ステージング手術が実施ていないものはTMN分類でTMNを記載する."
                     }
                 }
             }    
@@ -91,7 +64,8 @@
                 "then": {
                     "properties": {
                         "ypTNM": {
-                            "$ref": "#pTNM"
+                            "$ref": "#pTNM",
+                            "$comment": "術前治療後の手術によるステージングはypTMN分類を記載する."
                         }
                     }
                 }
@@ -225,6 +199,5 @@
                 "M9: 遠隔転移の判定不十分なとき"
             ]
         }
-    },
-    "additionalProperties": false
+    }
 }

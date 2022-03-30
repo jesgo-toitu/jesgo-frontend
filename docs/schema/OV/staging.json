@@ -15,6 +15,7 @@
     "properties": {
         "手術状況": {
             "type": "string",
+            "$comment": "この選択により進行期の記載が動的に変更される.",
             "enum": [
                 "手術施行",
                 "術前治療施行",
@@ -24,6 +25,7 @@
         },
         "FIGO": {
             "type": "string",
+            "jesgo:ui:listtype": "suggestlist",
             "title": "FIGO分類",
             "description": "手術進行期分類(日産婦2014、FIGO 2014)",
             "$comment": "手術状況が 手術施行例 以外の場合はXXでエクスポートする",
@@ -44,6 +46,7 @@
         },
         "IC期の場合": {
             "type": "string",
+            "jesgo:ui:listtype": "suggestlist",
             "enum": [
                 "1C1: 手術操作による被膜破綻",
                 "1C2: 自然被膜破綻あるいは被膜表面への浸潤",
@@ -57,10 +60,7 @@
                 "3A12: 転移巣最大径10mmをこえる",
                 "3A1X: 転移巣最大径による分類不能"
             ]
-        },
-        "pTNM": {},
-        "ypTNM": {},
-        "cTNM": {}
+        }
     },
     "allOf": [
         {
@@ -234,6 +234,5 @@
                 "X: 遠隔転移を判定するための検索が行われなかったとき"
             ]
         }
-    },
-    "additionalProperties": false
+    }
 }

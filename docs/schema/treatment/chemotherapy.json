@@ -58,6 +58,7 @@
         "drugs": {
             "$id": "#drugs",
             "type": "string",
+            "jesgo:ui:listtype": "suggestlist",
             "oneOf": [
                 {
                     "title": "白金製剤",

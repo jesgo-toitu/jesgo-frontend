@@ -9,22 +9,13 @@
             "format": "date",
             "jesgo:set": "eventdate"
         },
-        "評価とその対応": {
-            "type": "array",
-            "jesgo:ui:subschemastyle": "row",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "評価": {
-                        "type": "string",
-                        "jesgo:ui:textarea": true
-                    },
-                    "対応": {
-                        "type": "string",
-                        "jesgo:ui:textarea": true
-                    }
-                }
-            }
+        "評価": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "対応": {
+            "type": "string",
+            "jesgo:ui:textarea": true
         }
     }
 }

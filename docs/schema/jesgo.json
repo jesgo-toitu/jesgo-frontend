@@ -174,7 +174,7 @@
                 "jesgo:ui:subschemastyle": {
                     "$comment": "【フィールド属性/UI】 サブスキーマ（配列やオブジェクトプロパティ）の展開方法を指定する.",
                     "type": "string",
-                    "defalut": "row",
+                    "defalut": "noindent",
                     "oneOf": [
                         {
                             "const": "row",

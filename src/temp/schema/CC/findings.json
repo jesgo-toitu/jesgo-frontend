@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/CC/findigns",
+    "jesgo:unique": true,
     "type": "object",
     "title": "診断所見",
     "properties": {

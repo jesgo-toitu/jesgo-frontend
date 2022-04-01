@@ -1,29 +1,35 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluation/tumor_assessment",
+    "jesgo:unique": true,
     "type": "object",
     "title": "治療効果",
     "jesgo:parentschema": [
-        
+        "/schema/surveillance",
+        "/schema/treatment/summary"
     ],
     "properties": {
         "判定": {
             "type": "string",
-            "oneOf": [
+            "anyOf": [
                 {
-                    "const": "CR",
+                    "type":"string",
+                    "enum": ["CR"],
                     "title": "CR: 完全奏功(complete response)"
                 },
                 {
-                    "const": "PR",
+                    "type":"string",
+                    "enum": ["PR"],
                     "title": "PR: 部分奏功(partial response)"
                 },
                 {
-                    "const": "SD",
+                    "type":"string",
+                    "enum": ["SD"],
                     "title": "SD: 安定(stable disease)"
                 },
                 {
-                    "const": "PD",
+                    "type":"string",
+                    "enum": ["PD"],
                     "title": "PD: 進行(progressive disease)"
                 }
             ]

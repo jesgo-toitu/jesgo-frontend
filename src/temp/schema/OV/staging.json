@@ -8,7 +8,6 @@
         "/schema/OV/root"
     ],
     "jesgo:unique": true,
-
     "required": [
         "手術状況"
     ],
@@ -85,12 +84,13 @@
                     "手術状況": {
                         "const": "術前治療施行"
                     }
-                },
-                "then": {
-                    "properties": {
-                        "ypTNM": {
-                            "$ref": "#/$defs/pTNM"
-                        }
+                }
+            },
+            "then": {
+                "properties": {
+                    "pTNM": {},
+                    "ypTNM": {
+                        "$ref": "#/$defs/pTNM"
                     }
                 }
             }
@@ -101,13 +101,15 @@
                     "手術状況": {
                         "enum": [
                             "手術以外の治療のみ施行",
-                            "治療施行未施行"            
+                            "治療施行未施行"
                         ]
                     }
                 }
             },
             "then": {
                 "properties": {
+                    "pTNM": {},
+                    "ypTNM": {},
                     "cTMN": {
                         "$ref": "#/$defs/cTNM"
                     }
@@ -130,8 +132,7 @@
                 "cM": {
                     "$ref": "#/$defs/M"
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "pTNM": {
             "$id": "#pTNM",
@@ -147,8 +148,7 @@
                 "M": {
                     "$ref": "#/$defs/M"
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "T": {
             "$id": "#T",
@@ -234,6 +234,5 @@
                 "X: 遠隔転移を判定するための検索が行われなかったとき"
             ]
         }
-    },
-    "additionalProperties": false
+    }
 }

@@ -1,9 +1,9 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/cervix",
+    "jesgo:unique": true,
     "type": "object",
     "title": "子宮頸部検査",
-    "jesgo:unique": true,
     "properties": {
         "細胞診": {
             "type": "string",

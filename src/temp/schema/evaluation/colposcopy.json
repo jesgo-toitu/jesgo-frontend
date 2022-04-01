@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/colposcopy",
+    "jesgo:unique": true,
     "type": "object",
     "title": "コルポスコピー",
     "properties": {
@@ -15,7 +16,7 @@
         },
         "所見": {
             "type": "string",
-            "$textarea": true
+            "jesgo:ui:textarea": true
         }
     }
 }

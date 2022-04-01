@@ -1,25 +1,22 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/exam",
+    "jesgo:unique": true,
     "type": "object",
     "title": "内診・超音波",
-    "jesgo:parentschema": [
-        "/schema/CC/root"
-    ],
     "properties": {
         "検査実施日": {
             "type": "string",
             "format": "date",
             "jesgo:set": "eventdate"
         },
-        "所見": {
+        "内診所見": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "超音波所見": {
             "type": "string",
             "jesgo:ui:textarea": true
         }
-    },
-    "jesgo:childschema": [
-        "/schema/evaluations/cervix",
-        "/schema/evaluations/colposcopy",
-        "/schema/records/pathlogy_report"
-    ]
+    }
 }

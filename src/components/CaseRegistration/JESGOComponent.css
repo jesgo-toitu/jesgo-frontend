@@ -1,10 +1,46 @@
 .label-type {
-    margin-right: 5px;
+  margin-right: 5px;
 }
 
 .array-item-border {
-    border-bottom: 2px dotted #a0a0a0;
-    padding-top: 15px;
-    margin-top: 10px;
-    margin-bottom: 10px;
+  border-bottom: 2px dotted #a0a0a0;
+  padding-top: 15px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
+
+.with-units-div {
+  display: flex;
+  align-items: center;
+}
+
+/* 階層ドロップダウンのグループ */
+.layer-dropdown-group-title{
+  font-weight: bold;
+}
+
+/** subschemastyle:inline start*/
+/* type=object */
+.subschemastyle-inline > fieldset{
+  display: flex;
+  flex-wrap: wrap;
+}
+.subschemastyle-inline > fieldset > .form-group{
+  margin-right: 10px;
+}
+
+/* arrayの中のobjectは階層が違うので別途定義 */
+.array-subschemastyle-inline .field-object > fieldset{
+  display: flex;
+  flex-wrap: wrap;
+}
+.array-subschemastyle-inline .field-object > fieldset > .form-group{
+  margin-right: 10px;
+}
+
+
+/* flexを無効化する */
+.subschemastyle-inline > fieldset > .field-array,.field-object{
+  width: 100%;
+}
+/** subschemastyle:inline end*/

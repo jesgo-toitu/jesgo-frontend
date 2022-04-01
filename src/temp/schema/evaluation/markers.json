@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluation/markers",
+    "jesgo:unique": true,
     "type": "object",
     "title": "腫瘍マーカー",
     "properties": {

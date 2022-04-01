@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/pleural_effusion",
+    "jesgo:unique": true,
     "type": "object",
     "title": "胸水",
     "properties": {

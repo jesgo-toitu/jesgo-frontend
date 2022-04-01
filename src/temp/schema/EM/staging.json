@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/EM/staging",
+    "jesgo:unique": true,
     "type": "object",
     "title": "病期診断",
     "$comment": "子宮体がんの病期診断.",
@@ -9,7 +10,9 @@
         "手術状況": {
             "type": "string",
             "enum": [
-                "手術施行例", "手術未施行例", "術前治療施行例"
+                "手術施行例",
+                "手術未施行例",
+                "術前治療施行例"
             ]
         },
         "FIGO": {
@@ -17,44 +20,23 @@
             "title": "FIGO分類(FIGO2008, 日産婦2011)",
             "description": "漿膜、付属器浸潤の場合にIIIA期とし、腹水細胞診陽性は進行期分類には用いない。",
             "enum": [
-                "I期(亜分類不明)", "IA期", "IB期",
+                "I期(亜分類不明)",
+                "IA期",
+                "IB期",
                 "II期",
-                "III期(亜分類不明)", "IIIA期", "IIIB期",
-                "IIIC期(亜分類不明)", "IIIC1期", "IIIC2期",
-                "IV期(亜分類不明)", "IVA期", "IVB期"
+                "III期(亜分類不明)",
+                "IIIA期",
+                "IIIB期",
+                "IIIC期(亜分類不明)",
+                "IIIC1期",
+                "IIIC2期",
+                "IV期(亜分類不明)",
+                "IVA期",
+                "IVB期"
             ]
         },
-        "TNM": {
-            "if": {
-                "properties": {
-                    "手術状況": {
-                        "const": "手術施行例"
-                    }
-                }
-            },
-            "then": {
-                "$ref": "#/$defs/pTNM"
-            },
-            "else": {
-                "$ref": "#/$defs/TNM"
-            }
-        },
-        "ypTNM": {
-            "if": {
-                "properties": {
-                    "手術状況": {
-                        "const": "術前治療施行例"
-                    }
-                }
-            },
-            "then": {
-                "$ref": "#/$defs/pTNM"
-            },
-            "else": {
-                "type": "object",
-                "additionalProperties": true
-            }
-        }
+        "TNM": {},
+        "ypTNM": {}
     },
     "allOf": [
         {
@@ -66,7 +48,7 @@
                 }
             },
             "then": {
-                "properties":{
+                "properties": {
                     "TNM": {
                         "$ref": "#/$defs/pTNM"
                     }
@@ -78,7 +60,7 @@
                         "$ref": "#/$defs/TNM"
                     }
                 }
-            }    
+            }
         },
         {
             "if": {
@@ -86,15 +68,24 @@
                     "手術状況": {
                         "const": "術前治療施行例"
                     }
-                },
-                "then": {
-                    "properties": {
-                        "ypTNM": {
-                            "$ref": "#/$defs/pTNM"
-                        }
+                }
+            },
+            "then": {
+                "properties": {
+                    "TNM": {},
+                    "ypTNM": {
+                        "$ref": "#/$defs/pTNM"
                     }
                 }
-            }        
+            },
+            "else": {
+                "properties": {
+                    "TNM": {},
+                    "ypTNM": {
+                        "type": "object"
+                    }
+                }
+            }
         }
     ],
     "$defs": {
@@ -103,22 +94,32 @@
             "type": "object",
             "title": "TMN分類(UICC第8版)",
             "properties": {
-                "T": { "$ref": "#T/$defs/" },
-                "N": { "$ref": "#/$defs/N" },
-                "M": { "$ref": "#/$defs/M" }
-            },
-            "additionalProperties": false
+                "T": {
+                    "$ref": "#/$defs/T"
+                },
+                "N": {
+                    "$ref": "#/$defs/N"
+                },
+                "M": {
+                    "$ref": "#/$defs/M"
+                }
+            }
         },
         "pTNM": {
             "$id": "#pTNM",
             "type": "object",
             "title": "TMN分類(UICC第8版)",
             "properties": {
-                "T": { "$ref": "#/$defs/T" },
-                "N": { "$ref": "#/$defs/pN" },
-                "M": { "$ref": "#/$defs/M" }
-            },
-            "additionalProperties": false
+                "T": {
+                    "$ref": "#/$defs/T"
+                },
+                "N": {
+                    "$ref": "#/$defs/pN"
+                },
+                "M": {
+                    "$ref": "#/$defs/M"
+                }
+            }
         },
         "T": {
             "$id": "#T",
@@ -127,9 +128,13 @@
             "enum": [
                 "TX: 組織学的に子宮体癌と診断したが、その進行度の判定が何らかの障害で不能なもの。",
                 "T0: 臨床所見より子宮体癌と診断したが、原発巣より組織学的な癌の診断ができないもの(組織学的検索をせずに治療を始めたものを含む)。",
-                "T1(亜分類不明)", "T1a", "T1b",
+                "T1(亜分類不明)",
+                "T1a",
+                "T1b",
                 "T2",
-                "T3(亜分類不明)", "T3a", "T3b",
+                "T3(亜分類不明)",
+                "T3a",
+                "T3b",
                 "T4"
             ]
         },
@@ -142,7 +147,10 @@
                 "画像診断の計測手段": {
                     "type": "string",
                     "enum": [
-                        "MRI", "CT", "PET/CT", "施行せず"
+                        "MRI",
+                        "CT",
+                        "PET/CT",
+                        "施行せず"
                     ],
                     "description": "リンパ節転移の診断は短径10mm以上をもって腫大とする"
                 },
@@ -224,6 +232,5 @@
                 "M9: 遠隔転移の判定不十分なとき"
             ]
         }
-    },
-    "additionalProperties": false
+    }
 }

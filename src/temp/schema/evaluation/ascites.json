@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/ascites",
+    "jesgo:unique": true,
     "type": "object",
     "title": "腹水",
     "properties": {

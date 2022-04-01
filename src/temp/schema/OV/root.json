@@ -4,10 +4,17 @@
     "type": "object",
     "title": "患者台帳 卵巣がん",
     "$comment": "患者レコードの最上位に位置する基本情報.",
+    "jesgo:unique": true,
     "jesgo:parentschema": [
         "/"
     ],
-    "jesgo:unique": true,
+    "jesgo:subschema": [
+        "/schema/OV/staging",
+        "/schema/OV/findigns",
+        "/schema/OV/pathology",
+        "/schema/treatment/primary_treatment"
+    ],
+    "jesgo:ui:subschemastyle": "tab",
     "required": [
         "がん種",
         "治療開始年月日"
@@ -21,7 +28,9 @@
         "治療開始年月日": {
             "type": "string",
             "format": "date",
-            "jesgo:required": ["JSOG"],
+            "jesgo:required": [
+                "JSOG"
+            ],
             "jesgo:set": "eventdate",
             "description": "治療開始年月日が同じものは同時性重複癌とされます."
         },
@@ -38,33 +47,26 @@
             ]
         }
     },
-    "dependencies": {
-        "腫瘍登録対象": {
-            "oneOf": [
-                {
-                    "properties": {
-                        "腫瘍登録対象": {
-                            "enum": [
-                                "はい"
-                            ]
-                        },
-                        "腫瘍登録番号": {
-                            "type": "string",
-                            "jesgo:required": [
-                                "JSOG"
-                            ],
-                            "pattern": "^CC20[0-9]{2}-[1-9][0-9]*$"
-                        }
-                    }                       
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "腫瘍登録対象": {
+                        "const": "はい"
+                    }
                 }
-            ]
+            },
+            "then": {
+                "properties": {
+                    "腫瘍登録番号": {
+                        "type": "string",
+                        "jesgo:required": [
+                            "JSOG"
+                        ],
+                        "pattern": "^OV20[0-9]{2}-[1-9][0-9]*$"
+                    }
+                }
+            }
         }
-    },
-    "jesgo:subschema": [
-        "/schema/OV/staging",
-        "/schema/OV/findigns",
-        "/schema/OV/pathology",
-        "/schema/treatment/operation",
-        "/schema/treatment/chemotherapy"
     ]
 }

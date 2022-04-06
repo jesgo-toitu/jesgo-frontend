@@ -28,7 +28,7 @@
         "治療開始年月日": {
             "type": "string",
             "format": "date",
-            "jesgo:required": "JSOG",
+            "jesgo:required": ["JSOG"],
             "jesgo:set": "eventdate",
             "description": "治療開始年月日が同じものは同時性重複癌とされます."
         },

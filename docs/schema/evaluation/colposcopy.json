@@ -16,7 +16,7 @@
         },
         "所見": {
             "type": "string",
-            "$textarea": true
+            "jesgo:ui:textarea": true
         }
     }
 }

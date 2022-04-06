@@ -1,6 +1,6 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/treatment/chemotharapy",
+    "$id": "/schema/treatment/chemotherapy",
     "title": "化学療法",
     "type": "object",
     "required": [

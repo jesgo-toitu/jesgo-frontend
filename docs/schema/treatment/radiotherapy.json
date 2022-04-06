@@ -60,7 +60,7 @@
                                 ]
                             }
                         },
-                        "jesgo:ui:subschemastyle": "column"
+                        "jesgo:ui:subschemastyle": "inline"
                     }
                 }
             }
@@ -95,7 +95,7 @@
                 },
                 "核種": {
                     "type": "string",
-                    "jesgo:when": {
+                    "jesgo:ui:visibleWhen": {
                         "properties": {
                             "照射方法": {
                                 "const": "核医学治療"

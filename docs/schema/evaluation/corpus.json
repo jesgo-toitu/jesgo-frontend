@@ -27,7 +27,7 @@
         },
         "生検組織診": {
             "type": "string",
-            "$textarea": true
+            "jesgo:ui:textarea": true
         }
     }
 }

@@ -1,6 +1,6 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/EM/findigns/details",
+    "$id": "/schema/EM/findings/details",
     "type": "object",
     "jesgo:unique": true,
     "title": "診断所見 詳細",

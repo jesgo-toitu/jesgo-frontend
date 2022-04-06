@@ -53,23 +53,23 @@
                     }
                 ]
             }
-        },
-        "then": {
-            "properties": {
-                "死亡": {
-                    "const": true,
-                    "jesgo:ui:hidden": true,
-                    "jesgo:set": "death"
-                }
+        }
+    },
+    "then": {
+        "properties": {
+            "死亡": {
+                "const": true,
+                "jesgo:ui:hidden": true,
+                "jesgo:set": "death"
             }
-        },
-        "else": {
-            "properties": {
-                "死亡": {
-                    "const": false,
-                    "jesgo:ui:hidden": true,
-                    "jesgo:set": "death"
-                }
+        }
+    },
+    "else": {
+        "properties": {
+            "死亡": {
+                "const": false,
+                "jesgo:ui:hidden": true,
+                "jesgo:set": "death"
             }
         }
     }

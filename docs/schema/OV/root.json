@@ -10,7 +10,7 @@
     ],
     "jesgo:subschema": [
         "/schema/OV/staging",
-        "/schema/OV/findigns",
+        "/schema/OV/findings",
         "/schema/OV/pathology",
         "/schema/treatment/primary_treatment"
     ],

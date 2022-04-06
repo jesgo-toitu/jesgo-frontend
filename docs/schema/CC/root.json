@@ -10,7 +10,7 @@
     ],
     "jesgo:subschema": [
         "/schema/CC/staging",
-        "/schema/CC/findigns",
+        "/schema/CC/findings",
         "/schema/CC/pathology",
         "/schema/treatment/primary_treatment"
     ],

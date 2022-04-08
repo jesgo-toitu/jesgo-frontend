@@ -1,6 +1,6 @@
 import React from 'react';
 // eslint-disable-next-line import/no-unresolved
-import {JSONSchema7} from 'json-schema';
+import { JSONSchema7, JSONSchema7Type } from 'json-schema';
 import {
   FieldProps,
   FieldTemplateProps,
@@ -11,6 +11,7 @@ import {
 import { JESGOComp } from './JESGOComponent';
 import { Const } from '../../common/Const';
 import './JESGOFieldTemplete.css';
+import { getPropItemsAndNames } from './SchemaUtility';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace JESGOFiledTemplete {
@@ -22,7 +23,9 @@ export namespace JESGOFiledTemplete {
     return (
       <legend id={id}>
         {title}
-        {required && <span className="required">{Const.REQUIRED_FIELD_SYMBOL}</span>}
+        {required && (
+          <span className="required">{Const.REQUIRED_FIELD_SYMBOL}</span>
+        )}
         {/* <JESGOComp.TypeLabel
           requireType={schema['jesgo:required'] ?? []}
           pId={id ?? ''}
@@ -151,46 +154,109 @@ export namespace JESGOFiledTemplete {
   };
   /* eslint-enable */
 
+  // jesgo:ui:visibleWhenの条件
+  type VisibleWhenItem = {
+    name: string;
+    values?: JSONSchema7Type[];
+    pattern?: RegExp;
+  };
+
   // https://github.com/rjsf-team/react-jsonschema-form/blob/master/packages/core/src/components/fields/ArrayField.js
   // Latest commit 1bbd0ad
-  /* eslint-disable import/no-mutable-exports,no-var,react/destructuring-assignment,@typescript-eslint/no-unsafe-assignment */
   // 配列フィールドテンプレート
-  export var ArrayFieldTemplate = (props: ArrayFieldTemplateProps) => {
-    const { idSchema, schema, uiSchema, required, DescriptionField } = props;
-    const id = `${idSchema.$id}__title`;
-    const description = uiSchema['ui:description'] || schema.description;
-    const items = schema.items as JSONSchema7;
-    const subschemastyle = items["jesgo:ui:subschemastyle"];
+  export const ArrayFieldTemplate = (props: ArrayFieldTemplateProps) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const { idSchema, schema, uiSchema, required, DescriptionField, formData } =
+      props;
 
+    const id = `${idSchema.$id}__title`;
+    const description =
+      (uiSchema['ui:description'] as string) || schema.description;
+    const items = schema.items as JSONSchema7;
+    const subschemastyle = items['jesgo:ui:subschemastyle'];
+
+    // jesgo:ui:visibleWhen
+    const visibleWhenCondition: VisibleWhenItem[] = [];
+    const propertiesItem = getPropItemsAndNames(items);
+    propertiesItem.pNames.forEach((name: string) => {
+      const item = propertiesItem.pItems[name] as JSONSchema7;
+      const visiblewhenItem = item[
+        Const.EX_VOCABULARY.UI_VISIBLE_WHWN
+      ] as JSONSchema7;
+      if (visiblewhenItem) {
+        const vPropItem = getPropItemsAndNames(visiblewhenItem);
+        vPropItem.pNames.forEach((vName: string) => {
+          const vItem = vPropItem.pItems[vName] as JSONSchema7;
+          let values;
+          let pattern;
+          if (vItem.const) {
+            values = [vItem.const];
+          } else if (vItem.enum) {
+            values = [...vItem.enum];
+          } else if (vItem.pattern) {
+            pattern = new RegExp(vItem.pattern);
+          }
+          visibleWhenCondition.push({ name: vName, values, pattern });
+        });
+      }
+    });
     return (
       <div>
+        {/* eslint-disable-next-line react/destructuring-assignment */}
         <fieldset className={props.className} id={props.idSchema.$id}>
           <legend id={id}>
+            {/* eslint-disable-next-line react/destructuring-assignment */}
             {uiSchema['ui:title'] || props.title}
             {required && (
               <span className="required">{Const.REQUIRED_FIELD_SYMBOL}</span>
             )}
+            {/* eslint-disable react/destructuring-assignment */}
             <JESGOComp.TypeLabel
               requireType={schema['jesgo:required'] ?? []}
               pId={props.idSchema.$id ?? ''}
             />
-            <JESGOComp.DescriptionToolTip descriptionText={description} />
+            {/* eslint-enable */}
+            <JESGOComp.DescriptionToolTip descriptionText={description ?? ''} />
           </legend>
           {DescriptionField}
+          {/* eslint-disable react/destructuring-assignment */}
           <div
             className="array-item-list array-item-padding"
             key={`array-item-list-${props.idSchema.$id}`}
           >
+            {/* eslint-enable */}
+            {/* eslint-disable-next-line react/destructuring-assignment */}
             {props.items &&
-              props.items.map((item) => {
+              //  eslint-disable-next-line react/destructuring-assignment 
+              props.items.map((item, index) => {
                 const editItem = item;
                 if (subschemastyle === 'inline') {
                   editItem.className += ' array-subschemastyle-inline';
                 }
+                // visiblewhen
+                visibleWhenCondition.forEach((condition: VisibleWhenItem) => {
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                  const inputData = formData[index][
+                    condition.name
+                  ] as JSONSchema7Type;
+                  if (
+                    !(
+                      (condition.values &&
+                        condition.values.includes(inputData)) ||
+                      (condition.pattern &&
+                        typeof inputData === 'string' &&
+                        inputData.match(condition.pattern))
+                    )
+                  ) {
+                    // 条件に【当てはまらなければ】非表示にするCSSを追加
+                    editItem.className += ' visiblewhen-hidden';
+                  }
+                });
                 return JESGOComp.DefaultArrayItem(editItem);
               })}
           </div>
 
+          {/* eslint-disable react/destructuring-assignment */}
           {props.canAdd && (
             <JESGOComp.AddButton
               className="array-item-add col-lg-1 col-md-1 col-sm-2 col-lg-offset-11 col-md-offset-11 col-sm-offset-10"
@@ -198,6 +264,7 @@ export namespace JESGOFiledTemplete {
               disabled={props.disabled || props.readonly}
             />
           )}
+          {/* eslint-enable */}
         </fieldset>
       </div>
     );
@@ -205,6 +272,7 @@ export namespace JESGOFiledTemplete {
 
   // https://github.com/rjsf-team/react-jsonschema-form/blob/4542cd254ffdc6dfaf55e8c9f6f17dc900d0d041/packages/core/src/components/fields/ObjectField.js
   // Latest commit 64b8921
+  /* eslint-disable react/destructuring-assignment */
   export const CustiomObjectFieldTemplate = (
     props: ObjectFieldTemplateProps
   ) => {
@@ -213,7 +281,7 @@ export namespace JESGOFiledTemplete {
       description,
       schema,
       uiSchema,
-      formData,
+      formData, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       DescriptionField,
     } = props;
     return (
@@ -244,3 +312,4 @@ export namespace JESGOFiledTemplete {
     );
   };
 }
+// eslint-enable

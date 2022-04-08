@@ -10,7 +10,7 @@
     ],
     "jesgo:subschema": [
         "/schema/EM/staging",
-        "/schema/EM/findigns",
+        "/schema/EM/findings",
         "/schema/EM/pathology",
         "/schema/treatment/primary_treatment"
     ],
@@ -43,7 +43,7 @@
         },
         "腫瘍登録対象": {
             "title": "婦人科腫瘍登録対象症例",
-            "description": "***以下の症例は除外されます.***\n- 診断のみ行い、治療を行わなかった場合\n- 試験開腹のみ行い、それ以後に何ら治療が行われていない場合\n- 診断が最終的に細胞診のみによって下された場合\n- 先行治療が他施設の場合\n",
+            "description": "***以下の症例は除外されます.***<br>- 診断のみ行い、治療を行わなかった場合<br>- 試験開腹のみ行い、それ以後に何ら治療が行われていない場合<br>- 診断が最終的に細胞診のみによって下された場合<br>- 先行治療が他施設の場合<br>",
             "type": "string",
             "enum": [
                 "いいえ",

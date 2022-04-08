@@ -122,21 +122,21 @@
   margin-top: -5px;
 }
 
-.patients tr:first-child {
+.patients thead tr {
   background-color: #e0e0e0;
 }
 
-.patients tr {
+.patients tbody tr {
   background-color: #f3f3f3;
 }
 
-.patients tr th,
-.patients tr td {
+.patients thead tr th,
+.patients tbody tr td {
   padding: 10px;
   height: 60px;
 }
 
-.patients tr td img {
+.patients tbody tr td img {
   height: 32px;
   width: 32px;
   margin: 1px;

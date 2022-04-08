@@ -1,3 +1,5 @@
+// ※本ファイルは仮実装。バックエンドと疎通次第削除する。
+
 import React from 'react';
 import { JSONSchema7 } from 'json-schema';
 //#region jsonファイルインポート
@@ -130,6 +132,7 @@ export const ReadSchema = () => {
   let result: JesgoDocumentSchema[] = [];
   jsonSchemaObjects.map((value, index) => {
     const schemaObj = value;
+    
     // const titles = schemaObj.title!.split(" ");
 
     // subSchemaのID取得
@@ -169,6 +172,7 @@ export const ReadSchema = () => {
         }
       });
     });
+
 
     const jesgoDocumentSchema: JesgoDocumentSchema = {
       documentId: index,

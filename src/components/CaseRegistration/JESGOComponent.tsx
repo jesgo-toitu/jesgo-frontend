@@ -45,8 +45,13 @@ export namespace JESGOComp {
     const tooltip = (
       <Tooltip data-container="body">
         <div>
-          {/* TODO タグ込みの対応 */}
-          {descriptionText}
+          {/* <br>,<br/>タグを改行に置き換え */}
+          {descriptionText.split(/<br>|<br\/>/).map((item: string) => (
+            <>
+              {item}
+              <br />
+            </>
+          ))}
         </div>
       </Tooltip>
     );
@@ -104,7 +109,8 @@ export namespace JESGOComp {
 
   /** 選択と入力ができるTextWidget */
   export const DatalistTextBox = (props: WidgetProps) => {
-    const { schema,id } = props;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const { schema, id, onChange, value } = props;
     const selectItems: JSONSchema7Type[] = [];
     const oneOfs = schema.oneOf as JSONSchema7[];
     let units = '';
@@ -124,17 +130,26 @@ export namespace JESGOComp {
     // TODO これだとサジェストされちゃうので普通のコンボボックスに置き換えが必要
     return (
       <div key={id} className="with-units-div">
-        <input className="form-control" type="text" list={`datalist-${id}`} />
+        <input
+          className="form-control"
+          type="text"
+          list={`datalist-${id}`}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+            onChange(event.target.value)
+          }
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          value={value}
+        />
         <datalist id={`datalist-${id}`}>
           {selectItems.map((item: JSONSchema7Type) => {
-            const value = item ?? '';
+            const itemValue = item ?? '';
             return (
               <option
-                key={`selectList-item-${value.toString()}`}
+                key={`selectList-item-${itemValue.toString()}`}
                 className="datalist-option"
-                value={value.toString()}
+                value={itemValue.toString()}
               >
-                {value.toString()}
+                {itemValue.toString()}
               </option>
             );
           })}
@@ -150,7 +165,8 @@ export namespace JESGOComp {
    * @returns
    */
   export const LayerDropdown = (props: WidgetProps) => {
-    const { id, schema, onChange } = props;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const { id, schema, onChange, value } = props;
     const selectItems = schema.oneOf as JSONSchema7[];
     if (!selectItems) {
       return null;
@@ -160,11 +176,9 @@ export namespace JESGOComp {
     const createSelectItem = (
       item: JSONSchema7,
       level = 0,
-      gTitle = ''
     ): JSX.Element | null => {
       // 最上位のグループタイトル
       const title = item.title ?? '';
-      const valueTitle = [gTitle, title].join(' ').trim();
       const constItem = item.const as JSONSchema7Type;
 
       // 全角空白でインデントしているように見せる
@@ -184,7 +198,7 @@ export namespace JESGOComp {
             />
           )}
           {(item.oneOf as JSONSchema7[])?.map((oneOfItem: JSONSchema7) =>
-            createSelectItem(oneOfItem, level + 1, valueTitle)
+            createSelectItem(oneOfItem, level + 1)
           )}
           {(item.enum as JSONSchema7Type[])?.map((subItem: JSONSchema7Type) => {
             // array,object型以外を表示
@@ -192,13 +206,13 @@ export namespace JESGOComp {
               subItem != null &&
               ['string', 'number', 'boolean'].includes(typeof subItem)
             ) {
-              const label = subItem?.toString() ?? '';
+              const itemValue = subItem?.toString() ?? '';
               return (
                 <option
-                  key={`select-item-${label}`}
-                  value={`${valueTitle} ${label}`}
+                  key={`select-item-${itemValue}`}
+                  value={`${itemValue}`}
                 >
-                  {`${indent + INDENT_SPACE}${label}`}
+                  {`${indent + INDENT_SPACE}${itemValue}`}
                 </option>
               );
             }
@@ -207,7 +221,7 @@ export namespace JESGOComp {
           {constItem && (
             <option
               key={`select-item-${constItem.toString()}`}
-              value={`${valueTitle} ${constItem.toString()}`}
+              value={`${constItem.toString()}`}
             >
               {`${indent}${constItem.toString()}`}
             </option>
@@ -224,6 +238,8 @@ export namespace JESGOComp {
         onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
           onChange(event.target.value)
         }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        value={value}
       >
         {/* 未選択用の空のリストを作成 */}
         {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}

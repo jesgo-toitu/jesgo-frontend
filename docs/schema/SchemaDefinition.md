@@ -224,8 +224,15 @@
 
 ## 拡張ボキャブラリー
 拡張ボキャブラリーについては、要求仕様参照。
-ただし、β版では以下のみ対応しています。
+※ただし、現在は以下のみ対応しています。
 - "jesgo:parentschema"
 - "jesgo:required"
 - "jesgo:ui:textarea"
-  - 設定値がtrueの場合は3行。数値が設定された場合は、その行数で表示。
+-  jesgo:ui:visiblewhen【制限事項あり】
+   -  arrayのitem内のみの使用とする。条件となる値は同階層のitemsのみとする。
+   -  値はconst,enum,patternで記載可能
+
+
+## 入力フォーム以外
+### descrption
+- `<br>`,`<br/>`は改行に置き換える。

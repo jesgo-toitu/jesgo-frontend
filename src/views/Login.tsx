@@ -2,47 +2,45 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import './Login.css';
-import { Const } from '../common/Const';
+import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 
-export interface Jwt {
+export interface localStorageObject {
+  user_id: number;
+  display_name: string;
   token: string;
-}
+  reflesh_token: string;
+};
 
 export const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const submit = () => {
+  const submit = async () => {
     const loginInfo = { name: username, password };
-    axios
-      .post(`${Const.END_POINT}login/`, loginInfo)
-      .then((response) => {
-        const jwtResponse = response.data as Jwt;
-        // エラーが返ってきた時
-        if (jwtResponse.token === 'error') {
-          // eslint-disable-next-line no-alert
-          alert(
-            `ログインに失敗しました。ユーザ名かパスワードが間違っています。`
-          );
-          return;
-        }
-
-        localStorage.setItem('token', jwtResponse.token);
-        navigate('/patients');
-      })
-      .catch((err) => {
-        // ★TODO: ログ出す
-        console.log(err);
-        alert(`ログインに失敗しました。ユーザ名かパスワードが間違っています。`); // eslint-disable-line no-alert
-      });
+    // ログインAPIを呼ぶ
+    const returnApiObject = await apiAccess(
+      METHOD_TYPE.POST,
+      `login`,
+      loginInfo
+    );
+    if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      const localStorageObj = returnApiObject.body as localStorageObject;
+      localStorage.setItem('token', localStorageObj.token);
+      localStorage.setItem('reflesh_token', localStorageObj.reflesh_token);
+      localStorage.setItem('user_id', localStorageObj.user_id.toString());
+      localStorage.setItem('display_name', localStorageObj.display_name);
+      navigate('/patients');
+    } else {
+      // eslint-disable-next-line no-alert
+      alert(`ログインに失敗しました。ユーザ名かパスワードが間違っています。`);
+    }
   };
 
-  const onSubmit = (event: React.ChangeEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
     event.preventDefault();
-    submit();
+    await submit();
   };
 
   const onChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +62,7 @@ export const Login = () => {
         <div className="login-inputarea">
           <div className="login-inputarea-title">
             <p>ログイン</p>
-            <p className="ml40">○○病院</p>
+            <p className="ml40"> </p>
           </div>
           <div className="login-inputarea-inner">
             <form onSubmit={onSubmit}>

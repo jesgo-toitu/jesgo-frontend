@@ -19,6 +19,7 @@ export namespace Const {
     UI_TEXTAREA: 'jesgo:ui:textarea',
     UI_LISTTYPE: 'jesgo:ui:listtype',
     UI_SUBSCHEMA_STYLE: 'jesgo:ui:subschemastyle',
+    UI_VISIBLE_WHWN: 'jesgo:ui:visibleWhen',
   } as const;
 
   /**

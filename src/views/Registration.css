@@ -116,6 +116,14 @@ body {
   border-color: red;
 }
 
+/* jesgo:ui:visibleWhen
+※条件に当てはまらない場合このスタイルが付与される
+*/
+.visiblewhen-hidden .visiblewhen {
+  display: none;
+}
+
+
 .sidebar {
   display: none;
 }
@@ -144,3 +152,4 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] { 
   -moz-appearance:textfield; 
 } 
+

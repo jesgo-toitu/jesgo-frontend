@@ -51,6 +51,11 @@ const AddUiSchema = (
     }
   }
 
+  // "jesgo:ui:visiblewhen"
+  if (schema[Const.EX_VOCABULARY.UI_VISIBLE_WHWN]) {
+    classNames.push('visiblewhen');
+  }
+
   // "jesgo:required"、または"description"がある場合、カスタムラベルを使用
   // ※type:arrayの場合は除く
   if (

@@ -18,7 +18,11 @@ const makeIconList = (props: { iconList: string[] }) => {
   return (
     <>
       {lodash.uniq(iconList).map((icon) => (
-        <img src={`./image/icon_${icon}.png`} alt={`${iconCaptions[icon]}`} />
+        <img
+          key={icon}
+          src={`./image/icon_${icon}.svg`}
+          alt={`${iconCaptions[icon]}`}
+        />
       ))}
     </>
   );

@@ -15,16 +15,15 @@ import {
   ButtonGroup,
   Glyphicon,
   Jumbotron,
-  Table,
 } from 'react-bootstrap';
-import axios from 'axios';
 import UserTables from '../components/Patients/UserTables';
 import './Patients.css';
-import { Const } from '../common/Const';
+import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 
 const Patients = () => {
   const navigate = useNavigate();
   const url: string = useLocation().search;
+  const userName = localStorage.getItem('display_name')!;
   const [searchFormOpen, setSearchFormOpen] = useState('hidden');
   const [simpleSearchButtons, setSimpleSearchButtons] = useState('hidden');
   const [detailSearchOpen, setDetailSearchOpen] = useState('hidden');
@@ -36,24 +35,22 @@ const Patients = () => {
   const [userListJson, setUserListJson] = useState('');
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token == null) {
-      navigate('/login');
-      return;
-    }
+    const f = async () => {
+      // 患者情報取得APIを呼ぶ
+      const returnApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `patientlist${url}`
+      );
 
-    axios
-      .get(`${Const.END_POINT}patientlist${url}`, { headers: { token } })
-      .then((response) => {
-        // ★TODO: 仮データ受信、ログ出す
-        setUserListJson(JSON.stringify(response.data));
-        // setUserListJson('{"data": [{"patientId": "1122-34","patientName": "テスト 患者1","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-35","patientName": "テスト 患者2","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2021-02-05","lastUpdate": "2021-03-04","diagnosis": "子宮頸がん","advancedStage": "AA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "","copilacations": "","progress": "","postRelapseTreatment": "sai","threeYearPrognosis": "","fiveYearPrognosis": "5","status": ["sai","5"]},{"patientId": "1122-37","patientName": "テスト 患者3","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3","died"]},{"patientId": "1122-38","patientName": "テスト 患者4","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-39","patientName": "テスト 患者5","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-40","patientName": "テスト 患者6","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-41","patientName": "テスト 患者7","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-42","patientName": "テスト 患者8","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-43","patientName": "テスト 患者9","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-44","patientName": "テスト 患者10","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]}]}');
-      })
-      .catch((err) => {
-        // ★TODO: ログ出す
-        console.log(err);
+      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        setUserListJson(JSON.stringify(returnApiObject.body));
+      } else {
         navigate('/login');
-      });
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
   }, []);
 
   const [searchWord, setSearchWord] = useState({
@@ -113,7 +110,7 @@ const Patients = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSearchCondition = (event: any) => {
     const eventTarget: EventTarget & HTMLInputElement =
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       event.target as EventTarget & HTMLInputElement;
 
     let blankFields = searchWord.blankFields;
@@ -231,7 +228,7 @@ const Patients = () => {
     }
   };
 
-  const submit = (type: string) => {
+  const submit = async (type: string) => {
     const token = localStorage.getItem('token');
     if (token == null) {
       navigate('/login');
@@ -284,21 +281,18 @@ const Patients = () => {
 
     const param: string = makeQueryString();
 
-    axios
-      .get(`${Const.END_POINT}patientlist?${param}`, { headers: { token } })
-      .then((response) => {
-        // ★TODO: 仮データ受信、本来ならresponseを使用
-        console.log(response);
-        setUserListJson(JSON.stringify(response.data));
-        // ★TODO: 仮データ受信
-        // setUserListJson('{"data": [{"patientId": "1122-34","patientName": "テスト 検索1","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-345","patientName": "テスト 検索2","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2021-02-05","lastUpdate": "2021-03-04","diagnosis": "子宮頸がん","advancedStage": "AA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "","copilacations": "","progress": "","postRelapseTreatment": "sai","threeYearPrognosis": "","fiveYearPrognosis": "5","status": ["sai","5"]}]}');
-        navigate(`/patients?${param}`);
-      })
-      .catch((err) => {
-        // ★TODO: ログ出すようにする
-        console.log(err);
-        navigate('/login');
-      });
+    // 患者情報取得APIを呼ぶ
+    const returnApiObject = await apiAccess(
+      METHOD_TYPE.GET,
+      `patientlist?${param}`
+    );
+
+    if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      setUserListJson(JSON.stringify(returnApiObject.body));
+      navigate(`/patients?${param}`);
+    } else {
+      navigate('/login');
+    }
   };
 
   return (
@@ -330,8 +324,7 @@ const Patients = () => {
             </NavItem>
           </Nav>
           <Nav pullRight>
-            <Navbar.Text>○○病院</Navbar.Text>
-            <Navbar.Text>田中太郎</Navbar.Text>
+            <Navbar.Text>{userName}</Navbar.Text>
             <NavItem eventKey={3} href="#">
               <span className="glyphicon glyphicon-cog" aria-hidden="true" />
             </NavItem>
@@ -522,37 +515,12 @@ const Patients = () => {
       </div>
 
       <div className="search-result">
-        <Table striped className="patients">
-          <tr>
-            <th>患者ID</th>
-            <th>患者名</th>
-            <th>年齢</th>
-            <th className={search}>登録がん種</th>
-            <th className={search}>初回治療開始日</th>
-            <th className={noSearch}>
-              初回治療開始日
-              <br />
-              ／最終更新日
-            </th>
-            <th className={noSearch}>診断</th>
-            <th>進行期</th>
-            <th className={search}>病理診断</th>
-            <th className={search}>初回治療</th>
-            <th className={search}>合併症</th>
-            <th className={progressAndRecurrenceColumn}>経過</th>
-            <th className={progressAndRecurrenceColumn}>再発後治療</th>
-            <th className={search}>3年予後</th>
-            <th className={search}>5年予後</th>
-            <th className={noSearch}>ステータス</th>
-            <th>編集/削除</th>
-          </tr>
-          <UserTables
-            userListJson={userListJson}
-            search={search}
-            noSearch={noSearch}
-            progressAndRecurrenceColumn={progressAndRecurrenceColumn}
-          />
-        </Table>
+        <UserTables
+          userListJson={userListJson}
+          search={search}
+          noSearch={noSearch}
+          progressAndRecurrenceColumn={progressAndRecurrenceColumn}
+        />
       </div>
     </div>
   );

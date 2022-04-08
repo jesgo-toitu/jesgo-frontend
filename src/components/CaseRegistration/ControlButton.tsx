@@ -1,4 +1,5 @@
 import React from 'react';
+import { Dispatch } from 'redux';
 import { Dropdown, Glyphicon, MenuItem, SelectCallback } from 'react-bootstrap';
 import {
   GetRootSchema,
@@ -6,6 +7,7 @@ import {
 } from '../../common/CaseRegistrationUtility';
 import { JesgoDocumentSchema } from '../../temp/ReadSchema';
 import './ControlButton.css';
+import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -18,12 +20,20 @@ type CompType = typeof COMP_TYPE[keyof typeof COMP_TYPE];
 // TODO defaultpropsが設定できない
 type ControlButtonProps = {
   schemaId: number;
-  dispChildSchemaIds: number[];
-  setDispChildSchemaIds: React.Dispatch<React.SetStateAction<number[]>>;
-  childSchemaIds?: number[];  // eslint-disable-line react/require-default-props
+  dispChildSchemaIds: dispSchemaIdAndDocumentIdDefine[];
+  setDispChildSchemaIds: React.Dispatch<
+    React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
+  >;
+  childSchemaIds?: number[]; // eslint-disable-line react/require-default-props
   Type: CompType;
-  dispSchemaIds?: number[]; // eslint-disable-line react/require-default-props
-  setDispSchemaIds?: React.Dispatch<React.SetStateAction<number[]>>;  // eslint-disable-line react/require-default-props
+  dispSchemaIds?: dispSchemaIdAndDocumentIdDefine[]; // eslint-disable-line react/require-default-props
+  setDispSchemaIds?: React.Dispatch<
+    React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
+  >; // eslint-disable-line react/require-default-props
+  dispatch: Dispatch;
+  documentId: string;
+  isChildSchema: boolean;
+  setFormData?: React.Dispatch<React.SetStateAction<any>>;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -36,6 +46,10 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     setDispChildSchemaIds,
     dispSchemaIds = [],
     setDispSchemaIds = null,
+    dispatch,
+    documentId,
+    isChildSchema,
+    setFormData,
   } = props;
 
   // ルートの場合ルートドキュメント それ以外はchild_schema
@@ -43,10 +57,11 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     Type === COMP_TYPE.ROOT ? GetRootSchema() : childSchemaIds;
   const canAddSchemas = [] as JesgoDocumentSchema[];
   canAddSchemaIds.forEach((id: number) => {
+    // TODO: 追加済みのものは出さないとしているが、同一スキーマの作成は今後ある
     // 追加済みのものは候補に出さない
-    if (!dispChildSchemaIds.includes(id)) {
+    if (!dispChildSchemaIds.find((p) => p.schemaId === id)) {
       const info: unknown = GetSchemaInfo(id);
-      if(info != null){
+      if (info != null) {
         canAddSchemas.push(info as JesgoDocumentSchema);
       }
     }
@@ -56,15 +71,20 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const selectMenuHandler: SelectCallback | undefined = (eventKey: any) => {
     if (typeof eventKey === 'string') {
-      const copyIds = [...dispSchemaIds];
-      const index = copyIds.indexOf(props.schemaId);
+      const copyIds = dispSchemaIds;
+      const index = copyIds.findIndex((p) => p.documentId === documentId);
+      const findItem = copyIds.find((p) => p.documentId === documentId);
       switch (eventKey) {
         case 'up':
           // 上（左）へ移動
           // 自分が先頭の場合は何もしない
           if (index > 0 && setDispSchemaIds != null) {
             copyIds.splice(index, 1);
-            copyIds.splice(index - 1, 0, props.schemaId);
+            copyIds.splice(
+              index - 1,
+              0,
+              findItem as dispSchemaIdAndDocumentIdDefine
+            );
             setDispSchemaIds([...copyIds]);
           }
           break;
@@ -74,20 +94,30 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           // 自分が末尾の場合は何もしない
           if (index < copyIds.length - 1 && setDispSchemaIds != null) {
             copyIds.splice(index, 1);
-            copyIds.splice(index + 1, 0, props.schemaId);
+            copyIds.splice(
+              index + 1,
+              0,
+              findItem as dispSchemaIdAndDocumentIdDefine
+            );
             setDispSchemaIds([...copyIds]);
           }
           break;
         case 'delete':
           // 自身を削除
           if (setDispSchemaIds != null) {
-            copyIds.splice(index, 1);
+            // TODO: 削除は削除フラグ立てる
+            // copyIds.splice(index, 1);
+            copyIds[index].deleted = true;
             setDispSchemaIds([...copyIds]);
+            dispatch({ type: 'DEL', documentId });
           }
           break;
         case 'clear':
           // 自身のformData削除
-          // TODO 未実装
+          if (setFormData) {
+            // 空オブジェクトで更新
+            setFormData({});
+          }
           break;
         default:
           break;
@@ -95,18 +125,29 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     } else if (typeof eventKey === 'number') {
       // 子ドキュメントの追加
       const copyIds = [...dispChildSchemaIds];
-      if (!copyIds.includes(eventKey)) {
-        setDispChildSchemaIds([...copyIds, eventKey]);
+      if (!copyIds.find((p) => p.schemaId === eventKey)) {
+        const addItem: dispSchemaIdAndDocumentIdDefine = {
+          documentId: '',
+          schemaId: eventKey,
+          deleted: false,
+        };
+        setDispChildSchemaIds([...copyIds, addItem]);
       }
     }
   };
 
+  // 移動可否
   const canMove =
     Type !== COMP_TYPE.ROOT &&
+    isChildSchema &&
     dispSchemaIds?.length !== undefined &&
     dispSchemaIds?.length > 1;
+  // 削除可否
+  // サブスキーマ以外なら削除可能
   const canDelete =
-    dispSchemaIds !== undefined && dispSchemaIds.includes(schemaId);
+    isChildSchema &&
+    dispSchemaIds !== undefined &&
+    dispSchemaIds.find((p) => p.schemaId === schemaId);
   const canAdd = canAddSchemas.length > 0;
   const canClear = !canDelete && Type !== COMP_TYPE.ROOT;
   const horizontalMoveType: CompType[] = [COMP_TYPE.TAB, COMP_TYPE.ROOT_TAB];
@@ -149,10 +190,10 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           {(canMove || canDelete || canClear) && canAdd && <MenuItem divider />}
           {/* 子スキーマの追加 */}
           {canAddSchemas.map((info: JesgoDocumentSchema) => {
-            const { documentId, title } = info;
             return (
-              <MenuItem key={documentId} eventKey={documentId}>
-                {`${title} の追加`}
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              <MenuItem key={info.documentId} eventKey={info.documentId}>
+                {`${info.title} の追加`}
               </MenuItem>
             );
           })}

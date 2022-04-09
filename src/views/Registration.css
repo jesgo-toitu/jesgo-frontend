@@ -153,3 +153,7 @@ input[type="number"] {
   -moz-appearance:textfield; 
 } 
 
+.normal-button {
+  margin: 10px;
+  padding: 10px;
+}

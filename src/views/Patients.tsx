@@ -19,6 +19,8 @@ import {
 import UserTables from '../components/Patients/UserTables';
 import './Patients.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
+import UserMenu from '../components/common/UserMenu';
+import SystemMenu from '../components/common/SystemMenu';
 
 const Patients = () => {
   const navigate = useNavigate();
@@ -324,10 +326,18 @@ const Patients = () => {
             </NavItem>
           </Nav>
           <Nav pullRight>
-            <Navbar.Text>{userName}</Navbar.Text>
-            <NavItem eventKey={3} href="#">
-              <span className="glyphicon glyphicon-cog" aria-hidden="true" />
-            </NavItem>
+            <NavItem>
+              <UserMenu
+                title={userName}
+                i={0}
+                />
+              </NavItem>
+              <NavItem>
+                <SystemMenu
+                  title='設定'
+                  i={0}
+                  />                
+              </NavItem>
           </Nav>
         </Navbar.Collapse>
       </Navbar>
@@ -335,16 +345,16 @@ const Patients = () => {
         <div className="search-form-closed flex">
           <ButtonToolbar>
             <ButtonGroup>
-              <Button onClick={() => changeView('simpleSearch')}>
+              <Button onClick={() => changeView('simpleSearch')} >
                 <Glyphicon glyph="search" />
               </Button>
-              <Button onClick={() => changeView('detailSearch')}>
+              <Button onClick={() => changeView('detailSearch')} >
                 <Glyphicon glyph="eye-open" />
               </Button>
             </ButtonGroup>
           </ButtonToolbar>
           <div className="spacer10" />
-          <Button bsStyle="primary" href="/registration">
+          <Button bsStyle="primary" href="/registration" className="normal-button">
             新規作成
           </Button>
         </div>

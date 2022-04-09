@@ -85,12 +85,21 @@ const SubmitButton = (props: ButtonProps) => {
     SaveChanges(dispatch, formDatas, saveData, setSaveResponse);
   };
 
+  // 保存せずリストに戻る
+  const clickCancel = () => {
+    navigate('/Patients');
+}
+
+
   return (
     <Col lg={3} md={3} className="user-info-button-col">
       <div className="user-info-button-div">
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
-        <Button onClick={clickSubmit} bsStyle="primary">
+        <Button onClick={clickSubmit} bsStyle="primary" className="normal-button">
           保存してリストに戻る
+        </Button>
+        <Button onClick={clickCancel} bsStyle="secondary" className="normal-button">
+          閉じる
         </Button>
       </div>
     </Col>

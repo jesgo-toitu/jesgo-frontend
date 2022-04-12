@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Tabs, Tab } from 'react-bootstrap';
 import { UiSchema } from '@rjsf/core';
 import { useDispatch } from 'react-redux';
 import PanelSchema from './PanelSchema';
@@ -8,11 +9,13 @@ import CustomDivForm from './JESGOCustomForm';
 import { GetSchemaInfo } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
 import { JesgoDocumentSchema } from '../../temp/ReadSchema';
-import { CustomSchema } from './SchemaUtility';
 import {
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
+import { CustomSchema, getRootDescription } from './SchemaUtility';
+import { JESGOComp } from './JESGOComponent';
+import { createPanels, createTabs } from './FormCommonComponents';
 
 // ルートディレクトリ直下の子スキーマ
 type Props = {
@@ -62,7 +65,7 @@ const TabSchema = React.memo((props: Props) => {
   const dispatch = useDispatch();
 
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-
+  const isTab = customSchema['jesgo:ui:subschemastyle'] === 'tab';
   const uiSchema: UiSchema = CreateUISchema(customSchema);
   uiSchema['ui:ObjectFieldTemplate'] = JESGOFiledTemplete.TabItemFieldTemplate;
 
@@ -186,11 +189,6 @@ const TabSchema = React.memo((props: Props) => {
     });
   }, [dispSubSchemaIds, dispChildSchemaIds]);
 
-  // console.log("---[TabSchema]schema---");
-  // console.log(document_schema);
-  // console.log("---[TabSchema]uiSchema---");
-  // console.log(uiSchema);
-
   return (
     <>
       <ControlButton
@@ -215,37 +213,28 @@ const TabSchema = React.memo((props: Props) => {
         uiSchema={uiSchema}
         formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       />
-      {dispSubSchemaIdsNotDeleted.length > 0 &&
-        dispSubSchemaIdsNotDeleted.map(
-          (info: dispSchemaIdAndDocumentIdDefine) => (
-            <PanelSchema
-              key={info.schemaId}
-              isChildSchema={false}
-              schemaId={info.schemaId}
-              documentId={info.documentId}
-              dispSchemaIds={[...dispSubSchemaIds]}
-              setDispSchemaIds={setDispSubSchemaIds}
-              loadedData={loadedData}
-            />
+      {isTab
+        ? // タブ表示
+          createTabs(
+            'tabschema',
+            dispSubSchemaIds,
+            dispSubSchemaIdsNotDeleted,
+            setDispSubSchemaIds,
+            dispChildSchemaIds,
+            dispChildSchemaIdsNotDeleted,
+            setDispChildSchemaIds,
+            loadedData
           )
-        )}
-      {
-        // childSchema表示
-        dispChildSchemaIdsNotDeleted.length > 0 &&
-          dispChildSchemaIdsNotDeleted.map(
-            (info: dispSchemaIdAndDocumentIdDefine) => (
-              <PanelSchema
-                key={info.schemaId}
-                isChildSchema={true} // eslint-disable-line react/jsx-boolean-value
-                schemaId={info.schemaId}
-                documentId={info.documentId}
-                dispSchemaIds={[...dispChildSchemaIds]}
-                setDispSchemaIds={setDispChildSchemaIds}
-                loadedData={loadedData}
-              />
-            )
-          )
-      }
+        : // パネル表示
+          createPanels(
+            dispSubSchemaIds,
+            dispSubSchemaIdsNotDeleted,
+            setDispSubSchemaIds,
+            dispChildSchemaIds,
+            dispChildSchemaIdsNotDeleted,
+            setDispChildSchemaIds,
+            loadedData
+          )}
     </>
   );
 });

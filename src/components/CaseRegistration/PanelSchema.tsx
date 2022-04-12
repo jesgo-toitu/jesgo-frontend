@@ -11,6 +11,7 @@ import {
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
+import { createPanels, createTabs } from './FormCommonComponents';
 
 // 孫スキーマ以降
 type Props = {
@@ -59,6 +60,8 @@ const PanelSchema = React.memo((props: Props) => {
 
   const { documentSchema, subschema, childSchema } = schemaInfo;
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+  const isTab = customSchema['jesgo:ui:subschemastyle'] === 'tab';
+
   const uiSchema = CreateUISchema(customSchema);
 
   // console.log('---[PanelSchema]schemaInfo---');
@@ -119,7 +122,6 @@ const PanelSchema = React.memo((props: Props) => {
 
   useEffect(() => {
     if (subschema.length > 0 && dispSubSchemaIds.length === 0) {
-      
       subschema.forEach((id) => {
         const item: dispSchemaIdAndDocumentIdDefine = {
           documentId: '',
@@ -213,34 +215,28 @@ const PanelSchema = React.memo((props: Props) => {
         uiSchema={uiSchema}
         formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       />
-      {dispSubSchemaIdsNotDeleted.length > 0 &&
-        dispSubSchemaIdsNotDeleted.forEach(
-          (info: dispSchemaIdAndDocumentIdDefine) => (
-            <PanelSchema
-              key={info.schemaId}
-              isChildSchema={false}
-              schemaId={info.schemaId}
-              documentId={info.documentId}
-              dispSchemaIds={[...dispSubSchemaIds]}
-              setDispSchemaIds={setDispSubSchemaIds}
-              loadedData={loadedData}
-            />
+      {isTab
+        ? // タブ表示
+          createTabs(
+            'panelschema',
+            dispSubSchemaIds,
+            dispSubSchemaIdsNotDeleted,
+            setDispSubSchemaIds,
+            dispChildSchemaIds,
+            dispChildSchemaIdsNotDeleted,
+            setDispChildSchemaIds,
+            loadedData
           )
-        )}
-      {dispChildSchemaIdsNotDeleted.length > 0 &&
-        dispChildSchemaIdsNotDeleted.forEach(
-          (info: dispSchemaIdAndDocumentIdDefine) => (
-            <PanelSchema
-              key={info.schemaId}
-              isChildSchema={true} // eslint-disable-line react/jsx-boolean-value
-              schemaId={info.schemaId}
-              documentId={info.documentId}
-              dispSchemaIds={[...dispChildSchemaIds]}
-              setDispSchemaIds={setDispChildSchemaIds}
-              loadedData={loadedData}
-            />
-          )
-        )}
+        : // パネル表示
+          createPanels(
+            dispSubSchemaIds,
+            dispSubSchemaIdsNotDeleted,
+            setDispSubSchemaIds,
+            dispChildSchemaIds,
+            dispChildSchemaIdsNotDeleted,
+            setDispChildSchemaIds,
+            loadedData
+          )}
     </Panel>
   );
 });

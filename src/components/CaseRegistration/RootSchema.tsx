@@ -14,6 +14,7 @@ import {
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
+import { createTabs } from './FormCommonComponents';
 
 type Props = {
   schemaId: number;
@@ -187,46 +188,6 @@ const RootSchema = React.memo((props: Props) => {
   // console.log("---[RootSchema]uiSchema---");
   // console.log(uiSchema);
 
-  const createTab = (
-    schemaIds: dispSchemaIdAndDocumentIdDefine[],
-    filteredSchemaIds: dispSchemaIdAndDocumentIdDefine[],
-    setSchemaIds: React.Dispatch<
-      React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
-    >,
-    isChildSchema: boolean
-  ) =>
-    // subschema表示
-    filteredSchemaIds.map((info: dispSchemaIdAndDocumentIdDefine) => {
-      // TODO 仮。本来はAPI
-      const title = GetSchemaInfo(info.schemaId)?.title ?? '';
-      const description =
-        getRootDescription(GetSchemaInfo(info.schemaId)?.documentSchema) ?? '';
-
-      return (
-        // TODO TabSchemaにTabを置くとうまく動作しなくなる
-        <Tab
-          key={`tab-${info.schemaId}`}
-          className="panel-style"
-          eventKey={info.schemaId}
-          title={
-            <>
-              <span>{title} </span>
-              <JESGOComp.DescriptionToolTip descriptionText={description} />
-            </>
-          }
-        >
-          <TabSchema
-            key={`tabitem-${info.schemaId}`}
-            isChildSchema={isChildSchema}
-            schemaId={info.schemaId}
-            documentId={info.documentId}
-            dispSchemaIds={[...schemaIds]}
-            setDispSchemaIds={setSchemaIds}
-            loadedData={loadedData}
-          />
-        </Tab>
-      );
-    });
   return (
     <>
       <ControlButton
@@ -251,26 +212,15 @@ const RootSchema = React.memo((props: Props) => {
         uiSchema={uiSchema}
         schema={customSchema}
       />
-      {(dispSubSchemaIdsNotDeleted.filter((p) => p.deleted === false).length >
-        0 ||
-        dispChildSchemaIdsNotDeleted.length > 0) && (
-        <Tabs id="subschema-tabs">
-          {/* subschema表示 */}
-          {createTab(
-            dispSubSchemaIds,
-            dispSubSchemaIdsNotDeleted,
-            setDispSubSchemaIds,
-            false
-          )}
-
-          {/* childSchema表示 */}
-          {createTab(
-            dispChildSchemaIds,
-            dispChildSchemaIdsNotDeleted,
-            setDispChildSchemaIds,
-            true
-          )}
-        </Tabs>
+      {createTabs(
+        'root',
+        dispSubSchemaIds,
+        dispSubSchemaIdsNotDeleted,
+        setDispSubSchemaIds,
+        dispChildSchemaIds,
+        dispChildSchemaIdsNotDeleted,
+        setDispChildSchemaIds,
+        loadedData
       )}
     </>
   );

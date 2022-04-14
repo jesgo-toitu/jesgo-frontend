@@ -59,7 +59,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
   canAddSchemaIds.forEach((id: number) => {
     // TODO: 追加済みのものは出さないとしているが、同一スキーマの作成は今後ある
     // 追加済みのものは候補に出さない
-    if (!dispChildSchemaIds.find((p) => p.schemaId === id)) {
+    if (!dispChildSchemaIds.find((p) => p.schemaId === id && p.deleted === false)) {
       const info: unknown = GetSchemaInfo(id);
       if (info != null) {
         canAddSchemas.push(info as JesgoDocumentSchema);
@@ -125,7 +125,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     } else if (typeof eventKey === 'number') {
       // 子ドキュメントの追加
       const copyIds = [...dispChildSchemaIds];
-      if (!copyIds.find((p) => p.schemaId === eventKey)) {
+      if (!copyIds.find((p) => p.schemaId === eventKey && p.deleted === false)) {
         const addItem: dispSchemaIdAndDocumentIdDefine = {
           documentId: '',
           schemaId: eventKey,

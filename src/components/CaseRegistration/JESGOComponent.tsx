@@ -131,7 +131,7 @@ export namespace JESGOComp {
     return (
       <div key={id} className="with-units-div">
         <input
-          className="form-control"
+          className="form-control input-text"
           type="text"
           list={`datalist-${id}`}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
@@ -233,7 +233,7 @@ export namespace JESGOComp {
     return (
       // TODO こちらもReact-Bootstrapを使いたいが、onChangeがうまく設定できない。
       <select
-        className="form-control"
+        className="form-control input-text"
         id={id}
         onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
           onChange(event.target.value)

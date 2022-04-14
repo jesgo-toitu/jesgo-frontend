@@ -13,16 +13,22 @@ body {
   left: 0;
   /*余白が入らないように*/
   margin: 0;
-  padding: 15px;
+  padding: 5px;
   width: 100%;
-  height: 150px;
+  height: 115px;
   background-color: #f9f9f9;
   /* 常に最前面に表示 */
   z-index: 999;
 }
 
+.registration-area{
+  margin-top: 115px;
+  display: flex;
+}
+
 .content-area {
-  margin-top: 135px;
+  width: 100%;
+  margin-right: 10px;
 }
 
 .panel-style {
@@ -40,7 +46,7 @@ body {
 .user-info-row {
   display: flex;
   flex-wrap: wrap;
-  padding-top: 10px;
+  /* padding-top: 10px; */
 }
 
 .user-info-age {
@@ -92,12 +98,20 @@ body {
   border: 1px solid #a0a0a0;
 }
 
-.form-group > fieldset > div {
-  margin-left: 5px;
+/* アイテム間の隙間 */
+.form-group{
+  margin-bottom: 10px;
 }
 
-.form-group fieldset legend {
+.form-group > fieldset > div {
+  margin-left: 5px;
+  margin-bottom: 10px;
+}
+
+.form-group fieldset legend{
   border-bottom: 3px solid #e5e5e5;
+  font-size: medium;
+  font-weight: bold;
 }
 
 /* 数値入力(入力部分のみ) */
@@ -105,9 +119,23 @@ body {
   width: 100px;
 }
 
+.input-integer select {
+  width: auto;
+}
+
 /* 日付入力(入力部分のみ) */
-.input-date input {
+.input-date input[type="date"] {
   width: 200px;
+}
+
+/* input */
+.input-text input[type="text"] {
+  width: auto;
+  min-width: 200px;
+}
+.input-text select {
+  width: auto;
+  min-width: 200px;
 }
 
 /* 必須項目のスタイル */
@@ -128,15 +156,19 @@ body {
   display: none;
 }
 
+.first-content-area {
+  display: flex;
+}
+
 @media screen and (min-width: 768px) {
   .sidebar {
-    position: fixed;
-    top: 211px;
-    bottom: 0;
-    left: 0;
-    display: block;
-    overflow-x: hidden;
-    overflow-y: auto;
+      position: fixed;
+      top: 211px;
+      bottom: 0;
+      left: 0;
+      display: block;
+      overflow-x: hidden;
+      overflow-y: auto
   }
 }
 

@@ -4,6 +4,7 @@
     "jesgo:unique": true,
     "type": "object",
     "title": "病期診断",
+    "jesgo:ui:subschemastyle": "column",
     "$comment": "子宮体がんの病期診断.",
     "description": "術前に放射線治療や化学療法を施行した症例は「術前治療施行例」となり、「術前治療施行例」となり、進行期分類(FIGO TNM)は画像診断を用い、臨床進行期を推定し登録、手術時所見に即してpTNM分類を入力する。",
     "properties": {
@@ -78,6 +79,7 @@
             "$id": "#TNM",
             "type": "object",
             "title": "TMN分類(UICC第8版)",
+            "jesgo:ui:subschemastyle": "column",
             "properties": {
                 "T": { "$ref": "#/$defs/T" },
                 "N": { "$ref": "#/$defs/N" },
@@ -113,6 +115,7 @@
             "$id": "#N",
             "title": "N分類",
             "type": "object",
+            "jesgo:ui:subschemastyle": "column",
             "$comment": "治療前評価としてのN分類",
             "properties": {
                 "画像診断の計測手段": {
@@ -146,6 +149,7 @@
             "$id": "#pN",
             "title": "N分類",
             "type": "object",
+            "jesgo:ui:subschemastyle": "column",
             "$comment": "手術評価としてのN分類",
             "properties": {
                 "RP": {
@@ -194,6 +198,7 @@
             "$id": "#M",
             "title": "M分類",
             "type": "string",
+            "jesgo:ui:subschemastyle": "column",
             "enum": [
                 "M0: 遠隔転移なし",
                 "M1: その他の遠隔転移の存在",

@@ -4,6 +4,7 @@
     "jesgo:unique": true,
     "type": "object",
     "title": "病期診断",
+    "jesgo:ui:subschemastyle": "column",
     "$comment": "子宮頸がんの病期診断.",
     "properties": {
         "進行期分類の選択": {
@@ -48,6 +49,7 @@
         "cTNM": {
             "type": "object",
             "title": "cTMN分類(日産婦2020暫定版)",
+            "jesgo:ui:subschemastyle": "column",
             "description": "cTNM分類は、治療を開始する前に、内診・直腸診による局所所見に画像所見を加味して総合的に判断し報告する。<br>子宮頸部円錐切除術は臨床検査とみなし,これによる組織検査の結果は原則としてcTNM分類に入れる。",
             "properties": {
                 "cT": {
@@ -113,6 +115,7 @@
             "$id": "#T",
             "type": "object",
             "title": "T分類",
+            "jesgo:ui:subschemastyle": "column",
             "properties": {
                 "T": {
                     "type": "string",
@@ -197,6 +200,7 @@
             "$id": "#pN",
             "title": "N分類",
             "type": "object",
+            "jesgo:ui:subschemastyle": "column",
             "$comment": "手術評価としてのN分類",
             "properties": {
                 "RP": {

@@ -32,6 +32,11 @@ import {
 import { loadJesgoCaseAndDocument, responseResult } from '../common/DBUtility';
 import Loading from '../components/CaseRegistration/Loading';
 import { RESULT } from '../common/ApiAccess';
+import {
+  AddBeforeUnloadEvent,
+  calcAge,
+  RemoveBeforeUnloadEvent,
+} from '../common/CommonUtility';
 
 // 症例入力のおおもとの画面
 const Registration = () => {
@@ -66,28 +71,6 @@ const Registration = () => {
 
   let age = ''; // 年齢
 
-  // 年齢計算Function
-  // 現在の年齢を表示
-  const calcAge = () => {
-    if (!birthday) return '';
-
-    // 生年月日
-    const birthdayDateObj = new Date(birthday);
-    const birthNum =
-      birthdayDateObj.getFullYear() * 10000 +
-      (birthdayDateObj.getMonth() + 1) * 100 +
-      birthdayDateObj.getDate();
-
-    // 現在日
-    const nowDate = new Date();
-    const nowNum =
-      nowDate.getFullYear() * 10000 +
-      (nowDate.getMonth() + 1) * 100 +
-      nowDate.getDate();
-
-    return Math.floor((nowNum - birthNum) / 10000).toString();
-  };
-
   const initialData: SaveDataObjDefine = {
     jesgo_case: {
       case_id: '',
@@ -107,16 +90,20 @@ const Registration = () => {
   // eslint-disable-next-line prefer-const
   let [loadData, setLoadData] = useState<SaveDataObjDefine>(initialData);
 
-  // DBからデータ読み込み
+  // 初期設定
   useEffect(() => {
     const query = new URLSearchParams(search);
     const paramCaseId = query.get('id') ?? '';
     if (paramCaseId && loadData.jesgo_case.is_new_case === true) {
+      // DBからデータ読み込み
       loadJesgoCaseAndDocument(parseInt(paramCaseId, 10), setLoadedJesgoCase);
     } else if (!paramCaseId) {
       // 新規の場合は読み込み完了とする
       setIsLoading(false);
     }
+
+    // ブラウザの戻る・更新の防止
+    AddBeforeUnloadEvent();
   }, []);
 
   useEffect(() => {
@@ -124,9 +111,11 @@ const Registration = () => {
       // eslint-disable-next-line no-alert
       alert('読み込みに失敗しました。');
       setIsLoading(false);
+      RemoveBeforeUnloadEvent();
       navigate('/Patients');
     } else if (loadedJesgoCase.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
       // ログイン画面に戻る
+      RemoveBeforeUnloadEvent();
       navigate('/login');
     } else if (loadedJesgoCase.resCode === RESULT.NORMAL_TERMINATION) {
       loadData = loadedJesgoCase.loadedSaveData as SaveDataObjDefine;
@@ -220,8 +209,6 @@ const Registration = () => {
       case 'birthday':
         value = eventTarget.value;
         setBirthday(value);
-        // setAge(calcAge());
-        age = calcAge();
         break;
       case 'decline':
         value = eventTarget.checked;
@@ -241,7 +228,8 @@ const Registration = () => {
     dispatch(action);
   };
 
-  age = calcAge();
+  // 年齢
+  age = calcAge(birthday);
 
   return (
     <div className="page-area">
@@ -310,56 +298,58 @@ const Registration = () => {
         </Panel>
       </div>
       {!isLoading && (
-        <div className="content-area">
-          <ControlButton
-            Type={COMP_TYPE.ROOT}
-            isChildSchema={false} // eslint-disable-line react/jsx-boolean-value
-            schemaId={0}
-            dispChildSchemaIds={[...dispRootSchemaIds]}
-            setDispChildSchemaIds={setDispRootSchemaIds}
-            dispatch={dispatch}
-            documentId=""
-          />
-          {dispRootSchemaIdsNotDeleted.length > 0 && (
-            <Tabs id="root-tabs">
-              {dispRootSchemaIdsNotDeleted.map(
-                (info: dispSchemaIdAndDocumentIdDefine) => {
-                  // TODO 仮。本来はAPI
-                  const title = GetSchemaInfo(info.schemaId)?.title ?? '';
-                  const description =
-                    getRootDescription(
-                      GetSchemaInfo(info.schemaId)?.documentSchema
-                    ) ?? '';
+        <div className="registration-area">
+          <div className="content-area">
+            <ControlButton
+              Type={COMP_TYPE.ROOT}
+              isChildSchema={false} // eslint-disable-line react/jsx-boolean-value
+              schemaId={0}
+              dispChildSchemaIds={[...dispRootSchemaIds]}
+              setDispChildSchemaIds={setDispRootSchemaIds}
+              dispatch={dispatch}
+              documentId=""
+            />
+            {dispRootSchemaIdsNotDeleted.length > 0 && (
+              <Tabs id="root-tabs">
+                {dispRootSchemaIdsNotDeleted.map(
+                  (info: dispSchemaIdAndDocumentIdDefine) => {
+                    // TODO 仮。本来はAPI
+                    const title = GetSchemaInfo(info.schemaId)?.title ?? '';
+                    const description =
+                      getRootDescription(
+                        GetSchemaInfo(info.schemaId)?.documentSchema
+                      ) ?? '';
 
-                  return (
-                    // TODO TabSchemaにTabを置くとうまく動作しなくなる
-                    <Tab
-                      key={`root-tab-${info.schemaId}`}
-                      className="panel-style"
-                      eventKey={info.schemaId}
-                      title={
-                        <>
-                          <span>{title} </span>
-                          <JESGOComp.DescriptionToolTip
-                            descriptionText={description}
-                          />
-                        </>
-                      }
-                    >
-                      <RootSchema
-                        key={`root-${info.schemaId}`}
-                        schemaId={info.schemaId}
-                        documentId={info.documentId}
-                        dispSchemaIds={[...dispRootSchemaIds]}
-                        setDispSchemaIds={setDispRootSchemaIds}
-                        loadedData={loadData}
-                      />
-                    </Tab>
-                  );
-                }
-              )}
-            </Tabs>
-          )}
+                    return (
+                      // TODO TabSchemaにTabを置くとうまく動作しなくなる
+                      <Tab
+                        key={`root-tab-${info.schemaId}`}
+                        className="panel-style"
+                        eventKey={info.schemaId}
+                        title={
+                          <>
+                            <span>{title} </span>
+                            <JESGOComp.DescriptionToolTip
+                              descriptionText={description}
+                            />
+                          </>
+                        }
+                      >
+                        <RootSchema
+                          key={`root-${info.schemaId}`}
+                          schemaId={info.schemaId}
+                          documentId={info.documentId}
+                          dispSchemaIds={[...dispRootSchemaIds]}
+                          setDispSchemaIds={setDispRootSchemaIds}
+                          loadedData={loadData}
+                        />
+                      </Tab>
+                    );
+                  }
+                )}
+              </Tabs>
+            )}
+          </div>
         </div>
       )}
       {/* ローディング画面表示 */}

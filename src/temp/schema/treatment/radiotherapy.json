@@ -6,6 +6,7 @@
     "required": [
         "治療開始日"
     ],
+    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "治療開始日": {
             "type": "string",
@@ -28,12 +29,14 @@
         },
         "照射内容": {
             "type": "array",
+            "jesgo:ui:subschemastyle": "column",
             "items": {
                 "$ref": "#/$defs/radiotherapy"
             }
         },
         "同時化学療法": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "column",
             "properties": {
                 "レジメン": {
                     "type": "string"

@@ -48,6 +48,8 @@ const AddUiSchema = (
   if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE]) {
     if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'inline') {
       classNames.push('subschemastyle-inline');
+    } else if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'column') {
+      classNames.push('subschemastyle-column');
     }
   }
 
@@ -65,7 +67,7 @@ const AddUiSchema = (
   ) {
     if (getSchemaType(schema) === Const.JSONSchema7Types.OBJECT) {
       resultUiSchema[Const.UI_WIDGET.OBJECT_FIELD_TEMPLATE] =
-        JESGOFiledTemplete.CustiomObjectFieldTemplate;
+        JESGOFiledTemplete.CustomObjectFieldTemplate;
     } else {
       resultUiSchema[Const.UI_WIDGET.FIELD_TEMPLATE] =
         JESGOFiledTemplete.CustomLableTemplete;
@@ -98,6 +100,19 @@ const AddUiSchema = (
     classNames.push('input-integer');
   }
 
+  if (itemPropName.includes(kType)) {
+    switch (getSchemaType(schema)) {
+      case Const.JSONSchema7Types.STRING:
+        classNames.push('input-text');
+        break;
+      case Const.JSONSchema7Types.ARRAY:
+        classNames.push('input-text');
+        break;
+      default:
+        break;
+    }
+  }
+
   // oneOf
   if (itemPropName.includes(Const.JSONSchema7Keys.ONEOF)) {
     if (itemPropName.includes(kType)) {
@@ -123,6 +138,7 @@ const AddUiSchema = (
               ) {
                 // selectがある
                 selectItem = oneOfItem.enum;
+                classNames.push('input-select');
               }
             });
             if (selectItem.length > 0) {
@@ -172,14 +188,14 @@ const CreateOrderList = (
 /**
  * properties のUISchema作成
  * @param requiredNames 必須対象の項目名
- * @param propNames 
- * @param items 
- * @param uiSchema 
- * @param orderList 
- * @returns 
+ * @param propNames
+ * @param items
+ * @param uiSchema
+ * @param orderList
+ * @returns
  */
 export const createUiSchemaProperties = (
-  requiredNames : string[],
+  requiredNames: string[],
   propNames: string[],
   items: { [key: string]: JSONSchema7Definition },
   uiSchema: UiSchema,
@@ -254,6 +270,19 @@ export const CreateUISchema = (schema: JSONSchema7) => {
   // ルート
   uiSchema = AddUiSchema(schema, uiSchema, false);
 
+  // ルートのitems
+  const rootPropsName = Object.keys(schema);
+  // "jesgo:ui:subschemastyle"
+  const subchemaStyle = rootPropsName.find(
+    (p) => p === Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE
+  );
+  if (
+    subchemaStyle &&
+    schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'column'
+  ) {
+    uiSchema[Const.UI_WIDGET.CLASS] = 'subschemastyle-column';
+  }
+
   // items
   const items = schema.items;
   if (items) {
@@ -262,7 +291,7 @@ export const CreateUISchema = (schema: JSONSchema7) => {
       items.forEach((item: JSONSchema7Definition) => {
         const propItems = getPropItemsAndNames(item as JSONSchema7);
         if (propItems) {
-          uiSchema["items" as string] = createUiSchemaProperties(
+          uiSchema['items' as string] = createUiSchemaProperties(
             schema.required ?? [],
             propItems.pNames,
             propItems.pItems,
@@ -273,15 +302,15 @@ export const CreateUISchema = (schema: JSONSchema7) => {
       });
     } else {
       const propItems = getPropItemsAndNames(items as JSONSchema7);
-        if (propItems) {
-          uiSchema["items" as string]  = createUiSchemaProperties(
-            schema.required ?? [],
-            propItems.pNames,
-            propItems.pItems,
-            uiSchema,
-            orderList
-          );
-        }
+      if (propItems) {
+        uiSchema['items' as string] = createUiSchemaProperties(
+          schema.required ?? [],
+          propItems.pNames,
+          propItems.pItems,
+          uiSchema,
+          orderList
+        );
+      }
     }
   }
 

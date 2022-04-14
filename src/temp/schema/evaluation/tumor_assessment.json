@@ -8,6 +8,7 @@
         "/schema/surveillance",
         "/schema/treatment/summary"
     ],
+    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "判定": {
             "type": "string",

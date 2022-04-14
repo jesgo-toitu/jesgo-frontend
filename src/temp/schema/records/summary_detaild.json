@@ -8,6 +8,7 @@
     "jesgo:parentschema": [
         "/"
     ],
+    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "初診日": {
             "type": "string",
@@ -49,6 +50,7 @@
         },
         "家族歴": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "column",
             "properties": {
                 "乳癌": {
                     "type": "string",
@@ -74,6 +76,7 @@
         },
         "既往歴": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "column",
             "properties": {
                 "手術以外": {
                     "type": "string",
@@ -121,6 +124,7 @@
             "properties":{
                 "喫煙": {
                     "type": "object",
+                    "jesgo:ui:subschemastyle": "column",
                     "properties": {
                         "喫煙開始年齢": {
                             "type": "integer",
@@ -138,6 +142,7 @@
                 },
                 "飲酒": {
                     "type": "object",
+                    "jesgo:ui:subschemastyle": "column",
                     "properties": {
                         "飲酒歴": {
                             "type": "string",
@@ -164,6 +169,7 @@
         },
         "HPVワクチン": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "column",
             "properties": {
                 "接種回数": {
                     "type": "string",

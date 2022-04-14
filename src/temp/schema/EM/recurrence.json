@@ -10,6 +10,7 @@
     "required": [
         "再発確認日", "再発したがん種", "再発回数"
     ],
+    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "再発確認日": {
             "type": "string",

@@ -12,6 +12,7 @@ import {
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
 import { createPanels, createTabs } from './FormCommonComponents';
+import { Const } from '../../common/Const';
 
 // 孫スキーマ以降
 type Props = {
@@ -60,7 +61,7 @@ const PanelSchema = React.memo((props: Props) => {
 
   const { documentSchema, subschema, childSchema } = schemaInfo;
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-  const isTab = customSchema['jesgo:ui:subschemastyle'] === 'tab';
+  const isTab = customSchema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'tab';
 
   const uiSchema = CreateUISchema(customSchema);
 

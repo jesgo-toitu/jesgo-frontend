@@ -173,7 +173,7 @@ export namespace JESGOFiledTemplete {
     const description =
       (uiSchema['ui:description'] as string) || schema.description;
     const items = schema.items as JSONSchema7;
-    const subschemastyle = items['jesgo:ui:subschemastyle'];
+    const subschemastyle = items[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE];
 
     // jesgo:ui:visibleWhen
     const visibleWhenCondition: VisibleWhenItem[] = [];
@@ -227,11 +227,13 @@ export namespace JESGOFiledTemplete {
             {/* eslint-enable */}
             {/* eslint-disable-next-line react/destructuring-assignment */}
             {props.items &&
-              //  eslint-disable-next-line react/destructuring-assignment 
+              //  eslint-disable-next-line react/destructuring-assignment
               props.items.map((item, index) => {
                 const editItem = item;
                 if (subschemastyle === 'inline') {
                   editItem.className += ' array-subschemastyle-inline';
+                } else if (subschemastyle === 'column') {
+                  editItem.className += ' array-subschemastyle-column';
                 }
                 // visiblewhen
                 visibleWhenCondition.forEach((condition: VisibleWhenItem) => {
@@ -273,7 +275,7 @@ export namespace JESGOFiledTemplete {
   // https://github.com/rjsf-team/react-jsonschema-form/blob/4542cd254ffdc6dfaf55e8c9f6f17dc900d0d041/packages/core/src/components/fields/ObjectField.js
   // Latest commit 64b8921
   /* eslint-disable react/destructuring-assignment */
-  export const CustiomObjectFieldTemplate = (
+  export const CustomObjectFieldTemplate = (
     props: ObjectFieldTemplateProps
   ) => {
     const {

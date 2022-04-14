@@ -4,9 +4,26 @@
 
 .array-item-border {
   border-bottom: 2px dotted #a0a0a0;
-  padding-top: 15px;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  padding-top: 5px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* 横並び type=object */
+.subschemastyle-column > fieldset{
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* flexを無効化する */
+.subschemastyle-column > fieldset > .field-array,.field-object{
+  width: 100%;
+}
+
+/* arrayの中のobjectは階層が違うので別途定義 */
+.array-subschemastyle-column .field-object > fieldset{
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .with-units-div {
@@ -27,6 +44,7 @@
 }
 .subschemastyle-inline > fieldset > .form-group{
   margin-right: 10px;
+  margin-bottom: 5px;
 }
 
 /* arrayの中のobjectは階層が違うので別途定義 */
@@ -36,6 +54,7 @@
 }
 .array-subschemastyle-inline .field-object > fieldset > .form-group{
   margin-right: 10px;
+  margin-bottom: 5px;
 }
 
 

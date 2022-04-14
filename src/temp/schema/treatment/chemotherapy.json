@@ -6,6 +6,7 @@
     "required": [
         "投与開始日"
     ],
+    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "投与開始日": {
             "type": "string",

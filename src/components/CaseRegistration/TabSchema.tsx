@@ -16,6 +16,7 @@ import {
 import { CustomSchema, getRootDescription } from './SchemaUtility';
 import { JESGOComp } from './JESGOComponent';
 import { createPanels, createTabs } from './FormCommonComponents';
+import { Const } from '../../common/Const';
 
 // ルートディレクトリ直下の子スキーマ
 type Props = {
@@ -65,7 +66,7 @@ const TabSchema = React.memo((props: Props) => {
   const dispatch = useDispatch();
 
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-  const isTab = customSchema['jesgo:ui:subschemastyle'] === 'tab';
+  const isTab = customSchema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'tab';
   const uiSchema: UiSchema = CreateUISchema(customSchema);
   uiSchema['ui:ObjectFieldTemplate'] = JESGOFiledTemplete.TabItemFieldTemplate;
 

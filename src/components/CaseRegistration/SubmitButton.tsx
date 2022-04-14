@@ -7,6 +7,7 @@ import store from '../../store/index';
 import SaveChanges, { responseResult } from '../../common/DBUtility';
 import { RESULT } from '../../common/ApiAccess';
 import { SaveDataObjDefine } from '../../store/formDataReducer';
+import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
 
 interface ButtonProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -39,9 +40,11 @@ const SubmitButton = (props: ButtonProps) => {
 
     // 保存成功時は症例一覧に戻る
     if (saveResponse.resCode === RESULT.NORMAL_TERMINATION) {
+      RemoveBeforeUnloadEvent();
       navigate('/Patients');
     } else if (saveResponse.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
       // トークン期限切れはログイン画面に戻る
+      RemoveBeforeUnloadEvent();
       navigate('/login');
     }
   }, [saveResponse]);
@@ -87,6 +90,7 @@ const SubmitButton = (props: ButtonProps) => {
 
   // 保存せずリストに戻る
   const clickCancel = () => {
+    RemoveBeforeUnloadEvent();
     navigate('/Patients');
 }
 

@@ -4,6 +4,7 @@
     "jesgo:unique": true,
     "type": "object",
     "title": "診断所見",
+    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "洗浄細胞診": {
             "type": "string",
@@ -17,6 +18,7 @@
         "筋層浸潤": {
             "type": "object",
             "title": "筋層浸潤の有無",
+            "jesgo:ui:subschemastyle": "column",
             "description": "初回手術未施行例では画像診断での判定所見",
             "properties": {
                 "所見": {

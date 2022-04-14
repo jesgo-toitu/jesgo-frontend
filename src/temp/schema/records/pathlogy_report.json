@@ -6,6 +6,7 @@
     "jesgo:parentschema": [
         "/schema/*/pathology"
     ],
+    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "検査実施日": {
             "type": "string",

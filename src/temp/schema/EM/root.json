@@ -14,7 +14,7 @@
         "/schema/EM/pathology",
         "/schema/treatment/primary_treatment"
     ],
-    "jesgo:ui:subschemastyle": "column",
+    "jesgo:ui:subschemastyle": "tab",
     "required": [
         "がん種",
         "診断日"

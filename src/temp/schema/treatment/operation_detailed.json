@@ -6,7 +6,6 @@
     "required": [
         "手術日"
     ],
-    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "手術日": {
             "type": "string",

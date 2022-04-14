@@ -3,7 +3,6 @@
     "$id": "/schema/OV/staging",
     "type": "object",
     "title": "病期診断",
-    "jesgo:ui:subschemastyle": "column",
     "$comment": "卵巣がんの病期診断.",
     "jesgo:parentschema": [
         "/schema/OV/root"

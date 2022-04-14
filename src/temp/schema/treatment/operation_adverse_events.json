@@ -3,7 +3,6 @@
     "$id": "/schema/treatment/operation_adverse_events",
     "title": "手術合併症",
     "type": "object",
-    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "合併症の種別": {
             "type": "string",

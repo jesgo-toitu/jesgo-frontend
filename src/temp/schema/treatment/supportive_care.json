@@ -3,7 +3,6 @@
     "$id": "/schema/treatment/supportive_care",
     "type": "object",
     "title": "緩和治療",
-    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "評価日": {
             "type": "string",

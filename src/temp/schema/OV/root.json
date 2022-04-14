@@ -14,7 +14,7 @@
         "/schema/OV/pathology",
         "/schema/treatment/primary_treatment"
     ],
-    "jesgo:ui:subschemastyle": "column",
+    "jesgo:ui:subschemastyle": "tab",
     "required": [
         "がん種",
         "治療開始年月日"

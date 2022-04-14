@@ -3,7 +3,6 @@
     "$id": "/schema/surveillance",
     "type": "object",
     "title": "経過",
-    "jesgo:ui:subschemastyle": "column",
     "required": [
         "確認日",
         "状態"

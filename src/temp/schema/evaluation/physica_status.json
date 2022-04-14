@@ -15,7 +15,6 @@
             "PS": "0"
         }
     ],
-    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "身長": {
             "type": "number",

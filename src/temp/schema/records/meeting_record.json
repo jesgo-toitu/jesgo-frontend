@@ -6,7 +6,6 @@
     "jesgo:parentschema": [
         "/"
     ],
-    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "日付": {
             "title": "カンファレンス日付",

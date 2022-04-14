@@ -5,7 +5,6 @@
     "type": "object",
     "title": "組織診断",
     "description": "WHO分類2014年",
-    "jesgo:ui:subschemastyle": "column",
     "properties": {
         "組織型": {
             "type": "string",

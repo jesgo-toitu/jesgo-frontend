@@ -74,7 +74,7 @@
             "then": {
                 "properties": {
                     "pTNM": {
-                        "$ref": "#pTNM"
+                        "$ref": "#/$defs/pTNM"
                     }
                 }
             }
@@ -89,7 +89,7 @@
                 "then": {
                     "properties": {
                         "ypTNM": {
-                            "$ref": "#pTNM"
+                            "$ref": "#/$defs/pTNM"
                         }
                     }
                 }
@@ -109,7 +109,7 @@
             "then": {
                 "properties": {
                     "cTMN": {
-                        "$ref": "#cTNM"
+                        "$ref": "#/$defs/cTNM"
                     }
                 }
             }
@@ -122,16 +122,15 @@
             "title": "TMN分類(UICC第8版)",
             "properties": {
                 "T": {
-                    "$ref": "#T"
+                    "$ref": "#/$defs/T"
                 },
                 "cN": {
-                    "$ref": "#N"
+                    "$ref": "#/$defs/N"
                 },
                 "cM": {
-                    "$ref": "#M"
+                    "$ref": "#/$defs/M"
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "pTNM": {
             "$id": "#pTNM",
@@ -139,16 +138,15 @@
             "title": "TMN分類(UICC第8版)",
             "properties": {
                 "T": {
-                    "$ref": "#T"
+                    "$ref": "#/$defs/T"
                 },
                 "N": {
-                    "$ref": "#N"
+                    "$ref": "#/$defs/N"
                 },
                 "M": {
-                    "$ref": "#M"
+                    "$ref": "#/$defs/M"
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "T": {
             "$id": "#T",

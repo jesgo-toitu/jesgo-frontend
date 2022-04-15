@@ -56,51 +56,47 @@
             "description": "cTNM分類は、治療を開始する前に、内診・直腸診による局所所見に画像所見を加味して総合的に判断し報告する。<br>子宮頸部円錐切除術は臨床検査とみなし,これによる組織検査の結果は原則としてcTNM分類に入れる。",
             "properties": {
                 "cT": {
-                    "$ref": "#T"
+                    "$ref": "#/$defs/T"
                 },
                 "cN": {
-                    "$ref": "#cN"
+                    "$ref": "#/$defs/cN"
                 },
                 "cM": {
-                    "$ref": "#cM"
+                    "$ref": "#/$defs/cM"
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "pTNM": {
             "type": "object",
             "title": "pTNM分類(手術を実施した症例のみ)",
             "properties": {
                 "pT": {
-                    "$ref": "#T"
+                    "$ref": "#/$defs/T"
                 },
                 "pN": {
-                    "$ref": "#pN"
+                    "$ref": "#/$defs/pN"
                 },
                 "pM": {
-                    "$ref": "#pM"
+                    "$ref": "#/$defs/pM"
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "ypTNM": {
             "type": "object",
             "title": "ypTNM分類(手術前に放射線治療や化学療法を実施した症例)",
             "properties": {
                 "ypT": {
-                    "$ref": "#T"
+                    "$ref": "#/$defs/T"
                 },
                 "ypN": {
-                    "$ref": "#pN"
+                    "$ref": "#/$defs/pN"
                 },
                 "ypM": {
-                    "$ref": "#pM"
+                    "$ref": "#/$defs/pM"
                 }
-            },
-            "additionalProperties": false
+            }
         }
     },
-    "additionalProperties": true,
     "$defs": {
         "T": {
             "$id": "#T",
@@ -137,7 +133,6 @@
                     ]
                 },
                 "T1a期の広がり": {
-                    "type": "string",
                     "title": "T1a期の腫瘍の水平方向の広がり",
                     "oneOf": [
                         {

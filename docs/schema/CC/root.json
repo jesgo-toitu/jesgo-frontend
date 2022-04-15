@@ -25,7 +25,7 @@
             "jesgo:required": [
                 "JSOG"
             ],
-            "const": "子宮頸がん",
+            "default": "子宮頸がん",
             "readOnly": true
         },
         "診断日": {

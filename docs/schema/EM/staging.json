@@ -60,16 +60,16 @@
                     "手術状況": {
                         "const": "術前治療施行例"
                     }
-                },
-                "then": {
-                    "properties": {
-                        "ypTNM": {
-                            "$ref": "#pTNM",
-                            "$comment": "術前治療後の手術によるステージングはypTMN分類を記載する."
-                        }
+                }               
+            },
+            "then": {
+                "properties": {
+                    "ypTNM": {
+                        "$ref": "#pTNM",
+                        "$comment": "術前治療後の手術によるステージングはypTMN分類を記載する."
                     }
                 }
-            }        
+            }
         }
     ],
     "$defs": {

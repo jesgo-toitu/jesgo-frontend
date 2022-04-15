@@ -9,7 +9,7 @@
     "properties": {
         "日付": {
             "title": "カンファレンス日付",
-            "type": "strings",
+            "type": "string",
             "format": "date",
             "jesgo:set": "eventdate"
         },

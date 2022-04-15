@@ -6,6 +6,8 @@ import { Login } from './views/Login';
 import Patients from './views/Patients';
 import Registration from './views/Registration';
 import store from './store/index';
+import './index.css';
+import './biz-udpgothic.css'
 
 ReactDOM.render(
   <Provider store={store}>

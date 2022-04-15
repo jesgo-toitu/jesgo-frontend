@@ -1,0 +1,13 @@
+@font-face {
+    font-family: "BIZ-UDPGothic";
+    font-weight: normal;
+    src: local("../assets/fonts/BIZUDPGothic-Regular.ttf"), local("BIZ UDPGothic");
+  }
+  
+  @font-face {
+    font-family: "BIZ-UDPGothic";
+    font-weight: 700;
+    src: local("../assets/fonts/BIZUDPGothic-Bold.ttf"), local("BIZ UDPGothic");
+  }
+  
+  

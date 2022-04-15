@@ -111,8 +111,8 @@ body {
 
 .form-group fieldset legend{
   border-bottom: 3px solid #e5e5e5;
-  font-size: medium;
-  font-weight: bold;
+  font-size: 1.3rem;
+  font-weight: 700;
 }
 
 /* 数値入力(入力部分のみ) */

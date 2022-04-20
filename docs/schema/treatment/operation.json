@@ -3,6 +3,7 @@
     "$id": "/schema/treatment/operation",
     "type": "object",
     "title": "手術療法",
+    "jesgo:ui:subschemastyle": "tab",
     "properties": {
         "手術日": {
             "type": "string",

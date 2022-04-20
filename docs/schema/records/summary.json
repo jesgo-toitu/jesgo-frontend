@@ -44,7 +44,6 @@
             "description": "閉経のあり・なしもしくは年齢."
         }
     },
-    "additionalProperties": true,
     "jesgo:subschema": [
         "/schema/evaluation/physical_status",
         "/schema/evaluation/performance_status"

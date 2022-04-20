@@ -22,7 +22,7 @@
     "properties": {
         "がん種": {
             "type": "string",
-            "const": "子宮体がん",
+            "default": "子宮体がん",
             "jesgo:required": [
                 "JSOG"
             ],

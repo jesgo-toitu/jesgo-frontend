@@ -4,7 +4,7 @@
     "type": "array",
     "title": "実施手術",
     "items": {
-        "$ref": "#procedure"
+        "$ref": "#/$defs/procedure"
     },
     "$defs": {
         "procedure": {

@@ -75,7 +75,9 @@
                 "properties": {
                     "pTNM": {
                         "$ref": "#/$defs/pTNM"
-                    }
+                    },
+                    "ypTNM": {},
+                    "cTMN": {}
                 }
             }
         },
@@ -85,13 +87,15 @@
                     "手術状況": {
                         "const": "術前治療施行"
                     }
-                },
-                "then": {
-                    "properties": {
-                        "ypTNM": {
-                            "$ref": "#/$defs/pTNM"
-                        }
-                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "pTNM": {},
+                    "ypTNM": {
+                        "$ref": "#/$defs/pTNM"
+                    },
+                    "cTMN": {}
                 }
             }
         },
@@ -108,6 +112,8 @@
             },
             "then": {
                 "properties": {
+                    "pTNM": {},
+                    "ypTNM": {},
                     "cTMN": {
                         "$ref": "#/$defs/cTNM"
                     }

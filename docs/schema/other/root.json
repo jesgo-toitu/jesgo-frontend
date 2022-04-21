@@ -45,17 +45,6 @@
             "jesgo:required": [
                 "JSOG"
             ]
-        },
-        "腫瘍登録番号": {
-            "type": "string",
-            "pattern": "^(CC|EM|US|UAS|OV|VU|VA|TD)20[0-9]{2}-[1-9][0-9]*$",
-            "jesgo:ui:enabledwhen": {
-                "properties": {
-                    "腫瘍登録対象": {
-                        "const": "はい"
-                    }
-                }
-            }
         }
     },
     "if": {
@@ -70,9 +59,10 @@
             "腫瘍登録番号": {
                 "jesgo:required": [
                     "JSOG"
-                ]
+                ],
+                "type": "string",
+                "pattern": "^(CC|EM|US|UAS|OV|VU|VA|TD)20[0-9]{2}-[1-9][0-9]*$"
             }
         }
-    },
-    "additionalProperties": true
+    }
 }

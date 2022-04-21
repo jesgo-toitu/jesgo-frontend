@@ -16,10 +16,10 @@
             "properties": {
                 "術式": {
                     "type": "string",
-                    "anyOf": [
+                    "oneOf": [
                         {
                             "title": "開腹手術",
-                            "anyOf": [
+                            "oneOf": [
                                 {
                                     "title": "子宮摘出・子宮頸部摘出術式",
                                     "enum": [
@@ -93,7 +93,7 @@
                         },
                         {
                             "title": "腹腔鏡手術",
-                            "anyOf": [
+                            "oneOf": [
                                 {
                                     "title": "子宮摘出術式",
                                     "enum": [
@@ -150,7 +150,7 @@
                         },
                         {
                             "title": "ロボット支援下手術",
-                            "anyOf": [
+                            "oneOf": [
                                 {
                                     "title": "子宮摘出術式",
                                     "enum": [

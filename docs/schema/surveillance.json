@@ -38,19 +38,11 @@
     "if": {
         "properties": {
             "状態": {
-                "anyOf": [
-                    {
-                        "const": "当該がん腫による死亡"
-                    },
-                    {
-                        "const": "他のがんによる死亡"
-                    },
-                    {
-                        "const": "がんと直接関係のない死亡"
-                    },
-                    {
-                        "const": "死因不明"
-                    }
+                "enum": [
+                    "当該がん腫による死亡",
+                    "他のがんによる死亡",
+                    "癌と直接関係のない死亡",
+                    "死因不明"
                 ]
             }
         }
@@ -58,7 +50,8 @@
     "then": {
         "properties": {
             "死亡": {
-                "const": true,
+                "type": "boolean",
+                "default": true,
                 "jesgo:ui:hidden": true,
                 "jesgo:set": "death"
             }
@@ -67,7 +60,8 @@
     "else": {
         "properties": {
             "死亡": {
-                "const": false,
+                "type": "boolean",
+                "default": false,
                 "jesgo:ui:hidden": true,
                 "jesgo:set": "death"
             }

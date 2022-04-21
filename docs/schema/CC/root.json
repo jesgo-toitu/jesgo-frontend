@@ -50,16 +50,18 @@
             "jesgo:required": [
                 "JSOG"
             ]
-        },
-        "腫瘍登録番号": {
-            "if": {
-                "properties": {
-                    "腫瘍登録対象": {
-                        "const": "はい"
-                    }
-                }
-            },
-            "then": {
+        }
+    },
+    "if": {
+        "properties": {
+            "腫瘍登録対象": {
+                "const": "はい"
+            }
+        }
+    },
+    "then": {
+        "properties": {
+            "腫瘍登録番号": {
                 "type": "string",
                 "jesgo:required": [
                     "JSOG"

@@ -40,17 +40,19 @@
             "then": {
                 "properties":{
                     "TNM": {
-                        "$ref": "#pTNM",
+                        "$ref": "#/$defs/pTNM",
                         "$comment": "ステージング手術が実施されたものはpTMN分類でTMNを記載する."
-                    }
+                    },
+                    "ypTNM": {}
                 }
             },
             "else": {
                 "properties": {
                     "TNM": {
-                        "$ref": "#TNM",
+                        "$ref": "#/$defs/TNM",
                         "$comment": "ステージング手術が実施ていないものはTMN分類でTMNを記載する."
-                    }
+                    },
+                    "ypTNM": {}
                 }
             }    
         },
@@ -60,16 +62,17 @@
                     "手術状況": {
                         "const": "術前治療施行例"
                     }
-                }               
+                }
             },
             "then": {
                 "properties": {
+                    "TNM": {},
                     "ypTNM": {
-                        "$ref": "#pTNM",
+                        "$ref": "#/$defs/pTNM",
                         "$comment": "術前治療後の手術によるステージングはypTMN分類を記載する."
                     }
                 }
-            }
+            }        
         }
     ],
     "$defs": {
@@ -78,9 +81,9 @@
             "type": "object",
             "title": "TMN分類(UICC第8版)",
             "properties": {
-                "T": { "$ref": "#T" },
-                "N": { "$ref": "#N" },
-                "M": { "$ref": "#M" }
+                "T": { "$ref": "#/$defs/T" },
+                "N": { "$ref": "#/$defs/N" },
+                "M": { "$ref": "#/$defs/M" }
             },
             "additionalProperties": false
         },
@@ -89,9 +92,9 @@
             "type": "object",
             "title": "TMN分類(UICC第8版)",
             "properties": {
-                "T": { "$ref": "#T" },
-                "N": { "$ref": "#pN" },
-                "M": { "$ref": "#M" }
+                "T": { "$ref": "#/$defs/T" },
+                "N": { "$ref": "#/$defs/pN" },
+                "M": { "$ref": "#/$defs/M" }
             },
             "additionalProperties": false
         },

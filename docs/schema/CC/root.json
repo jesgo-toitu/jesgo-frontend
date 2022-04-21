@@ -25,7 +25,7 @@
             "jesgo:required": [
                 "JSOG"
             ],
-            "const": "子宮頸がん",
+            "default": "子宮頸がん",
             "readOnly": true
         },
         "診断日": {
@@ -50,16 +50,18 @@
             "jesgo:required": [
                 "JSOG"
             ]
-        },
-        "腫瘍登録番号": {
-            "if": {
-                "properties": {
-                    "腫瘍登録対象": {
-                        "const": "はい"
-                    }
-                }
-            },
-            "then": {
+        }
+    },
+    "if": {
+        "properties": {
+            "腫瘍登録対象": {
+                "const": "はい"
+            }
+        }
+    },
+    "then": {
+        "properties": {
+            "腫瘍登録番号": {
                 "type": "string",
                 "jesgo:required": [
                     "JSOG"

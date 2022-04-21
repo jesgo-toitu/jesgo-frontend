@@ -34,7 +34,7 @@
                 "type": "object",
                 "properties": {
                     "薬剤名": {
-                        "$ref": "#drugs"
+                        "$ref": "#/$defs/drugs"
                     },
                     "投与量": {
                         "type": "number",

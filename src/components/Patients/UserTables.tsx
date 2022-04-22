@@ -9,6 +9,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { formatDate } from '../../common/DBUtility';
 import IconList from './IconList';
 
 const makeTable = (props: {
@@ -141,11 +142,11 @@ const makeTable = (props: {
             <td>{user.patientName}</td>
             <td>{user.age}</td>
             <td className={search}>{user.registedCancerGroup}</td>
-            <td className={search}>{user.startDate}</td>
+            <td className={search}>{formatDate(user.startDate ?? '', '/')}</td>
             <td className={noSearch}>
-              {user.startDate}
+              {formatDate(user.startDate ?? '', '/')}
               {user.startDate && <br />}
-              {user.lastUpdate}
+              {formatDate(user.lastUpdate, '/')}
             </td>
             <td className={noSearch}>{user.diagnosis}</td>
             <td>{user.advancedStage}</td>

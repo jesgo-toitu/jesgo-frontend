@@ -21,15 +21,15 @@ export interface responseResult {
   anyValue?: unknown;
 }
 
-// 日付文字列をyyyy-MM-ddの形式に変換
-export const formatDate = (dtStr: string) => {
+// 日付文字列をyyyy/MM/ddなどの形式に変換
+export const formatDate = (dtStr: string, separator: string) => {
   if (!dtStr) return '';
   try {
     const dateObj = new Date(dtStr);
     const y = dateObj.getFullYear();
     const m = `00${dateObj.getMonth() + 1}`.slice(-2);
     const d = `00${dateObj.getDate()}`.slice(-2);
-    return `${y}-${m}-${d}`;
+    return `${y}${separator}${m}${separator}${d}`;
   } catch {
     return '';
   }
@@ -97,11 +97,13 @@ export const loadJesgoCaseAndDocument = async (
       // 日付文字列の変換
       // 生年月日
       res.loadedSaveData.jesgo_case.date_of_birth = formatDate(
-        res.loadedSaveData.jesgo_case.date_of_birth
+        res.loadedSaveData.jesgo_case.date_of_birth,
+        '-'
       );
       // 死亡日時
       res.loadedSaveData.jesgo_case.date_of_death = formatDate(
-        res.loadedSaveData.jesgo_case.date_of_death
+        res.loadedSaveData.jesgo_case.date_of_death,
+        '-'
       );
 
       res.loadedSaveData.jesgo_document.forEach((doc) => {

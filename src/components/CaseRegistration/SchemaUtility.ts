@@ -37,13 +37,18 @@ export const getPropItemsAndNames = (item: JSONSchema7) => {
   return result;
 };
 
-/** schemaのマージ */
+/**
+ * schemaのマージ
+ * @param props 
+ */
 const mergeSchemaItem = (props: {
   targetSchema: JSONSchema7;
   setSchema: JSONSchema7;
+  formData: any;
 }) => {
   let { targetSchema } = props;
-  const { setSchema } = props;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { setSchema, formData } = props;
 
   const setRootItemNames = Object.keys(setSchema);
   setRootItemNames.forEach((itemName: string) => {
@@ -51,16 +56,30 @@ const mergeSchemaItem = (props: {
     // 上書きではなくマージ
     targetSchema = lodash.merge(targetSchema, { [itemName]: setValue });
 
-    // enumのみマージではなく上書き
+    // 中身の解析
     if (targetSchema.properties && setSchema.properties) {
       const setItem = getPropItemsAndNames(setSchema);
       const targetItem = getPropItemsAndNames(targetSchema);
       setItem.pNames.forEach((pName: string) => {
+        const pitem = setItem.pItems[pName] as JSONSchema7;
+        const tItem = targetItem.pItems[pName] as JSONSchema7;
+
         if (targetItem.pNames.includes(pName)) {
-          const pitem = setItem.pItems[pName] as JSONSchema7;
-          const tItem = targetItem.pItems[pName] as JSONSchema7;
+          // enumのみマージではなく上書き
           if (pitem && pitem.enum && tItem && tItem.enum) {
             tItem.enum = pitem.enum;
+          }
+        }
+
+        // ユーザーが入力できない場合(readonly,jesgo:ui:hidden)はFormDataにdefaultを設定
+        if (
+          tItem[Const.EX_VOCABULARY.UI_HIDDEN] === true ||
+          tItem.readOnly === true
+        ) {
+          const value = tItem.default;
+          if (value != null) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            formData[pName] = value;
           }
         }
       });
@@ -211,12 +230,16 @@ export const transferSchemaItem = (
       mergeSchemaItem({
         targetSchema: result,
         setSchema: allOfItem.then as JSONSchema7,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        formData,
       });
     } else if (allOfItem.else != null) {
       // それ以外はelseの適用（あれば）
       mergeSchemaItem({
         targetSchema: result,
         setSchema: allOfItem.else as JSONSchema7,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        formData,
       });
     }
   }
@@ -313,7 +336,3 @@ export const CustomSchema = (props: {
   return schema;
 };
 
-export const getRootDescription = (schema: JSONSchema7 | undefined) => {
-  if (schema == null) return 'undefined';
-  return schema.description ?? undefined;
-}

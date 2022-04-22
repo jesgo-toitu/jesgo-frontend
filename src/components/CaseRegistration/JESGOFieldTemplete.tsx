@@ -15,6 +15,7 @@ import { getPropItemsAndNames } from './SchemaUtility';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace JESGOFiledTemplete {
+
   // https://github.com/rjsf-team/react-jsonschema-form/blob/4542cd254ffdc6dfaf55e8c9f6f17dc900d0d041/packages/core/src/components/fields/TitleField.js
   // Latest commit ef8b7fc
   // カスタムタイトル
@@ -79,6 +80,7 @@ export namespace JESGOFiledTemplete {
     const {
       properties,
       DescriptionField,
+      description,
       idSchema,
       schema,
       uiSchema,
@@ -89,7 +91,13 @@ export namespace JESGOFiledTemplete {
     } = props;
     return (
       <fieldset id={idSchema.$id}>
-        {DescriptionField}
+        {description && (
+          <DescriptionField
+            id={`${idSchema.$id}__description`}
+            description={description}
+            // formContext={formContext}
+          />
+        )}
         {properties.map((prop) => prop.content)}
         {/* TODO：AdditionalPropertiesを制限事項にするので不要かも */}
         {utils.canExpand(schema, uiSchema, formData) && (
@@ -218,7 +226,6 @@ export namespace JESGOFiledTemplete {
             {/* eslint-enable */}
             <JESGOComp.DescriptionToolTip descriptionText={description ?? ''} />
           </legend>
-          {DescriptionField}
           {/* eslint-disable react/destructuring-assignment */}
           <div
             className="array-item-list array-item-padding"
@@ -284,7 +291,6 @@ export namespace JESGOFiledTemplete {
       schema,
       uiSchema,
       formData, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-      DescriptionField,
     } = props;
     return (
       <fieldset id={props.idSchema.$id}>
@@ -301,7 +307,6 @@ export namespace JESGOFiledTemplete {
             <JESGOComp.DescriptionToolTip descriptionText={description} />
           </legend>
         )}
-        {DescriptionField}
         {props.properties.map((prop) => prop.content)}
         {utils.canExpand(schema, uiSchema, formData) && (
           <JESGOComp.AddButton

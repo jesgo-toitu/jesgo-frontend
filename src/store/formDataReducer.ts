@@ -1,6 +1,7 @@
 import lodash from 'lodash';
 import { Reducer } from 'redux';
 import React from 'react';
+import { JesgoDocumentSchema } from './schemaDataReducer';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -48,6 +49,7 @@ export interface formDataState {
   formDatas: Map<string, any>;
   saveData: SaveDataObjDefine;
   nextSeqNo: number;
+  selectedChildTabIds: Map<string, string>;
 }
 
 export interface dispSchemaIdAndDocumentIdDefine {
@@ -79,6 +81,9 @@ export interface formDataAction {
   >;
 
   saveData: SaveDataObjDefine;
+  schemaInfo: JesgoDocumentSchema;
+  selectedChildTabId: string;
+  parentTabsId: string;
 }
 
 // ユーザID取得
@@ -117,13 +122,15 @@ const initialState: formDataState = {
     jesgo_document: [],
   },
   nextSeqNo: 1,
+  selectedChildTabIds: new Map(),
 };
 
 // 保存用オブジェクト作成(1スキーマ1オブジェクト)
 const createJesgoDocumentValueItem = (
   actionType: string,
   schemaId: number,
-  formData: any
+  formData: any,
+  schemaInfo: JesgoDocumentSchema | undefined
 ) => {
   const valueItem: jesgoDocumentValueItem = {
     case_id: '',
@@ -132,7 +139,7 @@ const createJesgoDocumentValueItem = (
     child_documents: [],
     schema_id: -1,
     schema_major_version: -1,
-    registrant: -1, // TODO: ログインIDはどこから取得する？
+    registrant: -1,
     last_updated: '',
     readonly: false,
     deleted: false,
@@ -140,8 +147,12 @@ const createJesgoDocumentValueItem = (
 
   if (actionType.includes('ADD')) {
     valueItem.schema_id = schemaId;
-    // TODO: メジャーバージョンどこから持ってくる？
-    // ret.schemaMajorVersion
+
+    // バージョン情報設定(メジャーバージョン)
+    if (schemaInfo) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      valueItem.schema_major_version = schemaInfo.version_major;
+    }
   }
 
   if (formData) {
@@ -205,12 +216,17 @@ const formDataReducer: Reducer<
   state = initialState,
   action: formDataAction | headerInfoAction // eslint-disable-line @typescript-eslint/no-explicit-any
 ) => {
+  // 初期化の場合は常に初期値返す
+  if (action.type === 'INIT_STORE') {
+    return initialState;
+  }
+
   const copyState = lodash.cloneDeep(state); // 現在の状態をコピー
 
   const { formDatas, saveData } = copyState;
 
   console.log(`action.type=${action.type}`);
-  console.log(action);
+  // console.log(action);
 
   if (isHeaderInfoAction(action)) {
     // ヘッダの患者情報入力
@@ -270,7 +286,8 @@ const formDataReducer: Reducer<
         const item = createJesgoDocumentValueItem(
           action.type,
           action.schemaId,
-          action.formData
+          action.formData,
+          action.schemaInfo
         );
 
         const objDefine: jesgoDocumentObjDefine = {
@@ -307,7 +324,7 @@ const formDataReducer: Reducer<
           action.setDispChildSchemaIds
         ) {
           dispChildSchemaIds[dispChildSchemaIds.length - 1].documentId = docId;
-          action.setDispChildSchemaIds(dispChildSchemaIds);
+          action.setDispChildSchemaIds([...dispChildSchemaIds]);
         }
 
         break;
@@ -400,6 +417,16 @@ const formDataReducer: Reducer<
           );
         }
 
+        break;
+      }
+
+      // 子タブ選択
+      case 'SELECTED_CHILD_TAB': {
+        // 選択した子タブのIDと親のTabsのIDを保持する
+        copyState.selectedChildTabIds.set(
+          action.parentTabsId,
+          action.selectedChildTabId
+        );
         break;
       }
 

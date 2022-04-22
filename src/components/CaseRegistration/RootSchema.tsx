@@ -7,14 +7,14 @@ import { CreateUISchema } from './UISchemaUtility';
 import CustomDivForm from './JESGOCustomForm';
 import { GetSchemaInfo } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
-import { CustomSchema, getRootDescription } from './SchemaUtility';
+import { CustomSchema } from './SchemaUtility';
 import { JESGOFiledTemplete } from './JESGOFieldTemplete';
-import { JESGOComp } from './JESGOComponent';
 import {
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
 import { createTabs } from './FormCommonComponents';
+import { responseResult } from '../../common/DBUtility';
 
 type Props = {
   schemaId: number;
@@ -24,12 +24,23 @@ type Props = {
   >;
   documentId: string;
   loadedData: SaveDataObjDefine | undefined;
+  setSelectedTabKey: React.Dispatch<React.SetStateAction<any>>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>;
 };
 
 // ルートディレクトリのスキーマ
 const RootSchema = React.memo((props: Props) => {
-  const { schemaId, dispSchemaIds, setDispSchemaIds, documentId, loadedData } =
-    props;
+  const {
+    schemaId,
+    dispSchemaIds,
+    setDispSchemaIds,
+    documentId,
+    loadedData,
+    setSelectedTabKey,
+    setIsLoading,
+    setSaveResponse,
+  } = props;
 
   // 表示中のchild_schema
   const [dispChildSchemaIds, setDispChildSchemaIds] = useState<
@@ -57,7 +68,11 @@ const RootSchema = React.memo((props: Props) => {
   if (schemaInfo === undefined) {
     return null;
   }
-  const { documentSchema, subschema, childSchema } = schemaInfo;
+  const {
+    document_schema: documentSchema,
+    subschema,
+    child_schema: childSchema,
+  } = schemaInfo;
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
   const uiSchema = CreateUISchema(customSchema);
   uiSchema['ui:ObjectFieldTemplate'] = JESGOFiledTemplete.TabItemFieldTemplate;
@@ -101,19 +116,23 @@ const RootSchema = React.memo((props: Props) => {
           });
 
           if (dispSubSchemaIds.length > 0) {
-            setDispSubSchemaIds(dispSubSchemaIds);
+            setDispSubSchemaIds([...dispSubSchemaIds]);
           }
           if (dispChildSchemaIds.length > 0) {
-            setDispChildSchemaIds(dispChildSchemaIds);
+            setDispChildSchemaIds([...dispChildSchemaIds]);
           }
         }
       }
     }
-  }, []);
+  }, [loadedData, documentId]);
 
   // サブスキーマ
   useEffect(() => {
-    if (subschema.length > 0 && dispSubSchemaIds.length === 0) {
+    if (
+      subschema.length > 0 &&
+      dispSubSchemaIds.length === 0 &&
+      (!loadedData || documentId.startsWith('K'))
+    ) {
       // TODO: 読み込んだデータがある場合、documentIdはそのデータを入れたい
       subschema.forEach((id) => {
         const item: dispSchemaIdAndDocumentIdDefine = {
@@ -125,6 +144,7 @@ const RootSchema = React.memo((props: Props) => {
 
         // 新規時は必ずドキュメント作成する
         if (!item.documentId) {
+          const itemSchemaInfo = GetSchemaInfo(item.schemaId);
           dispatch({
             type: 'ADD_CHILD',
             schemaId: item.schemaId,
@@ -134,13 +154,11 @@ const RootSchema = React.memo((props: Props) => {
             dispChildSchemaIds: dispSubSchemaIds,
             setDispChildSchemaIds: setDispSubSchemaIds,
             isRootSchema: false,
+            schemaInfo: itemSchemaInfo,
           });
         }
       });
     }
-  }, [dispSubSchemaIds]);
-
-  useEffect(() => {
     setDispSubSchemaIdsNotDeleted(
       dispSubSchemaIds.filter((p) => p.deleted === false)
     );
@@ -152,6 +170,7 @@ const RootSchema = React.memo((props: Props) => {
       dispChildSchemaIds.forEach((item) => {
         // 新規時は必ずドキュメント作成する
         if (!item.documentId) {
+          const itemSchemaInfo = GetSchemaInfo(item.schemaId);
           dispatch({
             type: 'ADD_CHILD',
             schemaId: item.schemaId,
@@ -161,13 +180,11 @@ const RootSchema = React.memo((props: Props) => {
             dispChildSchemaIds,
             setDispChildSchemaIds,
             isRootSchema: false,
+            schemaInfo: itemSchemaInfo,
           });
         }
       });
     }
-  }, [dispChildSchemaIds]);
-
-  useEffect(() => {
     setDispChildSchemaIdsNotDeleted(
       dispChildSchemaIds.filter((p) => p.deleted === false)
     );
@@ -190,28 +207,31 @@ const RootSchema = React.memo((props: Props) => {
 
   return (
     <>
-      <ControlButton
-        schemaId={schemaId}
-        Type={COMP_TYPE.ROOT_TAB}
-        isChildSchema={true} // eslint-disable-line react/jsx-boolean-value
-        dispSchemaIds={[...dispSchemaIds]}
-        setDispSchemaIds={setDispSchemaIds}
-        dispChildSchemaIds={[...dispChildSchemaIds]}
-        setDispChildSchemaIds={setDispChildSchemaIds}
-        childSchemaIds={childSchema}
-        dispatch={dispatch}
-        documentId={documentId}
-        setFormData={setFormData}
-      />
-      <CustomDivForm
-        documentId={documentId}
-        schemaId={schemaId}
-        dispatch={dispatch}
-        setFormData={setFormData}
-        formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-        uiSchema={uiSchema}
-        schema={customSchema}
-      />
+      <div className="content-area">
+        <CustomDivForm
+          documentId={documentId}
+          schemaId={schemaId}
+          dispatch={dispatch}
+          setFormData={setFormData}
+          formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+          uiSchema={uiSchema}
+          schema={customSchema}
+        />
+        <ControlButton
+          schemaId={schemaId}
+          Type={COMP_TYPE.ROOT_TAB}
+          isChildSchema={true} // eslint-disable-line react/jsx-boolean-value
+          dispSchemaIds={[...dispSchemaIds]}
+          setDispSchemaIds={setDispSchemaIds}
+          dispChildSchemaIds={[...dispChildSchemaIds]}
+          setDispChildSchemaIds={setDispChildSchemaIds}
+          childSchemaIds={childSchema}
+          dispatch={dispatch}
+          documentId={documentId}
+          setFormData={setFormData}
+          setSelectedTabKey={setSelectedTabKey}
+        />
+      </div>
       {createTabs(
         'root',
         dispSubSchemaIds,
@@ -220,7 +240,9 @@ const RootSchema = React.memo((props: Props) => {
         dispChildSchemaIds,
         dispChildSchemaIdsNotDeleted,
         setDispChildSchemaIds,
-        loadedData
+        loadedData,
+        setIsLoading,
+        setSaveResponse
       )}
     </>
   );

@@ -9,7 +9,7 @@ import {
   getPropItemsAndNames,
 } from '../components/CaseRegistration/SchemaUtility';
 import { SaveDataObjDefine } from '../store/formDataReducer';
-import { JesgoDocumentSchema } from '../temp/ReadSchema';
+import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { GetSchemaInfo } from './CaseRegistrationUtility';
 
@@ -17,6 +17,8 @@ export interface responseResult {
   resCode?: number;
   message: string;
   loadedSaveData?: SaveDataObjDefine;
+  caseId?: number;
+  anyValue?: unknown;
 }
 
 // 日付文字列をyyyy-MM-ddの形式に変換
@@ -36,7 +38,8 @@ export const formatDate = (dtStr: string) => {
 // 症例データの保存
 export const SaveFormDataToDB = async (
   saveData: SaveDataObjDefine,
-  resFunc: React.Dispatch<React.SetStateAction<responseResult>>
+  resFunc: React.Dispatch<React.SetStateAction<responseResult>>,
+  isBack: boolean
 ) => {
   const res: responseResult = {
     message: '',
@@ -52,6 +55,7 @@ export const SaveFormDataToDB = async (
   );
 
   res.resCode = apiResult.statusNum;
+  res.anyValue = isBack;
 
   if (res.resCode === RESULT.NORMAL_TERMINATION) {
     res.message = '保存しました。';
@@ -61,6 +65,11 @@ export const SaveFormDataToDB = async (
     res.message = 'トークン期限切れ';
   } else {
     res.message = '保存に失敗しました。';
+  }
+
+  // case_idが返却される
+  if (apiResult.body && !isNaN(apiResult.body as any)) {
+    res.caseId = apiResult.body as number;
   }
 
   // 結果を呼び元に返す
@@ -115,7 +124,8 @@ const SaveChanges = async (
   dispatch: Dispatch<any>,
   formDatas: Map<string, any>,
   saveData: SaveDataObjDefine,
-  setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>
+  setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
+  isBack: boolean
 ) => {
   const copySaveData = lodash.cloneDeep(saveData);
 
@@ -129,7 +139,7 @@ const SaveChanges = async (
 
         let eventDatePropName = '';
         let deathDataPropName = '';
-        const { documentSchema } = GetSchemaInfo(
+        const { document_schema: documentSchema } = GetSchemaInfo(
           jesgoDoc.value.schema_id
         ) as JesgoDocumentSchema;
         const customSchema = CustomSchema({
@@ -188,10 +198,59 @@ const SaveChanges = async (
     dispatch({ type: 'SAVE', saveData: copySaveData });
   }
 
-  console.log(JSON.stringify(copySaveData));
+  // console.log(JSON.stringify(copySaveData));
 
   // API経由でのDB保存
-  await SaveFormDataToDB(copySaveData, setSaveResponse);
+  await SaveFormDataToDB(copySaveData, setSaveResponse, isBack);
 };
 
-export default SaveChanges;
+// ヘッダのエラーチェック
+// TODO: ここはvalidationにすべき
+export const hasJesgoCaseError = (saveData: SaveDataObjDefine) => {
+  const messages: string[] = [];
+
+  if (!saveData.jesgo_case.his_id) {
+    messages.push('患者IDを入力してください。');
+  }
+  if (!saveData.jesgo_case.date_of_birth) {
+    messages.push('生年月日を入力してください。');
+  }
+
+  if (messages.length > 0) {
+    messages.unshift('【症例入力エラー】');
+    alert(messages.join('\n'));
+    return true;
+  }
+
+  return false;
+};
+
+/**
+ * 保存コマンド
+ * @param formDatas
+ * @param saveData
+ * @param dispatch
+ * @param setIsLoading
+ * @param setSaveResponse
+ * @param isBack
+ * @returns
+ */
+const SaveCommand = (
+  formDatas: Map<string, any>,
+  saveData: SaveDataObjDefine,
+  dispatch: Dispatch<any>,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
+  isBack: boolean
+) => {
+  if (hasJesgoCaseError(saveData)) {
+    return;
+  }
+  setIsLoading(true);
+
+  // 保存処理実行
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  SaveChanges(dispatch, formDatas, saveData, setSaveResponse, isBack);
+};
+
+export default SaveCommand;

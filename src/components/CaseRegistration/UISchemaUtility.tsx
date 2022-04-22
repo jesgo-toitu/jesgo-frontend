@@ -161,6 +161,12 @@ const AddUiSchema = (
     }
   }
 
+  // "jesgo:ui:hidden"
+  // 非表示は最後に設定
+  if (schema[Const.EX_VOCABULARY.UI_HIDDEN]) {
+    resultUiSchema[Const.UI_WIDGET.WIDGET] = 'hidden';
+  }
+
   // classNameは最後に入れる
   if (classNames.length > 0) {
     resultUiSchema[Const.UI_WIDGET.CLASS] = classNames.join(' ');

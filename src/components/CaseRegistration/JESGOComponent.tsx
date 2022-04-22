@@ -43,8 +43,8 @@ export namespace JESGOComp {
     if (!descriptionText) return null;
 
     const tooltip = (
-      <Tooltip data-container="body">
-        <div>
+      <Tooltip>
+        <div className='description-tooptip'>
           {/* <br>,<br/>タグを改行に置き換え */}
           {descriptionText.split(/<br>|<br\/>/).map((item: string) => (
             <>

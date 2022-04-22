@@ -5,7 +5,7 @@ import {
   GetRootSchema,
   GetSchemaInfo,
 } from '../../common/CaseRegistrationUtility';
-import { JesgoDocumentSchema } from '../../temp/ReadSchema';
+import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 
@@ -34,6 +34,7 @@ type ControlButtonProps = {
   documentId: string;
   isChildSchema: boolean;
   setFormData?: React.Dispatch<React.SetStateAction<any>>;
+  setSelectedTabKey?: React.Dispatch<React.SetStateAction<any>>;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -50,22 +51,29 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     documentId,
     isChildSchema,
     setFormData,
+    setSelectedTabKey,
   } = props;
 
   // ルートの場合ルートドキュメント それ以外はchild_schema
   const canAddSchemaIds =
     Type === COMP_TYPE.ROOT ? GetRootSchema() : childSchemaIds;
   const canAddSchemas = [] as JesgoDocumentSchema[];
-  canAddSchemaIds.forEach((id: number) => {
-    // TODO: 追加済みのものは出さないとしているが、同一スキーマの作成は今後ある
-    // 追加済みのものは候補に出さない
-    if (!dispChildSchemaIds.find((p) => p.schemaId === id && p.deleted === false)) {
-      const info: unknown = GetSchemaInfo(id);
-      if (info != null) {
-        canAddSchemas.push(info as JesgoDocumentSchema);
+  if (canAddSchemaIds != null && canAddSchemaIds.length > 0) {
+    canAddSchemaIds.forEach((id: number) => {
+      // TODO: 追加済みのものは出さないとしているが、同一スキーマの作成は今後ある
+      // 追加済みのものは候補に出さない
+      if (
+        !dispChildSchemaIds.find(
+          (p) => p.schemaId === id && p.deleted === false
+        )
+      ) {
+        const info: unknown = GetSchemaInfo(id);
+        if (info != null) {
+          canAddSchemas.push(info as JesgoDocumentSchema);
+        }
       }
-    }
-  });
+    });
+  }
 
   /// コントロールボタン メニュー選択イベントハンドラ
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,13 +87,17 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           // 上（左）へ移動
           // 自分が先頭の場合は何もしない
           if (index > 0 && setDispSchemaIds != null) {
+            const newIndex = index - 1;
             copyIds.splice(index, 1);
             copyIds.splice(
-              index - 1,
+              newIndex,
               0,
               findItem as dispSchemaIdAndDocumentIdDefine
             );
             setDispSchemaIds([...copyIds]);
+            if (setSelectedTabKey) {
+              setSelectedTabKey(newIndex);
+            }
           }
           break;
 
@@ -93,13 +105,17 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           // 下（右）へ移動
           // 自分が末尾の場合は何もしない
           if (index < copyIds.length - 1 && setDispSchemaIds != null) {
+            const newIndex = index + 1;
             copyIds.splice(index, 1);
             copyIds.splice(
-              index + 1,
+              newIndex,
               0,
               findItem as dispSchemaIdAndDocumentIdDefine
             );
             setDispSchemaIds([...copyIds]);
+            if (setSelectedTabKey) {
+              setSelectedTabKey(newIndex);
+            }
           }
           break;
         case 'delete':
@@ -125,7 +141,9 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     } else if (typeof eventKey === 'number') {
       // 子ドキュメントの追加
       const copyIds = [...dispChildSchemaIds];
-      if (!copyIds.find((p) => p.schemaId === eventKey && p.deleted === false)) {
+      if (
+        !copyIds.find((p) => p.schemaId === eventKey && p.deleted === false)
+      ) {
         const addItem: dispSchemaIdAndDocumentIdDefine = {
           documentId: '',
           schemaId: eventKey,
@@ -192,8 +210,8 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           {canAddSchemas.map((info: JesgoDocumentSchema) => {
             return (
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              <MenuItem key={info.documentId} eventKey={info.documentId}>
-                {`${info.title} の追加`}
+              <MenuItem key={info.schema_id} eventKey={info.schema_id}>
+                {`${info.title} ${info.subtitle} の追加`}
               </MenuItem>
             );
           })}

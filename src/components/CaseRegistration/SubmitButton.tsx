@@ -1,20 +1,24 @@
+/* eslint-disable no-alert */
+/* eslint-disable no-restricted-globals */
 import React, { useEffect, useState } from 'react';
 import { Button, Col } from 'react-bootstrap';
 import '../../views/Registration.css';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import store from '../../store/index';
-import SaveChanges, { responseResult } from '../../common/DBUtility';
+import SaveCommand, { responseResult } from '../../common/DBUtility';
 import { RESULT } from '../../common/ApiAccess';
-import { SaveDataObjDefine } from '../../store/formDataReducer';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
 
 interface ButtonProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setLoadedJesgoCase: React.Dispatch<React.SetStateAction<responseResult>>;
+  setCaseId: React.Dispatch<React.SetStateAction<number | undefined>>;
+  setIsReload: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const SubmitButton = (props: ButtonProps) => {
-  const { setIsLoading } = props;
+  const { setIsLoading, setLoadedJesgoCase, setCaseId, setIsReload } = props;
 
   // 保存時の応答
   const [saveResponse, setSaveResponse] = useState<responseResult>({
@@ -27,6 +31,7 @@ const SubmitButton = (props: ButtonProps) => {
 
   // 保存時のコールバック
   useEffect(() => {
+    // 保存しましたなどのメッセージ表示
     if (
       saveResponse.resCode !== RESULT.TOKEN_EXPIRED_ERROR &&
       saveResponse.message
@@ -38,10 +43,30 @@ const SubmitButton = (props: ButtonProps) => {
       setIsLoading(false);
     }
 
-    // 保存成功時は症例一覧に戻る
     if (saveResponse.resCode === RESULT.NORMAL_TERMINATION) {
-      RemoveBeforeUnloadEvent();
-      navigate('/Patients');
+      // 保存して戻る場合は症例一覧に戻る
+      if (
+        saveResponse.anyValue &&
+        (saveResponse.anyValue as boolean) === true
+      ) {
+        RemoveBeforeUnloadEvent();
+        navigate('/Patients');
+      } else if (saveResponse.caseId) {
+        // 保存ボタンの場合は再読み込み
+        setIsLoading(true);
+        setLoadedJesgoCase({
+          message: '',
+          resCode: undefined,
+          loadedSaveData: undefined,
+        });
+        setCaseId(saveResponse.caseId);
+        setIsReload(true);
+      } else {
+        // TODO: 読み込み失敗
+        setIsLoading(false);
+        RemoveBeforeUnloadEvent();
+        navigate('/Patients');
+      }
     } else if (saveResponse.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
       // トークン期限切れはログイン画面に戻る
       RemoveBeforeUnloadEvent();
@@ -49,60 +74,63 @@ const SubmitButton = (props: ButtonProps) => {
     }
   }, [saveResponse]);
 
-  // ヘッダのエラーチェック
-  // TODO: ここはvalidationにすべき
-  const hasJesgoCaseError = (saveData: SaveDataObjDefine) => {
-    const messages: string[] = [];
-
-    if (!saveData.jesgo_case.his_id) {
-      messages.push('患者IDを入力してください。');
-    }
-    if (!saveData.jesgo_case.date_of_birth) {
-      messages.push('生年月日を入力してください。');
-    }
-
-    if (messages.length > 0) {
-      messages.unshift('【症例入力エラー】');
-      alert(messages.join('\n'));
-      return true;
-    }
-
-    return false;
-  };
-
-  // 保存ボタンクリック
-  const clickSubmit = () => {
+  /**
+   * 保存ボタンクリック
+   * @param isBack 保存して戻る場合はtrue
+   */
+  const clickSubmit = (isBack: boolean) => {
     const formDatas = store.getState().formDataReducer.formDatas;
     const saveData = store.getState().formDataReducer.saveData;
 
-    // ヘッダのエラーチェック
-    // TODO: ここはvalidationにすべき
-    if (hasJesgoCaseError(saveData)) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    // 保存処理実行
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    SaveChanges(dispatch, formDatas, saveData, setSaveResponse);
+    SaveCommand(
+      formDatas,
+      saveData,
+      dispatch,
+      setIsLoading,
+      setSaveResponse,
+      isBack
+    );
   };
 
   // 保存せずリストに戻る
   const clickCancel = () => {
-    RemoveBeforeUnloadEvent();
-    navigate('/Patients');
-}
-
+    if (
+      confirm(
+        '画面を閉じて患者リストに戻ります。保存してないデータは失われます。\nよろしいですか？'
+      )
+    ) {
+      RemoveBeforeUnloadEvent();
+      navigate('/Patients');
+    }
+  };
 
   return (
     <Col lg={3} md={3} className="user-info-button-col">
       <div className="user-info-button-div">
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
-        <Button onClick={clickSubmit} bsStyle="primary" className="normal-button">
+        <Button
+          bsStyle="success"
+          className="normal-button"
+          onClick={() => {
+            clickSubmit(false);
+          }}
+        >
+          保存
+        </Button>
+        <Button
+          onClick={() => {
+            clickSubmit(true);
+          }}
+          bsStyle="success"
+          className="normal-button"
+        >
           保存してリストに戻る
         </Button>
-        <Button onClick={clickCancel} bsStyle="secondary" className="normal-button">
+        <Button
+          onClick={clickCancel}
+          bsStyle="secondary"
+          className="normal-button"
+        >
           閉じる
         </Button>
       </div>

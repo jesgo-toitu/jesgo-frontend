@@ -41,7 +41,7 @@
                 "enum": [
                     "当該がん腫による死亡",
                     "他のがんによる死亡",
-                    "がんと直接関係のない死亡",
+                    "癌と直接関係のない死亡",
                     "死因不明"
                 ]
             }
@@ -51,7 +51,7 @@
         "properties": {
             "死亡": {
                 "type": "boolean",
-                "const": true,
+                "default": true,
                 "jesgo:ui:hidden": true,
                 "jesgo:set": "death"
             }
@@ -61,7 +61,7 @@
         "properties": {
             "死亡": {
                 "type": "boolean",
-                "const": false,
+                "default": false,
                 "jesgo:ui:hidden": true,
                 "jesgo:set": "death"
             }

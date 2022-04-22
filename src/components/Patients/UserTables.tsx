@@ -6,6 +6,8 @@ import {
   Glyphicon,
   Table,
 } from 'react-bootstrap';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import IconList from './IconList';
 
@@ -40,6 +42,9 @@ const makeTable = (props: {
   const [userList, setUserList] = useState<userData[]>([]);
   const { userListJson, search, noSearch, progressAndRecurrenceColumn } = props;
   let userDataListJson: userDataList;
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (userListJson.length > 0) {
@@ -85,6 +90,13 @@ const makeTable = (props: {
     }
   };
 
+  // 編集ボタンクリック
+  const clickEdit = (caseId: number) => {
+    // 遷移前にstoreを初期化
+    dispatch({ type: 'INIT_STORE' });
+    navigate(`/registration?id=${caseId}`);
+  };
+
   return (
     <Table striped className="patients">
       <thead>
@@ -106,22 +118,32 @@ const makeTable = (props: {
           <th className={search}>合併症</th>
           <th className={progressAndRecurrenceColumn}>経過</th>
           <th className={progressAndRecurrenceColumn}>再発後治療</th>
-          <th className={search}>3年予後</th>
-          <th className={search}>5年予後</th>
           <th className={noSearch}>ステータス</th>
-          <th>編集/削除</th>
+          {(localStorage.getItem('is_edit_roll') === 'true' ||
+            localStorage.getItem('is_remove_roll') === 'true') && (
+            <th>
+              {localStorage.getItem('is_edit_roll') === 'true' && '編集'}
+              {localStorage.getItem('is_edit_roll') === 'true' &&
+                localStorage.getItem('is_remove_roll') === 'true' &&
+                '/'}
+              {localStorage.getItem('is_remove_roll') === 'true' && '削除'}
+            </th>
+          )}
         </tr>
       </thead>
       <tbody>
         {userList.map((user) => (
-          <tr key={user.caseId.toString()}>
+          <tr
+            className={user.status.includes('death') ? 'died' : ''}
+            key={user.caseId.toString()}
+          >
             <td>{user.patientId}</td>
             <td>{user.patientName}</td>
             <td>{user.age}</td>
             <td className={search}>{user.registedCancerGroup}</td>
             <td className={search}>{user.startDate}</td>
             <td className={noSearch}>
-              {user.startDate} <br /> {user.lastUpdate}
+              {user.startDate && `${user.startDate}<br />`} {user.lastUpdate}
             </td>
             <td className={noSearch}>{user.diagnosis}</td>
             <td>{user.advancedStage}</td>
@@ -138,39 +160,36 @@ const makeTable = (props: {
             <td className={progressAndRecurrenceColumn}>
               <IconList iconList={user.postRelapseTreatment} />
             </td>
-            <td className={search}>
-              {user.threeYearPrognosis && (
-                <img src="./image/icon_3.png" alt="3" />
-              )}
-            </td>
-            <td className={search}>
-              {user.fiveYearPrognosis && (
-                <img src="./image/icon_5.png" alt="5" />
-              )}
-            </td>
             <td className={noSearch}>
               <IconList iconList={user.status} />
             </td>
-            <td>
-              <ButtonToolbar>
-                <ButtonGroup>
-                  <Button href={`/registration?id=${user.caseId}`}>
-                    <Glyphicon glyph="edit" />
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      deletePatient(
-                        user.caseId,
-                        user.patientId,
-                        user.patientName
-                      )
-                    }
-                  >
-                    <Glyphicon glyph="trash" />
-                  </Button>
-                </ButtonGroup>
-              </ButtonToolbar>
-            </td>
+            {(localStorage.getItem('is_edit_roll') === 'true' ||
+              localStorage.getItem('is_remove_roll') === 'true') && (
+              <td>
+                <ButtonToolbar>
+                  <ButtonGroup>
+                    {localStorage.getItem('is_edit_roll') === 'true' && (
+                      <Button onClick={() => clickEdit(user.caseId)}>
+                        <Glyphicon glyph="edit" />
+                      </Button>
+                    )}
+                    {localStorage.getItem('is_remove_roll') === 'true' && (
+                      <Button
+                        onClick={() =>
+                          deletePatient(
+                            user.caseId,
+                            user.patientId,
+                            user.patientName
+                          )
+                        }
+                      >
+                        <Glyphicon glyph="trash" />
+                      </Button>
+                    )}
+                  </ButtonGroup>
+                </ButtonToolbar>
+              </td>
+            )}
           </tr>
         ))}
       </tbody>

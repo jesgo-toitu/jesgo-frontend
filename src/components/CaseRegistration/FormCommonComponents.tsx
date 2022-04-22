@@ -1,56 +1,65 @@
-import React from 'react';
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import React, { useEffect, useRef, useState } from 'react';
 import { Tabs, Tab } from 'react-bootstrap';
+import { useDispatch } from 'react-redux';
 import { GetSchemaInfo } from '../../common/CaseRegistrationUtility';
+import { TabSelectMessage } from '../../common/CommonUtility';
+import SaveCommand, { responseResult } from '../../common/DBUtility';
+import store from '../../store';
 import {
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
-import { JESGOComp } from './JESGOComponent';
 import PanelSchema from './PanelSchema';
-import { getRootDescription } from './SchemaUtility';
 import TabSchema from './TabSchema';
 
 export const createTab = (
+  parentTabsId: string,
   schemaIds: dispSchemaIdAndDocumentIdDefine[],
   filteredSchemaIds: dispSchemaIdAndDocumentIdDefine[],
   setSchemaIds: React.Dispatch<
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >,
   isChildSchema: boolean,
-  loadedData: SaveDataObjDefine | undefined
+  loadedData: SaveDataObjDefine | undefined,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
+  subSchemaCount: number
 ) =>
   // subschema表示
-  filteredSchemaIds.map((info: dispSchemaIdAndDocumentIdDefine) => {
-    // TODO 仮。本来はAPI
-    const title = GetSchemaInfo(info.schemaId)?.title ?? '';
-    const description =
-      getRootDescription(GetSchemaInfo(info.schemaId)?.documentSchema) ?? '';
+  filteredSchemaIds.map(
+    (info: dispSchemaIdAndDocumentIdDefine, index: number) => {
+      // TODO: サブタイトル追加は暫定対応。今後使用しない可能性あり
+      const schemaInfo = GetSchemaInfo(info.schemaId);
+      let title = schemaInfo?.title ?? '';
+      if (schemaInfo?.subtitle) {
+        title += ` ${schemaInfo.subtitle}`;
+      }
 
-    return (
-      // TODO TabSchemaにTabを置くとうまく動作しなくなる
-      <Tab
-        key={`tab-${info.schemaId}`}
-        className="panel-style"
-        eventKey={info.schemaId}
-        title={
-          <>
-            <span>{title} </span>
-            <JESGOComp.DescriptionToolTip descriptionText={description} />
-          </>
-        }
-      >
-        <TabSchema
-          key={`tabitem-${info.schemaId}`}
-          isChildSchema={isChildSchema}
-          schemaId={info.schemaId}
-          documentId={info.documentId}
-          dispSchemaIds={[...schemaIds]}
-          setDispSchemaIds={setSchemaIds}
-          loadedData={loadedData}
-        />
-      </Tab>
-    );
-  });
+      return (
+        // TODO TabSchemaにTabを置くとうまく動作しなくなる
+        <Tab
+          key={`tab-${info.schemaId}`}
+          className="panel-style"
+          eventKey={subSchemaCount + index}
+          title={<span>{title} </span>}
+        >
+          <TabSchema
+            key={`tabitem-${info.schemaId}`}
+            isChildSchema={isChildSchema}
+            schemaId={info.schemaId}
+            documentId={info.documentId}
+            dispSchemaIds={[...schemaIds]}
+            setDispSchemaIds={setSchemaIds}
+            loadedData={loadedData}
+            setIsLoading={setIsLoading}
+            setSaveResponse={setSaveResponse}
+            parentTabsId={parentTabsId}
+          />
+        </Tab>
+      );
+    }
+  );
 
 export const createTabs = (
   id: string,
@@ -65,30 +74,100 @@ export const createTabs = (
   setDispChildSchemaIds: React.Dispatch<
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >,
+  loadedData: SaveDataObjDefine | undefined,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>
+) => {
+  // 選択中のタブeventKey
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const [selectedTabKey, setSelectedTabKey] = useState<any>();
 
-  loadedData: SaveDataObjDefine | undefined
-) =>
-  (subschemaIds.length > 0 || dispChildSchemaIds.length > 0) && (
-    <Tabs id={`${id}-tabs`}>
-      {/* subschema表示 */}
-      {createTab(
-        subschemaIds,
-        subschemaIdsNotDeleted,
-        setSubschemaIds,
-        false,
-        loadedData
-      )}
+  const dispatch = useDispatch();
 
-      {/* childSchema表示 */}
-      {createTab(
-        dispChildSchemaIds,
-        dispChildSchemaIdsNotDeleted,
-        setDispChildSchemaIds,
-        true,
-        loadedData
-      )}
-    </Tabs>
+  // タブ選択イベント
+  const onTabSelectEvent = (eventKey: any) => {
+    if (eventKey === selectedTabKey) return;
+
+    // TODO：タブ移動での保存は一時的にオフ
+    setSelectedTabKey(eventKey);
+    return;
+
+    // 保存しますかメッセージ
+    // if (TabSelectMessage()) {
+    if (true) {
+      const formDatas = store.getState().formDataReducer.formDatas;
+      const saveData = store.getState().formDataReducer.saveData;
+
+      dispatch({
+        type: 'SELECTED_CHILD_TAB',
+        parentTabsId: `${id}-tabs`,
+        selectedChildTabId: eventKey as string,
+      });
+
+      // 保存処理
+      SaveCommand(
+        formDatas,
+        saveData,
+        dispatch,
+        setIsLoading,
+        setSaveResponse,
+        false
+      );
+
+      setSelectedTabKey(eventKey);
+    } else {
+      // TODO: キャンセルの場合は留まる？
+      // setSelectedTabKey(selectedTabKey);
+      setSelectedTabKey(eventKey);
+    }
+  };
+
+  // 子タブでの保存後の選択タブ復元処理
+  useEffect(() => {
+    // TODO: 親IDが被っているので一意になるような命名にしなければならない
+    const tabIds = store.getState().formDataReducer.selectedChildTabIds;
+    const tabId = tabIds.get(`${id}-tabs`);
+    if (tabId) {
+      setSelectedTabKey(tabId);
+    }
+  }, []);
+
+  return (
+    (subschemaIds.length > 0 || dispChildSchemaIds.length > 0) && (
+      <Tabs
+        id={`${id}-tabs`}
+        activeKey={selectedTabKey} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        onSelect={(eventKey) => onTabSelectEvent(eventKey)}
+      >
+        {/* subschema表示 */}
+        {createTab(
+          `${id}-tabs`,
+          subschemaIds,
+          subschemaIdsNotDeleted,
+          setSubschemaIds,
+          false,
+          loadedData,
+          setIsLoading,
+          setSaveResponse,
+          0
+        )}
+
+        {/* childSchema表示 */}
+        {createTab(
+          `${id}-tabs`,
+          dispChildSchemaIds,
+          dispChildSchemaIdsNotDeleted,
+          setDispChildSchemaIds,
+          true,
+          loadedData,
+          setIsLoading,
+          setSaveResponse,
+          subschemaIdsNotDeleted.length
+        )}
+      </Tabs>
+    )
   );
+};
 
 // パネル作成
 export const createPanel = (
@@ -98,7 +177,9 @@ export const createPanel = (
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >,
   isChildSchema: boolean,
-  loadedData: SaveDataObjDefine | undefined
+  loadedData: SaveDataObjDefine | undefined,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>
 ) =>
   // subschema表示
   filteredSchemaIds.map((info: dispSchemaIdAndDocumentIdDefine) => (
@@ -111,6 +192,8 @@ export const createPanel = (
       dispSchemaIds={[...schemaIds]}
       setDispSchemaIds={setSchemaIds}
       loadedData={loadedData}
+      setIsLoading={setIsLoading}
+      setSaveResponse={setSaveResponse}
     />
   ));
 
@@ -128,7 +211,9 @@ export const createPanels = (
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >,
 
-  loadedData: SaveDataObjDefine | undefined
+  loadedData: SaveDataObjDefine | undefined,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>
 ) =>
   (subschemaIdsNotDeleted.length > 0 ||
     dispChildSchemaIdsNotDeleted.length > 0) && (
@@ -138,14 +223,18 @@ export const createPanels = (
         subschemaIdsNotDeleted,
         setSubschemaIds,
         false,
-        loadedData
+        loadedData,
+        setIsLoading,
+        setSaveResponse
       )}
       {createPanel(
         dispChildSchemaIds,
         dispChildSchemaIdsNotDeleted,
         setDispChildSchemaIds,
         true,
-        loadedData
+        loadedData,
+        setIsLoading,
+        setSaveResponse
       )}
     </>
   );

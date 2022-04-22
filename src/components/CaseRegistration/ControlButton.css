@@ -1,4 +1,4 @@
 .control-button-area {
-  position: absolute;
-  right: 75px;
+  text-align: right;
+  margin-bottom: 15px;
 }

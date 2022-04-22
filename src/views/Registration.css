@@ -22,12 +22,11 @@ body {
   z-index: 999;
 }
 
-.registration-area{
-  /* margin-top: 115px; */
+.content-area {
   display: flex;
 }
 
-.content-area {
+.input-form {
   width: 100%;
   margin-right: 10px;
 }
@@ -113,11 +112,18 @@ body {
   border-bottom: 3px solid #e5e5e5;
   font-size: 1.3rem;
   font-weight: 700;
+  font-family: 'BIZ-UDPGothic';
 }
 
 /* 数値入力(入力部分のみ) */
 .input-integer input {
   width: 100px;
+  font-family: 'BIZ-UDPGothic';
+}
+
+.input-integer select {
+  width: auto;
+  font-family: 'BIZ-UDPGothic';
 }
 
 .input-integer select {
@@ -127,6 +133,19 @@ body {
 /* 日付入力(入力部分のみ) */
 .input-date input[type="date"] {
   width: 200px;
+  font-family: 'BIZ-UDPGothic';
+}
+
+/* input */
+.input-text input[type="text"] {
+  width: auto;
+  min-width: 200px;
+  font-family: 'BIZ-UDPGothic';
+}
+.input-text select {
+  width: auto;
+  min-width: 200px;
+  font-family: 'BIZ-UDPGothic';
 }
 
 /* input */
@@ -155,10 +174,6 @@ body {
 
 .sidebar {
   display: none;
-}
-
-.first-content-area {
-  display: flex;
 }
 
 @media screen and (min-width: 768px) {

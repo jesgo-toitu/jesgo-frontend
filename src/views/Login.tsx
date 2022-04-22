@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import './Login.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 
@@ -10,12 +11,20 @@ export interface localStorageObject {
   display_name: string;
   token: string;
   reflesh_token: string;
-};
+  roll_id: number;
+  is_view_roll: boolean;
+  is_add_roll: boolean;
+  is_edit_roll: boolean;
+  is_remove_roll: boolean;
+  is_data_manage_roll: boolean;
+  is_system_manage_roll: boolean;
+}
 
 export const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const submit = async () => {
     const loginInfo = { name: username, password };
@@ -31,7 +40,59 @@ export const Login = () => {
       localStorage.setItem('reflesh_token', localStorageObj.reflesh_token);
       localStorage.setItem('user_id', localStorageObj.user_id.toString());
       localStorage.setItem('display_name', localStorageObj.display_name);
-      navigate('/patients');
+      localStorage.setItem('roll_id', localStorageObj.roll_id.toString());
+      localStorage.setItem(
+        'is_view_roll',
+        localStorageObj.is_view_roll.toString()
+      );
+      localStorage.setItem(
+        'is_add_roll',
+        localStorageObj.is_add_roll.toString()
+      );
+      localStorage.setItem(
+        'is_edit_roll',
+        localStorageObj.is_edit_roll.toString()
+      );
+      localStorage.setItem(
+        'is_remove_roll',
+        localStorageObj.is_remove_roll.toString()
+      );
+      localStorage.setItem(
+        'is_data_manage_roll',
+        localStorageObj.is_data_manage_roll.toString()
+      );
+      localStorage.setItem(
+        'is_system_manage_roll',
+        localStorageObj.is_system_manage_roll.toString()
+      );
+
+      // スキーマ取得処理
+      const returnSchemaApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `getJsonSchema`
+      );
+
+      // ルートスキーマID取得処理
+      if (returnSchemaApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        dispatch({
+          type: 'SCHEMA',
+          schemaDatas: returnSchemaApiObject.body,
+        });
+      }
+
+      const returnRootSchemaIdsApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `getRootSchemaIds`
+      );
+      if (
+        returnRootSchemaIdsApiObject.statusNum === RESULT.NORMAL_TERMINATION
+      ) {
+        dispatch({
+          type: 'ROOT',
+          rootSchemas: returnRootSchemaIdsApiObject.body,
+        });
+      }
+      navigate('/Patients');
     } else {
       // eslint-disable-next-line no-alert
       alert(`ログインに失敗しました。ユーザ名かパスワードが間違っています。`);

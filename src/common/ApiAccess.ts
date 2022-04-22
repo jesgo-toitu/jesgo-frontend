@@ -11,6 +11,10 @@ export const RESULT = {
   ABNORMAL_TERMINATION: -1,
   ID_DUPLICATION: -2,
   TOKEN_EXPIRED_ERROR: -10,
+  FAILED_USER_ALREADY_REGISTERED:-100,
+  FAILED_USER_ERROR:-101,
+  UNAUTHORIZED_OPERATIONS:-900,  
+  
 };
 
 export const METHOD_TYPE = {
@@ -107,6 +111,7 @@ const apiAccess = async (
             localStorage.removeItem('reflesh_token');
             localStorage.removeItem('user_id');
             localStorage.removeItem('display_name');
+            localStorage.removeItem('roll_id');
             returnObj = { statusNum: RESULT.ABNORMAL_TERMINATION, body: null };
           }
         })
@@ -116,6 +121,7 @@ const apiAccess = async (
           localStorage.removeItem('reflesh_token');
           localStorage.removeItem('user_id');
           localStorage.removeItem('display_name');
+          localStorage.removeItem('roll_id');
           console.log(err);
           returnObj = { statusNum: RESULT.ABNORMAL_TERMINATION, body: null };
         });

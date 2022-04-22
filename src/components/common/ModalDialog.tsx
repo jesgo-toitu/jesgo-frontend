@@ -1,8 +1,32 @@
 import React from "react";
 import {Modal, Button} from 'react-bootstrap';
+import './ModalDialog.css';
 
 export const ModalDialog = (props:any) => {
-  const { title, message } = props;
+  const { title, message, type } = props;
+
+const buttonControl: any = () => {
+
+  if( type == 'Confirm' ){
+    return (
+        <>
+          <Button bsStyle={"secondary"} onClick={props.onCancel}>
+            いいえ
+          </Button>
+          <Button bsStyle={"primary"} onClick={props.onOk}>
+            はい
+          </Button>
+        </>      
+    )
+  }
+  return (
+      <>
+      <Button bsStyle={"primary"} onClick={props.onOk}>
+        閉じる
+      </Button>
+      </>
+  )
+};
 
   return (
     <>
@@ -10,14 +34,9 @@ export const ModalDialog = (props:any) => {
         <Modal.Header closeButton>
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>{message}</Modal.Body>
+        <Modal.Body className="modal-body-cr">{props.message}</Modal.Body>
         <Modal.Footer>
-          <Button bsStyle={"secondary"} onClick={props.onCancel}>
-            いいえ
-          </Button>
-          <Button bsStyle={"primary"} onClick={props.onOk}>
-            はい
-          </Button>
+          {buttonControl()}
         </Modal.Footer>
       </Modal>
     </>

@@ -31,8 +31,13 @@
   align-items: center;
 }
 
+/* descriptionのラベル */
+.description-tooptip {
+  text-align: left;
+}
+
 /* 階層ドロップダウンのグループ */
-.layer-dropdown-group-title{
+.layer-dropdown-group-title {
   font-weight: bold;
 }
 

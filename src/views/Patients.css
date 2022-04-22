@@ -32,14 +32,14 @@
 
 .search-form-outer {
   width: 96%;
-  margin: 120px 2% 0 2%;
+  margin: 13rem 2% 0 2%;
 }
 
 .page-menu {
   width: 96%;
-  padding: 0px;
+  padding: 0rem;
   margin: 0 2% 0 2%;
-  top: 60px;
+  top: 4.35rem;
   position: fixed;
   background-color: #f9f9f9;
   z-index: 150;
@@ -64,7 +64,8 @@
 .search-form-opened div:first-child {
   display: flex;
   align-items: center;
-  height: 30px;
+  /* height: 30px; */
+  height: auto;
 }
 
 .search-form-opened div select {
@@ -149,4 +150,20 @@
 .normal-button {
   margin: 10px;
   padding: 10px;
+}
+
+.patient-navbar {
+  margin-bottom: 0.125rem;
+  border: 2px solid transparent;
+  display: flex;
+}
+
+.img {
+  height: 60px;
+  padding: 10px 10px;
+  vertical-align: middle;
+}
+
+.header-text {
+  font-size: 1.4rem;
 }

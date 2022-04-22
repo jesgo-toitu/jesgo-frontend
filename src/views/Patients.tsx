@@ -19,13 +19,13 @@ import {
 import UserTables from '../components/Patients/UserTables';
 import './Patients.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
-import UserMenu from '../components/common/UserMenu';
-import SystemMenu from '../components/common/SystemMenu';
+import { UserMenu } from '../components/common/UserMenu';
+import { SystemMenu } from '../components/common/SystemMenu';
 
 const Patients = () => {
   const navigate = useNavigate();
   const url: string = useLocation().search;
-  const userName = localStorage.getItem('display_name')!;
+  const userName = localStorage.getItem('display_name');
   const [searchFormOpen, setSearchFormOpen] = useState('hidden');
   const [simpleSearchButtons, setSimpleSearchButtons] = useState('hidden');
   const [detailSearchOpen, setDetailSearchOpen] = useState('hidden');
@@ -291,7 +291,7 @@ const Patients = () => {
 
     if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
       setUserListJson(JSON.stringify(returnApiObject.body));
-      navigate(`/patients?${param}`);
+      navigate(`/Patients?${param}`);
     } else {
       navigate('/login');
     }
@@ -302,7 +302,7 @@ const Patients = () => {
       <Navbar collapseOnSelect fixedTop>
         <Navbar.Header>
           <Navbar.Brand>
-            <img src="./image/logo.png" alt="JESGO" />
+            <img src="./image/logo.png" alt="JESGO" className='img' />
           </Navbar.Brand>
           <Navbar.Toggle />
         </Navbar.Header>
@@ -311,7 +311,7 @@ const Patients = () => {
             <NavItem
               eventKey={1}
               href="#"
-              className={listMode[0]}
+              className={`header-text ${listMode[0]}`}
               onClick={() => changeListColumn(false)}
             >
               患者リスト表示
@@ -319,7 +319,7 @@ const Patients = () => {
             <NavItem
               eventKey={2}
               href="#"
-              className={listMode[1]}
+              className={`header-text ${listMode[1]}`}
               onClick={() => changeListColumn(true)}
             >
               腫瘍登録管理表示
@@ -327,17 +327,11 @@ const Patients = () => {
           </Nav>
           <Nav pullRight>
             <NavItem>
-              <UserMenu
-                title={userName}
-                i={0}
-                />
-              </NavItem>
-              <NavItem>
-                <SystemMenu
-                  title='設定'
-                  i={0}
-                  />                
-              </NavItem>
+              <UserMenu title={userName} i={0} />
+            </NavItem>
+            <NavItem>
+              <SystemMenu title="設定" i={0} />
+            </NavItem>
           </Nav>
         </Navbar.Collapse>
       </Navbar>
@@ -345,18 +339,24 @@ const Patients = () => {
         <div className="search-form-closed flex">
           <ButtonToolbar>
             <ButtonGroup>
-              <Button onClick={() => changeView('simpleSearch')} >
+              <Button onClick={() => changeView('simpleSearch')}>
                 <Glyphicon glyph="search" />
               </Button>
-              <Button onClick={() => changeView('detailSearch')} >
+              <Button onClick={() => changeView('detailSearch')}>
                 <Glyphicon glyph="eye-open" />
               </Button>
             </ButtonGroup>
           </ButtonToolbar>
           <div className="spacer10" />
-          <Button bsStyle="primary" href="/registration" className="normal-button">
-            新規作成
-          </Button>
+          {localStorage.getItem('is_add_roll') === 'true' && (
+            <Button
+              bsStyle="primary"
+              href="/registration"
+              className="normal-button"
+            >
+              新規作成
+            </Button>
+          )}
         </div>
       </div>
       <div className="search-form-outer">

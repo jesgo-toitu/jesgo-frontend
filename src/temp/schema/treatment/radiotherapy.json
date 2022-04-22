@@ -70,7 +70,7 @@
         "radiotherapy": {
             "$id": "#radiotherapy",
             "type": "object",
-            "jesgo:ui:subschemastyle": "column",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "照射開始日": {
                     "type": "string",

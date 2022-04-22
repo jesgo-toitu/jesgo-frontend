@@ -10,13 +10,13 @@ import CC_findings from './schema/CC/findings.json';
 import CC_pathology from './schema/CC/pathology.json';
 import CC_root from './schema/CC/root.json';
 import CC_staging from './schema/CC/staging.json';
-import recurrence_CC from "./schema/CC/recurrence.json";
+import recurrence_CC from './schema/CC/recurrence.json';
 import EM_findings from './schema/EM/findings.json';
 import EM_findings_detail from './schema/EM/findings_detail.json';
 import EM_pathology from './schema/EM/pathology.json';
 import EM_root from './schema/EM/root.json';
 import EM_staging from './schema/EM/staging.json';
-import recurrence_EM from "./schema/EM/recurrence.json";
+import recurrence_EM from './schema/EM/recurrence.json';
 import evaluation_ascites from './schema/evaluation/ascites.json';
 import evaluation_cervix from './schema/evaluation/cervix.json';
 import evaluation_colonoscopy from './schema/evaluation/colonoscopy.json';
@@ -40,7 +40,7 @@ import other_root from './schema/other/root.json';
 import OV_pathology from './schema/OV/pathology.json';
 import OV_root from './schema/OV/root.json';
 import OV_staging from './schema/OV/staging.json';
-import recurrence_OV from "./schema/OV/recurrence.json";
+import recurrence_OV from './schema/OV/recurrence.json';
 import records_meeting_record from './schema/records/meeting_record.json';
 import records_pathlogy_report from './schema/records/pathlogy_report.json';
 import records_treatment_summary from './schema/records/summary.json';
@@ -52,12 +52,10 @@ import treatment_operation_adverse_events from './schema/treatment/operation_adv
 import treatment_operation_detailed from './schema/treatment/operation_detailed.json';
 import treatment_operation_procedures from './schema/treatment/operation_procedures.json';
 import treatment_radiotherapy from './schema/treatment/radiotherapy.json';
-import treatment_primary_treatment from "./schema/treatment/primary_treatment.json";
-import treatment_summary from "./schema/treatment/summary.json";
-import treatment_relapse_treatment from "./schema/treatment/relapse_treatment.json";
-import treatment_supportive_care from "./schema/treatment/supportive_care.json";
-
-
+import treatment_primary_treatment from './schema/treatment/primary_treatment.json';
+import treatment_summary from './schema/treatment/summary.json';
+import treatment_relapse_treatment from './schema/treatment/relapse_treatment.json';
+import treatment_supportive_care from './schema/treatment/supportive_care.json';
 
 //#endregion
 
@@ -115,24 +113,24 @@ const jsonSchemaObjects: JSONSchema7[] = [
   treatment_summary as JSONSchema7,
   treatment_relapse_treatment as JSONSchema7,
   treatment_supportive_care as JSONSchema7,
-
 ];
 
 export type JesgoDocumentSchema = {
-  documentId: number;
-  schemaIdString: string;
+  schema_id: number;
+  schema_id_string: string;
   title: string;
   subtitle: string;
-  documentSchema: JSONSchema7;
+  document_schema: JSONSchema7;
   subschema: number[];
-  childSchema: number[];
+  child_schema: number[];
+  majorVersion: number;
 };
 
 export const ReadSchema = () => {
   let result: JesgoDocumentSchema[] = [];
   jsonSchemaObjects.map((value, index) => {
     const schemaObj = value;
-    
+
     // const titles = schemaObj.title!.split(" ");
 
     // subSchemaのID取得
@@ -173,22 +171,30 @@ export const ReadSchema = () => {
       });
     });
 
+    const version = schemaObj['jesgo:version'];
+    let majorVersion = -1;
+    if (version) {
+      const verSplit = version.split('.');
+      if (verSplit.length > 0) {
+        majorVersion = parseInt(verSplit[0]);
+      }
+    }
 
     const jesgoDocumentSchema: JesgoDocumentSchema = {
-      documentId: index,
-      schemaIdString: schemaObj.$id!,
+      schema_id: index,
+      schema_id_string: schemaObj.$id!,
       title: schemaObj.title!,
       subtitle: '',
       // TODO タイトル・サブタイトルの使い分けがわかるまでは仮実装
       // title: titles[0],
       // subtitle: titles.length >= 2 ? titles[1] : "",
-      documentSchema: schemaObj,
+      document_schema: schemaObj,
       subschema: subschemaIds,
-      childSchema: childschemaIds,
+      child_schema: childschemaIds,
+      majorVersion: majorVersion,
     };
     result.push(jesgoDocumentSchema);
   });
 
   return result;
 };
-

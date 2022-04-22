@@ -64,6 +64,5 @@
                 "pattern": "^(CC|EM|US|UAS|OV|VU|VA|TD)20[0-9]{2}-[1-9][0-9]*$"
             }
         }
-    },
-    "additionalProperties": true
+    }
 }

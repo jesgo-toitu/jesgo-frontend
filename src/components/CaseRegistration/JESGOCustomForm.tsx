@@ -35,7 +35,6 @@ const CustomDivForm = (props: CustomDivFormProp) => {
 
   // TODO OneOfFieldについては他に影響ないか確認
   const customFields = {
-    DescriptionField: () => null, // 注釈は非表示
     OneOfField: () => null, // defaultのOneOfFieldは使わない
   };
 
@@ -48,6 +47,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
 
   return (
     <Form
+      className="input-form"
       tagName="div"
       ArrayFieldTemplate={JESGOFiledTemplete.ArrayFieldTemplate}
       onChange={onChange}

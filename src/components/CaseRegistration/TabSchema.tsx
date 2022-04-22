@@ -1,22 +1,24 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Tabs, Tab } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react';
 import { UiSchema } from '@rjsf/core';
 import { useDispatch } from 'react-redux';
-import PanelSchema from './PanelSchema';
 import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { CreateUISchema } from './UISchemaUtility';
 import CustomDivForm from './JESGOCustomForm';
-import { GetSchemaInfo } from '../../common/CaseRegistrationUtility';
+import {
+  GetRootSchema,
+  GetSchemaInfo,
+} from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
-import { JesgoDocumentSchema } from '../../temp/ReadSchema';
+import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import {
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
-import { CustomSchema, getRootDescription } from './SchemaUtility';
-import { JESGOComp } from './JESGOComponent';
+import { CustomSchema } from './SchemaUtility';
 import { createPanels, createTabs } from './FormCommonComponents';
 import { Const } from '../../common/Const';
+import { responseResult } from '../../common/DBUtility';
+import '../../views/Registration.css';
 
 // ルートディレクトリ直下の子スキーマ
 type Props = {
@@ -28,6 +30,9 @@ type Props = {
   documentId: string;
   isChildSchema: boolean;
   loadedData: SaveDataObjDefine | undefined;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>;
+  parentTabsId: string;
 };
 
 const TabSchema = React.memo((props: Props) => {
@@ -38,12 +43,19 @@ const TabSchema = React.memo((props: Props) => {
     documentId,
     isChildSchema,
     loadedData,
+    setIsLoading,
+    setSaveResponse,
   } = props;
 
+  // console.log('tabschema');
+  // console.log(GetRootSchema());
   // schemaIdをもとに情報を取得
   const schemaInfo = GetSchemaInfo(schemaId);
-  const { documentSchema, subschema, childSchema } =
-    schemaInfo as JesgoDocumentSchema;
+  const {
+    document_schema: documentSchema,
+    subschema,
+    child_schema: childSchema,
+  } = schemaInfo as JesgoDocumentSchema;
 
   // 表示中のchild_schema
   const [dispChildSchemaIds, setDispChildSchemaIds] = useState<
@@ -117,11 +129,15 @@ const TabSchema = React.memo((props: Props) => {
         }
       }
     }
-  }, []);
+  }, [loadedData, documentId]);
 
   // サブスキーマ
   useEffect(() => {
-    if (subschema.length > 0 && dispSubSchemaIds.length === 0) {
+    if (
+      subschema.length > 0 &&
+      dispSubSchemaIds.length === 0 &&
+      (!loadedData || documentId.startsWith('K'))
+    ) {
       subschema.forEach((id) => {
         const item: dispSchemaIdAndDocumentIdDefine = {
           documentId: '',
@@ -132,6 +148,7 @@ const TabSchema = React.memo((props: Props) => {
 
         // 新規時は必ずドキュメント作成する
         if (!item.documentId) {
+          const itemSchemaInfo = GetSchemaInfo(item.schemaId);
           dispatch({
             type: 'ADD_CHILD',
             schemaId: item.schemaId,
@@ -141,13 +158,12 @@ const TabSchema = React.memo((props: Props) => {
             dispChildSchemaIds: dispSubSchemaIds,
             setDispChildSchemaIds: setDispSubSchemaIds,
             isRootSchema: false,
+            schemaInfo: itemSchemaInfo,
           });
         }
       });
     }
-  }, [dispSubSchemaIds]);
 
-  useEffect(() => {
     setDispSubSchemaIdsNotDeleted(
       dispSubSchemaIds.filter((p) => p.deleted === false)
     );
@@ -159,6 +175,7 @@ const TabSchema = React.memo((props: Props) => {
       dispChildSchemaIds.forEach((item) => {
         // 新規時は必ずドキュメント作成する
         if (!item.documentId) {
+          const itemSchemaInfo = GetSchemaInfo(item.schemaId);
           dispatch({
             type: 'ADD_CHILD',
             schemaId: item.schemaId,
@@ -168,13 +185,11 @@ const TabSchema = React.memo((props: Props) => {
             dispChildSchemaIds,
             setDispChildSchemaIds,
             isRootSchema: false,
+            schemaInfo: itemSchemaInfo,
           });
         }
       });
     }
-  }, [dispChildSchemaIds]);
-
-  useEffect(() => {
     setDispChildSchemaIdsNotDeleted(
       dispChildSchemaIds.filter((p) => p.deleted === false)
     );
@@ -192,28 +207,30 @@ const TabSchema = React.memo((props: Props) => {
 
   return (
     <>
-      <ControlButton
-        schemaId={schemaId}
-        Type={COMP_TYPE.TAB}
-        isChildSchema={isChildSchema}
-        dispatch={dispatch}
-        dispSchemaIds={[...dispSchemaIds]}
-        setDispSchemaIds={setDispSchemaIds}
-        dispChildSchemaIds={[...dispChildSchemaIds]}
-        setDispChildSchemaIds={setDispChildSchemaIds}
-        childSchemaIds={childSchema}
-        documentId={documentId}
-        setFormData={setFormData}
-      />
-      <CustomDivForm
-        documentId={documentId}
-        schemaId={schemaId}
-        dispatch={dispatch}
-        setFormData={setFormData}
-        schema={customSchema}
-        uiSchema={uiSchema}
-        formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-      />
+      <div className="content-area">
+        <CustomDivForm
+          documentId={documentId}
+          schemaId={schemaId}
+          dispatch={dispatch}
+          setFormData={setFormData}
+          schema={customSchema}
+          uiSchema={uiSchema}
+          formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        />
+        <ControlButton
+          schemaId={schemaId}
+          Type={COMP_TYPE.TAB}
+          isChildSchema={isChildSchema}
+          dispatch={dispatch}
+          dispSchemaIds={[...dispSchemaIds]}
+          setDispSchemaIds={setDispSchemaIds}
+          dispChildSchemaIds={[...dispChildSchemaIds]}
+          setDispChildSchemaIds={setDispChildSchemaIds}
+          childSchemaIds={childSchema}
+          documentId={documentId}
+          setFormData={setFormData}
+        />
+      </div>
       {isTab
         ? // タブ表示
           createTabs(
@@ -224,7 +241,9 @@ const TabSchema = React.memo((props: Props) => {
             dispChildSchemaIds,
             dispChildSchemaIdsNotDeleted,
             setDispChildSchemaIds,
-            loadedData
+            loadedData,
+            setIsLoading,
+            setSaveResponse
           )
         : // パネル表示
           createPanels(
@@ -234,7 +253,9 @@ const TabSchema = React.memo((props: Props) => {
             dispChildSchemaIds,
             dispChildSchemaIdsNotDeleted,
             setDispChildSchemaIds,
-            loadedData
+            loadedData,
+            setIsLoading,
+            setSaveResponse
           )}
     </>
   );

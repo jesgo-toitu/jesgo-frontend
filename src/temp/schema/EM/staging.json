@@ -42,7 +42,8 @@
                     "TNM": {
                         "$ref": "#/$defs/pTNM",
                         "$comment": "ステージング手術が実施されたものはpTMN分類でTMNを記載する."
-                    }
+                    },
+                    "ypTNM": {}
                 }
             },
             "else": {
@@ -50,7 +51,8 @@
                     "TNM": {
                         "$ref": "#/$defs/TNM",
                         "$comment": "ステージング手術が実施ていないものはTMN分類でTMNを記載する."
-                    }
+                    },
+                    "ypTNM": {}
                 }
             }    
         },

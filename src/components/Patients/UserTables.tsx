@@ -143,7 +143,9 @@ const makeTable = (props: {
             <td className={search}>{user.registedCancerGroup}</td>
             <td className={search}>{user.startDate}</td>
             <td className={noSearch}>
-              {user.startDate && `${user.startDate}<br />`} {user.lastUpdate}
+              {user.startDate}
+              {user.startDate && <br />}
+              {user.lastUpdate}
             </td>
             <td className={noSearch}>{user.diagnosis}</td>
             <td>{user.advancedStage}</td>

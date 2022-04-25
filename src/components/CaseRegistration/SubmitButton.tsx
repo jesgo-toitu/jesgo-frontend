@@ -128,10 +128,10 @@ const SubmitButton = (props: ButtonProps) => {
         </Button>
         <Button
           onClick={clickCancel}
-          bsStyle="secondary"
+          bsStyle="primary"
           className="normal-button"
         >
-          閉じる
+          リストに戻る
         </Button>
       </div>
     </Col>

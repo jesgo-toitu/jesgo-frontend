@@ -53,4 +53,9 @@ export namespace Const {
    * 必須項目のラベル横に出るマーク
    */
   export const REQUIRED_FIELD_SYMBOL = '*';
+
+  /**
+   * 日付入力コントロールの最大値
+   */
+  export const INPUT_DATE_MAX = '2100-12-31';
 }

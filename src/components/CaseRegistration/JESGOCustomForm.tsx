@@ -39,6 +39,10 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   };
 
   const customWidgets = {
+    // 既存のWidget
+    DateWidget: JESGOComp.CustomDateWidget,
+
+    // オリジナルのWidget
     layerDropdown: JESGOComp.LayerDropdown,
     multiTypeTextBox: JESGOComp.MultiTypeTextBox,
     datalistTextBox: JESGOComp.DatalistTextBox,

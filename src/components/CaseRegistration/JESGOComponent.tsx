@@ -5,6 +5,7 @@ import './JESGOFieldTemplete.css';
 import { WidgetProps } from '@rjsf/core';
 import { JSONSchema7Type, JSONSchema7 } from 'json-schema'; // eslint-disable-line import/no-unresolved
 import { IconButton } from './RjsfDefaultComponents';
+import { Const } from '../../common/Const';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace JESGOComp {
@@ -60,6 +61,29 @@ export namespace JESGOComp {
       <OverlayTrigger placement="right" overlay={tooltip}>
         <Glyphicon glyph="question-sign" />
       </OverlayTrigger>
+    );
+  };
+
+  /**
+   * 標準DateWidget
+   * ※年に6桁入ってしまう問題の回避のため上限・下限を設定
+   * @param props
+   * @returns
+   */
+  export const CustomDateWidget = (props: WidgetProps) => {
+    const {
+      registry: {
+        widgets: { BaseInput },
+      },
+    } = props;
+
+    return (
+      <BaseInput
+        type="date"
+        max={Const.INPUT_DATE_MAX}
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        {...props}
+      />
     );
   };
 

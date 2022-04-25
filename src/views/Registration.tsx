@@ -43,6 +43,7 @@ import {
   RemoveBeforeUnloadEvent,
 } from '../common/CommonUtility';
 import store from '../store';
+import { Const } from '../common/Const';
 
 // 症例入力のおおもとの画面
 const Registration = () => {
@@ -425,6 +426,7 @@ const Registration = () => {
                 <ControlLabel>生年月日</ControlLabel>
                 <FormControl
                   type="date"
+                  max={Const.INPUT_DATE_MAX}
                   onChange={onChangeItem}
                   value={birthday}
                 />

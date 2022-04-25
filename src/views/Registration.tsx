@@ -236,6 +236,11 @@ const Registration = () => {
       // setIsLoading(false);
       setIsReload(false);
 
+      // 患者情報しか入力されてない場合はローディング画面解除されないのでここで解除する
+      if (jesgoDocument.length === 0) {
+        setIsLoading(false);
+      }
+
       // TODO: これだと読み込み後にまた再描画かかる？
       if (caseId) {
         navigate(`/registration?id=${caseId}`);

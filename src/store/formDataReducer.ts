@@ -56,6 +56,7 @@ export interface dispSchemaIdAndDocumentIdDefine {
   documentId: string;
   schemaId: number;
   deleted: boolean;
+  isSchemaChange?: boolean;
 }
 
 // フォームデータ用Action
@@ -65,6 +66,8 @@ export interface formDataAction {
   schemaId: number;
   parentDocumentId: string;
   documentId: string;
+  isInherit: boolean;
+  inheritSchema: number[];
   formData: any;
   dispSchemaIds: number[];
   setDispSchemaIds: React.Dispatch<React.SetStateAction<number[]>>;
@@ -147,6 +150,7 @@ const createJesgoDocumentValueItem = (
 
   if (actionType.includes('ADD')) {
     valueItem.schema_id = schemaId;
+    // TODO: メジャーバージョンどこから持ってくる？
 
     // バージョン情報設定(メジャーバージョン)
     if (schemaInfo) {
@@ -343,9 +347,41 @@ const formDataReducer: Reducer<
         const idx = saveData.jesgo_document.findIndex((p) => p.key === docId);
         if (idx > -1) {
           const jesgoDoc = saveData.jesgo_document[idx];
+          // schemaIdが指定されている場合(継承)、schemaIdを更新
+          if (action.schemaId) {
+            jesgoDoc.value.schema_id = action.schemaId;
+          }
           jesgoDoc.value.document = action.formData; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
           jesgoDoc.value.registrant = getLoginUserId();
           jesgoDoc.value.last_updated = updateDate;
+
+          // 新規文書の継承の場合、継承元の子ドキュメントは削除してリセットする
+          if (action.isInherit) {
+            const deletedDocIds: string[] = [];
+
+            // 子、孫含め削除するdocumentIdを取得
+            jesgoDoc.value.child_documents.forEach((childDocId) => {
+              deletedDocIds.push(
+                ...deleteDocument(saveData.jesgo_document, childDocId)
+              );
+            });
+
+            if (deletedDocIds.length > 0) {
+              if (docId.startsWith('K')) {
+                // saveDataから子ドキュメントを物理削除
+                saveData.jesgo_document = saveData.jesgo_document.filter(
+                  (p) => !deletedDocIds.includes(p.key)
+                );
+                // formDatasからも物理削除
+                deletedDocIds.forEach((childDocId) => {
+                  formDatas.delete(childDocId);
+                });
+              }
+            }
+
+            // 子ドキュメントリセット
+            jesgoDoc.value.child_documents.length = 0;
+          }
         }
         break;
       }

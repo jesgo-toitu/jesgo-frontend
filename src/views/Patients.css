@@ -32,14 +32,14 @@
 
 .search-form-outer {
   width: 96%;
-  margin: 13rem 2% 0 2%;
+  margin: 9rem 2% 0 2%;
 }
 
 .page-menu {
   width: 96%;
   padding: 0rem;
   margin: 0 2% 0 2%;
-  top: 4.35rem;
+  top: 4.5rem;
   position: fixed;
   background-color: #f9f9f9;
   z-index: 150;
@@ -119,12 +119,27 @@
 .patients {
   border: none;
   border-collapse: separate;
-  border-spacing: 0 5px;
   margin-top: -5px;
 }
 
 .patients thead tr {
   background-color: #e0e0e0;
+}
+
+.patients tbody {
+  overflow-y: auto;
+}
+
+.normal table tbody {
+  height: calc(100vh - 14.9rem);
+}
+
+.search_on table tbody {
+  height: calc(100vh - 23rem);
+}
+
+.detail_on table tbody {
+  height: calc(100vh - 32rem);
 }
 
 .patients tbody tr {
@@ -141,6 +156,29 @@
   height: 32px;
   width: 32px;
   margin: 1px;
+}
+
+table {
+  display: flex;
+  flex-flow: column;
+  width: 100%;
+}
+
+thead {
+  flex: 0 0 auto;
+}
+
+tbody {
+  flex: 1 1 auto;
+  display: block;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+tr {
+  width: 100%;
+  display: table;
+  table-layout: fixed;
 }
 
 .died {

@@ -11,10 +11,11 @@ export const RESULT = {
   ABNORMAL_TERMINATION: -1,
   ID_DUPLICATION: -2,
   TOKEN_EXPIRED_ERROR: -10,
-  FAILED_USER_ALREADY_REGISTERED:-100,
-  FAILED_USER_ERROR:-101,
-  UNAUTHORIZED_OPERATIONS:-900,  
-  
+  NETWORK_ERROR: -20,
+  TOO_LARGE_ERROR: -30,
+  FAILED_USER_ALREADY_REGISTERED: -100,
+  FAILED_USER_ERROR: -101,
+  UNAUTHORIZED_OPERATIONS: -900,
 };
 
 export const METHOD_TYPE = {
@@ -48,6 +49,8 @@ const apiAccess = async (
     payloadObj = { headers: { token } };
   }
 
+  let errMsg: unknown;
+
   switch (methodType) {
     case METHOD_TYPE.GET:
       await axios
@@ -58,6 +61,7 @@ const apiAccess = async (
         .catch((err) => {
           // ★TODO: ログ出す
           console.log(err);
+          errMsg = err;
         });
       break;
 
@@ -70,6 +74,7 @@ const apiAccess = async (
         .catch((err) => {
           // ★TODO: ログ出す
           console.log(err);
+          errMsg = err;
         });
       break;
 
@@ -82,10 +87,23 @@ const apiAccess = async (
         .catch((err) => {
           // ★TODO: ログ出す
           console.log(err);
+          errMsg = err;
         });
       break;
 
     default:
+  }
+
+  if (errMsg !== null && errMsg !== undefined) {
+    // axiosエラーのメッセージがネットワークエラーの場合その旨を返す
+    if (axios.isAxiosError(errMsg) && errMsg.message === 'Network Error') {
+      return { statusNum: RESULT.NETWORK_ERROR, body: null };
+    }
+
+    // axiosエラーのメッセージが転送量エラーの場合その旨を返す
+    if (axios.isAxiosError(errMsg) && errMsg.response?.status === 413) {
+      return { statusNum: RESULT.TOO_LARGE_ERROR, body: null };
+    }
   }
 
   if (returnObj.statusNum === RESULT.TOKEN_EXPIRED_ERROR) {

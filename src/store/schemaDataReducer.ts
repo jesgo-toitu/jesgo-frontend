@@ -11,17 +11,21 @@ export type JesgoDocumentSchema = {
   document_schema: JSONSchema7;
   subschema: number[];
   child_schema: number[];
+  inherit_schema: number[];
+  base_schema: number | null;
   version_major: number;
 };
 
 export interface schemaDataState {
   schemaDatas: Map<number, JesgoDocumentSchema>;
   rootSchemas: number[];
+  inheritSchemaIds: Map<number, number[]>;
 }
 
 const initialState: schemaDataState = {
   schemaDatas: new Map(),
   rootSchemas: [],
+  inheritSchemaIds: new Map(),
 };
 
 // スキーマデータ用Action
@@ -51,6 +55,27 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
           schema.child_schema = [];
         }
         copyState.schemaDatas.set(schema.schema_id, schema);
+
+        // 継承スキーマの設定
+        let inheritIds: number[] = [];
+        // 親スキーマの継承スキーマを追加
+        action.schemaDatas
+          .filter(
+            (p) =>
+              p.inherit_schema &&
+              p.inherit_schema.includes(schema.schema_id) &&
+              p.schema_id !== schema.schema_id
+          )
+          .map((p) => inheritIds.push(...p.inherit_schema));
+        // 自身の継承スキーマを追加
+        inheritIds.push(
+          ...schema.inherit_schema.filter((p) => !inheritIds.includes(p))
+        );
+
+        // 重複あれば除く
+        inheritIds = lodash.uniq(inheritIds);
+
+        copyState.inheritSchemaIds.set(schema.schema_id, inheritIds);
       });
 
       break;

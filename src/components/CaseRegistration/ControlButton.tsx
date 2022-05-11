@@ -8,6 +8,7 @@ import {
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
+import store from '../../store/index';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -27,14 +28,19 @@ type ControlButtonProps = {
   childSchemaIds?: number[]; // eslint-disable-line react/require-default-props
   Type: CompType;
   dispSchemaIds?: dispSchemaIdAndDocumentIdDefine[]; // eslint-disable-line react/require-default-props
+  // eslint-disable-next-line react/require-default-props
   setDispSchemaIds?: React.Dispatch<
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
-  >; // eslint-disable-line react/require-default-props
+  >;
   dispatch: Dispatch;
   documentId: string;
   isChildSchema: boolean;
+  // eslint-disable-next-line react/require-default-props
   setFormData?: React.Dispatch<React.SetStateAction<any>>;
+  // eslint-disable-next-line
+  formData?: any;
   setSelectedTabKey?: React.Dispatch<React.SetStateAction<any>>;
+  subSchemaCount: number;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -51,8 +57,22 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     documentId,
     isChildSchema,
     setFormData,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    formData,
     setSelectedTabKey,
+    subSchemaCount,
   } = props;
+
+  // 基底スキーマを取得
+  const baseSchemaId = GetSchemaInfo(schemaId)?.base_schema;
+  const baseSchema = baseSchemaId ? GetSchemaInfo(baseSchemaId) : undefined;
+  const baseSchemaName = baseSchema
+    ? `${baseSchema.title} ${baseSchema.subtitle}`
+    : '';
+  // 継承スキーマを取得
+  const inheritIds = baseSchemaId
+    ? GetSchemaInfo(baseSchemaId)?.inherit_schema
+    : GetSchemaInfo(schemaId)?.inherit_schema;
 
   // ルートの場合ルートドキュメント それ以外はchild_schema
   const canAddSchemaIds =
@@ -82,6 +102,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
       const copyIds = dispSchemaIds;
       const index = copyIds.findIndex((p) => p.documentId === documentId);
       const findItem = copyIds.find((p) => p.documentId === documentId);
+
       switch (eventKey) {
         case 'up':
           // 上（左）へ移動
@@ -94,9 +115,10 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               0,
               findItem as dispSchemaIdAndDocumentIdDefine
             );
+            // TODO: 今はindexだが、ユニークなキーに変わるならここも変える必要あり
             setDispSchemaIds([...copyIds]);
             if (setSelectedTabKey) {
-              setSelectedTabKey(newIndex);
+              setSelectedTabKey(subSchemaCount + newIndex);
             }
           }
           break;
@@ -112,9 +134,10 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               0,
               findItem as dispSchemaIdAndDocumentIdDefine
             );
+            // TODO: 今はindexだが、ユニークなキーに変わるならここも変える必要あり
             setDispSchemaIds([...copyIds]);
             if (setSelectedTabKey) {
-              setSelectedTabKey(newIndex);
+              setSelectedTabKey(subSchemaCount + newIndex);
             }
           }
           break;
@@ -136,6 +159,23 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           }
           break;
         default:
+          // 拡張用
+          if (eventKey.startsWith('I') && setDispSchemaIds != null) {
+            const inheritId = Number(eventKey.replace('I', ''));
+            copyIds[index].schemaId = inheritId;
+            copyIds[index].isSchemaChange = true;
+            if (formData) {
+              dispatch({
+                type: 'INPUT',
+                isInherit: true,
+                schemaId: inheritId,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                formData: {},
+                documentId: copyIds[index].documentId,
+              });
+            }
+            setDispSchemaIds([...copyIds]);
+          }
           break;
       }
     } else if (typeof eventKey === 'number') {
@@ -206,6 +246,30 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             </MenuItem>
           )}
           {(canMove || canDelete || canClear) && canAdd && <MenuItem divider />}
+          {/* 継承スキーマ関連の追加 */}
+          {baseSchemaId && (
+            <MenuItem key={baseSchemaId} eventKey={`I${baseSchemaId}`}>
+              {`${baseSchemaName} への回帰`}
+            </MenuItem>
+          )}
+          {inheritIds &&
+            inheritIds.length > 0 &&
+            // eslint-disable-next-line
+            inheritIds.map((num: number) => {
+              // 自分以外のスキーマIDのみ追加
+              if (schemaId !== num) {
+                const schema = GetSchemaInfo(num);
+                if (schema !== undefined) {
+                  const schemaName = `${schema.title} ${schema.subtitle}`;
+                  return (
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    <MenuItem key={num} eventKey={`I${num}`}>
+                      {`${schemaName} への継承`}
+                    </MenuItem>
+                  );
+                }
+              }
+            })}
           {/* 子スキーマの追加 */}
           {canAddSchemas.map((info: JesgoDocumentSchema) => {
             return (

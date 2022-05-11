@@ -61,6 +61,8 @@ export const SaveFormDataToDB = async (
     res.message = '保存しました。';
   } else if (res.resCode === RESULT.ID_DUPLICATION) {
     res.message = '既に登録されている患者IDです';
+  } else if (res.resCode === RESULT.TOO_LARGE_ERROR) {
+    res.message = '保存サイズが大きすぎます。';
   } else if (res.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
     res.message = 'トークン期限切れ';
   } else {

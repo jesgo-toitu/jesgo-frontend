@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Tabs, Tab } from 'react-bootstrap';
+import React, { useEffect, useMemo, useState } from 'react';
+import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
-import TabSchema from './TabSchema';
 import '../../views/Registration.css';
 import { CreateUISchema } from './UISchemaUtility';
 import CustomDivForm from './JESGOCustomForm';
@@ -15,6 +14,8 @@ import {
 } from '../../store/formDataReducer';
 import { createTabs } from './FormCommonComponents';
 import { responseResult } from '../../common/DBUtility';
+import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
+import store from '../../store';
 
 type Props = {
   schemaId: number;
@@ -27,6 +28,7 @@ type Props = {
   setSelectedTabKey: React.Dispatch<React.SetStateAction<any>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>;
+  isSchemaChange: boolean | undefined;
 };
 
 // ルートディレクトリのスキーマ
@@ -40,6 +42,7 @@ const RootSchema = React.memo((props: Props) => {
     setSelectedTabKey,
     setIsLoading,
     setSaveResponse,
+    isSchemaChange,
   } = props;
 
   // 表示中のchild_schema
@@ -64,7 +67,7 @@ const RootSchema = React.memo((props: Props) => {
   const dispatch = useDispatch();
 
   // ルートのschema情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId);
+  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
   if (schemaInfo === undefined) {
     return null;
   }
@@ -77,63 +80,39 @@ const RootSchema = React.memo((props: Props) => {
   const uiSchema = CreateUISchema(customSchema);
   uiSchema['ui:ObjectFieldTemplate'] = JESGOFiledTemplete.TabItemFieldTemplate;
 
-  // DBから読み込んだデータを設定
-  useEffect(() => {
-    if (loadedData) {
-      const parentDoc = loadedData.jesgo_document.find(
-        (p) => p.key === documentId
-      );
-      if (parentDoc) {
-        // このスキーマのformDataを設定
-        setFormData(parentDoc.value.document);
+  // サブスキーマとサブスキーマから派生できる継承スキーマ一覧取得
+  const subSchemaAndInherit = useMemo(() => {
+    let subSchemaArray: number[] = [];
+    if (subschema.length > 0) {
+      subSchemaArray.push(...subschema);
+      subschema.forEach((subSchemaId: number) => {
+        // 基底スキーマを取得
+        const baseSchemaId = GetSchemaInfo(subSchemaId)?.base_schema;
+        // 継承スキーマを取得
+        const inheritIds = baseSchemaId
+          ? GetSchemaInfo(baseSchemaId)?.inherit_schema
+          : GetSchemaInfo(subSchemaId)?.inherit_schema;
 
-        const childDocuments = parentDoc.value.child_documents;
-
-        // 子ドキュメントがあればサブスキーマとchildスキーマを判定してそれぞれの配列に格納
-        if (childDocuments.length > 0) {
-          childDocuments.forEach((childDocId) => {
-            const childDoc = loadedData.jesgo_document.find(
-              (p) => p.key === childDocId
-            );
-            if (childDoc) {
-              const item: dispSchemaIdAndDocumentIdDefine = {
-                documentId: childDoc.key,
-                schemaId: childDoc.value.schema_id,
-                deleted: childDoc.value.deleted,
-              };
-
-              // サブスキーマに追加
-              if (
-                subschema.length > 0 &&
-                subschema.includes(childDoc.value.schema_id)
-              ) {
-                dispSubSchemaIds.push(item);
-              } else {
-                // childスキーマに追加
-                dispChildSchemaIds.push(item);
-              }
-            }
-          });
-
-          if (dispSubSchemaIds.length > 0) {
-            setDispSubSchemaIds([...dispSubSchemaIds]);
-          }
-          if (dispChildSchemaIds.length > 0) {
-            setDispChildSchemaIds([...dispChildSchemaIds]);
-          }
+        if (baseSchemaId) {
+          subSchemaArray.push(baseSchemaId);
         }
-      }
-    }
-  }, [loadedData, documentId]);
+        if (inheritIds) {
+          subSchemaArray.push(...inheritIds);
+        }
+      });
 
-  // サブスキーマ
-  useEffect(() => {
+      subSchemaArray = lodash.uniq(subSchemaArray);
+    }
+    return subSchemaArray;
+  }, [subschema]);
+
+  // サブスキーマのドキュメント作成
+  const createSubSchemaDocument = () => {
     if (
       subschema.length > 0 &&
       dispSubSchemaIds.length === 0 &&
-      (!loadedData || documentId.startsWith('K'))
+      (!loadedData || documentId.startsWith('K') || isSchemaChange)
     ) {
-      // TODO: 読み込んだデータがある場合、documentIdはそのデータを入れたい
       subschema.forEach((id) => {
         const item: dispSchemaIdAndDocumentIdDefine = {
           documentId: '',
@@ -159,9 +138,83 @@ const RootSchema = React.memo((props: Props) => {
         }
       });
     }
+
     setDispSubSchemaIdsNotDeleted(
       dispSubSchemaIds.filter((p) => p.deleted === false)
     );
+  };
+
+  // DBから読み込んだデータを設定
+  useEffect(() => {
+    if (loadedData) {
+      let parentDoc = loadedData.jesgo_document.find(
+        (p) => p.key === documentId
+      );
+
+      // 編集中のデータ
+      const saveParentDoc = store
+        .getState()
+        .formDataReducer.saveData.jesgo_document.find(
+          (p) => p.key === documentId
+        );
+      // 継承した場合は編集中のデータをセットする
+      if (saveParentDoc && isSchemaChange) {
+        parentDoc = saveParentDoc;
+      }
+
+      if (parentDoc) {
+        setFormData(parentDoc.value.document);
+
+        if (isSchemaChange) {
+          // 継承した場合は子ドキュメントがクリアされるので、サブスキーマ再作成
+          createSubSchemaDocument();
+        } else {
+          const childDocuments = parentDoc.value.child_documents;
+
+          // 子ドキュメントがあればサブスキーマとchildスキーマを判定してそれぞれの配列に格納
+          if (childDocuments.length > 0) {
+            childDocuments.forEach((childDocId) => {
+              const childDoc = loadedData.jesgo_document.find(
+                (p) => p.key === childDocId
+              );
+              if (childDoc) {
+                const item: dispSchemaIdAndDocumentIdDefine = {
+                  documentId: childDoc.key,
+                  schemaId: childDoc.value.schema_id,
+                  deleted: childDoc.value.deleted,
+                };
+
+                // サブスキーマに追加
+                if (
+                  subschema.length > 0 &&
+                  !dispSubSchemaIds.find(
+                    (p) => p.schemaId === childDoc.value.schema_id
+                  ) &&
+                  subSchemaAndInherit.includes(childDoc.value.schema_id)
+                ) {
+                  dispSubSchemaIds.push(item);
+                } else {
+                  // childスキーマに追加
+                  dispChildSchemaIds.push(item);
+                }
+              }
+            });
+
+            if (dispSubSchemaIds.length > 0) {
+              setDispSubSchemaIds([...dispSubSchemaIds]);
+            }
+            if (dispChildSchemaIds.length > 0) {
+              setDispChildSchemaIds([...dispChildSchemaIds]);
+            }
+          }
+        }
+      }
+    }
+  }, [loadedData, documentId]);
+
+  // サブスキーマ
+  useEffect(() => {
+    createSubSchemaDocument();
   }, [dispSubSchemaIds]);
 
   // childスキーマ
@@ -230,6 +283,8 @@ const RootSchema = React.memo((props: Props) => {
           documentId={documentId}
           setFormData={setFormData}
           setSelectedTabKey={setSelectedTabKey}
+          formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+          subSchemaCount={0}
         />
       </div>
       {createTabs(

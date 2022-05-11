@@ -24,7 +24,8 @@ export const createTab = (
   loadedData: SaveDataObjDefine | undefined,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
-  subSchemaCount: number
+  subSchemaCount: number,
+  setSelectedTabKey: React.Dispatch<React.SetStateAction<any>>
 ) =>
   // subschema表示
   filteredSchemaIds.map(
@@ -55,6 +56,9 @@ export const createTab = (
             setIsLoading={setIsLoading}
             setSaveResponse={setSaveResponse}
             parentTabsId={parentTabsId}
+            setSelectedTabKey={setSelectedTabKey}
+            subSchemaCount={subSchemaCount}
+            isSchemaChange={info.isSchemaChange}
           />
         </Tab>
       );
@@ -149,7 +153,8 @@ export const createTabs = (
           loadedData,
           setIsLoading,
           setSaveResponse,
-          0
+          0,
+          setSelectedTabKey
         )}
 
         {/* childSchema表示 */}
@@ -162,7 +167,8 @@ export const createTabs = (
           loadedData,
           setIsLoading,
           setSaveResponse,
-          subschemaIdsNotDeleted.length
+          subschemaIdsNotDeleted.length,
+          setSelectedTabKey
         )}
       </Tabs>
     )
@@ -194,6 +200,7 @@ export const createPanel = (
       loadedData={loadedData}
       setIsLoading={setIsLoading}
       setSaveResponse={setSaveResponse}
+      isSchemaChange={info.isSchemaChange}
     />
   ));
 

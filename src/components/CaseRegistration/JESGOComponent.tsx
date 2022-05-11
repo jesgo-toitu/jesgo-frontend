@@ -66,7 +66,7 @@ export namespace JESGOComp {
 
   /**
    * 標準DateWidget
-   * ※年に6桁入ってしまう問題の回避のため上限・下限を設定
+   * ※年に6桁入ってしまう問題の回避のため上限を設定
    * @param props
    * @returns
    */
@@ -86,6 +86,70 @@ export namespace JESGOComp {
       />
     );
   };
+
+  /**
+   * 標準TextareaWidget
+   * ・既存のTextareaWidgetを流用
+   * ・props.options.rowsが正の数なら入力行数分コントロールを拡張、
+   *   負の数なら絶対値を高さに設定、入力でそれを超える場合はスクロールバー表示
+   * @param props 
+   * @returns 
+   */
+  export const CustomTextareaWidget = (props: WidgetProps) => {
+    const {
+      id,
+      options,
+      placeholder,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      value,
+      required,
+      disabled,
+      readonly,
+      autofocus,
+      onChange,
+      onBlur,
+      onFocus,
+    } = props;
+
+    const isFixedHeight = Math.sign(options.rows as number) < 0;
+    const rows = Math.abs(options.rows as number);
+
+    const calcTextAreaHeight = (val: string) => {
+      let rowsHeight = rows;
+      if (val) {
+        const inputRowsNum = val.split('\n').length;
+        if (inputRowsNum > rows) {
+          rowsHeight = inputRowsNum;
+        }
+      }
+      return rowsHeight;
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>{
+      onChange(e.target.value === "" ? options.emptyValue : e.target.value);
+    } 
+
+    return (
+      <textarea
+        id={id}
+        className="form-control"
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        value={value || ''}
+        placeholder={placeholder}
+        required={required}
+        disabled={disabled}
+        readOnly={readonly}
+        // eslint-disable-next-line jsx-a11y/no-autofocus
+        autoFocus={autofocus}
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        rows={isFixedHeight ? rows : calcTextAreaHeight(value)}
+        onBlur={onBlur && ((event) => onBlur(id, event.target.value))}
+        onFocus={onFocus && ((event) => onFocus(id, event.target.value))}
+        onChange={handleInputChange}
+      />
+    );
+  };
+
 
   /**
    * 単位付きのTextWidget

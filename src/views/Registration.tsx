@@ -102,7 +102,6 @@ const Registration = () => {
   // 初期設定
   useEffect(() => {
     const asyncFunc = async () => {
-      console.log('スキーマ取得処理 start');
       // スキーマ取得処理
       const returnSchemaApiObject = await apiAccess(
         METHOD_TYPE.GET,
@@ -129,7 +128,6 @@ const Registration = () => {
           rootSchemas: returnRootSchemaIdsApiObject.body,
         });
       }
-      console.log('スキーマ取得処理 end');
       setHasSchema(true);
     };
 
@@ -502,6 +500,7 @@ const Registration = () => {
                           setSelectedTabKey={setSelectedTabKey}
                           setIsLoading={setIsLoading}
                           setSaveResponse={setSaveResponse}
+                          isSchemaChange={info.isSchemaChange}
                         />
                       </Tab>
                     );
@@ -518,6 +517,7 @@ const Registration = () => {
             setDispChildSchemaIds={setDispRootSchemaIds}
             dispatch={dispatch}
             documentId=""
+            subSchemaCount={0}
           />
         </div>
       )}

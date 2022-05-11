@@ -93,6 +93,9 @@ export const Login = () => {
         });
       }
       navigate('/Patients');
+    } else if (returnApiObject.statusNum === RESULT.NETWORK_ERROR) {
+      // eslint-disable-next-line no-alert
+      alert(`サーバーへの接続に失敗しました。`);
     } else {
       // eslint-disable-next-line no-alert
       alert(`ログインに失敗しました。ユーザ名かパスワードが間違っています。`);

@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import React from 'react';
 import Form, { FormProps, IChangeEvent } from '@rjsf/core';
 import { Dispatch } from 'redux';
 import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
+import store from '../../store';
 
 interface CustomDivFormProp extends FormProps<any> {
   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -19,7 +21,16 @@ interface CustomDivFormProp extends FormProps<any> {
 // - onChangeでuseStateで保持しているformDataを更新する
 const CustomDivForm = (props: CustomDivFormProp) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { schemaId, dispatch, setFormData, documentId, formData } = props;
+  const { schemaId, dispatch, setFormData, documentId } = props;
+  let { formData } = props;
+
+  const saveData = store.getState().formDataReducer.saveData;
+  const thisDocument = saveData.jesgo_document.find(
+    (p) => p.key === documentId
+  );
+  if (thisDocument) {
+    formData = thisDocument.value.document;
+  }
 
   // 描画の段階でstore側にフォームデータを保存しておく
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -41,6 +52,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   const customWidgets = {
     // 既存のWidget
     DateWidget: JESGOComp.CustomDateWidget,
+    TextareaWidget: JESGOComp.CustomTextareaWidget,
 
     // オリジナルのWidget
     layerDropdown: JESGOComp.LayerDropdown,

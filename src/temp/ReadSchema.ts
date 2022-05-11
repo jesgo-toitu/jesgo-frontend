@@ -123,6 +123,7 @@ export type JesgoDocumentSchema = {
   document_schema: JSONSchema7;
   subschema: number[];
   child_schema: number[];
+  inherit_schema: number[];
   majorVersion: number;
 };
 
@@ -191,6 +192,7 @@ export const ReadSchema = () => {
       document_schema: schemaObj,
       subschema: subschemaIds,
       child_schema: childschemaIds,
+      inherit_schema: [],
       majorVersion: majorVersion,
     };
     result.push(jesgoDocumentSchema);

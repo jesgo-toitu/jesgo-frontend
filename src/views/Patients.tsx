@@ -35,6 +35,7 @@ const Patients = () => {
     useState('hidden');
   const [listMode, setListMode] = useState(['blue', '']);
   const [userListJson, setUserListJson] = useState('');
+  const [tableMode, setTableMode] = useState('normal');
 
   useEffect(() => {
     const f = async () => {
@@ -91,18 +92,21 @@ const Patients = () => {
         setSearchFormOpen('hidden');
         setSimpleSearchButtons('hidden');
         setDetailSearchOpen('hidden');
+        setTableMode('normal');
         break;
 
       case 'simpleSearch':
         setSearchFormOpen('search-form-opened block');
         setSimpleSearchButtons('block');
         setDetailSearchOpen('hidden');
+        setTableMode('search_on');
         break;
 
       case 'detailSearch':
         setSearchFormOpen('search-form-opened block');
         setSimpleSearchButtons('hidden');
         setDetailSearchOpen('detail-form-opened block');
+        setTableMode('detail_on');
         break;
 
       default:
@@ -302,7 +306,7 @@ const Patients = () => {
       <Navbar collapseOnSelect fixedTop>
         <Navbar.Header>
           <Navbar.Brand>
-            <img src="./image/logo.png" alt="JESGO" className='img' />
+            <img src="./image/logo.png" alt="JESGO" className="img" />
           </Navbar.Brand>
           <Navbar.Toggle />
         </Navbar.Header>
@@ -337,7 +341,7 @@ const Patients = () => {
       </Navbar>
       <div className="page-menu">
         <div className="search-form-closed flex">
-          <ButtonToolbar>
+          <ButtonToolbar style={{ marginTop: '14px', marginBottom: '14px' }}>
             <ButtonGroup>
               <Button onClick={() => changeView('simpleSearch')}>
                 <Glyphicon glyph="search" />
@@ -524,7 +528,7 @@ const Patients = () => {
         </Jumbotron>
       </div>
 
-      <div className="search-result">
+      <div className={`search-result ${tableMode}`}>
         <UserTables
           userListJson={userListJson}
           search={search}

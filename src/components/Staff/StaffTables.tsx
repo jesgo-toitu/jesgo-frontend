@@ -139,7 +139,7 @@ const makeTable = (props: {}) => {
 
   return (
     <>
-      <div className="">
+      <div className="page-menu">
         <div className="search-form-closed flex">
           <Button
             bsStyle="primary"

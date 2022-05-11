@@ -170,6 +170,12 @@ const PanelSchema = React.memo((props: Props) => {
 
       if (parentDoc) {
         setFormData(parentDoc.value.document);
+        dispatch({
+          type: 'INPUT',
+          schemaId,
+          formData: parentDoc.value.document,
+          documentId,
+        });
 
         if (isSchemaChange) {
           // 継承した場合は子ドキュメントがクリアされるので、サブスキーマ再作成

@@ -82,6 +82,14 @@ const SubmitButton = (props: ButtonProps) => {
     const formDatas = store.getState().formDataReducer.formDatas;
     const saveData = store.getState().formDataReducer.saveData;
 
+    // スクロール位置保存
+    dispatch({
+      type: 'SCROLL_POSITION',
+      scrollTop: document.scrollingElement
+        ? document.scrollingElement.scrollTop
+        : undefined,
+    });
+
     SaveCommand(
       formDatas,
       saveData,

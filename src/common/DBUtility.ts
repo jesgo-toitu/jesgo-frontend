@@ -212,10 +212,39 @@ const SaveChanges = async (
 // TODO: ここはvalidationにすべき
 export const hasJesgoCaseError = (saveData: SaveDataObjDefine) => {
   const messages: string[] = [];
-
+  const digit = Number(localStorage.getItem('digit') ?? '0');
+  const alignment = localStorage.getItem('alignment') === 'true';
+  const alphabetEnable = localStorage.getItem('alphabet_enable') === 'true';
+  const hyphenEnable = localStorage.getItem('hyphen_enable') === 'true';
   if (!saveData.jesgo_case.his_id) {
     messages.push('患者IDを入力してください。');
+  }else if(saveData.jesgo_case.is_new_case){
+    if(saveData.jesgo_case.his_id.length > digit ){
+      messages.push(`患者IDは${digit}桁以内で入力してください。`);
+    }
+    if(alphabetEnable === false && saveData.jesgo_case.his_id.search(/[a-zA-Z]/) !== -1){
+      messages.push(`患者IDにアルファベットが含まれています。`);
+    }
+    if(hyphenEnable === false && saveData.jesgo_case.his_id.indexOf('-') !== -1){
+      messages.push(`患者IDにハイフンが含まれています。`);
+    }
+    if(!(saveData.jesgo_case.his_id.match(/^[0-9a-zA-Z\\-]*$/))){
+      messages.push(`患者IDに使用できない文字が含まれています。`);
+
+    // 参照渡しなので桁揃えもここでする
+    }else if(
+      alignment &&
+      alphabetEnable === false && 
+      hyphenEnable === false && 
+      saveData.jesgo_case.his_id.length < digit)
+    {
+        while(saveData.jesgo_case.his_id.length < digit){
+          // eslint-disable-next-line no-param-reassign
+          saveData.jesgo_case.his_id = `0${saveData.jesgo_case.his_id}`;
+       }
+    }
   }
+
   if (!saveData.jesgo_case.date_of_birth) {
     messages.push('生年月日を入力してください。');
   }

@@ -1,6 +1,16 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { Const } from './Const';
 
+const CONFIG_PATH = './config.json' as string;
+
+export type EndPointCOnfig = {
+  endPointUrl: string;
+};
+
+export type Config = {
+  config: EndPointCOnfig;
+};
+
+let config: Config;
 export interface ApiReturnObject {
   statusNum: number;
   body: unknown;
@@ -34,6 +44,21 @@ const apiAccess = async (
     statusNum: RESULT.ABNORMAL_TERMINATION,
     body: null,
   };
+
+  await axios
+    .get(CONFIG_PATH)
+    .then((res) => {
+      const configJson = JSON.parse(
+        JSON.stringify(res.data as object)
+      ) as Config;
+      config = configJson;
+    })
+    .catch((err) => {
+      config.config.endPointUrl = 'http://localhost:3000';
+      console.log(err);
+    });
+  console.log(config.config.endPointUrl);
+
   let token = localStorage.getItem('token');
   if (token == null) {
     token = '';
@@ -54,7 +79,7 @@ const apiAccess = async (
   switch (methodType) {
     case METHOD_TYPE.GET:
       await axios
-        .get(`${Const.END_POINT}${url}`, payloadObj)
+        .get(`${config.config.endPointUrl}${url}`, payloadObj)
         .then((response) => {
           returnObj = response.data as ApiReturnObject;
         })
@@ -67,7 +92,7 @@ const apiAccess = async (
 
     case METHOD_TYPE.POST:
       await axios
-        .post(`${Const.END_POINT}${url}`, payloadObj)
+        .post(`${config.config.endPointUrl}${url}`, payloadObj)
         .then((response) => {
           returnObj = response.data as ApiReturnObject;
         })
@@ -80,7 +105,7 @@ const apiAccess = async (
 
     case METHOD_TYPE.DELETE:
       await axios
-        .delete(`${Const.END_POINT}${url}`, payloadObj)
+        .delete(`${config.config.endPointUrl}${url}`, payloadObj)
         .then((response) => {
           returnObj = response.data as ApiReturnObject;
         })
@@ -111,7 +136,9 @@ const apiAccess = async (
     const refleshToken = localStorage.getItem('reflesh_token');
     if (refleshToken !== null) {
       await axios
-        .post(`${Const.END_POINT}relogin/`, { reflesh_token: refleshToken })
+        .post(`${config.config.endPointUrl}relogin/`, {
+          reflesh_token: refleshToken,
+        })
         .then(async (response) => {
           const refleshResponse = response.data as ApiReturnObject;
           if (refleshResponse.statusNum === RESULT.NORMAL_TERMINATION) {

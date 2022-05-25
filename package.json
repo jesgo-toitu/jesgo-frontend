@@ -1,5 +1,5 @@
 {
-  "name": "jsego",
+  "name": "jsego-web",
   "version": "0.0.8",
   "description": "",
   "main": "index.js",
@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.14.178",
+    "@types/react-csv": "^1.1.2",
     "@types/react-modal": "^3.13.1",
     "@typescript-eslint/eslint-plugin": "^5.12.1",
     "@typescript-eslint/parser": "^5.12.1",
@@ -61,6 +62,7 @@
     "eslint-plugin-react-hooks": "^4.3.0",
     "patch-package": "^6.4.7",
     "prettier": "2.5.1",
+    "react-csv": "^2.2.2",
     "style-loader": "^3.3.1"
   }
 }

@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import lodash from 'lodash';
 import { UiSchema } from '@rjsf/core';
 import { useDispatch } from 'react-redux';
@@ -13,7 +15,11 @@ import {
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
 import { CustomSchema } from './SchemaUtility';
-import { createPanels, createTabs } from './FormCommonComponents';
+import {
+  ChildTabSelectedFuncObj,
+  createPanels,
+  createTabs,
+} from './FormCommonComponents';
 import { Const } from '../../common/Const';
 import { responseResult } from '../../common/DBUtility';
 import '../../views/Registration.css';
@@ -21,6 +27,8 @@ import store from '../../store';
 
 // ルートディレクトリ直下の子スキーマ
 type Props = {
+  tabId: string;
+  parentTabsId: string;
   schemaId: number;
   dispSchemaIds: dispSchemaIdAndDocumentIdDefine[];
   setDispSchemaIds: React.Dispatch<
@@ -31,14 +39,17 @@ type Props = {
   loadedData: SaveDataObjDefine | undefined;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>;
-  parentTabsId: string;
   setSelectedTabKey: React.Dispatch<React.SetStateAction<any>>;
   subSchemaCount: number;
   isSchemaChange: boolean | undefined;
+  selectedTabKey: any;
+  schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void;
 };
 
 const TabSchema = React.memo((props: Props) => {
   const {
+    tabId,
+    parentTabsId,
     schemaId,
     dispSchemaIds,
     setDispSchemaIds,
@@ -50,10 +61,10 @@ const TabSchema = React.memo((props: Props) => {
     setSelectedTabKey,
     subSchemaCount,
     isSchemaChange,
+    selectedTabKey,
+    schemaAddModFunc,
   } = props;
 
-  // console.log('tabschema');
-  // console.log(GetRootSchema());
   // schemaIdをもとに情報を取得
   const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
   const {
@@ -80,12 +91,20 @@ const TabSchema = React.memo((props: Props) => {
     dispSchemaIdAndDocumentIdDefine[]
   >([]);
 
+  const [addedDocumentCount, setAddedDocumentCount] = useState<number>(0);
+
   const dispatch = useDispatch();
 
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
   const isTab = customSchema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'tab';
   const uiSchema: UiSchema = CreateUISchema(customSchema);
   uiSchema['ui:ObjectFieldTemplate'] = JESGOFiledTemplete.TabItemFieldTemplate;
+
+  const [childTabSelectedFunc, setChildTabSelectedFunc] =
+    useState<ChildTabSelectedFuncObj>({
+      fnAddDocument: schemaAddModFunc, // ドキュメント追加後のTabSelectEvent
+      fnSchemaChange: schemaAddModFunc, // 継承後のTabSelectEvent
+    });
 
   // サブスキーマとサブスキーマから派生できる継承スキーマ一覧取得
   const subSchemaAndInherit = useMemo(() => {
@@ -117,14 +136,17 @@ const TabSchema = React.memo((props: Props) => {
   const createSubSchemaDocument = () => {
     if (
       subschema.length > 0 &&
-      dispSubSchemaIds.length === 0 &&
-      (!loadedData || documentId.startsWith('K') || isSchemaChange)
+      (isSchemaChange ||
+        (dispSubSchemaIds.length === 0 &&
+          (!loadedData || documentId.startsWith('K'))))
     ) {
+      dispSubSchemaIds.length = 0; // 一旦クリア
       subschema.forEach((id) => {
         const item: dispSchemaIdAndDocumentIdDefine = {
           documentId: '',
           schemaId: id,
           deleted: false,
+          compId: '',
         };
         dispSubSchemaIds.push(item);
 
@@ -141,6 +163,7 @@ const TabSchema = React.memo((props: Props) => {
             setDispChildSchemaIds: setDispSubSchemaIds,
             isRootSchema: false,
             schemaInfo: itemSchemaInfo,
+            setAddedDocumentCount,
           });
         }
       });
@@ -149,7 +172,36 @@ const TabSchema = React.memo((props: Props) => {
     setDispSubSchemaIdsNotDeleted(
       dispSubSchemaIds.filter((p) => p.deleted === false)
     );
+
+    // 継承スキーマの場合は再作成完了後に親ドキュメントのフラグを降ろす
+    if (isSchemaChange) {
+      setDispSchemaIds(
+        dispSchemaIds.map((p) => {
+          if (p.documentId === documentId) {
+            p.isSchemaChange = false;
+          }
+          return p;
+        })
+      );
+    }
   };
+
+  // ドキュメント追加後の保存
+  useEffect(() => {
+    const {
+      maxDocumentCount: maxCount,
+      addedDocumentCount: nowCount,
+      selectedTabKeyName: eventKey,
+    } = store.getState().formDataReducer;
+    const tabSelectEvent = store.getState().formDataReducer.tabSelectEvent;
+    // すべてのドキュメントが作成完了したら保存する
+    if (maxCount !== undefined && maxCount === nowCount) {
+      if (tabSelectEvent) {
+        tabSelectEvent(false, eventKey);
+      }
+      dispatch({ type: 'ADD_DOCUMENT_STATUS', maxDocumentCount: undefined });
+    }
+  }, [addedDocumentCount]);
 
   // DBから読み込んだデータを設定
   useEffect(() => {
@@ -178,47 +230,43 @@ const TabSchema = React.memo((props: Props) => {
           documentId,
         });
 
-        if (isSchemaChange) {
-          // 継承した場合は子ドキュメントがクリアされるので、サブスキーマ再作成
-          createSubSchemaDocument();
-        } else {
-          const childDocuments = parentDoc.value.child_documents;
+        const childDocuments = parentDoc.value.child_documents;
 
-          // 子ドキュメントがあればサブスキーマとchildスキーマを判定してそれぞれの配列に格納
-          if (childDocuments.length > 0) {
-            childDocuments.forEach((childDocId) => {
-              const childDoc = loadedData.jesgo_document.find(
-                (p) => p.key === childDocId
-              );
-              if (childDoc) {
-                const item: dispSchemaIdAndDocumentIdDefine = {
-                  documentId: childDoc.key,
-                  schemaId: childDoc.value.schema_id,
-                  deleted: childDoc.value.deleted,
-                };
+        // 子ドキュメントがあればサブスキーマとchildスキーマを判定してそれぞれの配列に格納
+        if (childDocuments.length > 0) {
+          childDocuments.forEach((childDocId) => {
+            const childDoc = loadedData.jesgo_document.find(
+              (p) => p.key === childDocId
+            );
+            if (childDoc) {
+              const item: dispSchemaIdAndDocumentIdDefine = {
+                documentId: childDoc.key,
+                schemaId: childDoc.value.schema_id,
+                deleted: childDoc.value.deleted,
+                compId: childDoc.compId,
+              };
 
-                // サブスキーマに追加
-                if (
-                  subschema.length > 0 &&
-                  !dispSubSchemaIds.find(
-                    (p) => p.schemaId === childDoc.value.schema_id
-                  ) &&
-                  subSchemaAndInherit.includes(childDoc.value.schema_id)
-                ) {
-                  dispSubSchemaIds.push(item);
-                } else {
-                  // childスキーマに追加
-                  dispChildSchemaIds.push(item);
-                }
+              // サブスキーマに追加
+              if (
+                subschema.length > 0 &&
+                !dispSubSchemaIds.find(
+                  (p) => p.schemaId === childDoc.value.schema_id
+                ) &&
+                subSchemaAndInherit.includes(childDoc.value.schema_id)
+              ) {
+                dispSubSchemaIds.push(item);
+              } else {
+                // childスキーマに追加
+                dispChildSchemaIds.push(item);
               }
-            });
+            }
+          });
 
-            if (dispSubSchemaIds.length > 0) {
-              setDispSubSchemaIds([...dispSubSchemaIds]);
-            }
-            if (dispChildSchemaIds.length > 0) {
-              setDispChildSchemaIds([...dispChildSchemaIds]);
-            }
+          if (dispSubSchemaIds.length > 0) {
+            setDispSubSchemaIds([...dispSubSchemaIds]);
+          }
+          if (dispChildSchemaIds.length > 0) {
+            setDispChildSchemaIds([...dispChildSchemaIds]);
           }
         }
       }
@@ -228,7 +276,7 @@ const TabSchema = React.memo((props: Props) => {
   // サブスキーマ
   useEffect(() => {
     createSubSchemaDocument();
-  }, [dispSubSchemaIds]);
+  }, [dispSubSchemaIds, isSchemaChange]);
 
   // childスキーマ
   useEffect(() => {
@@ -247,6 +295,7 @@ const TabSchema = React.memo((props: Props) => {
             setDispChildSchemaIds,
             isRootSchema: false,
             schemaInfo: itemSchemaInfo,
+            setAddedDocumentCount,
           });
         }
       });
@@ -266,6 +315,13 @@ const TabSchema = React.memo((props: Props) => {
     });
   }, [dispSubSchemaIds, dispChildSchemaIds]);
 
+  useLayoutEffect(() => {
+    const scrollTop = store.getState().commonReducer.scrollTop;
+    if (scrollTop && document.scrollingElement) {
+      document.scrollingElement.scrollTop = scrollTop;
+    }
+  });
+
   return (
     <>
       <div className="content-area">
@@ -279,6 +335,8 @@ const TabSchema = React.memo((props: Props) => {
           formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         />
         <ControlButton
+          tabId={tabId}
+          parentTabsId={parentTabsId}
           schemaId={schemaId}
           Type={COMP_TYPE.TAB}
           isChildSchema={isChildSchema}
@@ -286,6 +344,7 @@ const TabSchema = React.memo((props: Props) => {
           dispSchemaIds={[...dispSchemaIds]}
           setDispSchemaIds={setDispSchemaIds}
           dispChildSchemaIds={[...dispChildSchemaIds]}
+          dispSubSchemaIds={[...dispSubSchemaIdsNotDeleted]}
           setDispChildSchemaIds={setDispChildSchemaIds}
           childSchemaIds={childSchema}
           documentId={documentId}
@@ -293,12 +352,13 @@ const TabSchema = React.memo((props: Props) => {
           formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
           setSelectedTabKey={setSelectedTabKey}
           subSchemaCount={subSchemaCount}
+          tabSelectEvents={childTabSelectedFunc}
         />
       </div>
       {isTab
         ? // タブ表示
           createTabs(
-            'tabschema',
+            `${tabId}`,
             dispSubSchemaIds,
             dispSubSchemaIdsNotDeleted,
             setDispSubSchemaIds,
@@ -307,7 +367,9 @@ const TabSchema = React.memo((props: Props) => {
             setDispChildSchemaIds,
             loadedData,
             setIsLoading,
-            setSaveResponse
+            setSaveResponse,
+            childTabSelectedFunc,
+            setChildTabSelectedFunc
           )
         : // パネル表示
           createPanels(
@@ -319,7 +381,10 @@ const TabSchema = React.memo((props: Props) => {
             setDispChildSchemaIds,
             loadedData,
             setIsLoading,
-            setSaveResponse
+            setSaveResponse,
+            selectedTabKey,
+            schemaAddModFunc,
+            tabId
           )}
     </>
   );

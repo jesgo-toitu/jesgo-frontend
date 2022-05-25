@@ -1,5 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable camelcase */
-import React, { useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -20,6 +26,7 @@ import {
 import RootSchema from '../components/CaseRegistration/RootSchema';
 import SubmitButton from '../components/CaseRegistration/SubmitButton';
 import {
+  convertTabKey,
   GetRootSchema,
   GetSchemaInfo,
 } from '../common/CaseRegistrationUtility';
@@ -39,17 +46,22 @@ import apiAccess, { RESULT, METHOD_TYPE } from '../common/ApiAccess';
 import {
   AddBeforeUnloadEvent,
   calcAge,
-  TabSelectMessage,
   RemoveBeforeUnloadEvent,
 } from '../common/CommonUtility';
 import store from '../store';
 import { Const } from '../common/Const';
+import SaveConfirmDialog from '../components/CaseRegistration/SaveConfirmDialog';
+
+export interface ShowSaveDialogState {
+  showFlg: boolean;
+  eventKey: any;
+}
 
 // 症例入力のおおもとの画面
 const Registration = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { search } = useLocation();
+  const { search, state } = useLocation();
 
   // 表示中のルートドキュメント
   const [dispRootSchemaIds, setDispRootSchemaIds] = useState<
@@ -95,9 +107,75 @@ const Registration = () => {
   // 選択中のタブeventKey
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const [selectedTabKey, setSelectedTabKey] = useState<any>();
+  // 選択中のタブインデックス
+  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(-1);
+
+  const [addedDocumentCount, setAddedDocumentCount] = useState<number>(0);
 
   // eslint-disable-next-line prefer-const
   let [loadData, setLoadData] = useState<SaveDataObjDefine | undefined>();
+
+  const saveFunction = (eventKey: any) => {
+    const formDatas = store.getState().formDataReducer.formDatas;
+    const saveData = store.getState().formDataReducer.saveData;
+
+    // スクロール位置保存
+    dispatch({
+      type: 'SCROLL_POSITION',
+      scrollTop: document.scrollingElement
+        ? document.scrollingElement.scrollTop
+        : undefined,
+    });
+
+    // 保存処理
+    SaveCommand(
+      formDatas,
+      saveData,
+      dispatch,
+      setIsLoading,
+      setSaveResponse,
+      false
+    );
+
+    // インデックスからタブ名に変換
+    const convTabKey = convertTabKey('root-tab', eventKey);
+
+    setSelectedTabKey(convTabKey);
+  };
+
+  const [showSaveDialog, setShowSaveDialog] = useState<ShowSaveDialogState>({
+    showFlg: false,
+    eventKey: undefined,
+  });
+
+  // 保存確認ダイアログ はい選択
+  const saveDialogOk = useCallback(
+    (eventKey: any) => {
+      setShowSaveDialog({ showFlg: false, eventKey });
+
+      dispatch({ type: 'SAVE_MESSAGE_STATE', isSaveAfterTabbing: true });
+      dispatch({ type: 'SHOWN_SAVE_MESSAGE', isShownSaveMessage: false });
+
+      saveFunction(eventKey);
+    },
+    [showSaveDialog]
+  );
+
+  // 保存確認ダイアログ いいえ選択
+  const saveDialogCancel = useCallback(
+    (eventKey: any) => {
+      dispatch({ type: 'SAVE_MESSAGE_STATE', isSaveAfterTabbing: false });
+      dispatch({ type: 'SHOWN_SAVE_MESSAGE', isShownSaveMessage: false });
+
+      setShowSaveDialog({ showFlg: false, eventKey });
+
+      // インデックスからタブ名に変換
+      const convTabKey = convertTabKey('root-tab', showSaveDialog.eventKey);
+
+      setSelectedTabKey(convTabKey);
+    },
+    [showSaveDialog]
+  );
 
   // 初期設定
   useEffect(() => {
@@ -131,9 +209,6 @@ const Registration = () => {
       setHasSchema(true);
     };
 
-    console.log('hasschema');
-    console.log(hasSchema);
-
     if (!hasSchema) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       asyncFunc();
@@ -162,9 +237,7 @@ const Registration = () => {
   useEffect(() => {
     // ブラウザの戻る・更新の防止
     AddBeforeUnloadEvent();
-  }, []);
 
-  useEffect(() => {
     // 初回のデータ読み込み
     LoadDataFromDB();
   }, []);
@@ -221,18 +294,26 @@ const Registration = () => {
               documentId: doc.key,
               schemaId: doc.value.schema_id,
               deleted: doc.value.deleted,
+              compId: doc.compId,
             });
           });
         setDispRootSchemaIds([...dispRootSchemaIds]);
         setLoadData(loadData);
 
-        // 先頭のタブを選択する
+        // 初回読み込みの場合は先頭のタブを選択する
         if (!selectedTabKey && dispRootSchemaIds.length > 0) {
-          setSelectedTabKey(0);
+          setSelectedTabKey(`root-tab-${dispRootSchemaIds[0].compId}`);
+        } else if (
+          selectedTabIndex > -1 &&
+          dispRootSchemaIds.length > selectedTabIndex
+        ) {
+          // 手動保存後の読込時は保存前に選択していたタブを選択しておく
+          setSelectedTabKey(
+            `root-tab-${dispRootSchemaIds[selectedTabIndex].compId}`
+          );
         }
       }
 
-      // setIsLoading(false);
       setIsReload(false);
 
       // 患者情報しか入力されてない場合はローディング画面解除されないのでここで解除する
@@ -242,10 +323,41 @@ const Registration = () => {
 
       // TODO: これだと読み込み後にまた再描画かかる？
       if (caseId) {
-        navigate(`/registration?id=${caseId}`);
+        navigate(`/registration?id=${caseId}`, {
+          state: {
+            scrollX: window.scrollX,
+            scrollY: document.scrollingElement
+              ? document.scrollingElement.scrollTop
+              : undefined,
+          },
+        });
       }
     }
   }, [loadedJesgoCase]);
+
+  // タブ選択イベント
+  const onTabSelectEvent = (isTabSelected: boolean, eventKey: any) => {
+    if (isTabSelected && eventKey === selectedTabKey) return;
+
+    const commonReducer = store.getState().commonReducer;
+
+    const isHiddenSaveMessage = commonReducer.isHiddenSaveMassage;
+    if (!isHiddenSaveMessage) {
+      // 確認ダイアログの表示
+      if (!commonReducer.isShownSaveMessage) {
+        dispatch({ type: 'SHOWN_SAVE_MESSAGE', isShownSaveMessage: true });
+        setShowSaveDialog({ showFlg: true, eventKey });
+      }
+    } else if (commonReducer.isSaveAfterTabbing) {
+      // 確認ダイアログを表示しない＆保存する場合は保存処理だけする
+      saveFunction(eventKey);
+    } else {
+      // 確認ダイアログを表示しない＆保存しない場合はタブ移動だけする
+      // インデックスからタブ名に変換
+      const convTabKey = convertTabKey('root-tab', eventKey);
+      setSelectedTabKey(convTabKey);
+    }
+  };
 
   useEffect(() => {
     if (dispRootSchemaIds.length > 0) {
@@ -262,15 +374,19 @@ const Registration = () => {
             setDispChildSchemaIds: setDispRootSchemaIds,
             isRootSchema: true,
             schemaInfo,
+            setAddedDocumentCount,
           });
         }
       });
     }
 
+    const filteredIdList = dispRootSchemaIds.filter((p) => p.deleted === false);
     // 削除済みはフィルタ
-    setDispRootSchemaIdsNotDeleted(
-      dispRootSchemaIds.filter((p) => p.deleted === false)
-    );
+    setDispRootSchemaIdsNotDeleted(filteredIdList);
+
+    if (filteredIdList.length === 1) {
+      setSelectedTabKey(`root-tab-${filteredIdList[0].compId}`);
+    }
   }, [dispRootSchemaIds, loadData]);
 
   useEffect(() => {
@@ -287,6 +403,31 @@ const Registration = () => {
   useEffect(() => {
     if (isLoading) {
       setIsLoading(false);
+    }
+
+    // 子ドキュメントのタブ名取得
+    const allTabIds = dispRootSchemaIdsNotDeleted.map(
+      (info) => `root-tab-${info.compId}`
+    );
+
+    if (!isNaN(Number(selectedTabKey))) {
+      const tabIndex = parseInt(selectedTabKey as string, 10);
+      if (allTabIds.length > tabIndex) {
+        const convTabKey = allTabIds[parseInt(selectedTabKey as string, 10)];
+        setSelectedTabKey(convTabKey);
+      }
+    }
+
+    dispatch({
+      type: 'TAB_LIST',
+      parentTabsId: 'root-tab',
+      tabList: allTabIds,
+    });
+
+    // ドキュメントの並び替えも考慮してTabIndex更新しておく
+    if (allTabIds.length > 0) {
+      const idx = allTabIds.findIndex((p) => p === selectedTabKey);
+      setSelectedTabIndex(idx);
     }
   }, [dispRootSchemaIdsNotDeleted]);
 
@@ -331,38 +472,6 @@ const Registration = () => {
   // 年齢
   age = calcAge(birthday);
 
-  // タブ選択イベント
-  const onTabSelectEvent = (eventKey: any) => {
-    if (eventKey === selectedTabKey) return;
-
-    // TODO：タブ移動での保存は一時的にオフ
-    setSelectedTabKey(eventKey);
-    return;
-
-    // 保存しますかメッセージ
-    // if (TabSelectMessage()) {
-    if (true) {
-      const formDatas = store.getState().formDataReducer.formDatas;
-      const saveData = store.getState().formDataReducer.saveData;
-
-      // 保存処理
-      SaveCommand(
-        formDatas,
-        saveData,
-        dispatch,
-        setIsLoading,
-        setSaveResponse,
-        false
-      );
-
-      setSelectedTabKey(eventKey);
-    } else {
-      // TODO: キャンセルの場合は留まる？
-      // setSelectedTabKey(selectedTabKey);
-      setSelectedTabKey(eventKey);
-    }
-  };
-
   // 保存後のコールバック
   useEffect(() => {
     if (saveResponse.resCode !== undefined) {
@@ -391,6 +500,28 @@ const Registration = () => {
       }
     }
   }, [saveResponse]);
+
+  // 選択されているタブをstoreに保存
+  useEffect(() => {
+    dispatch({
+      type: 'SELECTED_TAB',
+      parentTabsId: `root-tab`,
+      selectedChildTabId: selectedTabKey as string,
+    });
+
+    const tabList = store.getState().formDataReducer.allTabList.get('root-tab');
+    if (tabList && tabList.length > 0) {
+      const idx = tabList.findIndex((p) => p === (selectedTabKey as string));
+      setSelectedTabIndex(idx);
+    }
+  }, [selectedTabKey]);
+
+  useLayoutEffect(() => {
+    const scrollTop = store.getState().commonReducer.scrollTop;
+    if (scrollTop && document.scrollingElement) {
+      document.scrollingElement.scrollTop = scrollTop;
+    }
+  });
 
   return (
     <div className="page-area">
@@ -471,7 +602,7 @@ const Registration = () => {
               <Tabs
                 id="root-tabs"
                 activeKey={selectedTabKey} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                onSelect={(eventKey) => onTabSelectEvent(eventKey)}
+                onSelect={(eventKey) => onTabSelectEvent(true, eventKey)}
               >
                 {dispRootSchemaIdsNotDeleted.map(
                   (info: dispSchemaIdAndDocumentIdDefine, index: number) => {
@@ -481,17 +612,18 @@ const Registration = () => {
                     if (schemaInfo?.subtitle) {
                       title += ` ${schemaInfo.subtitle}`;
                     }
-
                     return (
                       // TODO TabSchemaにTabを置くとうまく動作しなくなる
                       <Tab
-                        key={`root-tab-${info.schemaId}`}
+                        key={`root-tab-${info.compId}`}
                         className="panel-style"
-                        eventKey={index}
-                        title={<span>{title} </span>}
+                        eventKey={`root-tab-${info.compId}`}
+                        title={<span>{title}</span>}
                       >
                         <RootSchema
-                          key={`root-${info.schemaId}`}
+                          key={`root-${info.compId}`}
+                          tabId={`root-tab-${info.compId}`}
+                          parentTabsId="root-tab"
                           schemaId={info.schemaId}
                           documentId={info.documentId}
                           dispSchemaIds={[...dispRootSchemaIds]}
@@ -501,6 +633,8 @@ const Registration = () => {
                           setIsLoading={setIsLoading}
                           setSaveResponse={setSaveResponse}
                           isSchemaChange={info.isSchemaChange}
+                          selectedTabKey={selectedTabKey}
+                          schemaAddModFunc={onTabSelectEvent}
                         />
                       </Tab>
                     );
@@ -510,19 +644,34 @@ const Registration = () => {
             )}
           </div>
           <ControlButton
+            tabId="root-tab"
+            parentTabsId=""
             Type={COMP_TYPE.ROOT}
             isChildSchema={false} // eslint-disable-line react/jsx-boolean-value
             schemaId={0}
+            dispSubSchemaIds={[]}
             dispChildSchemaIds={[...dispRootSchemaIds]}
             setDispChildSchemaIds={setDispRootSchemaIds}
             dispatch={dispatch}
             documentId=""
             subSchemaCount={0}
+            tabSelectEvents={{
+              fnAddDocument: onTabSelectEvent,
+              fnSchemaChange: undefined,
+            }}
           />
         </div>
       )}
       {/* ローディング画面表示 */}
       {(isLoading || !hasSchema) && <Loading />}
+      {/* 保存確認ダイアログ */}
+      <SaveConfirmDialog
+        show={showSaveDialog}
+        onOk={() => saveDialogOk(showSaveDialog.eventKey)}
+        onCancel={() => saveDialogCancel(showSaveDialog.eventKey)}
+        title="JESGO"
+        message="保存します。よろしいですか？"
+      />
     </div>
   );
 };

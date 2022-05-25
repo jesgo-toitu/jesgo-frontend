@@ -6,9 +6,10 @@ import { Login } from './views/Login';
 import Patients from './views/Patients';
 import Registration from './views/Registration';
 import store from './store/index';
+import Stafflist from './views/Stafflist';
+import Settings from './views/Settings';
 import './index.css';
 import './biz-udpgothic.css';
-import Stafflist from './views/Stafflist';
 
 ReactDOM.render(
   <Provider store={store}>
@@ -18,6 +19,7 @@ ReactDOM.render(
         <Route path="/Patients" element={<Patients />} />
         <Route path="/Registration" element={<Registration />} />
         <Route path="/Stafflist" element={<Stafflist />} />
+        <Route path="/Settings" element={<Settings />} />
       </Routes>
     </BrowserRouter>
   </Provider>,

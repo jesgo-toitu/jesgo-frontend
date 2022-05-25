@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Nav, Navbar, NavItem } from 'react-bootstrap';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { UserMenu } from '../components/common/UserMenu';
-import StaffEditModalDialog from '../components/Staff/StaffEditModal';
 import StaffTables from '../components/Staff/StaffTables';
+import { settingsFromApi } from './Settings';
 import './Stafflist.css';
 
 export type staffData = {
@@ -17,13 +17,27 @@ export type staffData = {
 
 export const Stafflist = () => {
   const navigate = useNavigate();
-  const url: string = useLocation().search;
   const userName = localStorage.getItem('display_name')!;
-  const [staffListJson, setStaffListJson] = useState('');
-  const [show, setShow] = useState(false);
-  const [update, setUpdate] = useState(false);
+  const [facilityName, setFacilityName] = useState('');
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const f = async () => {
+      // 設定情報取得APIを呼ぶ
+      const returnSettingApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `getSettings`
+      );
+
+      // 正常に取得できた場合施設名を設定
+      if (returnSettingApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = returnSettingApiObject.body as settingsFromApi;
+        setFacilityName(returned.facility_name);
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
+  }, []);
 
   const clickCancel = useCallback(() => {
     navigate('/Patients');
@@ -46,6 +60,7 @@ export const Stafflist = () => {
             <NavItem className="header-text">利用者管理</NavItem>
           </Nav>
           <Nav pullRight>
+            <Navbar.Text>{facilityName}</Navbar.Text>
             <NavItem>
               <UserMenu title={userName} i={0} />
             </NavItem>

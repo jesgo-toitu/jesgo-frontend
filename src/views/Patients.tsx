@@ -16,11 +16,14 @@ import {
   Glyphicon,
   Jumbotron,
 } from 'react-bootstrap';
-import UserTables from '../components/Patients/UserTables';
+import { CSVLink } from 'react-csv';
+import UserTables, { userDataList } from '../components/Patients/UserTables';
 import './Patients.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
+import { settingsFromApi } from './Settings';
+import { csvHeader, patientListCsv } from '../common/MakeCsv';
 
 const Patients = () => {
   const navigate = useNavigate();
@@ -36,9 +39,23 @@ const Patients = () => {
   const [listMode, setListMode] = useState(['blue', '']);
   const [userListJson, setUserListJson] = useState('');
   const [tableMode, setTableMode] = useState('normal');
+  const [facilityName, setFacilityName] = useState('');
+  const [csvData, setCsvData] = useState<object[]>([]);
 
   useEffect(() => {
     const f = async () => {
+      // 設定情報取得APIを呼ぶ
+      const returnSettingApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `getSettings`
+      );
+
+      // 正常に取得できた場合施設名を設定
+      if (returnSettingApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = returnSettingApiObject.body as settingsFromApi;
+        setFacilityName(returned.facility_name);
+      }
+
       // 患者情報取得APIを呼ぶ
       const returnApiObject = await apiAccess(
         METHOD_TYPE.GET,
@@ -55,6 +72,53 @@ const Patients = () => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     f();
   }, []);
+
+  useEffect(() => {
+    console.log('useeff');
+    console.log(userListJson);
+    const newData: patientListCsv[] = [];
+    if (userListJson !== null && userListJson !== '') {
+      const decordedJson = JSON.parse(userListJson) as userDataList;
+
+      // eslint-disable-next-line no-plusplus
+      for (let index = 0; index < decordedJson.data.length; index++) {
+        const userData = decordedJson.data[index];
+        const patientCsv: patientListCsv = {
+          patientId: userData.patientId,
+          patinetName: userData.patientName,
+          age: userData.age.toString(),
+          startDate: userData.startDate!,
+          lastUpdate: userData.lastUpdate,
+          diagnosisCervical: userData.diagnosisCervical,
+          diagnosisEndometrial: userData.diagnosisEndometrial,
+          diagnosisOvarian: userData.diagnosisOvarian,
+          advancedStageCervical: userData.advancedStageCervical,
+          advancedStageEndometrial: userData.advancedStageEndometrial,
+          advancedStageOvarian: userData.advancedStageOvarian,
+          recurrence: userData.status.includes('recurrence') ? '有' : '無',
+          chemotherapy: userData.status.includes('chemo') ? '有' : '無',
+          operation: userData.status.includes('surgery') ? '有' : '無',
+          radiotherapy: userData.status.includes('radio') ? '有' : '無',
+          supportiveCare: userData.status.includes('surveillance')
+            ? '有'
+            : '無',
+          registration:
+            // eslint-disable-next-line no-nested-ternary
+            userData.registration.includes('decline')
+              ? '拒否'
+              : userData.registration.includes('not_completed')
+              ? '無'
+              : '有',
+          death: userData.status.includes('death') ? '有' : '無',
+          threeYearPrognosis: `無`,
+          fiveYearPrognosis: `無`,
+        };
+        newData.push(patientCsv);
+      }
+
+      setCsvData(newData);
+    }
+  }, [userListJson]);
 
   const [searchWord, setSearchWord] = useState({
     registrationYear: 'all',
@@ -330,6 +394,7 @@ const Patients = () => {
             </NavItem>
           </Nav>
           <Nav pullRight>
+            <Navbar.Text>{facilityName}</Navbar.Text>
             <NavItem>
               <UserMenu title={userName} i={0} />
             </NavItem>
@@ -361,6 +426,16 @@ const Patients = () => {
               新規作成
             </Button>
           )}
+          <CSVLink
+            data={csvData}
+            headers={csvHeader}
+            // eslint-disable-next-line
+            onClick={() => confirm('CSVファイルをダウンロードしますか？')}
+          >
+            <Button bsStyle="success" className="normal-button">
+              CSV作成
+            </Button>
+          </CSVLink>
         </div>
       </div>
       <div className="search-form-outer">

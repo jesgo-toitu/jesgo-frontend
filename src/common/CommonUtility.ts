@@ -48,5 +48,3 @@ export const calcAge = (birthday: string) => {
 
   return Math.floor((nowNum - birthNum) / 10000).toString();
 };
-
-export const TabSelectMessage = () => confirm('保存しますか？');

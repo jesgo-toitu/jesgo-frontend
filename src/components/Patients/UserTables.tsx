@@ -12,34 +12,43 @@ import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import { formatDate } from '../../common/DBUtility';
 import IconList from './IconList';
 
+export interface userData {
+  caseId: number;
+  patientId: string;
+  patientName: string;
+  age: number;
+  registedCancerGroup: string;
+  since: string | null;
+  startDate: string | null;
+  lastUpdate: string;
+  diagnosis: string;
+  diagnosisCervical: string;
+  diagnosisEndometrial: string;
+  diagnosisOvarian: string;
+  advancedStage: string;
+  advancedStageCervical: string;
+  advancedStageEndometrial: string;
+  advancedStageOvarian: string;
+  pathlogicalDiagnosis: string;
+  initialTreatment: string[];
+  copilacations: string[];
+  progress: string[];
+  postRelapseTreatment: string[];
+  registration: string[];
+  threeYearPrognosis: string[];
+  fiveYearPrognosis: string[];
+  status: string[];
+}
+export interface userDataList {
+  data: userData[];
+}
+
 const makeTable = (props: {
   userListJson: string;
   search: string;
   noSearch: string;
   progressAndRecurrenceColumn: string;
 }) => {
-  interface userData {
-    caseId: number;
-    patientId: string;
-    patientName: string;
-    age: number;
-    registedCancerGroup: string;
-    startDate: string | null;
-    lastUpdate: string;
-    diagnosis: string;
-    advancedStage: string;
-    pathlogicalDiagnosis: string;
-    initialTreatment: string[];
-    copilacations: string[];
-    progress: string[];
-    postRelapseTreatment: string[];
-    threeYearPrognosis: string[];
-    fiveYearPrognosis: string[];
-    status: string[];
-  }
-  interface userDataList {
-    data: userData[];
-  }
   const [userList, setUserList] = useState<userData[]>([]);
   const { userListJson, search, noSearch, progressAndRecurrenceColumn } = props;
   let userDataListJson: userDataList;
@@ -95,6 +104,7 @@ const makeTable = (props: {
   const clickEdit = (caseId: number) => {
     // 遷移前にstoreを初期化
     dispatch({ type: 'INIT_STORE' });
+    // 保存確認ダイアログ表示設定を初期化
     navigate(`/registration?id=${caseId}`);
   };
 
@@ -104,21 +114,18 @@ const makeTable = (props: {
         <tr>
           <th>患者ID</th>
           <th>患者名</th>
-          <th>年齢</th>
-          <th className={search}>登録がん種</th>
-          <th className={search}>初回治療開始日</th>
+          <th className={noSearch}>年齢</th>
           <th className={noSearch}>
             初回治療開始日
             <br />
             ／最終更新日
           </th>
-          <th className={noSearch}>診断</th>
+          <th>診断</th>
           <th>進行期</th>
-          <th className={search}>病理診断</th>
           <th className={search}>初回治療</th>
-          <th className={search}>合併症</th>
-          <th className={progressAndRecurrenceColumn}>経過</th>
-          <th className={progressAndRecurrenceColumn}>再発後治療</th>
+          <th className={search}>登録</th>
+          <th className={search}>3年予後</th>
+          <th className={search}>5年予後</th>
           <th className={noSearch}>ステータス</th>
           {(localStorage.getItem('is_edit_roll') === 'true' ||
             localStorage.getItem('is_remove_roll') === 'true') && (
@@ -140,28 +147,37 @@ const makeTable = (props: {
           >
             <td>{user.patientId}</td>
             <td>{user.patientName}</td>
-            <td>{user.age}</td>
-            <td className={search}>{user.registedCancerGroup}</td>
-            <td className={search}>{formatDate(user.startDate ?? '', '/')}</td>
+            <td className={noSearch}>{user.age}</td>
             <td className={noSearch}>
-              {formatDate(user.startDate ?? '', '/')}
-              {user.startDate && <br />}
+              {formatDate(user.since ?? '', '/')}
+              {user.since && <br />}
               {formatDate(user.lastUpdate, '/')}
             </td>
-            <td className={noSearch}>{user.diagnosis}</td>
-            <td>{user.advancedStage}</td>
-            <td className={search}>{user.pathlogicalDiagnosis}</td>
+            <td>
+              {user.diagnosis === '未' ? (
+                <img src="./image/icon_not_completed.svg" alt="未" />
+              ) : (
+                user.diagnosis
+              )}
+            </td>
+            <td>
+              {user.advancedStage === '未' ? (
+                <img src="./image/icon_not_completed.svg" alt="未" />
+              ) : (
+                user.advancedStage
+              )}
+            </td>
             <td className={search}>
               <IconList iconList={user.initialTreatment} />
             </td>
             <td className={search}>
-              <IconList iconList={user.copilacations} />
+              <IconList iconList={user.registration} />
             </td>
-            <td className={progressAndRecurrenceColumn}>
-              <IconList iconList={user.progress} />
+            <td className={search}>
+              <IconList iconList={user.threeYearPrognosis} />
             </td>
-            <td className={progressAndRecurrenceColumn}>
-              <IconList iconList={user.postRelapseTreatment} />
+            <td className={search}>
+              <IconList iconList={user.fiveYearPrognosis} />
             </td>
             <td className={noSearch}>
               <IconList iconList={user.status} />

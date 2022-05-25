@@ -39,6 +39,7 @@ export type jesgoDocumentObjDefine = {
   death_data_prop_name: string;
   // TODO: 削除したキーは必要？
   delete_document_keys: string[];
+  compId: string;
 };
 
 export interface SaveDataObjDefine {
@@ -49,13 +50,20 @@ export interface formDataState {
   formDatas: Map<string, any>;
   saveData: SaveDataObjDefine;
   nextSeqNo: number;
-  selectedChildTabIds: Map<string, string>;
+  nextCompSeqNo: number;
+  selectedTabIds: Map<string, string>;
+  allTabList: Map<string, string[]>;
+  maxDocumentCount: number | undefined; // ドキュメント追加時のサブスキーマ含む全ドキュメント数
+  addedDocumentCount: number; // 追加されたドキュメント数
+  tabSelectEvent?: (isTabSelected: boolean, eventKey: any) => void; // 保存後に実行するタブ選択イベント
+  selectedTabKeyName: string;
 }
 
 export interface dispSchemaIdAndDocumentIdDefine {
   documentId: string;
   schemaId: number;
   deleted: boolean;
+  compId: string;
   isSchemaChange?: boolean;
 }
 
@@ -87,6 +95,12 @@ export interface formDataAction {
   schemaInfo: JesgoDocumentSchema;
   selectedChildTabId: string;
   parentTabsId: string;
+  tabList: string[];
+
+  maxDocumentCount: number | undefined;
+  setAddedDocumentCount: React.Dispatch<React.SetStateAction<number>>;
+  tabSelectEvent: (isTabSelected: boolean, eventKey: any) => void;
+  selectedTabKeyName: string;
 }
 
 // ユーザID取得
@@ -125,7 +139,13 @@ const initialState: formDataState = {
     jesgo_document: [],
   },
   nextSeqNo: 1,
-  selectedChildTabIds: new Map(),
+  nextCompSeqNo: 0,
+  selectedTabIds: new Map(),
+  allTabList: new Map(),
+  maxDocumentCount: undefined,
+  addedDocumentCount: 0,
+  tabSelectEvent: undefined,
+  selectedTabKeyName: '',
 };
 
 // 保存用オブジェクト作成(1スキーマ1オブジェクト)
@@ -150,7 +170,6 @@ const createJesgoDocumentValueItem = (
 
   if (actionType.includes('ADD')) {
     valueItem.schema_id = schemaId;
-    // TODO: メジャーバージョンどこから持ってくる？
 
     // バージョン情報設定(メジャーバージョン)
     if (schemaInfo) {
@@ -181,6 +200,13 @@ const isHeaderInfoAction = (arg: any): arg is headerInfoAction =>
 
 // 仮番発行
 const getTmpSeq = (seqNo: number) => `K${seqNo}`;
+
+// コンポーネントID発行
+const getCompId = (formState: formDataState) => {
+  // eslint-disable-next-line no-param-reassign
+  formState.nextCompSeqNo += 1;
+  return `C${formState.nextCompSeqNo}`;
+};
 
 // ドキュメント削除関数
 const deleteDocument = (
@@ -230,7 +256,6 @@ const formDataReducer: Reducer<
   const { formDatas, saveData } = copyState;
 
   console.log(`action.type=${action.type}`);
-  // console.log(action);
 
   if (isHeaderInfoAction(action)) {
     // ヘッダの患者情報入力
@@ -283,6 +308,9 @@ const formDataReducer: Reducer<
         const docId = getTmpSeq(copyState.nextSeqNo);
         copyState.nextSeqNo += 1;
 
+        // コンポーネントIDの発行
+        const compId = getCompId(copyState);
+
         // フォームデータの更新
         formDatas.set(docId, action.formData);
 
@@ -301,6 +329,7 @@ const formDataReducer: Reducer<
           event_date_prop_name: '',
           death_data_prop_name: '',
           delete_document_keys: [],
+          compId,
         };
 
         const dispChildSchemaIds = action.dispChildSchemaIds;
@@ -328,7 +357,14 @@ const formDataReducer: Reducer<
           action.setDispChildSchemaIds
         ) {
           dispChildSchemaIds[dispChildSchemaIds.length - 1].documentId = docId;
+          dispChildSchemaIds[dispChildSchemaIds.length - 1].compId = compId;
           action.setDispChildSchemaIds([...dispChildSchemaIds]);
+        }
+
+        // 追加通知
+        copyState.addedDocumentCount += 1;
+        if (action.setAddedDocumentCount) {
+          action.setAddedDocumentCount(copyState.addedDocumentCount);
         }
 
         break;
@@ -442,6 +478,23 @@ const formDataReducer: Reducer<
       // 読み込んだデータをstoreに保存
       case 'SAVE_LOADDATA': {
         copyState.saveData = action.saveData;
+
+        // コンポーネントID初期化
+        copyState.nextCompSeqNo = 0;
+
+        // コンポーネントIDの割り当て
+        // 何故か保存の度に並び順変わることあるのでdocumentIdでソートしてから振る
+        copyState.saveData.jesgo_document
+          .sort(
+            (f, s) =>
+              Number.parseInt(f.key.toString(), 10) -
+              Number.parseInt(s.key.toString(), 10)
+          )
+          .forEach((doc: jesgoDocumentObjDefine) => {
+            // eslint-disable-next-line no-param-reassign
+            doc.compId = getCompId(copyState);
+          });
+
         copyState.formDatas.clear();
 
         // フォームデータの更新
@@ -457,12 +510,27 @@ const formDataReducer: Reducer<
       }
 
       // 子タブ選択
-      case 'SELECTED_CHILD_TAB': {
+      case 'SELECTED_TAB': {
         // 選択した子タブのIDと親のTabsのIDを保持する
-        copyState.selectedChildTabIds.set(
+        copyState.selectedTabIds.set(
           action.parentTabsId,
           action.selectedChildTabId
         );
+        break;
+      }
+
+      // 親タブにある子タブも含めたタブ名一覧を保持する
+      case 'TAB_LIST': {
+        copyState.allTabList.set(action.parentTabsId, action.tabList);
+        break;
+      }
+
+      // 追加するドキュメント数など更新
+      case 'ADD_DOCUMENT_STATUS': {
+        copyState.maxDocumentCount = action.maxDocumentCount; // 追加ドキュメント最大数
+        copyState.addedDocumentCount = 0; // 追加済み件数はリセット
+        copyState.tabSelectEvent = action.tabSelectEvent; // 追加後の実行されるTabSelectEvent
+        copyState.selectedTabKeyName = action.selectedTabKeyName; // 選択するタブ名
         break;
       }
 

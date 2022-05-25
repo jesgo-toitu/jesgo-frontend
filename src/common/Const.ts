@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {
-  // サーバーIPアドレス
-  export const END_POINT = 'http://localhost:3000/';
 
   // UiSchemaプロパティ
   export const UI_WIDGET = {

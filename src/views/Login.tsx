@@ -1,10 +1,11 @@
 // ★TODO: JSXの属性を修正する
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import './Login.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
+import { settingsFromApi } from './Settings';
 
 export interface localStorageObject {
   user_id: number;
@@ -25,6 +26,27 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const [facilityName, setFacilityName] = useState('');
+
+  useEffect(() => {
+    const f = async () => {
+      // 設定情報取得APIを呼ぶ
+      const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
+
+      // 正常に取得できた場合施設名を設定
+      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = returnApiObject.body as settingsFromApi;
+        localStorage.setItem('alignment', returned.hisid_alignment);
+        localStorage.setItem('digit', returned.hisid_digit);
+        localStorage.setItem('alphabet_enable', returned.hisid_alphabet_enable);
+        localStorage.setItem('hyphen_enable', returned.hisid_hyphen_enable);
+        setFacilityName(returned.facility_name);
+      }
+    };
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
+  }, []);
 
   const submit = async () => {
     const loginInfo = { name: username, password };
@@ -126,7 +148,7 @@ export const Login = () => {
         <div className="login-inputarea">
           <div className="login-inputarea-title">
             <p>ログイン</p>
-            <p className="ml40"> </p>
+            <p className="ml40">{facilityName}</p>
           </div>
           <div className="login-inputarea-inner">
             <form onSubmit={onSubmit}>

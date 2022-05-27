@@ -19,6 +19,7 @@ export type settingsFromApi = {
 type settings = {
   hisid_alignment: boolean;
   hisid_digit: number;
+  hisid_digit_string: string;
   hisid_hyphen_enable: boolean;
   hisid_alphabet_enable: boolean;
   facility_name: string;
@@ -33,6 +34,7 @@ const Settings = () => {
   const [settingJson, setSettingJson] = useState<settings>({
     hisid_alignment: true,
     hisid_digit: 8,
+    hisid_digit_string: '8',
     hisid_hyphen_enable: true,
     hisid_alphabet_enable: true,
     facility_name: '',
@@ -50,6 +52,7 @@ const Settings = () => {
         const setting: settings = {
           hisid_alignment: returned.hisid_alignment === 'true',
           hisid_digit: Number(returned.hisid_digit),
+          hisid_digit_string: returned.hisid_digit,
           hisid_hyphen_enable: returned.hisid_hyphen_enable === 'true',
           hisid_alphabet_enable: returned.hisid_alphabet_enable === 'true',
           facility_name: returned.facility_name,
@@ -85,21 +88,40 @@ const Settings = () => {
         setSettingJson({
           ...settingJson,
           hisid_digit: Number(eventTarget.value),
+          hisid_digit_string: eventTarget.value,
         });
         break;
 
       case 'hyphen_enable':
-        setSettingJson({
-          ...settingJson,
-          hisid_hyphen_enable: eventTarget.value === 'true',
-        });
+        // ハイフン許容がtrueの場合、桁揃えをfalseにする
+        if (eventTarget.value === 'true') {
+          setSettingJson({
+            ...settingJson,
+            hisid_hyphen_enable: true,
+            hisid_alignment: false,
+          });
+        } else {
+          setSettingJson({
+            ...settingJson,
+            hisid_hyphen_enable: false,
+          });
+        }
         break;
 
       case 'alphabet_enable':
-        setSettingJson({
-          ...settingJson,
-          hisid_alphabet_enable: eventTarget.value === 'true',
-        });
+        // アルファベット許容がtrueの場合、桁揃えをfalseにする
+        if (eventTarget.value === 'true') {
+          setSettingJson({
+            ...settingJson,
+            hisid_alphabet_enable: true,
+            hisid_alignment: false,
+          });
+        } else {
+          setSettingJson({
+            ...settingJson,
+            hisid_alphabet_enable: false,
+          });
+        }
         break;
 
       case 'facility_name':
@@ -128,8 +150,12 @@ const Settings = () => {
   };
   const errorCheck = (): string[] => {
     const errorMessages: string[] = [];
-    if (settingJson.hisid_digit <= 0) {
-      errorMessages.push('桁数は1以上の数値を入力してください');
+    if (
+      settingJson.hisid_digit < 6 ||
+      settingJson.hisid_digit > 12 ||
+      !Number.isInteger(settingJson.hisid_digit)
+    ) {
+      errorMessages.push('桁数は6-12の整数を入力してください');
     }
     if (
       settingJson.jsog_registration_number !== '' &&
@@ -155,6 +181,10 @@ const Settings = () => {
     }
 
     return errorMessages;
+  };
+
+  const clickCancel = () => {
+    navigate('/Patients');
   };
 
   const submit = async () => {
@@ -223,10 +253,19 @@ const Settings = () => {
           </Nav>
         </Navbar.Collapse>
       </Navbar>
+
       <div className="page-menu">
         <div className="search-form-closed flex">
           <Button bsStyle="primary" onClick={submit} className="normal-button">
             保存
+          </Button>
+          <div className="spacer10" />
+          <Button
+            onClick={clickCancel}
+            bsStyle="primary"
+            className="normal-button"
+          >
+            リストに戻る
           </Button>
         </div>
       </div>
@@ -278,9 +317,9 @@ const Settings = () => {
               <td>患者ID 桁数</td>
               <td>
                 <input
-                  type="number"
+                  type="text"
                   name="digit"
-                  value={settingJson.hisid_digit}
+                  value={settingJson.hisid_digit_string}
                   onChange={handleSettingInputs}
                 />
                 桁

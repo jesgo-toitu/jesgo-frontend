@@ -608,7 +608,7 @@ const Patients = () => {
           userListJson={userListJson}
           search={search}
           noSearch={noSearch}
-          progressAndRecurrenceColumn={progressAndRecurrenceColumn}
+          setUserListJson={setUserListJson}
         />
       </div>
     </div>

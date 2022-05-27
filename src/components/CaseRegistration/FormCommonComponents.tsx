@@ -51,7 +51,7 @@ export const createTab = (
     return (
       // TODO TabSchemaにTabを置くとうまく動作しなくなる
       <Tab
-        key={`tab-${info.compId}`}
+        key={`tab-${info.compId}-${info.schemaId}`}
         className="panel-style"
         eventKey={`${parentTabsId}-tab-${info.compId}`}
         title={<span>{title}</span>}

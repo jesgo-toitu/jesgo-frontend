@@ -10,6 +10,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import { formatDate } from '../../common/DBUtility';
+import store from '../../store';
 import IconList from './IconList';
 
 export interface userData {
@@ -47,10 +48,10 @@ const makeTable = (props: {
   userListJson: string;
   search: string;
   noSearch: string;
-  progressAndRecurrenceColumn: string;
+  setUserListJson: React.Dispatch<React.SetStateAction<string>>;
 }) => {
   const [userList, setUserList] = useState<userData[]>([]);
-  const { userListJson, search, noSearch, progressAndRecurrenceColumn } = props;
+  const { userListJson, search, noSearch, setUserListJson } = props;
   let userDataListJson: userDataList;
 
   const navigate = useNavigate();
@@ -93,6 +94,11 @@ const makeTable = (props: {
         const userListCopy = userList.splice(0, userList.length);
         userListCopy.splice(index, 1);
         setUserList(userListCopy);
+
+        // CSV用に削除したデータを上で使ってるJSONからも消す
+        const newJson = { data: userListCopy };
+        const strJson = JSON.stringify(newJson);
+        setUserListJson(strJson);
       } else {
         // eslint-disable-next-line no-alert
         alert('処理に失敗しました。');

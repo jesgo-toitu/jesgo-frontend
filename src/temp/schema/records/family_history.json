@@ -1,0 +1,32 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/record/family_history",
+    "type": "object",
+    "title": "既往歴",
+    "jesgo:unique": true,
+    "家族歴": {
+        "type": "object",
+        "properties": {
+            "乳癌": {
+                "type": "string",
+                "jesgo:ui:textarea": 1
+            },
+            "子宮体がん": {
+                "type": "string",
+                "jesgo:ui:textarea": 1
+            },
+            "卵巣がん": {
+                "type": "string",
+                "jesgo:ui:textarea": 1
+            },
+            "HBOCリスク": {
+                "type": "string",
+                "jesgo:ui:textarea": 1
+            },
+            "その他": {
+                "type": "string",
+                "jesgo:ui:textarea": 2
+            }
+        }
+    }
+}

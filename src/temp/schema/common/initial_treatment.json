@@ -1,0 +1,26 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/initial_treatment",
+    "type": "object",
+    "title": "初回治療",
+    "description": "初回治療情報.",
+    "jesgo:unique": true,
+    "properties": {
+        "初回治療開始日": {
+            "type": "string",
+            "format": "date",
+            "jesgo:required": ["JSOG"],
+            "jesgo:set": "eventdate",
+            "$comment": "治療開始日が同じものは同時性重複癌としてマークされます."
+        }
+    },
+    "jesgo:ui:subschemastyle": "tab",
+    "jesgo:childschema": [
+        "/schema/treatment/operation",
+        "/schema/treatment/chemotherapy",
+        "/schema/treatment/radiotherapy"
+    ],
+    "jesgo:subschema": [
+        "/schema/treatment/supportive_care"
+    ]
+}

@@ -1,0 +1,42 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/record/flavor",
+    "type": "object",
+    "title": "嗜好",
+    "jesgo:unique": true,
+    "properties":{
+        "喫煙": {
+            "type": "object",
+            "properties": {
+                "喫煙開始年齢": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "喫煙中止年齢": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "喫煙本数": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "飲酒": {
+            "type": "object",
+            "properties": {
+                "飲酒歴": {
+                    "type": "string",
+                    "enum": [
+                        "あり",
+                        "なし"
+                    ]
+                },
+                "量": {
+                    "type": "string",
+                    "jesgo:ui:textarea": 1
+                }
+            }
+        }
+    }
+}

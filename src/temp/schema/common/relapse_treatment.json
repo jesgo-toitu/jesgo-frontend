@@ -1,13 +1,14 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/treatment/primary_treatment",
-    "title": "初回治療",
+    "$id": "/schema/relapse_treatment",
+    "title": "再発治療",
     "jesgo:unique": true,
+    "jesgo:ui:subschemastyle": "tab",
     "jesgo:subschema": [
         "/schema/treatment/summary",
         "/schema/treatment/operation",
         "/schema/treatment/chemotherapy",
-        "/schema/treatment/radiotherapy"
-    ],
-    "jesgo:ui:subschemastyle": "tab"
+        "/schema/treatment/radiotherapy",
+        "/schema/treatment/supportive_care"
+    ]
 }

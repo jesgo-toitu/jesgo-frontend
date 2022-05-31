@@ -1,0 +1,13 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/record/history",
+    "type": "object",
+    "title": "現病歴",
+    "jesgo:unique": true,
+    "properties": {
+        "現病歴": {
+            "type": "string",
+            "jesgo:ui:textarea": 8
+        }        
+    }
+}

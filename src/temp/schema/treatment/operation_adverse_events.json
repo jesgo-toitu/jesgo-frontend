@@ -4,253 +4,278 @@
     "title": "手術合併症",
     "type": "object",
     "properties": {
-        "合併症の種別": {
+        "合併症の有無": {
             "type": "string",
-            "$comment": "JSGOEではAE.*.Categoryにマップ",
             "enum": [
-                "出血",
-                "術中手術操作",
-                "気腹・潅流操作",
-                "機器の不具合・破損",
-                "機器の誤操作",
-                "術中使用した薬剤",
-                "体腔内遺残",
-                "術後"
+                "なし",
+                "あり"
             ]
         },
-        "出血量": {
-            "type": "string",
-            "$comment": "JSGOEではAE.*.BloodCountにマップ",
-            "pattern": "(不明|([1-9][0-9]+|[5-9])[0-9][0-9])",
-            "jesgo:ref": "../出血量"
-        },
-        "発生した合併症": {
-            "$comment": "JSGOEではAE.*.Titleにマップ"            
-        },
-        "関連する機器": {
-            "$comment": "JSGOEではAE.*.Causeにマップ"
-        },
-        "発生部位": {
-            "$comment": "JSGOEではAE.*.Locationにマップ"
-        },
-        "関連する薬剤": {
-            "$comment": "JSGOEではAE.*.Causeにマップ"
-        },
-        "遺残したもの": {
+        "合併症": {
             "type": "array",
-            "$comment": "JSGOEではAE.*.Titleにマップ",
-            "items": {
-                "type": "string",
-                "enum": [
-                    "検体", "器械", "ガーゼなど衛生材料", "針",
-                    "上記にないもの"
-                ]
-            }
-        },
-        "合併症の内容": {
-            "type": "array",
-            "$comment": "JSGOEではAE.*.Titleにマップ",
-            "items": {
-                "type": "string",
-                "enum": [
-                    "出血", "血腫",
-                    "創部感染", "創離開", "腟断端部離開",
-                    "メッシュ露出", "腹膜炎", "子宮感染", "卵管・卵巣感染", "メッシュ感染",
-                    "イレウス", "腸閉塞", "消化管穿孔",
-                    "腹壁瘢痕・ポートサイトヘルニア",
-                    "尿管損傷", "尿路閉塞", "膀胱損傷",
-                    "肺動脈血栓塞栓症", "深部静脈血栓症",
-                    "気胸", "心肺停止",
-                    "コンパートメント症候群", "上肢神経障害", "下肢神経障害",
-                    "リンパ浮腫", "非感染性リンパ嚢胞", "感染性リンパ嚢胞・後腹膜膿瘍",
-                    "子宮腔からの出血持続", "子宮腔の癒着", "卵管閉塞"
-                ]
-            }
-        },
-        "Grade": {
-            "type": "string",
-            "title": "合併症のGrade",
-            "anyOf": [
-                {
-                    "type": "string",
-                    "enum": [
-                        "1"
-                    ],
-                    "title": "Grade 1: 正常な術後経過からの逸脱"
-                },
-                {
-                    "type": "string",
-                    "enum": [
-                        "2"
-                    ],
-                    "title": "Grade 2: 中等症 輸血および中心静脈栄養を要する場合を含む"
-                },
-                {
-                    "type": "string",
-                    "enum": [
-                        "3a"
-                    ],
-                    "title": "Grade 3a: 全身麻酔を要さない治療介入を要する"
-                },
-                {
-                    "type": "string",
-                    "enum": [
-                        "3b"
-                    ],
-                    "title": "Grade 3b: 全身麻酔下での治療介入を要する"
-                },
-                {
-                    "type": "string",
-                    "enum": [
-                        "4"
-                    ],
-                    "title": "Grade 4: ICU管理を要する、合併症により生命を脅かす状態"
-                },
-                {
-                    "type": "string",
-                    "enum": [
-                        "5"
-                    ],
-                    "title": "Grade 5: 死亡"
+            "jesgo:ui:visibleWhen": {
+                "properties": {
+                    "合併症の有無": {
+                        "const": "あり"
+                    }
                 }
-            ]
-        },
-        "転帰": {
-            "type": "array",
-            "title": "合併症の転帰",
+            },
             "items": {
+                "$ref": "#/$defs/AE"
+            }
+        }
+    },
+    "$defs": {
+        "AE": {
+            "type": "object",
+            "合併症の種別": {
                 "type": "string",
+                "$comment": "JSGOEではAE.*.Categoryにマップ",
+                "enum": [
+                    "出血",
+                    "術中手術操作",
+                    "気腹・潅流操作",
+                    "機器の不具合・破損",
+                    "機器の誤操作",
+                    "術中使用した薬剤",
+                    "体腔内遺残",
+                    "術後"
+                ]
+            },
+            "出血量": {
+                "type": "string",
+                "$comment": "JSGOEではAE.*.BloodCountにマップ",
+                "pattern": "(不明|([1-9][0-9]+|[5-9])[0-9][0-9])",
+                "jesgo:ref": "../出血量"
+            },
+            "発生した合併症": {
+                "$comment": "JSGOEではAE.*.Titleにマップ"            
+            },
+            "関連する機器": {
+                "$comment": "JSGOEではAE.*.Causeにマップ"
+            },
+            "発生部位": {
+                "$comment": "JSGOEではAE.*.Locationにマップ"
+            },
+            "関連する薬剤": {
+                "$comment": "JSGOEではAE.*.Causeにマップ"
+            },
+            "遺残したもの": {
+                "type": "array",
+                "$comment": "JSGOEではAE.*.Titleにマップ",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "検体", "器械", "ガーゼなど衛生材料", "針",
+                        "上記にないもの"
+                    ]
+                }
+            },
+            "合併症の内容": {
+                "type": "array",
+                "$comment": "JSGOEではAE.*.Titleにマップ",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "出血", "血腫",
+                        "創部感染", "創離開", "腟断端部離開",
+                        "メッシュ露出", "腹膜炎", "子宮感染", "卵管・卵巣感染", "メッシュ感染",
+                        "イレウス", "腸閉塞", "消化管穿孔",
+                        "腹壁瘢痕・ポートサイトヘルニア",
+                        "尿管損傷", "尿路閉塞", "膀胱損傷",
+                        "肺動脈血栓塞栓症", "深部静脈血栓症",
+                        "気胸", "心肺停止",
+                        "コンパートメント症候群", "上肢神経障害", "下肢神経障害",
+                        "リンパ浮腫", "非感染性リンパ嚢胞", "感染性リンパ嚢胞・後腹膜膿瘍",
+                        "子宮腔からの出血持続", "子宮腔の癒着", "卵管閉塞"
+                    ]
+                }
+            },
+            "Grade": {
+                "type": "string",
+                "title": "合併症のGrade",
                 "anyOf": [
                     {
                         "type": "string",
                         "enum": [
-                            "経過観察"
+                            "1"
                         ],
-                        "title": "経過観察"
+                        "title": "Grade 1: 正常な術後経過からの逸脱"
                     },
                     {
                         "type": "string",
                         "enum": [
-                            "周術期管理の延長"
+                            "2"
                         ],
-                        "title": "周術期管理の延長"
+                        "title": "Grade 2: 中等症 輸血および中心静脈栄養を要する場合を含む"
                     },
                     {
                         "type": "string",
                         "enum": [
-                            "入院期間の延長"
+                            "3a"
                         ],
-                        "title": "入院期間の延長"
+                        "title": "Grade 3a: 全身麻酔を要さない治療介入を要する"
                     },
                     {
                         "type": "string",
                         "enum": [
-                            "再入院"
+                            "3b"
                         ],
-                        "title": "再入院"
+                        "title": "Grade 3b: 全身麻酔下での治療介入を要する"
                     },
                     {
                         "type": "string",
                         "enum": [
-                            "自己血輸血・術中回収血"
+                            "4"
                         ],
-                        "title": "自己血輸血・術中回収血"
+                        "title": "Grade 4: ICU管理を要する、合併症により生命を脅かす状態"
                     },
                     {
                         "type": "string",
                         "enum": [
-                            "輸血・血液製剤"
+                            "5"
                         ],
-                        "title": "輸血・血液製剤"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術中の追加手術～開腹"
-                        ],
-                        "title": "術中の追加手術～開腹"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術中の追加手術～腹腔鏡"
-                        ],
-                        "title": "術中の追加手術～腹腔鏡"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術中の追加手術～子宮鏡"
-                        ],
-                        "title": "術中の追加手術～子宮鏡"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術中の追加手術～経腟"
-                        ],
-                        "title": "術中の追加手術～経腟"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術中の追加手術～その他"
-                        ],
-                        "title": "術中の追加手術～その他"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術後の再手術～開腹"
-                        ],
-                        "title": "術後の再手術～開腹"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術後の再手術～腹腔鏡"
-                        ],
-                        "title": "術後の再手術～腹腔鏡"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術後の再手術～子宮鏡"
-                        ],
-                        "title": "術後の再手術～子宮鏡"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術後の再手術～経腟"
-                        ],
-                        "title": "術後の再手術～経腟"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "術後の再手術～その他"
-                        ],
-                        "title": "術後の再手術～その他"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "ICU管理"
-                        ],
-                        "title": "合併症管理のためICU入室"
-                    },
-                    {
-                        "type": "string",
-                        "enum": [
-                            "死亡"
-                        ],
-                        "title": "死亡"
+                        "title": "Grade 5: 死亡"
                     }
                 ]
+            },
+            "転帰": {
+                "type": "array",
+                "title": "合併症の転帰",
+                "jesgo:ui:listtype": "buttons",
+                "items": {
+                    "type": "string",
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "enum": [
+                                "経過観察"
+                            ],
+                            "title": "経過観察"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "周術期管理の延長"
+                            ],
+                            "title": "周術期管理の延長"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "入院期間の延長"
+                            ],
+                            "title": "入院期間の延長"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "再入院"
+                            ],
+                            "title": "再入院"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "自己血輸血・術中回収血"
+                            ],
+                            "title": "自己血輸血・術中回収血"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "輸血・血液製剤"
+                            ],
+                            "title": "輸血・血液製剤"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術中の追加手術～開腹"
+                            ],
+                            "title": "術中の追加手術～開腹"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術中の追加手術～腹腔鏡"
+                            ],
+                            "title": "術中の追加手術～腹腔鏡"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術中の追加手術～子宮鏡"
+                            ],
+                            "title": "術中の追加手術～子宮鏡"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術中の追加手術～経腟"
+                            ],
+                            "title": "術中の追加手術～経腟"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術中の追加手術～その他"
+                            ],
+                            "title": "術中の追加手術～その他"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術後の再手術～開腹"
+                            ],
+                            "title": "術後の再手術～開腹"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術後の再手術～腹腔鏡"
+                            ],
+                            "title": "術後の再手術～腹腔鏡"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術後の再手術～子宮鏡"
+                            ],
+                            "title": "術後の再手術～子宮鏡"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術後の再手術～経腟"
+                            ],
+                            "title": "術後の再手術～経腟"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "術後の再手術～その他"
+                            ],
+                            "title": "術後の再手術～その他"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "ICU管理"
+                            ],
+                            "title": "合併症管理のためICU入室"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "死亡"
+                            ],
+                            "title": "死亡"
+                        }
+                    ]
+                }
             }
-        },
-        "additionalProperties": false
+        }
     },
     "allOf": [
         {

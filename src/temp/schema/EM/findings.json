@@ -5,7 +5,7 @@
     "type": "object",
     "title": "診断所見",
     "properties": {
-        "洗浄細胞診": {
+        "腹水細胞診": {
             "type": "string",
             "enum": [
                 "陽性",

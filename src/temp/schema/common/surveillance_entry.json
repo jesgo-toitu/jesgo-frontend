@@ -1,0 +1,14 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/surveillanceRoot",
+    "type": "object",
+    "title": "経過",
+    "jesgo:parentschema": [
+        "/"
+    ],
+    "jesgo:unique": true,
+    "jesgo:ui:subschemastyle": "noindent",
+    "jesgo:subschema": [
+        "/schema/surveillance"
+    ]
+}

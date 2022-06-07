@@ -1,0 +1,26 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/OV/diagnosis",
+    "type": "object",
+    "title": "卵巣腫瘍診断情報",
+    "jesgo:unique": true,
+    "properties": {
+        "診断": {
+            "type": "string",
+            "enum": [
+                "卵巣癌、卵巣境界悪性腫瘍",
+                "卵管癌、卵管境界悪性腫瘍",
+                "腹膜癌",
+                "卵巣・卵管・腹膜（分類不能）"
+            ]
+        },
+        "STIC": {
+            "description": "漿液性卵管上皮内癌（STIC）の有無",
+            "type": "string",
+            "enum": [
+                "あり",
+                "なし"
+            ]
+        }
+    }
+}

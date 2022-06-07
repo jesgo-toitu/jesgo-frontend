@@ -69,83 +69,83 @@
                     "$ref": "#/$defs/cM"
                 }
             }
-        },
-        "allOf": [
-            {
-                "if": {
-                    "properties": {
-                        "治療施行状況": {
-                            "const": "初回手術施行"
-                        },
-                        "進行期分類の選択": {
-                            "const": "手術により進行期を決定した症例"
-                        }
-                    }
-                },
-                "then": {
-                    "pTNM": {
-                        "type": "object",
-                        "title": "pTNM分類(初回手術を実施した症例のみ)",
-                        "properties": {
-                            "T": {
-                                "$ref": "#/$defs/T"
-                            },
-                            "N": {
-                                "$ref": "#/$defs/pN"
-                            },
-                            "M": {
-                                "$ref": "#/$defs/pM"
-                            }
-                        }
+        }
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "治療施行状況": {
+                        "const": "初回手術施行"
                     },
-                    "ypTNM": {}
-                }
-            },
-            {
-                "if": {
-                    "properties": {
-                        "治療施行状況": {
-                            "const": "術前治療後に手術施行"
-                        }
-                    }
-                },
-                "then": {
-                    "pTNM": {},
-                    "ypTNM": {
-                        "type": "object",
-                        "title": "ypTNM分類(初回手術を実施した症例のみ)",
-                        "properties": {
-                            "T": {
-                                "$ref": "#/$defs/T"
-                            },
-                            "N": {
-                                "$ref": "#/$defs/pN"
-                            },
-                            "M": {
-                                "$ref": "#/$defs/pM"
-                            }
-                        }
+                    "進行期分類の選択": {
+                        "const": "手術により進行期を決定した症例"
                     }
                 }
             },
-            {
-                "if": {
+            "then": {
+                "pTNM": {
+                    "type": "object",
+                    "title": "pTNM分類(初回手術を実施した症例のみ)",
                     "properties": {
-                        "": {
-                            "enum": [
-                                "術前治療および手術未施行例",
-                                "治療施行せず"            
-                            ]
+                        "T": {
+                            "$ref": "#/$defs/T"
+                        },
+                        "N": {
+                            "$ref": "#/$defs/pN"
+                        },
+                        "M": {
+                            "$ref": "#/$defs/pM"
                         }
-                    }    
+                    }
                 },
-                "then": {
-                    "pTNM": {},
-                    "ypTNM": {}
+                "ypTNM": {}
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "治療施行状況": {
+                        "const": "術前治療後に手術施行"
+                    }
+                }
+            },
+            "then": {
+                "pTNM": {},
+                "ypTNM": {
+                    "type": "object",
+                    "title": "ypTNM分類(初回手術を実施した症例のみ)",
+                    "properties": {
+                        "T": {
+                            "$ref": "#/$defs/T"
+                        },
+                        "N": {
+                            "$ref": "#/$defs/pN"
+                        },
+                        "M": {
+                            "$ref": "#/$defs/pM"
+                        }
+                    }
                 }
             }
-        ]
-    },
+        },
+        {
+            "if": {
+                "properties": {
+                    "": {
+                        "enum": [
+                            "術前治療および手術未施行例",
+                            "治療施行せず"
+                        ]
+                    }
+                }
+            },
+            "then": {
+                "pTNM": {},
+                "ypTNM": {}
+            }
+        }
+    ],
     "$defs": {
         "T": {
             "$id": "#T",

@@ -3,7 +3,7 @@
     "$id": "/schema/evaluations/regional_lymph_nodes",
     "jesgo:unique": true,
     "type": "object",
-    "title": "所属リンパ節",
+    "title": "所属リンパ節所見",
     "properties": {
         "所見": {
             "type": "string",

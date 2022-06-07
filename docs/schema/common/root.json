@@ -27,7 +27,10 @@
         "初回治療開始日": {
             "type": "string",
             "format": "date",
-            "jesgo:get": "initial_treatment"
+            "jesgo:get": "initial_treatment",
+            "jesgo:required": [
+                "JSOG"
+            ]
         },
         "診断日": {
             "type": "string",

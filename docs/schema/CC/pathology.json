@@ -101,5 +101,10 @@
                 "不明"
             ]
         }
-    }
+    },
+    "jesgo:childschema": [
+        "/schema/evaluation/immunohistochemistry",
+        "/schema/evaluation/oncogenes"
+    ]
+
 }

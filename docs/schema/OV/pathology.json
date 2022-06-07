@@ -162,5 +162,9 @@
                 }
             }
         }
-    }
+    },
+    "jesgo:childschema": [
+        "/schema/evaluation/immunohistochemistry",
+        "/schema/evaluation/oncogenes"
+    ]
 }

@@ -4,17 +4,6 @@
     "jesgo:unique": true,
     "type": "object",
     "title": "身体所見",
-    "jesgo:parentschema": [
-        "/schema/status"
-    ],
-    "examples": [
-        {
-            "身長": 150,
-            "体重": 42,
-            "BSA": 1.33,
-            "PS": "0"
-        }
-    ],
     "properties": {
         "身長": {
             "type": "number",

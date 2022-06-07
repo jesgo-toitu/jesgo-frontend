@@ -1,6 +1,7 @@
 {
-    "$schema": "jesgo.json",
+    "$schema": "../jesgo.json",
     "$id": "/schema/evaluation/performance_status",
+    "jesgo:unique": true,
     "type": "integer",
     "title": "Performance Status",
     "description": "ECOGのPerformance Status",

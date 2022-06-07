@@ -88,11 +88,11 @@
                     "uniqueItems": true
                 },
                 "jesgo:unique": {
-                    "$comment": "【スキーマ属性】 親ドキュメントの下位として、ユニークであることを明示",
+                    "$comment": "【スキーマ属性】 親ドキュメントの下位として、ユニークであることを明示. この値は継承され、変更は不可.",
                     "type": "boolean",
                     "defalut": false
                 },
-                "jesgo:copytonewdocument": {
+                "jesgo:copydocument": {
                     "$comment": "【スキーマ属性】 jesgo:unique false のドキュメントについて、選択されているドキュメントの内容で新規ドキュメントを同レベルに作成可能とする. eventdate のみ新規作成にあたって削除される.",
                     "type": "boolean",
                     "default": false
@@ -132,7 +132,7 @@
                         },
                         {
                             "const": "initial_treatment_date",
-                            "$comment": "現在のドキュメントの連なる /schema/root に連なる /schema/initial_treatment が保持する event_date を取得する.未設定の場合は空白扱い."
+                            "$comment": "現在のドキュメントの連なるツリーの近い位置にある /schema/initial_treatment が保持する event_date を取得する.未設定の場合は空白扱い."
                         }
                     ]
                 },

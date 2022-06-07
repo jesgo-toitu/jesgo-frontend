@@ -20,6 +20,14 @@
                 "その他", "採取せず"
             ]
         },
+        "その他組織型": {
+            "type": "string",
+            "jesgo:ui:visibleWhen": {
+                "properties": {
+                    "組織型": "その他"
+                }
+            }
+        },
         "組織学的異型度": {
             "type": "string",
             "enum": ["Grade 1", "Grade 2", "Grade 3", "異型度評価の対象に含まれない", "不明"]

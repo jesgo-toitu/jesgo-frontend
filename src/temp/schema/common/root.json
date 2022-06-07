@@ -61,7 +61,25 @@
                 ],
                 "type": "string",
                 "pattern": "^(CC|EM|US|UAS|OV|VU|VA|TD)20[0-9]{2}-[1-9][0-9]*$"
+            },
+            "予後調査": {
+                "type": "object",
+                "description": "予後調査の登録日の入力をもって調査登録実施とします.",
+                "properties": {
+                    "3年": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "5年": {
+                        "type": "string",
+                        "format": "date"
+                    }
+                }
             }
         }
-    }
+    },
+    "jesgo:ui:subschemastyle": "tab",
+    "jesgo:childschema": [
+        "/schema/treatment/initial_treatment"
+    ]
 }

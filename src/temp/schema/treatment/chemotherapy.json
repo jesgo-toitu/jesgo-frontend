@@ -2,7 +2,7 @@
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/chemotherapy",
     "title": "化学療法",
-    "jesgo;copytonewdocument": true,
+    "jesgo:copydocument": true,
     "type": "object",
     "required": [
         "投与開始日"

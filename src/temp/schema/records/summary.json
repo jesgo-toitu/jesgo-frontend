@@ -45,16 +45,15 @@
         }
     },
     "jesgo:ui:subschemastyle": "tab",
+    "jesgo:subschema": [
+        "/schema/record/flavor",
+        "/schema/record/vaccination",
+        "/schema/record/physical_status"
+    ],
     "jesgo:childschema": [
         "/schema/record/history",
         "/schema/record/past_history",
         "/schema/record/family_history",
         "/schema/record/medical_record"
-    ],
-    "jesgo:subschema": [
-        "/schema/record/flavor",
-        "/schema/record/vaccination",
-        "/schema/record/physical_status",
-        "/schema/record/performance_status"
     ]
 }

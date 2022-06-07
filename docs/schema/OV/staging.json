@@ -43,14 +43,6 @@
                 "IVB期",
                 "不明"
             ]
-        },
-        "IIIA1期の場合": {
-            "type": "string",
-            "enum": [
-                "3A11: 転移巣最大径10mm以下",
-                "3A12: 転移巣最大径10mmをこえる",
-                "3A1X: 転移巣最大径による分類不能"
-            ]
         }
     },
     "allOf": [
@@ -64,11 +56,13 @@
             },
             "then": {
                 "properties": {
+                    "cTMN": {
+                        "$ref": "#/$defs/cTNM"
+                    },
                     "pTNM": {
                         "$ref": "#/$defs/pTNM"
                     },
-                    "ypTNM": {},
-                    "cTMN": {}
+                    "ypTNM": {}
                 }
             }
         },
@@ -82,11 +76,13 @@
             },
             "then": {
                 "properties": {
+                    "cTMN": {
+                        "$ref": "#/$defs/cTNM"
+                    },
                     "pTNM": {},
                     "ypTNM": {
-                        "$ref": "#/$defs/pTNM"
-                    },
-                    "cTMN": {}
+                        "$ref": "#/$defs/ypTNM"
+                    }
                 }
             }
         },
@@ -103,11 +99,11 @@
             },
             "then": {
                 "properties": {
-                    "pTNM": {},
-                    "ypTNM": {},
                     "cTMN": {
                         "$ref": "#/$defs/cTNM"
-                    }
+                    },
+                    "pTNM": {},
+                    "ypTNM": {}
                 }
             }
         },
@@ -120,11 +116,27 @@
             "then": {
                 "IC期の場合": {
                     "type": "string",
-                    "jesgo:ui:listtype": "suggestlist",
                     "enum": [
                         "1C1: 手術操作による被膜破綻",
                         "1C2: 自然被膜破綻あるいは被膜表面への浸潤",
                         "1C3: 腹水または腹腔洗浄細胞診に悪性細胞が認められるもの"
+                    ]
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "FIGO": "IIIA1期"
+                }
+            },
+            "then": {
+                "IIIA1期の場合": {
+                    "type": "string",
+                    "enum": [
+                        "3A11: 転移巣最大径10mm以下",
+                        "3A12: 転移巣最大径10mmをこえる",
+                        "3A1X: 転移巣最大径による分類不能"
                     ]
                 }
             }
@@ -134,7 +146,7 @@
         "cTNM": {
             "$id": "#cTNM",
             "type": "object",
-            "title": "TMN分類(UICC第8版)",
+            "title": "cTMN分類",
             "properties": {
                 "T": {
                     "$ref": "#/$defs/T"
@@ -150,7 +162,7 @@
         "pTNM": {
             "$id": "#pTNM",
             "type": "object",
-            "title": "TMN分類(UICC第8版)",
+            "title": "pTMN分類",
             "properties": {
                 "T": {
                     "$ref": "#/$defs/T"
@@ -160,6 +172,28 @@
                 },
                 "M": {
                     "$ref": "#/$defs/M"
+                },
+                "遠隔転移部位": {
+                    "$ref": "#/$defs/locations"
+                }
+            }
+        },
+        "ypTNM": {
+            "$id": "#ypTNM",
+            "type": "object",
+            "title": "ypTMN分類",
+            "properties": {
+                "T": {
+                    "$ref": "#/$defs/T"
+                },
+                "N": {
+                    "$ref": "#/$defs/N"
+                },
+                "M": {
+                    "$ref": "#/$defs/M"
+                },
+                "遠隔転移部位": {
+                    "$ref": "#/$defs/locations"
                 }
             }
         },
@@ -206,34 +240,32 @@
         },
         "M": {
             "$id": "#M",
-            "type": "object",
-            "properties": {
-                "M分類": {
-                    "type": "string",
-                    "enum": [
-                        "0: 遠隔転移を認めない",
-                        "1a: 胸水中に悪性細胞を認める",
-                        "1b: 実質転移ならびに腹腔外臓器(鼠径リンパ節ならびに腹腔外リンパ節を含む)に転移を認めるもの",
-                        "X: 遠隔転移を判定するための検索が行われなかった"
-                    ]
-                },
-                "遠隔転移の部位": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            "肺転移",
-                            "胸膜転移",
-                            "リンパ節転移",
-                            "肝転移",
-                            "脳転移",
-                            "骨転移",
-                            "皮膚転移",
-                            "骨髄転移",
-                            "その他"
-                        ]
-                    }
-                }
+            "type": "string",
+            "title": "M分類",
+            "enum": [
+                "0: 遠隔転移を認めない",
+                "1a: 胸水中に悪性細胞を認める",
+                "1b: 実質転移ならびに腹腔外臓器(鼠径リンパ節ならびに腹腔外リンパ節を含む)に転移を認めるもの",
+                "X: 遠隔転移を判定するための検索が行われなかった"
+            ]
+        },
+        "locations": {
+            "$id": "#locations",
+            "type": "array",
+            "title": "遠隔転移の部位",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "肺転移",
+                    "胸膜転移",
+                    "リンパ節転移",
+                    "肝転移",
+                    "脳転移",
+                    "骨転移",
+                    "皮膚転移",
+                    "骨髄転移",
+                    "その他"
+                ]
             }
         },
         "cM": {

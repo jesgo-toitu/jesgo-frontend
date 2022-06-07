@@ -2,7 +2,7 @@
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/operation/detailed",
     "type": "object",
-    "title": "手術療法",
+    "title": "手術療法 詳細",
     "required": [
         "手術日"
     ],
@@ -69,6 +69,7 @@
                             "婦人科腫瘍専門医",
                             "産婦人科内視鏡技術認定医",
                             "婦人科腫瘍専門医+産婦人科内視鏡技術認定医",
+                            "婦人科腫瘍修錬医",
                             "産婦人科専門医",
                             "産婦人科専攻医",
                             "その他",
@@ -147,10 +148,19 @@
                     ]
                 }
             }
+        },
+        "合併症の有無": {
+            "type": "string",
+            "enum": [
+                "なし",
+                "あり"
+            ]
         }
     },
     "jesgo:subschema": [
-        "/schema/treatment/operation_procedures",
+        "/schema/treatment/operation_procedures"
+    ],
+    "jesgo:childschema": [
         "/schema/treatment/operation_adverse_events"
     ]
 }

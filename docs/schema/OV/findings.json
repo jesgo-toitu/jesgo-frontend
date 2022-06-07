@@ -2,29 +2,28 @@
     "$schema": "../jesgo.json",
     "$id": "/schema/OV/findings",
     "type": "object",
-    "title": "卵巣腫瘍所見",
+    "title": "術中腹腔内所見",
     "jesgo:unique": true,
     "properties": {
-        "腹腔内所見": {
+        "皮膜破綻の有無": {
             "type": "string",
             "enum": [
-                "卵巣癌、卵巣境界悪性腫瘍",
-                "卵管癌、卵管境界悪性腫瘍",
-                "腹膜癌",
-                "卵巣・卵管・腹膜（分類不能）"
+                "なし",
+                "あり",
+                "不明"
             ]
         },
-        "STIC": {
-            "description": "漿液性卵管上皮内癌（STIC）の有無",
+        "腹腔細胞診": {
             "type": "string",
-            "enum": [
-                "あり",
-                "なし"
-            ]
+            "jesgo:ui:textarea": true
+        },
+        "骨盤内臓器進展": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "腹腔内臓器進展": {
+            "type": "string",
+            "jesgo:ui:textarea": true
         }
-    },
-    "jesgo:childschema": [
-        "/schema/evaluations/ascites",
-        "/schema/evaluation/oncogenes"
-    ]
+    }
 }

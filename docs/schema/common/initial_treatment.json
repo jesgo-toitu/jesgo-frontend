@@ -15,12 +15,13 @@
         }
     },
     "jesgo:ui:subschemastyle": "tab",
-    "jesgo:childschema": [
+    "jesgo:subschema": [
+        "/schema/treatment/treatment_summary",
         "/schema/treatment/operation",
         "/schema/treatment/chemotherapy",
         "/schema/treatment/radiotherapy"
     ],
-    "jesgo:subschema": [
+    "jesgo:childschema": [
         "/schema/treatment/supportive_care"
     ]
 }

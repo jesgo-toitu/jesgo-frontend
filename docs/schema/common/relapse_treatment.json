@@ -81,6 +81,7 @@
     },
     "jesgo:ui:subschemastyle": "tab",
     "jesgo:subschema": [
+        "/schema/treatment/treatment_summary",
         "/schema/treatment/summary",
         "/schema/treatment/operation",
         "/schema/treatment/chemotherapy",

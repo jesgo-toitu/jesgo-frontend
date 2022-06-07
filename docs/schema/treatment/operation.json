@@ -55,10 +55,19 @@
                 "不明",
                 "施行せず"
             ]
+        },
+        "合併症の有無": {
+            "type": "string",
+            "enum": [
+                "なし",
+                "あり"
+            ]
         }
     },
     "jesgo:subschema": [
-        "/schema/treatment/operation_procedures",
+        "/schema/treatment/operation_procedures"
+    ],
+    "jesgo:childschema": [
         "/schema/treatment/operation_adverse_events"
     ]
 }

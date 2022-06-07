@@ -59,12 +59,12 @@
             "then": {
                 "properties": {
                     "cTNM": {
-                        "$ref": "#/$defs/TNM",
+                        "$ref": "#/$defs/cTNM",
                         "$comment": "ステージング手術が実施さていないものはcTNM分類としてTNMを記載する."
                     },
                     "pTNM": {},
                     "ypTNM": {
-                        "$ref": "#/$defs/pTNM",
+                        "$ref": "#/$defs/ypTNM",
                         "$comment": "術前治療後の手術によるステージングはypTNM分類を記載する."
                     }
                 }
@@ -81,7 +81,7 @@
             "then": {
                 "properties": {
                     "cTNM": {
-                        "$ref": "#/$defs/TNM",
+                        "$ref": "#/$defs/cTNM",
                         "$comment": "ステージング手術が実施さていないものはcTNM分類としてTNMを記載する."
                     },
                     "pTNM": {},
@@ -92,27 +92,38 @@
         }
     ],
     "$defs": {
-        "TNM": {
-            "$id": "#TNM",
+        "cTNM": {
+            "$id": "#cTNM",
             "type": "object",
-            "title": "TNM分類(UICC第8版)",
+            "title": "cTNM分類",
+            "jesgo:ui:subschemastyle": "row",
             "properies": {
                 "T": { "$ref": "#/$defs/T" },
                 "N": { "$ref": "#/$defs/N" },
                 "M": { "$ref": "#/$defs/M" }
-            },
-            "additionalProperties": false
+            }
         },
         "pTNM": {
             "$id": "#pTNM",
             "type": "object",
-            "title": "TNM分類(UICC第8版)",
+            "title": "pTNM分類",
+            "jesgo:ui:subschemastyle": "row",
             "properties": {
                 "T": { "$ref": "#/$defs/T" },
                 "N": { "$ref": "#/$defs/pN" },
                 "M": { "$ref": "#/$defs/M" }
-            },
-            "additionalProperties": false
+            }
+        },
+        "ypTNM": {
+            "$id": "#pTNM",
+            "type": "object",
+            "title": "ypTNM分類",
+            "jesgo:ui:subschemastyle": "row",
+            "properties": {
+                "T": { "$ref": "#/$defs/T" },
+                "N": { "$ref": "#/$defs/pN" },
+                "M": { "$ref": "#/$defs/M" }
+            }
         },
         "T": {
             "$id": "#T",

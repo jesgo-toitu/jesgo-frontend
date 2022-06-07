@@ -22,5 +22,8 @@
                 "なし"
             ]
         }
-    }
+    },
+    "jesgo:childschema": [
+        "/schema/evaluations/regional_lymph_nodes"
+    ]
 }

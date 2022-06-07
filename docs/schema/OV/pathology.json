@@ -153,6 +153,14 @@
                     ]
                 }
             ]
+        },
+        "その他組織型": {
+            "type": "string",
+            "jesgo:ui:visibleWhen": {
+                "properties": {
+                    "組織型": "その他"
+                }
+            }
         }
     }
 }

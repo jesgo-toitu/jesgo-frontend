@@ -1,6 +1,6 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/summary",
+    "$id": "/schema/record/summary",
     "type": "object",
     "title": "初診時情報",
     "$comment": "初診時基本的な確認情報.",
@@ -44,8 +44,16 @@
             "description": "閉経のあり・なしもしくは年齢."
         }
     },
+    "jesgo:ui:subschemastyle": "tab",
     "jesgo:subschema": [
-        "/schema/evaluation/physical_status",
-        "/schema/evaluation/performance_status"
+        "/schema/record/flavor",
+        "/schema/record/vaccination",
+        "/schema/record/physical_status"
+    ],
+    "jesgo:childschema": [
+        "/schema/record/history",
+        "/schema/record/past_history",
+        "/schema/record/family_history",
+        "/schema/record/medical_record"
     ]
 }

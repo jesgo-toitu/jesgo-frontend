@@ -31,24 +31,17 @@
         },
         "術者": {
             "type": "array",
+            "description": "筆頭に執刀医、以下を助手として入力",
             "items": {
                 "type": "object",
                 "jesgo:ui:subschemastyle": "inline",
                 "properties": {
-                    "役割": {
-                        "type": "string",
-                        "enum": [
-                            "術者",
-                            "指導",
-                            "助手",
-                            "第一助手",
-                            "第二助手"
-                        ]
-                    },
-                    "名前": {
+                    "name": {
+                        "title": "名前",
                         "type": "string"
                     },
-                    "資格": {
+                    "property": {
+                        "title": "資格",
                         "type": "string",
                         "enum": [
                             "婦人科腫瘍専門医",
@@ -77,6 +70,13 @@
                 }
             ]
         },
+        "妊孕性温存": {
+            "type": "string",
+            "enum": [
+                "あり",
+                "なし"
+            ]
+        },
         "手術完遂度": {
             "type": "string",
             "enum": [
@@ -92,44 +92,6 @@
         },
         "腹腔内所見": {
             "type": "string"
-        },
-        "内性器の摘出状態": {
-            "type": "object",
-            "properties": {
-                "子宮": {
-                    "type": "string",
-                    "enum": [
-                        "頸部摘出",
-                        "全摘出",
-                        "温存"
-                    ]
-                },
-                "妊孕性温存": {
-                    "type": "string",
-                    "enum": [
-                        "あり",
-                        "なし"
-                    ]
-                },
-                "卵管": {
-                    "type": "string",
-                    "enum": [
-                        "両側摘出",
-                        "左側摘出",
-                        "右側摘出",
-                        "温存"
-                    ]
-                },
-                "卵巣": {
-                    "type": "string",
-                    "enum": [
-                        "両側摘出",
-                        "左側摘出",
-                        "右側摘出",
-                        "温存"
-                    ]
-                }
-            }
         }
     },
     "jesgo:subschema": [

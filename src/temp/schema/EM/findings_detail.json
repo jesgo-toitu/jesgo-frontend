@@ -5,7 +5,7 @@
     "jesgo:unique": true,
     "title": "診断所見 詳細",
     "properties": {
-        "腹水細胞診": {
+        "洗浄細胞診": {
             "type": "string",
             "enum": [
                 "陽性",
@@ -13,6 +13,10 @@
                 "未施行",
                 "不明"
             ]
+        },
+        "頸管浸潤": {
+            "type": "string",
+            "jesgo:ui:textarea": true
         },
         "筋層浸潤": {
             "type": "object",
@@ -37,14 +41,6 @@
                         "PET/CT"
                     ]
                 },
-                "筋層の厚さ": {
-                    "type": "number",
-                    "units": "mm"
-                },
-                "腫瘍浸潤の深さ": {
-                    "type": "number",
-                    "units": "mm"
-                },
                 "詳細": {
                     "type": "string",
                     "jesgo:ui:textarea": true
@@ -65,21 +61,6 @@
                 }
             }
         },
-        "子宮頸部間質浸潤": {
-            "title": "子宮頸部間質浸潤の詳細",
-            "type": "string",
-            "jesgo:ui:textarea": true
-        },
-        "子宮傍組織浸潤": {
-            "title": "子宮傍組織浸潤の詳細",
-            "type": "string",
-            "jesgo:ui:textarea": true
-        },
-        "子宮漿膜浸潤": {
-            "title": "子宮漿膜浸潤の詳細",
-            "type": "string",
-            "jesgo:ui:textarea": true
-        },
         "付属器転移": {
             "title": "付属器転移の詳細",
             "type": "string",
@@ -92,19 +73,15 @@
         },
         "リンパ節転移": {
             "title": "リンパ節転移の詳細",
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "部位": {
-                        "type": "string"
-                    },
-                    "摘出リンパ節数": {
-                        "type": "integer"
-                    },
-                    "転移陽性リンパ節数": {
-                        "type": "integer"
-                    }
+            "type": "object",
+            "properties": {
+                "部位と個数": {
+                    "type": "string",
+                    "jesgo:ui:textarea": true
+                },
+                "詳細": {
+                    "type": "string",
+                    "jesgo:ui:textarea": true
                 }
             }
         },
@@ -112,22 +89,6 @@
             "title": "他臓器への転移の詳細",
             "type": "string",
             "jesgo:ui:textarea": true
-        },
-        "再発リスク": {
-            "type": "string",
-            "jesgo:ui:listtype": "combo",
-            "oneOf": [
-                {
-                    "enum": [
-                        "低リスク",
-                        "中リスク",
-                        "高リスク"
-                    ]
-                },
-                {
-                    "pattern": ".*"
-                }
-            ]
         }
     },
     "$defs": {}

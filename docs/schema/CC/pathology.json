@@ -83,6 +83,14 @@
                 }
             ]
         },
+        "その他組織型": {
+            "type": "string",
+            "jesgo:ui:visibleWhen": {
+                "properties": {
+                    "組織型": "その他"
+                }
+            }
+        },
         "組織学的異型度": {
             "type": "string",
             "enum": [

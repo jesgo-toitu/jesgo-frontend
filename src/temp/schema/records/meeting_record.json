@@ -1,6 +1,6 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/record/meeting_record",
+    "$id": "/schema/records/meeting_record",
     "type": "object",
     "title": "カンファレンス記録",
     "jesgo:parentschema": [

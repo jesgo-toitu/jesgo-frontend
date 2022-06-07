@@ -192,7 +192,33 @@
                             }
                         }
                     }
-                }        
+                },
+                "卵巣・卵管の状態": {
+                    "type": "object",
+                    "jesgo:ui:visibleWhen": {
+                        "properties": {
+                            "術式": {
+                                "pattern": "子宮全摘出術"
+                            }
+                        }
+                    },
+                    "properties": {
+                        "卵管": {
+                            "type": "string",
+                            "enum": [
+                                "摘出",
+                                "温存"
+                            ]
+                        },
+                        "卵巣": {
+                            "type": "string",
+                            "enum": [
+                                "摘出",
+                                "温存"
+                            ]
+                        }
+                    }
+                }
             } 
         }
     }

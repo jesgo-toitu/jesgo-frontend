@@ -3,10 +3,13 @@
     "$id": "/schema/root",
     "type": "object",
     "title": "患者台帳",
-    "description": "患者レコードの最上位に位置する基本情報.",
+    "description": "腫瘍登録台帳（共通）.",
+    "jesgo:unique": false,
+    "jesgo:parentschema": [
+        "/"
+    ],
     "required": [
-        "がん種",
-        "診断日"
+        "がん種"
     ],
     "properties": {
         "がん種": {
@@ -21,18 +24,14 @@
                 "JSOG"
             ]
         },
+        "初回治療開始日": {
+            "type": "string",
+            "format": "date",
+            "jesgo:get": "initial_treatment"
+        },
         "診断日": {
             "type": "string",
             "format": "date"
-        },
-        "治療開始年月日": {
-            "type": "string",
-            "format": "date",
-            "jesgo:required": [
-                "JSOG"
-            ],
-            "jesgo:set": "eventdate",
-            "$comment": "治療開始年月日が同じものは同時性重複癌としてマークされます."
         },
         "腫瘍登録対象": {
             "title": "婦人科腫瘍登録対象症例",
@@ -62,7 +61,25 @@
                 ],
                 "type": "string",
                 "pattern": "^(CC|EM|US|UAS|OV|VU|VA|TD)20[0-9]{2}-[1-9][0-9]*$"
+            },
+            "予後調査": {
+                "type": "object",
+                "description": "予後調査の登録日の入力をもって調査登録実施とします.",
+                "properties": {
+                    "3年": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "5年": {
+                        "type": "string",
+                        "format": "date"
+                    }
+                }
             }
         }
-    }
+    },
+    "jesgo:ui:subschemastyle": "tab",
+    "jesgo:childschema": [
+        "/schema/treatment/initial_treatment"
+    ]
 }

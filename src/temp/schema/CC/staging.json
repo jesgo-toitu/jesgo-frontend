@@ -6,15 +6,6 @@
     "title": "病期診断",
     "$comment": "子宮頸がんの病期診断.",
     "properties": {
-        "治療施行状況": {
-            "type": "string",
-            "enum": [
-                "初回手術施行",
-                "術前治療後に手術施行",
-                "術前治療および手術未施行例",
-                "治療施行せず"
-            ]
-        },
         "進行期分類の選択": {
             "type": "string",
             "enum": [
@@ -56,95 +47,64 @@
         },
         "cTNM": {
             "type": "object",
-            "title": "cTNM分類(日産婦2020暫定版)",
+            "title": "cTMN分類(日産婦2020暫定版)",
             "description": "cTNM分類は、治療を開始する前に、内診・直腸診による局所所見に画像所見を加味して総合的に判断し報告する。<br>子宮頸部円錐切除術は臨床検査とみなし,これによる組織検査の結果は原則としてcTNM分類に入れる。",
             "properties": {
-                "T": {
+                "cT": {
                     "$ref": "#/$defs/T"
                 },
-                "N": {
+                "cN": {
                     "$ref": "#/$defs/cN"
                 },
-                "M": {
+                "cM": {
                     "$ref": "#/$defs/cM"
                 }
             }
         },
-        "allOf": [
-            {
-                "if": {
-                    "properties": {
-                        "治療施行状況": {
-                            "const": "初回手術施行"
-                        },
-                        "進行期分類の選択": {
-                            "const": "手術により進行期を決定した症例"
-                        }
-                    }
+        "pTNM": {
+            "type": "object",
+            "title": "pTNM分類(手術を実施した症例のみ)",
+            "properties": {
+                "pT": {
+                    "$ref": "#/$defs/T"
                 },
-                "then": {
-                    "pTNM": {
-                        "type": "object",
-                        "title": "pTNM分類(初回手術を実施した症例のみ)",
-                        "properties": {
-                            "T": {
-                                "$ref": "#/$defs/T"
-                            },
-                            "N": {
-                                "$ref": "#/$defs/pN"
-                            },
-                            "M": {
-                                "$ref": "#/$defs/pM"
-                            }
-                        }
-                    },
-                    "ypTNM": {}
-                }
-            },
-            {
-                "if": {
-                    "properties": {
-                        "治療施行状況": {
-                            "const": "術前治療後に手術施行"
-                        }
-                    }
+                "pN": {
+                    "$ref": "#/$defs/pN"
                 },
-                "then": {
-                    "pTNM": {},
-                    "ypTNM": {
-                        "type": "object",
-                        "title": "ypTNM分類(初回手術を実施した症例のみ)",
-                        "properties": {
-                            "T": {
-                                "$ref": "#/$defs/T"
-                            },
-                            "N": {
-                                "$ref": "#/$defs/pN"
-                            },
-                            "M": {
-                                "$ref": "#/$defs/pM"
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                "if": {
-                    "properties": {
-                        "": {
-                            "enum": [
-                                "術前治療および手術未施行例",
-                                "治療施行せず"            
-                            ]
-                        }
-                    }    
-                },
-                "then": {
-                    "pTNM": {},
-                    "ypTNM": {}
+                "pM": {
+                    "$ref": "#/$defs/pM"
                 }
             }
-        ]
+        },
+        "ypTNM": {
+            "type": "object",
+            "title": "ypTNM分類(手術前に放射線治療や化学療法を実施した症例)",
+            "properties": {
+                "ypT": {
+                    "$ref": "#/$defs/T"
+                },
+                "ypN": {
+                    "$ref": "#/$defs/pN"
+                },
+                "ypM": {
+                    "$ref": "#/$defs/pM"
+                }
+            }
+        }
+    },
+    "if": {
+        "properties": {
+            "進行期分類の選択": {
+                "const": "治療開始前に進行期を決定した症例"
+            }
+        }
+    },
+    "then": {
+        "properties": {
+            "進行期分類の選択": {
+                "description": "根治的放射線療法、術前化学療法・術前放射線療法実施例など"
+            }
+        }
     },
     "$defs": {
         "T": {

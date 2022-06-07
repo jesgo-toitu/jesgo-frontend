@@ -39,14 +39,22 @@
             },
             "then": {
                 "properties":{
-                    "cTNM": {},
-                    "pTNM": {
+                    "TNM": {
                         "$ref": "#/$defs/pTNM",
-                        "$comment": "ステージング手術が実施されたものはpTNM分類でTNMを記載する."
+                        "$comment": "ステージング手術が実施されたものはpTMN分類でTMNを記載する."
                     },
                     "ypTNM": {}
                 }
-            }
+            },
+            "else": {
+                "properties": {
+                    "TNM": {
+                        "$ref": "#/$defs/TNM",
+                        "$comment": "ステージング手術が実施ていないものはTMN分類でTMNを記載する."
+                    },
+                    "ypTNM": {}
+                }
+            }    
         },
         {
             "if": {
@@ -58,45 +66,21 @@
             },
             "then": {
                 "properties": {
-                    "cTNM": {
-                        "$ref": "#/$defs/TNM",
-                        "$comment": "ステージング手術が実施さていないものはcTNM分類としてTNMを記載する."
-                    },
-                    "pTNM": {},
+                    "TNM": {},
                     "ypTNM": {
                         "$ref": "#/$defs/pTNM",
-                        "$comment": "術前治療後の手術によるステージングはypTNM分類を記載する."
+                        "$comment": "術前治療後の手術によるステージングはypTMN分類を記載する."
                     }
                 }
             }        
-        },
-        {
-            "if": {
-                "properties": {
-                    "手術状況": {
-                        "const": "手術未施行例"
-                    }
-                }
-            },
-            "then": {
-                "properties": {
-                    "cTNM": {
-                        "$ref": "#/$defs/TNM",
-                        "$comment": "ステージング手術が実施さていないものはcTNM分類としてTNMを記載する."
-                    },
-                    "pTNM": {},
-                    "ypTNM": {}
-                }
-            }    
-
         }
     ],
     "$defs": {
         "TNM": {
             "$id": "#TNM",
             "type": "object",
-            "title": "TNM分類(UICC第8版)",
-            "properies": {
+            "title": "TMN分類(UICC第8版)",
+            "properties": {
                 "T": { "$ref": "#/$defs/T" },
                 "N": { "$ref": "#/$defs/N" },
                 "M": { "$ref": "#/$defs/M" }
@@ -106,7 +90,7 @@
         "pTNM": {
             "$id": "#pTNM",
             "type": "object",
-            "title": "TNM分類(UICC第8版)",
+            "title": "TMN分類(UICC第8版)",
             "properties": {
                 "T": { "$ref": "#/$defs/T" },
                 "N": { "$ref": "#/$defs/pN" },

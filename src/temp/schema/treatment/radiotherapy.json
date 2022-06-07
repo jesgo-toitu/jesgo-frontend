@@ -2,7 +2,6 @@
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/radiotherapy",
     "title": "放射線療法",
-    "jesgo:copydocument": true,
     "type": "object",
     "required": [
         "治療開始日"
@@ -22,20 +21,9 @@
             "enum": [
                 "腔内照射",
                 "体外照射",
-                "体外照射+腔内照射",
                 "同時化学放射線治療(腔内照射)",
                 "同時化学放射線治療(体外照射)",
-                "同時化学放射線治療(体外照射+腔内照射)",
                 "核医学治療"
-            ]
-        },
-        "治療目的": {
-            "type": "string",
-            "enum": [
-                "術前治療",
-                "術後治療",
-                "根治的治療",
-                "緩和的治療"
             ]
         },
         "照射内容": {
@@ -46,13 +34,6 @@
         },
         "同時化学療法": {
             "type": "object",
-            "jesgo:ui:visibleWhen": {
-                "properties": {
-                    "治療区分": {
-                        "pattern": "^同時化学放射線治療"
-                    }
-                }
-            },
             "properties": {
                 "レジメン": {
                     "type": "string"
@@ -73,9 +54,8 @@
                                 "type": "string",
                                 "enum": [
                                     "AUC",
-                                    "mg/㎡",
+                                    "mg/m<SUP>2</SUP>",
                                     "mg/kg",
-                                    "mg/body",
                                     "mg/日"
                                 ]
                             }
@@ -105,11 +85,8 @@
                     "enum": [
                         "全骨盤照射",
                         "全骨盤照射(中央遮蔽あり)",
-                        "リンパ節への体外照射",
                         "3DCRT, IMRT, VMRTなど",
-                        "腔内照射",
                         "組織内照射",
-                        "密封小線源治療",
                         "核医学治療"
                     ]
                 },
@@ -132,7 +109,6 @@
         "drugs": {
             "$id": "#drugs",
             "type": "string",
-            "jesgo:ui:listtype": "suggestlist",
             "oneOf": [
                 {
                     "title": "白金製剤",

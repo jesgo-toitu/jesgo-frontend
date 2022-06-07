@@ -9,10 +9,10 @@
     ],
     "jesgo:parentschema": [
         "/",
-        "/schema/root"
+        "/schema/*/root"
     ],
     "properties": {
-        "観察日": {
+        "確認日": {
             "type": "string",
             "format": "date",
             "jesgo:set": "eventdate"
@@ -51,10 +51,9 @@
         "properties": {
             "死亡": {
                 "type": "boolean",
-                "const": true,
+                "default": true,
                 "jesgo:ui:hidden": true,
-                "jesgo:set": "death",
-                "$comment": "経過情報として死亡が選択された場合、症例レコードに死亡日を設定する."
+                "jesgo:set": "death"
             }
         }
     },
@@ -62,13 +61,10 @@
         "properties": {
             "死亡": {
                 "type": "boolean",
-                "const": false,
-                "jesgo:ui:hidden": true
+                "default": false,
+                "jesgo:ui:hidden": true,
+                "jesgo:set": "death"
             }
         }
-    },
-    "jesgo:childschema": [
-        "/schema/evaluation/tumor_assessment",
-        "/schema/evaluation/psysical_status"
-    ]
+    }
 }

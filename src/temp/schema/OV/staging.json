@@ -44,6 +44,15 @@
                 "不明"
             ]
         },
+        "IC期の場合": {
+            "type": "string",
+            "jesgo:ui:listtype": "suggestlist",
+            "enum": [
+                "1C1: 手術操作による被膜破綻",
+                "1C2: 自然被膜破綻あるいは被膜表面への浸潤",
+                "1C3: 腹水または腹腔洗浄細胞診に悪性細胞が認められるもの"
+            ]
+        },
         "IIIA1期の場合": {
             "type": "string",
             "enum": [
@@ -110,24 +119,6 @@
                     }
                 }
             }
-        },
-        {
-            "if": {
-                "properties": {
-                    "FIGO": "IC期"
-                }
-            },
-            "then": {
-                "IC期の場合": {
-                    "type": "string",
-                    "jesgo:ui:listtype": "suggestlist",
-                    "enum": [
-                        "1C1: 手術操作による被膜破綻",
-                        "1C2: 自然被膜破綻あるいは被膜表面への浸潤",
-                        "1C3: 腹水または腹腔洗浄細胞診に悪性細胞が認められるもの"
-                    ]
-                }
-            }
         }
     ],
     "$defs": {
@@ -139,11 +130,11 @@
                 "T": {
                     "$ref": "#/$defs/T"
                 },
-                "N": {
-                    "$ref": "#/$defs/cN"
+                "cN": {
+                    "$ref": "#/$defs/N"
                 },
-                "M": {
-                    "$ref": "#/$defs/cM"
+                "cM": {
+                    "$ref": "#/$defs/M"
                 }
             }
         },
@@ -167,6 +158,7 @@
             "$id": "#T",
             "title": "T分類",
             "type": "string",
+            "$comment": "XXXX は自動的にエクスポートで生成される.",
             "enum": [
                 "1a",
                 "1b",

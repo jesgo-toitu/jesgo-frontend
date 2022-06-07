@@ -1,6 +1,6 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/records/pathlogy_report",
+    "$id": "/schema/record/pathlogy_report",
     "type": "object",
     "title": "病理診断レポート",
     "jesgo:parentschema": [

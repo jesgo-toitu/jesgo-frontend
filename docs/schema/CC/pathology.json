@@ -104,7 +104,8 @@
     },
     "jesgo:childschema": [
         "/schema/evaluation/immunohistochemistry",
-        "/schema/evaluation/oncogenes"
+        "/schema/evaluation/oncogenes",
+        "/schema/record/pathlogy_report"
     ]
 
 }

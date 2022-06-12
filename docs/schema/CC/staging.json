@@ -13,15 +13,15 @@
                 "術前治療後に手術施行",
                 "術前治療および手術未施行例",
                 "治療施行せず"
-            ]
+            ],
+            "description": "術前に放射線治療や化学療法を施行した症例は「術前治療施行例」となり、ypTNMとして手術時所見に即してpTNM分類を入力する。"
         },
         "進行期分類の選択": {
             "type": "string",
             "enum": [
                 "手術により進行期を決定した症例",
                 "治療開始前に進行期を決定した症例"
-            ],
-            "description": "術前に放射線治療や化学療法を施行した症例は「術前治療施行例」となり、pTNM欄は術後所見、ypTNMとして手術時所見に即してpTNM分類を入力する。"
+            ]
         },
         "FIGO": {
             "type": "string",
@@ -55,20 +55,7 @@
             ]
         },
         "cTNM": {
-            "type": "object",
-            "title": "cTNM分類(日産婦2020暫定版)",
-            "description": "cTNM分類は、治療を開始する前に、内診・直腸診による局所所見に画像所見を加味して総合的に判断し報告する。<br>子宮頸部円錐切除術は臨床検査とみなし,これによる組織検査の結果は原則としてcTNM分類に入れる。",
-            "properties": {
-                "T": {
-                    "$ref": "#/$defs/T"
-                },
-                "N": {
-                    "$ref": "#/$defs/cN"
-                },
-                "M": {
-                    "$ref": "#/$defs/cM"
-                }
-            }
+            "$ref": "#/$defs/cTNM"
         }
     },
     "allOf": [
@@ -77,29 +64,16 @@
                 "properties": {
                     "治療施行状況": {
                         "const": "初回手術施行"
-                    },
-                    "進行期分類の選択": {
-                        "const": "手術により進行期を決定した症例"
                     }
                 }
             },
             "then": {
-                "pTNM": {
-                    "type": "object",
-                    "title": "pTNM分類(初回手術を実施した症例のみ)",
-                    "properties": {
-                        "T": {
-                            "$ref": "#/$defs/T"
-                        },
-                        "N": {
-                            "$ref": "#/$defs/pN"
-                        },
-                        "M": {
-                            "$ref": "#/$defs/pM"
-                        }
-                    }
-                },
-                "ypTNM": {}
+                "properties": {
+                    "pTNM": {
+                        "$ref": "#/$defs/pTNM"
+                    },
+                    "ypTNM": {}
+                }
             }
         },
         {
@@ -111,20 +85,10 @@
                 }
             },
             "then": {
-                "pTNM": {},
-                "ypTNM": {
-                    "type": "object",
-                    "title": "ypTNM分類(初回手術を実施した症例のみ)",
-                    "properties": {
-                        "T": {
-                            "$ref": "#/$defs/T"
-                        },
-                        "N": {
-                            "$ref": "#/$defs/pN"
-                        },
-                        "M": {
-                            "$ref": "#/$defs/pM"
-                        }
+                "properties": {
+                    "pTNM": {},
+                    "ypTNM": {
+                        "$ref": "#/$defs/ypTNM"
                     }
                 }
             }
@@ -132,7 +96,7 @@
         {
             "if": {
                 "properties": {
-                    "": {
+                    "治療施行状況": {
                         "enum": [
                             "術前治療および手術未施行例",
                             "治療施行せず"
@@ -141,95 +105,109 @@
                 }
             },
             "then": {
-                "pTNM": {},
-                "ypTNM": {}
+                "properties": {
+                    "pTNM": {},
+                    "ypTNM": {}
+                }
             }
         }
     ],
     "$defs": {
-        "T": {
-            "$id": "#T",
+        "cTNM": {
             "type": "object",
-            "title": "T分類",
+            "title": "cTNM分類(日産婦2020暫定版)",
+            "description": "cTNM分類は、治療を開始する前に、内診・直腸診による局所所見に画像所見を加味して総合的に判断し報告する。<br>子宮頸部円錐切除術は臨床検査とみなし,これによる組織検査の結果は原則としてcTNM分類に入れる。",
+            "jesgo:ui:subschemastyle": "row",
             "properties": {
                 "T": {
-                    "type": "string",
-                    "title": "T分類",
-                    "enum": [
-                        "TX",
-                        "T0",
-                        "Tis",
-                        "T1(亜分類不明)",
-                        "T1a1:脈管侵襲なし",
-                        "T1a1:脈管侵襲あり",
-                        "T1a2:脈管侵襲なし",
-                        "T1a2:脈管侵襲あり",
-                        "T1a(亜分類不明):脈管侵襲なし",
-                        "T1a(亜分類不明):脈管侵襲あり",
-                        "T1b1",
-                        "T1b2",
-                        "T1b3",
-                        "T1b(亜分類不明)",
-                        "T2(亜分類不明)",
-                        "T2a1",
-                        "T2a2",
-                        "T2a(亜分類不明)",
-                        "T2b",
-                        "T3(亜分類不明)",
-                        "T3a",
-                        "T3b",
-                        "T4"
-                    ]
+                    "$ref": "#/$defs/T"
                 },
-                "T1a期の広がり": {
-                    "title": "T1a期の腫瘍の水平方向の広がり",
-                    "oneOf": [
-                        {
-                            "type": "number",
-                            "minimum": 0,
-                            "units": "mm"
-                        },
-                        {
-                            "type": "string",
-                            "enum": [
-                                "7mm以下",
-                                "7mmを超える",
-                                "不明"
-                            ]
-                        }
-                    ]
+                "N": {
+                    "$ref": "#/$defs/cN"
+                },
+                "M": {
+                    "$ref": "#/$defs/cM"
                 }
-            },
-            "if": {
-                "properties": {
-                    "T": {
-                        "pattern": "^T1a"
-                    }
-                }
-            },
-            "then": {
-                "required": [
-                    "T",
-                    "T1a期の広がり"
-                ]
-            },
-            "else": {
-                "required": [
-                    "T"
-                ]
             }
         },
-        "cN": {
-            "$id": "cN",
-            "title": "N分類",
+        "pTNM": {
+            "type": "object",
+            "title": "pTNM分類(初回手術を実施した症例のみ)",
+            "jesgo:ui:subschemastyle": "row",
+            "properties": {
+                "T": {
+                    "$ref": "#/$defs/T"
+                },
+                "N": {
+                    "$ref": "#/$defs/pN"
+                },
+                "M": {
+                    "$ref": "#/$defs/pM"
+                }
+            }
+        },
+        "ypTNM": {
+            "type": "object",
+            "title": "ypTNM分類(初回手術を実施した症例のみ)",
+            "jesgo:ui:subschemastyle": "row",
+            "properties": {
+                "T": {
+                    "$ref": "#/$defs/T"
+                },
+                "N": {
+                    "$ref": "#/$defs/pN"
+                },
+                "M": {
+                    "$ref": "#/$defs/pM"
+                }
+            }
+        },
+        "T": {
+            "$id": "#T",
             "type": "string",
+            "title": "T分類",
             "enum": [
-                "領域リンパ節転移なし",
-                "骨盤リンパ節のみに転移を認める",
-                "傍大動脈リンパ節のみに転移を認める",
-                "骨盤および傍大動脈リンパ節転移を認める",
-                "画像診断をしなかった"
+                "TX",
+                "T0",
+                "Tis",
+                "T1(亜分類不明)",
+                "T1a1:脈管侵襲なし",
+                "T1a1:脈管侵襲あり",
+                "T1a2:脈管侵襲なし",
+                "T1a2:脈管侵襲あり",
+                "T1a(亜分類不明):脈管侵襲なし",
+                "T1a(亜分類不明):脈管侵襲あり",
+                "T1b1",
+                "T1b2",
+                "T1b3",
+                "T1b(亜分類不明)",
+                "T2(亜分類不明)",
+                "T2a1",
+                "T2a2",
+                "T2a(亜分類不明)",
+                "T2b",
+                "T3(亜分類不明)",
+                "T3a",
+                "T3b",
+                "T4"
             ]
+        },
+        "cN": {
+            "$id": "#cN",
+            "title": "N分類",
+            "type": "object",
+            "properties": {
+                "N": {
+                    "type": "string",
+                    "enum": [
+                        "領域リンパ節転移なし",
+                        "骨盤リンパ節のみに転移を認める",
+                        "傍大動脈リンパ節のみに転移を認める",
+                        "骨盤および傍大動脈リンパ節転移を認める",
+                        "画像診断をしなかった"
+                    ]
+                }
+            }
         },
         "pN": {
             "$id": "#pN",
@@ -280,12 +258,13 @@
             }
         },
         "cM": {
-            "$id": "#M",
+            "$id": "#cM",
+            "title": "M分類",
             "type": "object",
             "properties": {
                 "M": {
                     "type": "string",
-                    "title": "M分類",
+                    "title": "遠隔転移の評価",
                     "description": "鼠径リンパ節転移や腹腔内病変は遠隔転移に含む。腟,骨盤漿膜,付属器への転移は遠隔転移から除外する。",
                     "enum": [
                         "遠隔転移なし",
@@ -317,8 +296,8 @@
         "pM": {
             "$id": "#pM",
             "title": "M分類",
-            "type": "string",
             "description": "腟、骨盤漿膜、付属器への転移は除外する。",
+            "type": "string",
             "enum": [
                 "M0: 遠隔転移なし",
                 "MA1: 傍大動脈リンパ節の明らかな腫大を認めるが、病理学的検索が行われなかった",

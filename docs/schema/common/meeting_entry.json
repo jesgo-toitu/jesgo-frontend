@@ -1,0 +1,20 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/meeting",
+    "type": "object",
+    "title": "カンファレンス",
+    "jesgo:parentschema": [
+        "/"
+    ],
+    "jesgo:unique": true,
+    "jesgo:ui:subschemastyle": "row",
+    "properties": {
+        "申し送り事項": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        }
+    },
+    "jesgo:subschema": [
+        "/schema/record/meeting_record"
+    ]
+}

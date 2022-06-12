@@ -8,7 +8,6 @@
         "/schema/OV/root"
     ],
     "jesgo:unique": true,
-
     "required": [
         "手術状況"
     ],
@@ -43,6 +42,11 @@
                 "IVB期",
                 "不明"
             ]
+        },
+        "IC期の場合": {},
+        "IIIA1期の場合": {},
+        "cTMN": {
+            "$ref": "#/$defs/cTNM"
         }
     },
     "allOf": [
@@ -56,13 +60,45 @@
             },
             "then": {
                 "properties": {
-                    "cTMN": {
-                        "$ref": "#/$defs/cTNM"
-                    },
                     "pTNM": {
                         "$ref": "#/$defs/pTNM"
                     },
                     "ypTNM": {}
+                }
+            }
+        },
+        {
+            "if": {
+                "allOf": [
+                    {
+                        "properties": {
+                            "手術状況": {
+                                "const": "手術施行"
+                            }
+                        }
+                    },
+                    {
+                        "properties": {
+                            "pTNM": {
+                                "properties": {
+                                    "M": {
+                                        "pattern": "^1"
+                                    }    
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "then": {
+                "properties": {
+                    "pTNM": {
+                        "properties": {
+                            "遠隔転移部位": {
+                                "$ref": "#/$defs/locations"
+                            }    
+                        }
+                    }
                 }
             }
         },
@@ -76,12 +112,44 @@
             },
             "then": {
                 "properties": {
-                    "cTMN": {
-                        "$ref": "#/$defs/cTNM"
-                    },
                     "pTNM": {},
                     "ypTNM": {
                         "$ref": "#/$defs/ypTNM"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "allOf": [
+                    {
+                        "properties": {
+                            "手術状況": {
+                                "const": "術前治療施行"
+                            }
+                        }
+                    },
+                    {
+                        "properties": {
+                            "ypTNM": {
+                                "properties": {
+                                    "M": {
+                                        "pattern": "^1"
+                                    }    
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "then": {
+                "properties": {
+                    "ypTNM": {
+                        "properties": {
+                            "遠隔転移部位": {
+                                "$ref": "#/$defs/locations"
+                            }    
+                        }
                     }
                 }
             }
@@ -92,16 +160,13 @@
                     "手術状況": {
                         "enum": [
                             "手術以外の治療のみ施行",
-                            "治療施行未施行"            
+                            "治療施行未施行"
                         ]
                     }
                 }
             },
             "then": {
                 "properties": {
-                    "cTMN": {
-                        "$ref": "#/$defs/cTNM"
-                    },
                     "pTNM": {},
                     "ypTNM": {}
                 }
@@ -110,34 +175,42 @@
         {
             "if": {
                 "properties": {
-                    "FIGO": "IC期"
+                    "FIGO": {
+                        "const": "IC期"
+                    }
                 }
             },
             "then": {
-                "IC期の場合": {
-                    "type": "string",
-                    "enum": [
-                        "1C1: 手術操作による被膜破綻",
-                        "1C2: 自然被膜破綻あるいは被膜表面への浸潤",
-                        "1C3: 腹水または腹腔洗浄細胞診に悪性細胞が認められるもの"
-                    ]
+                "properties": {
+                    "IC期の場合": {
+                        "type": "string",
+                        "enum": [
+                            "1C1: 手術操作による被膜破綻",
+                            "1C2: 自然被膜破綻あるいは被膜表面への浸潤",
+                            "1C3: 腹水または腹腔洗浄細胞診に悪性細胞が認められるもの"
+                        ]
+                    }
                 }
             }
         },
         {
             "if": {
                 "properties": {
-                    "FIGO": "IIIA1期"
+                    "FIGO": {
+                        "const": "IIIA1期"
+                    }
                 }
             },
             "then": {
-                "IIIA1期の場合": {
-                    "type": "string",
-                    "enum": [
-                        "3A11: 転移巣最大径10mm以下",
-                        "3A12: 転移巣最大径10mmをこえる",
-                        "3A1X: 転移巣最大径による分類不能"
-                    ]
+                "properties": {
+                    "IIIA1期の場合": {
+                        "type": "string",
+                        "enum": [
+                            "3A11: 転移巣最大径10mm以下",
+                            "3A12: 転移巣最大径10mmをこえる",
+                            "3A1X: 転移巣最大径による分類不能"
+                        ]
+                    }
                 }
             }
         }
@@ -160,7 +233,6 @@
             }
         },
         "pTNM": {
-            "$id": "#pTNM",
             "type": "object",
             "title": "pTMN分類",
             "properties": {
@@ -172,9 +244,6 @@
                 },
                 "M": {
                     "$ref": "#/$defs/M"
-                },
-                "遠隔転移部位": {
-                    "$ref": "#/$defs/locations"
                 }
             }
         },
@@ -191,9 +260,6 @@
                 },
                 "M": {
                     "$ref": "#/$defs/M"
-                },
-                "遠隔転移部位": {
-                    "$ref": "#/$defs/locations"
                 }
             }
         },
@@ -255,18 +321,46 @@
             "title": "遠隔転移の部位",
             "items": {
                 "type": "string",
-                "enum": [
-                    "肺転移",
-                    "胸膜転移",
-                    "リンパ節転移",
-                    "肝転移",
-                    "脳転移",
-                    "骨転移",
-                    "皮膚転移",
-                    "骨髄転移",
-                    "その他"
+                "oneOf": [
+                    {
+                        "const": "PUL",
+                        "title": "肺転移"
+                    },
+                    {
+                        "const": "PLE",
+                        "title": "胸膜転移"
+                    },
+                    {
+                        "const": "LYM",
+                        "title": "リンパ節転移"
+                    },
+                    {
+                        "const": "HEP",
+                        "title": "肝転移"
+                    },
+                    {
+                        "const": "BRA",
+                        "title": "脳転移"
+                    },
+                    {
+                        "const": "OSS",
+                        "title": "骨転移"
+                    },
+                    {
+                        "const": "SKI",
+                        "title": "皮膚転移"
+                    },
+                    {
+                        "const": "MAR",
+                        "title": "骨髄転移"
+                    },
+                    {
+                        "const": "OTH",
+                        "title": "その他"
+                    }
                 ]
-            }
+            },
+            "minItems": 1
         },
         "cM": {
             "$id": "#cM",

@@ -14,7 +14,6 @@
     "title": "JESGOのスキーマ",
     "$defs": {
         "meta": {
-            "$id": "#meta",
             "type": "object",
             "$comment": "スキーマの $id の命名は /schema/ で開始する. また /schema/foo/bar は /schema/foo の派生スキーマである.",
             "properties": {

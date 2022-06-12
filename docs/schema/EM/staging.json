@@ -97,7 +97,7 @@
             "type": "object",
             "title": "cTNM分類",
             "jesgo:ui:subschemastyle": "row",
-            "properies": {
+            "properties": {
                 "T": { "$ref": "#/$defs/T" },
                 "N": { "$ref": "#/$defs/N" },
                 "M": { "$ref": "#/$defs/M" }

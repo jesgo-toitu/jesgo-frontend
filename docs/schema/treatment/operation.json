@@ -40,9 +40,24 @@
         },
         "術者": {
             "type": "array",
-            "description": "筆頭に執刀医、以下を助手として入力",
             "items": {
-                "type": "string"
+                "type": "object",
+                "properties": {
+                    "役割": {
+                        "type": "string",
+                        "enum": [
+                            "術者",
+                            "指導",
+                            "助手",
+                            "第一助手",
+                            "第二助手",
+                            "第三助手～"
+                        ]
+                    },
+                    "名前": {
+                        "type": "string"
+                    }
+                }
             }
         },
         "手術完遂度": {

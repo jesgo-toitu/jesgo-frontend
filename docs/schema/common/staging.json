@@ -1,0 +1,135 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/common/staging",
+    "jesgo:unique": true,
+    "type": "object",
+    "title": "病期診断",
+    "$comment": "一般的病期診断.",
+    "properties": {
+        "治療施行状況": {
+            "type": "string",
+            "enum": [
+                "初回手術施行",
+                "術前治療後に手術施行",
+                "術前治療および手術未施行例",
+                "治療施行せず"
+            ]
+        },
+        "進行期分類の選択": {
+            "type": "string",
+            "enum": [
+                "手術により進行期を決定した症例",
+                "治療開始前に進行期を決定した症例"
+            ],
+            "description": "術前に放射線治療や化学療法を施行した症例は「術前治療施行例」となり、pTNM欄は術後所見、ypTNMとして手術時所見に即してpTNM分類を入力する。"
+        },
+        "FIGO": {
+            "type": "string",
+            "title": "FIGO分類"
+        },
+        "cTNM": {
+            "type": "object",
+            "title": "cTNM分類",
+            "properties": {
+                "T": {
+                    "$ref": "#/$defs/T"
+                },
+                "N": {
+                    "$ref": "#/$defs/N"
+                },
+                "M": {
+                    "$ref": "#/$defs/M"
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "治療施行状況": {
+                        "const": "初回手術施行"
+                    },
+                    "進行期分類の選択": {
+                        "const": "手術により進行期を決定した症例"
+                    }
+                }
+            },
+            "then": {
+                "pTNM": {
+                    "type": "object",
+                    "title": "pTNM分類(初回手術を実施した症例のみ)",
+                    "properties": {
+                        "T": {
+                            "$ref": "#/$defs/T"
+                        },
+                        "N": {
+                            "$ref": "#/$defs/N"
+                        },
+                        "M": {
+                            "$ref": "#/$defs/M"
+                        }
+                    }
+                },
+                "ypTNM": {}
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "治療施行状況": {
+                        "const": "術前治療後に手術施行"
+                    }
+                }
+            },
+            "then": {
+                "pTNM": {},
+                "ypTNM": {
+                    "type": "object",
+                    "title": "ypTNM分類(初回手術を実施した症例のみ)",
+                    "properties": {
+                        "T": {
+                            "$ref": "#/$defs/T"
+                        },
+                        "N": {
+                            "$ref": "#/$defs/N"
+                        },
+                        "M": {
+                            "$ref": "#/$defs/M"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "": {
+                        "enum": [
+                            "術前治療および手術未施行例",
+                            "治療施行せず"
+                        ]
+                    }
+                }
+            },
+            "then": {
+                "pTNM": {},
+                "ypTNM": {}
+            }
+        }
+    ],
+    "$defs": {
+        "T": {
+            "type": "string",
+            "title": "T分類"
+        },
+        "N": {
+            "type": "string",
+            "title": "N分類"
+        },
+        "M": {
+            "type": "string",
+            "title": "M分類"
+        }
+    }
+}

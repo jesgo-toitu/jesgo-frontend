@@ -8,7 +8,7 @@
     ],
     "jesgo:unique": true,
     "properties": {},
-    "jesgo:ui:subschemastyle": "noindent",
+    "jesgo:ui:subschemastyle": "row",
     "jesgo:subschema": [
         "/schema/surveillance"
     ]

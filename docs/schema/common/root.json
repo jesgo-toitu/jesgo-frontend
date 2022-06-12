@@ -1,10 +1,10 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/root",
+    "$id": "/schema/common/root",
     "type": "object",
-    "title": "患者台帳",
-    "description": "腫瘍登録台帳（共通）.",
-    "jesgo:unique": false,
+    "title": "患者台帳 (その他)",
+    "$comment": "腫瘍登録の最低限の雛型",
+    "jesgo:unique": true,
     "jesgo:parentschema": [
         "/"
     ],
@@ -14,11 +14,13 @@
     "properties": {
         "がん種": {
             "type": "string",
+            "$comment": "既に実装済み＞子宮頸がん, 子宮体がん, 卵巣がん・卵管がん・腹膜がん",
             "enum": [
-                "子宮頸がん",
-                "子宮体がん",
-                "卵巣がん・卵管がん・腹膜がん",
-                "その他がん種"
+                "外陰癌",
+                "腟癌",
+                "子宮肉腫",
+                "子宮腺肉腫",
+                "絨毛性疾患"
             ],
             "jesgo:required": [
                 "JSOG"
@@ -82,7 +84,8 @@
         }
     },
     "jesgo:ui:subschemastyle": "tab",
-    "jesgo:childschema": [
+    "jesgo:subschema": [
+        "/schema/staging",
         "/schema/treatment/initial_treatment"
     ]
 }

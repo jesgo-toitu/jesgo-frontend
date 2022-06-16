@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/EM/pathology",
+    "jesgo:version": "1.0",
     "jesgo:unique": true,
     "type": "object",
     "title": "組織診断",

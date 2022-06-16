@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/blood_transfusion",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "輸血・血液製剤",
     "jesgo:unique": true,

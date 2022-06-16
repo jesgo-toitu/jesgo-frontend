@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/operation_adverse_events",
+    "jesgo:version": "1.0",
     "title": "手術合併症",
     "type": "object",
     "jesgo:unique": false,

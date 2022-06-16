@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/OV/staging",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "病期診断",
     "$comment": "卵巣がんの病期診断.",

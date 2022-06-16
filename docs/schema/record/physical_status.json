@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/record/status",
+    "jesgo:version": "1.0",
     "jesgo:unique": true,
     "type": "object",
     "title": "患者所見",

@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/relapse_treatment",
+    "jesgo:version": "1.0",
     "title": "再発治療",
     "jesgo:unique": true,
     "type": "object",

@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/record/past_history",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "既往歴",
     "jesgo:unique": true,

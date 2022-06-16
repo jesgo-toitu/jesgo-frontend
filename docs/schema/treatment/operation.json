@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/operation",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "手術療法",
     "jesgo:ui:subschemastyle": "tab",

@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/record/summary",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "初診時情報",
     "$comment": "初診時基本的な確認情報.",

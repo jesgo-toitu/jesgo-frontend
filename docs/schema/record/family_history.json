@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/record/family_history",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "家族歴",
     "jesgo:unique": true,

@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/record/history",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "現病歴",
     "jesgo:unique": true,

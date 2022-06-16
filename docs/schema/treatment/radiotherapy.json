@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/radiotherapy",
+    "jesgo:version": "1.0",
     "title": "放射線療法",
     "jesgo:copydocument": true,
     "type": "object",

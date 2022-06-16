@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/record/flavor",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "嗜好",
     "jesgo:unique": true,

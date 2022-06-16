@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/meeting",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "カンファレンス",
     "jesgo:parentschema": [

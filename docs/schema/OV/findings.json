@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/OV/findings",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "術中腹腔内所見",
     "jesgo:unique": true,
@@ -25,5 +26,8 @@
             "type": "string",
             "jesgo:ui:textarea": true
         }
-    }
+    },
+    "jesgo:subschema": [
+        "/schema/evaluation/*"
+    ]
 }

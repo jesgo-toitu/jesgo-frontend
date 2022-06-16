@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/recurrence",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "再発",
     "description": "再発診断に関わる所見情報も併せて設定して下さい.",
@@ -70,6 +71,7 @@
         }
     },
     "jesgo:childschema": [
-        "/schema/treatment/relapse_treatment"
+        "/schema/treatment/relapse_treatment",
+        "/schema/evaluation/*"
     ]
 }

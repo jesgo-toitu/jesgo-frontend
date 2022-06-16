@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/record/medical_record",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "併存症",
     "jesgo:unique": true,

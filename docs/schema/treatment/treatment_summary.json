@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/treatment_summary",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "治療サマリー",
     "jesgo:unique": true,

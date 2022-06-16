@@ -1,6 +1,10 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/cervix",
+    "jesgo:version": "1.0",
+    "jesgo:parentschema": [
+        "/schema/surveillance"
+    ],
     "jesgo:unique": true,
     "type": "object",
     "title": "子宮頸部検査",

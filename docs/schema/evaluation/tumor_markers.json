@@ -1,6 +1,10 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluation/tumor_markers",
+    "jesgo:version": "1.0",
+    "jesgo:parentschema": [
+        "/schema/surveillance"
+    ],
     "jesgo:unique": true,
     "type": "object",
     "title": "腫瘍マーカー",

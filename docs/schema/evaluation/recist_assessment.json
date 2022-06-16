@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluation/recist_assessment",
+    "jesgo:version": "1.0",
     "jesgo:unique": true,
     "type": "object",
     "title": "治療効果",
@@ -9,6 +10,11 @@
         "/schema/treatment/summary"
     ],
     "properties": {
+        "判定日": {
+            "type": "string",
+            "format": "date",
+            
+        },
         "判定": {
             "type": "string",
             "anyOf": [

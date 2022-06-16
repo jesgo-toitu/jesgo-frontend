@@ -1,6 +1,10 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/regional_lymph_nodes",
+    "jesgo:version": "1.0",
+    "jesgo:parentschema": [
+        "/schema/surveillance"
+    ],
     "jesgo:unique": true,
     "type": "object",
     "title": "所属リンパ節所見",

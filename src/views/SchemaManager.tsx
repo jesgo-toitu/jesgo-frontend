@@ -75,9 +75,10 @@ const SchemaManager = () => {
   const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (fileList) {
-      const file = fileList[0];
-      if (!file.name.endsWith('.zip')) {
-        alert('ZIPファイルを選択してください');
+      const file = fileList[0]
+      const fileName:string = file.name.toLocaleLowerCase()
+      if (!fileName.endsWith('.zip') && !fileName.endsWith('.json')) {
+        alert('ZIPファイルもしくはJSONファイルを選択してください');
         return;
       }
 
@@ -138,7 +139,7 @@ const SchemaManager = () => {
           </Button>
           {/* 実際のアップロードボタンは非表示 */}
           <input
-            accept=".zip"
+            accept=".zip,.json"
             ref={refBtnUpload}
             type="file"
             onChange={onFileSelected}

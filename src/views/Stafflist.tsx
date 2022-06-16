@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Nav, Navbar, NavItem } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
+import { Const } from '../common/Const';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { UserMenu } from '../components/common/UserMenu';
 import StaffTables from '../components/Staff/StaffTables';
@@ -72,6 +73,7 @@ export const Stafflist = () => {
                 リストに戻る
               </Button>
             </NavItem>
+            <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
           </Nav>
         </Navbar.Collapse>
       </Navbar>

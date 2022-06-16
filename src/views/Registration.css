@@ -43,6 +43,13 @@ body {
   padding-right: 30px;
 }
 
+/* エラーメッセージ表示パネル */
+.error-msg-panel {
+  border: solid thin red;
+  color: #a94442;
+  padding: 0.5rem;
+}
+
 .user-info-row {
   display: flex;
   flex-wrap: wrap;
@@ -86,16 +93,22 @@ body {
 
 /* タブ（選択） */
 .nav-tabs li.active a {
-  font-weight: bold;
+  font-weight: normal;
   border: 1px solid #a0a0a0;
 }
 .nav-tabs li.active a:focus {
-  font-weight: bold;
+  font-weight: normal;
   border: 1px solid #a0a0a0;
 }
 .nav-tabs li.active a:hover {
-  font-weight: bold;
+  font-weight: normal;
   border: 1px solid #a0a0a0;
+}
+
+/* フォームデータ入力済み時のタブフォント */
+a.has-input {
+  font-weight: bold !important;
+  color: black !important;
 }
 
 /* アイテム間の隙間 */
@@ -204,4 +217,11 @@ input[type="number"] {
 .normal-button {
   margin: 10px;
   padding: 10px;
+}
+
+/* validationエラー時のスタイル */
+.has-error > .form-control,
+.has-error > .control-label,
+.has-error legend {
+  color: red
 }

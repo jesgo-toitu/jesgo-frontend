@@ -6,6 +6,7 @@ import React, {
   useLayoutEffect,
   useState,
 } from 'react';
+import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -29,6 +30,11 @@ import {
   convertTabKey,
   GetRootSchema,
   GetSchemaInfo,
+  GetSchemaTitle,
+  IsNotUpdate,
+  SetSameSchemaTitleNumbering,
+  getErrMsg,
+  RegistrationErrors,
 } from '../common/CaseRegistrationUtility';
 import './Registration.css';
 import {
@@ -110,11 +116,13 @@ const Registration = () => {
   // 選択中のタブインデックス
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(-1);
 
-  const [addedDocumentCount, setAddedDocumentCount] = useState<number>(0);
+  const [addedDocumentCount, setAddedDocumentCount] = useState<number>(-1);
 
   // eslint-disable-next-line prefer-const
   let [loadData, setLoadData] = useState<SaveDataObjDefine | undefined>();
 
+  // エラーメッセージ
+  const [errors, setErrors] = useState<RegistrationErrors[]>([]);
   const saveFunction = (eventKey: any) => {
     const formDatas = store.getState().formDataReducer.formDatas;
     const saveData = store.getState().formDataReducer.saveData;
@@ -134,7 +142,8 @@ const Registration = () => {
       dispatch,
       setIsLoading,
       setSaveResponse,
-      false
+      false,
+      setErrors
     );
 
     // インデックスからタブ名に変換
@@ -295,8 +304,13 @@ const Registration = () => {
               schemaId: doc.value.schema_id,
               deleted: doc.value.deleted,
               compId: doc.compId,
+              title: GetSchemaTitle(doc.value.schema_id),
             });
           });
+
+        // 同一スキーマのドキュメントが複数ある場合はタブ名に番号付与
+        SetSameSchemaTitleNumbering(dispRootSchemaIds);
+
         setDispRootSchemaIds([...dispRootSchemaIds]);
         setLoadData(loadData);
 
@@ -339,7 +353,24 @@ const Registration = () => {
   const onTabSelectEvent = (isTabSelected: boolean, eventKey: any) => {
     if (isTabSelected && eventKey === selectedTabKey) return;
 
+    // スクロール位置保存
+    dispatch({
+      type: 'SCROLL_POSITION',
+      scrollTop: document.scrollingElement
+        ? document.scrollingElement.scrollTop
+        : undefined,
+    });
+
     const commonReducer = store.getState().commonReducer;
+
+    // インデックスからタブ名に変換
+    const convTabKey = convertTabKey('root-tab', eventKey);
+
+    // 変更ない場合はそのままタブ移動
+    if (IsNotUpdate()) {
+      setSelectedTabKey(convTabKey);
+      return;
+    }
 
     const isHiddenSaveMessage = commonReducer.isHiddenSaveMassage;
     if (!isHiddenSaveMessage) {
@@ -353,8 +384,6 @@ const Registration = () => {
       saveFunction(eventKey);
     } else {
       // 確認ダイアログを表示しない＆保存しない場合はタブ移動だけする
-      // インデックスからタブ名に変換
-      const convTabKey = convertTabKey('root-tab', eventKey);
       setSelectedTabKey(convTabKey);
     }
   };
@@ -363,8 +392,8 @@ const Registration = () => {
     if (dispRootSchemaIds.length > 0) {
       dispRootSchemaIds.forEach((info: dispSchemaIdAndDocumentIdDefine) => {
         // ドキュメントIDがなければ作成する
+        const schemaInfo = GetSchemaInfo(info.schemaId);
         if (!info.documentId) {
-          const schemaInfo = GetSchemaInfo(info.schemaId);
           dispatch({
             type: 'ADD_PARENT',
             schemaId: info.schemaId,
@@ -377,7 +406,13 @@ const Registration = () => {
             setAddedDocumentCount,
           });
         }
+
+        // タイトル振り直し
+        info.title = GetSchemaTitle(info.schemaId);
       });
+
+      // 同一スキーマのドキュメントが複数ある場合はタブ名に番号付与
+      SetSameSchemaTitleNumbering(dispRootSchemaIds);
     }
 
     const filteredIdList = dispRootSchemaIds.filter((p) => p.deleted === false);
@@ -399,12 +434,7 @@ const Registration = () => {
     });
   }, [dispRootSchemaIds]);
 
-  // 表示用のルートスキーマ更新終わった時点でローディング解除
   useEffect(() => {
-    if (isLoading) {
-      setIsLoading(false);
-    }
-
     // 子ドキュメントのタブ名取得
     const allTabIds = dispRootSchemaIdsNotDeleted.map(
       (info) => `root-tab-${info.compId}`
@@ -428,6 +458,11 @@ const Registration = () => {
     if (allTabIds.length > 0) {
       const idx = allTabIds.findIndex((p) => p === selectedTabKey);
       setSelectedTabIndex(idx);
+    }
+
+    // 表示用のルートスキーマ更新終わった時点でローディング解除
+    if (isLoading && loadedJesgoCase.resCode !== undefined) {
+      setIsLoading(false);
     }
   }, [dispRootSchemaIdsNotDeleted]);
 
@@ -501,6 +536,7 @@ const Registration = () => {
     }
   }, [saveResponse]);
 
+  const message: string[] = getErrMsg(errors);
   // 選択されているタブをstoreに保存
   useEffect(() => {
     dispatch({
@@ -516,12 +552,31 @@ const Registration = () => {
     }
   }, [selectedTabKey]);
 
+  // スクロール位置復元
   useLayoutEffect(() => {
     const scrollTop = store.getState().commonReducer.scrollTop;
     if (scrollTop && document.scrollingElement) {
       document.scrollingElement.scrollTop = scrollTop;
     }
-  });
+  }, []);
+
+  // タブタイトル振り直し ※タイミングによってスキーマ情報が取得できない
+  useEffect(() => {
+    if (hasSchema) {
+      const noTitles = dispRootSchemaIds.filter(
+        (p) => p.title === '' || !isNaN(Number(p.title))
+      );
+      if (noTitles.length > 0) {
+        noTitles.forEach((item) => {
+          item.title = GetSchemaTitle(item.schemaId);
+        });
+
+        SetSameSchemaTitleNumbering(dispRootSchemaIds);
+
+        setDispRootSchemaIds([...dispRootSchemaIds]);
+      }
+    }
+  }, [hasSchema]);
 
   return (
     <div className="page-area">
@@ -555,7 +610,8 @@ const Registration = () => {
                 <ControlLabel>生年月日</ControlLabel>
                 <FormControl
                   type="date"
-                  max={Const.INPUT_DATE_MAX}
+                  min={Const.INPUT_DATE_MIN}
+                  max={Const.INPUT_DATE_MAX()}
                   onChange={onChangeItem}
                   value={birthday}
                 />
@@ -591,76 +647,85 @@ const Registration = () => {
               setLoadedJesgoCase={setLoadedJesgoCase}
               setCaseId={setCaseId}
               setIsReload={setIsReload}
+              setErrors={setErrors}
             />
           </Row>
         </Panel>
       </div>
       {!isLoading && hasSchema && (
-        <div className="content-area">
-          <div className="input-form">
-            {dispRootSchemaIdsNotDeleted.length > 0 && (
-              <Tabs
-                id="root-tabs"
-                activeKey={selectedTabKey} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                onSelect={(eventKey) => onTabSelectEvent(true, eventKey)}
-              >
-                {dispRootSchemaIdsNotDeleted.map(
-                  (info: dispSchemaIdAndDocumentIdDefine, index: number) => {
-                    // TODO: サブタイトル追加は暫定対応。今後使用しない可能性あり
-                    const schemaInfo = GetSchemaInfo(info.schemaId);
-                    let title = schemaInfo?.title ?? '';
-                    if (schemaInfo?.subtitle) {
-                      title += ` ${schemaInfo.subtitle}`;
-                    }
-                    return (
+        <>
+          {message.length > 0 && (
+            <Panel className="error-msg-panel">
+              {message.map((error: string) => (
+                <p>{error}</p>
+              ))}
+            </Panel>
+          )}
+          <div className="content-area">
+            <div className="input-form">
+              {dispRootSchemaIdsNotDeleted.length > 0 && (
+                <Tabs
+                  id="root-tabs"
+                  activeKey={selectedTabKey} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                  onSelect={(eventKey) => onTabSelectEvent(true, eventKey)}
+                >
+                  {dispRootSchemaIdsNotDeleted.map(
+                    (info: dispSchemaIdAndDocumentIdDefine, index: number) => {
+                      const title =
+                        info.title + (info.titleNum?.toString() ?? '');
+
                       // TODO TabSchemaにTabを置くとうまく動作しなくなる
-                      <Tab
-                        key={`root-tab-${info.compId}`}
-                        className="panel-style"
-                        eventKey={`root-tab-${info.compId}`}
-                        title={<span>{title}</span>}
-                      >
-                        <RootSchema
-                          key={`root-${info.compId}`}
-                          tabId={`root-tab-${info.compId}`}
-                          parentTabsId="root-tab"
-                          schemaId={info.schemaId}
-                          documentId={info.documentId}
-                          dispSchemaIds={[...dispRootSchemaIds]}
-                          setDispSchemaIds={setDispRootSchemaIds}
-                          loadedData={loadData}
-                          setSelectedTabKey={setSelectedTabKey}
-                          setIsLoading={setIsLoading}
-                          setSaveResponse={setSaveResponse}
-                          isSchemaChange={info.isSchemaChange}
-                          selectedTabKey={selectedTabKey}
-                          schemaAddModFunc={onTabSelectEvent}
-                        />
-                      </Tab>
-                    );
-                  }
-                )}
-              </Tabs>
-            )}
+                      return (
+                        <Tab
+                          key={`root-tab-${info.compId}`}
+                          className="panel-style"
+                          eventKey={`root-tab-${info.compId}`}
+                          title={<span>{title}</span>}
+                        >
+                          <RootSchema
+                            key={`root-${info.compId}`}
+                            tabId={`root-tab-${info.compId}`}
+                            parentTabsId="root-tab"
+                            schemaId={info.schemaId}
+                            documentId={info.documentId}
+                            dispSchemaIds={[...dispRootSchemaIds]}
+                            setDispSchemaIds={setDispRootSchemaIds}
+                            loadedData={loadData}
+                            setSelectedTabKey={setSelectedTabKey}
+                            setIsLoading={setIsLoading}
+                            setSaveResponse={setSaveResponse}
+                            isSchemaChange={info.isSchemaChange}
+                            setErrors={setErrors}
+                            selectedTabKey={selectedTabKey}
+                            schemaAddModFunc={onTabSelectEvent}
+                          />
+                        </Tab>
+                      );
+                    }
+                  )}
+                </Tabs>
+              )}
+            </div>
+            <ControlButton
+              tabId="root-tab"
+              parentTabsId=""
+              Type={COMP_TYPE.ROOT}
+              isChildSchema={false} // eslint-disable-line react/jsx-boolean-value
+              schemaId={0}
+              dispSubSchemaIds={[]}
+              dispChildSchemaIds={[...dispRootSchemaIds]}
+              setDispSubSchemaIds={undefined}
+              setDispChildSchemaIds={setDispRootSchemaIds}
+              dispatch={dispatch}
+              documentId=""
+              subSchemaCount={0}
+              tabSelectEvents={{
+                fnAddDocument: onTabSelectEvent,
+                fnSchemaChange: undefined,
+              }}
+            />
           </div>
-          <ControlButton
-            tabId="root-tab"
-            parentTabsId=""
-            Type={COMP_TYPE.ROOT}
-            isChildSchema={false} // eslint-disable-line react/jsx-boolean-value
-            schemaId={0}
-            dispSubSchemaIds={[]}
-            dispChildSchemaIds={[...dispRootSchemaIds]}
-            setDispChildSchemaIds={setDispRootSchemaIds}
-            dispatch={dispatch}
-            documentId=""
-            subSchemaCount={0}
-            tabSelectEvents={{
-              fnAddDocument: onTabSelectEvent,
-              fnSchemaChange: undefined,
-            }}
-          />
-        </div>
+        </>
       )}
       {/* ローディング画面表示 */}
       {(isLoading || !hasSchema) && <Loading />}

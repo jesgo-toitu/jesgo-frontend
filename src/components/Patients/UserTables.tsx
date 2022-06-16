@@ -9,8 +9,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
-import { formatDate } from '../../common/DBUtility';
-import store from '../../store';
+import { formatDateStr } from '../../common/DBUtility';
 import IconList from './IconList';
 
 export interface userData {
@@ -151,13 +150,15 @@ const makeTable = (props: {
             className={user.status.includes('death') ? 'died' : ''}
             key={user.caseId.toString()}
           >
-            <td>{user.patientId}</td>
+            <td>
+              {user.patientId}
+            </td>
             <td>{user.patientName}</td>
             <td className={noSearch}>{user.age}</td>
             <td className={noSearch}>
-              {formatDate(user.since ?? '', '/')}
-              {user.since && <br />}
-              {formatDate(user.lastUpdate, '/')}
+              {formatDateStr(user.startDate ?? '', '/')}
+              {user.startDate && <br />}
+              {formatDateStr(user.lastUpdate, '/')}
             </td>
             <td>
               {user.diagnosis === '未' ? (

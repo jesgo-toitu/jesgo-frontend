@@ -6,6 +6,8 @@ import { useDispatch } from 'react-redux';
 import {
   convertTabKey,
   GetSchemaInfo,
+  IsNotUpdate,
+  RegistrationErrors,
 } from '../../common/CaseRegistrationUtility';
 import SaveCommand, { responseResult } from '../../common/DBUtility';
 import store from '../../store';
@@ -36,20 +38,16 @@ export const createTab = (
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
   subSchemaCount: number,
   setSelectedTabKey: React.Dispatch<React.SetStateAction<any>>,
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
   selectedTabKey: any,
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void
 ) =>
   // subschema表示
   filteredSchemaIds.map((info: dispSchemaIdAndDocumentIdDefine) => {
-    // TODO: サブタイトル追加は暫定対応。今後使用しない可能性あり
-    const schemaInfo = GetSchemaInfo(info.schemaId);
-    let title = schemaInfo?.title ?? '';
-    if (schemaInfo?.subtitle) {
-      title += ` ${schemaInfo.subtitle}`;
-    }
+    const title = info.title + (info.titleNum?.toString() ?? '');
 
+    // TODO TabSchemaにTabを置くとうまく動作しなくなる
     return (
-      // TODO TabSchemaにTabを置くとうまく動作しなくなる
       <Tab
         key={`tab-${info.compId}-${info.schemaId}`}
         className="panel-style"
@@ -71,6 +69,8 @@ export const createTab = (
           setSelectedTabKey={setSelectedTabKey}
           subSchemaCount={subSchemaCount}
           isSchemaChange={info.isSchemaChange}
+          isParentSchemaChange={info.isParentSchemaChange}
+          setErrors={setErrors}
           selectedTabKey={selectedTabKey}
           schemaAddModFunc={schemaAddModFunc}
         />
@@ -94,6 +94,7 @@ export const createTabs = (
   loadedData: SaveDataObjDefine | undefined,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
   childTabSelectedFunc: ChildTabSelectedFuncObj,
   setChildTabSelectedFunc:
     | React.Dispatch<React.SetStateAction<ChildTabSelectedFuncObj>>
@@ -130,7 +131,8 @@ export const createTabs = (
       dispatch,
       setIsLoading,
       setSaveResponse,
-      false
+      false,
+      setErrors
     );
 
     // インデックスからタブ名に変換
@@ -173,6 +175,23 @@ export const createTabs = (
   const onTabSelectEvent = (isTabSelected: boolean, eventKey: any) => {
     if (isTabSelected && eventKey === selectedTabKey) return;
 
+    // スクロール位置保存
+    dispatch({
+      type: 'SCROLL_POSITION',
+      scrollTop: document.scrollingElement
+        ? document.scrollingElement.scrollTop
+        : undefined,
+    });
+
+    // インデックスからタブ名に変換
+    const convTabKey = convertTabKey(id, eventKey);
+
+    // 変更ない場合は保存しないでタブ移動
+    if (IsNotUpdate()) {
+      setSelectedTabKey(convTabKey);
+      return;
+    }
+
     const commonReducer = store.getState().commonReducer;
     const isHiddenSaveMessage = commonReducer.isHiddenSaveMassage;
     if (!isHiddenSaveMessage) {
@@ -186,8 +205,6 @@ export const createTabs = (
       saveFunction(eventKey);
     } else {
       // 確認ダイアログを表示しない＆保存しない場合はタブ移動だけする
-      // インデックスからタブ名に変換
-      const convTabKey = convertTabKey(id, eventKey);
       setSelectedTabKey(convTabKey);
     }
   };
@@ -270,6 +287,7 @@ export const createTabs = (
             setSaveResponse,
             0,
             setSelectedTabKey,
+            setErrors,
             selectedTabKey,
             onTabSelectEvent
           )}
@@ -286,6 +304,7 @@ export const createTabs = (
             setSaveResponse,
             subschemaIdsNotDeleted.length,
             setSelectedTabKey,
+            setErrors,
             selectedTabKey,
             onTabSelectEvent
           )}
@@ -313,9 +332,11 @@ export const createPanel = (
   loadedData: SaveDataObjDefine | undefined,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
   selectedTabKey: any,
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void,
-  parentTabsId: string
+  parentTabsId: string,
+  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>
 ) =>
   // subschema表示
   filteredSchemaIds.map((info: dispSchemaIdAndDocumentIdDefine) => (
@@ -332,8 +353,11 @@ export const createPanel = (
       setIsLoading={setIsLoading}
       setSaveResponse={setSaveResponse}
       isSchemaChange={info.isSchemaChange}
+      isParentSchemaChange={info.isParentSchemaChange}
+      setErrors={setErrors}
       selectedTabKey={selectedTabKey}
       schemaAddModFunc={schemaAddModFunc}
+      setUpdateFormData={setUpdateFormData}
     />
   ));
 
@@ -354,9 +378,11 @@ export const createPanels = (
   loadedData: SaveDataObjDefine | undefined,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
   selectedTabKey: any,
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void,
-  parentTabsId: string
+  parentTabsId: string,
+  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>
 ) =>
   (subschemaIdsNotDeleted.length > 0 ||
     dispChildSchemaIdsNotDeleted.length > 0) && (
@@ -369,9 +395,11 @@ export const createPanels = (
         loadedData,
         setIsLoading,
         setSaveResponse,
+        setErrors,
         selectedTabKey,
         schemaAddModFunc,
-        parentTabsId
+        parentTabsId,
+        setUpdateFormData
       )}
       {createPanel(
         dispChildSchemaIds,
@@ -381,9 +409,11 @@ export const createPanels = (
         loadedData,
         setIsLoading,
         setSaveResponse,
+        setErrors,
         selectedTabKey,
         schemaAddModFunc,
-        parentTabsId
+        parentTabsId,
+        setUpdateFormData
       )}
     </>
   );

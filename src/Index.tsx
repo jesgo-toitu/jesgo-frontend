@@ -10,6 +10,7 @@ import Stafflist from './views/Stafflist';
 import Settings from './views/Settings';
 import './index.css';
 import './biz-udpgothic.css';
+import SchemaManager from './views/SchemaManager';
 
 ReactDOM.render(
   <Provider store={store}>
@@ -20,6 +21,7 @@ ReactDOM.render(
         <Route path="/Registration" element={<Registration />} />
         <Route path="/Stafflist" element={<Stafflist />} />
         <Route path="/Settings" element={<Settings />} />
+        <Route path="/SchemaManager" element={<SchemaManager />} />
       </Routes>
     </BrowserRouter>
   </Provider>,

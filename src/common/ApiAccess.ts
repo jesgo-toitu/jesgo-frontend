@@ -32,6 +32,7 @@ export const METHOD_TYPE = {
   GET: 0,
   POST: 1,
   DELETE: 2,
+  POST_ZIP: 3,
 };
 
 const apiAccess = async (
@@ -63,13 +64,26 @@ const apiAccess = async (
   if (token == null) {
     token = '';
   }
-  let payloadObj: AxiosRequestConfig<Record<string, unknown>> | undefined;
+  // eslint-disable-next-line
+  let payloadObj: AxiosRequestConfig<Record<string, any>> | undefined;
   if (body !== null) {
-    payloadObj = {
-      headers: { token },
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      data: body,
-    };
+    // ZIPファイル送信時はファイル形式を替える
+    if(methodType === METHOD_TYPE.POST_ZIP){
+      const data = new FormData();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      data.append("schemas", body);
+      payloadObj = {
+        headers: { token, 'content-type': 'multipart/form-data' },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data,
+      };
+    }else{
+      payloadObj = {
+        headers: { token },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data: body,
+      };
+    }
   } else {
     payloadObj = { headers: { token } };
   }
@@ -115,6 +129,20 @@ const apiAccess = async (
           errMsg = err;
         });
       break;
+
+      case METHOD_TYPE.POST_ZIP:
+        console.log(payloadObj.headers)
+        await axios
+        .post(`${config.config.endPointUrl}${url}`, payloadObj.data, payloadObj)
+        .then((response) => {
+          returnObj = response.data as ApiReturnObject;
+        })
+        .catch((err) => {
+          // ★TODO: ログ出す
+          console.log(err);
+          errMsg = err;
+        });
+        break;
 
     default:
   }

@@ -44,6 +44,11 @@ const AddUiSchema = (
     classNames.push('required-item');
   }
 
+  // "jesgo:validation:haserror"
+  if(schema["jesgo:validation:haserror"] === true){
+    classNames.push('has-error');
+  }
+
   // "jesgo:ui:subschemastyle"
   if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE]) {
     if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'inline') {
@@ -117,13 +122,6 @@ const AddUiSchema = (
   if (itemPropName.includes(Const.JSONSchema7Keys.ONEOF)) {
     if (itemPropName.includes(kType)) {
       switch (getSchemaType(schema)) {
-        case Const.JSONSchema7Types.OBJECT:
-          // ・個々のラベル非表示
-          // ・タイトルを他Widgetと同様のスタイルに変更
-          resultUiSchema[Const.UI_WIDGET.OBJECT_FIELD_TEMPLATE] =
-            JESGOFiledTemplete.OneOfFieldTemplate;
-          resultUiSchema[Const.UI_WIDGET.OPTIONS] = { label: false };
-          break;
         case Const.JSONSchema7Types.STRING:
           if (schema[Const.EX_VOCABULARY.UI_LISTTYPE] === 'combo') {
             // oneOfの中身解析

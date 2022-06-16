@@ -8,10 +8,12 @@ import {
   CustomSchema,
   getPropItemsAndNames,
 } from '../components/CaseRegistration/SchemaUtility';
-import { SaveDataObjDefine } from '../store/formDataReducer';
+import {
+  SaveDataObjDefine,
+} from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
-import { GetSchemaInfo } from './CaseRegistrationUtility';
+import { GetSchemaInfo, RegistrationErrors, validateJesgoDocument } from './CaseRegistrationUtility';
 
 export interface responseResult {
   resCode?: number;
@@ -20,9 +22,20 @@ export interface responseResult {
   caseId?: number;
   anyValue?: unknown;
 }
+// 日付(Date形式)をyyyy/MM/ddなどの形式に変換
+export const formatDate = (dateObj: Date, separator = ''):string => {
+  try {
+    const y = dateObj.getFullYear();
+    const m = `00${dateObj.getMonth() + 1}`.slice(-2);
+    const d = `00${dateObj.getDate()}`.slice(-2);
+    return `${y}${separator}${m}${separator}${d}`;
+  } catch {
+    return '';
+  }
+};
 
 // 日付文字列をyyyy/MM/ddなどの形式に変換
-export const formatDate = (dtStr: string, separator: string) => {
+export const formatDateStr = (dtStr: string, separator: string):string => {
   if (!dtStr) return '';
   try {
     const dateObj = new Date(dtStr);
@@ -98,12 +111,12 @@ export const loadJesgoCaseAndDocument = async (
     if (res.loadedSaveData) {
       // 日付文字列の変換
       // 生年月日
-      res.loadedSaveData.jesgo_case.date_of_birth = formatDate(
+      res.loadedSaveData.jesgo_case.date_of_birth = formatDateStr(
         res.loadedSaveData.jesgo_case.date_of_birth,
         '-'
       );
       // 死亡日時
-      res.loadedSaveData.jesgo_case.date_of_death = formatDate(
+      res.loadedSaveData.jesgo_case.date_of_death = formatDateStr(
         res.loadedSaveData.jesgo_case.date_of_death,
         '-'
       );
@@ -177,6 +190,7 @@ const SaveChanges = async (
         }
 
         // 死亡日時の設定(jesgo_case)
+        copySaveData.jesgo_case.date_of_death = ''; // 一旦リセット
         if (
           jesgoDoc.death_data_prop_name &&
           jesgoDoc.event_date_prop_name &&
@@ -189,8 +203,6 @@ const SaveChanges = async (
           if (deathProp && (deathProp[1] as boolean) === true) {
             // 死亡フラグが立っていればevent_dateを死亡日時にセットする
             copySaveData.jesgo_case.date_of_death = jesgoDoc.value.event_date;
-          } else {
-            copySaveData.jesgo_case.date_of_death = '';
           }
           // saveData.jesgo_case.last_updated = updateDate;
         }
@@ -208,45 +220,75 @@ const SaveChanges = async (
   await SaveFormDataToDB(copySaveData, setSaveResponse, isBack);
 };
 
+
 // ヘッダのエラーチェック
 // TODO: ここはvalidationにすべき
-export const hasJesgoCaseError = (saveData: SaveDataObjDefine) => {
+export const hasJesgoCaseError = (
+  saveData: SaveDataObjDefine,
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
+  dispatch: Dispatch<any>
+) => {
   const messages: string[] = [];
-  const digit = Number(localStorage.getItem('digit') ?? '0');
+  const digit = Number(localStorage.getItem('digit') ?? '8');
   const alignment = localStorage.getItem('alignment') === 'true';
   const alphabetEnable = localStorage.getItem('alphabet_enable') === 'true';
   const hyphenEnable = localStorage.getItem('hyphen_enable') === 'true';
   if (!saveData.jesgo_case.his_id) {
     messages.push('患者IDを入力してください。');
-  }else if(saveData.jesgo_case.is_new_case){
-    if(saveData.jesgo_case.his_id.length > digit ){
+  } else if (saveData.jesgo_case.is_new_case) {
+    if ((alphabetEnable || hyphenEnable)){
+      // アルファベットかハイフン許容の場合、桁数は20までで固定
+      if(saveData.jesgo_case.his_id.length > 20){
+        messages.push(`患者IDは20桁以内で入力してください。`);
+      }
+    } else if (saveData.jesgo_case.his_id.length > digit) {
       messages.push(`患者IDは${digit}桁以内で入力してください。`);
     }
-    if(alphabetEnable === false && saveData.jesgo_case.his_id.search(/[a-zA-Z]/) !== -1){
+    if (
+      alphabetEnable === false &&
+      saveData.jesgo_case.his_id.search(/[a-zA-Z]/) !== -1
+    ) {
       messages.push(`患者IDにアルファベットが含まれています。`);
     }
-    if(hyphenEnable === false && saveData.jesgo_case.his_id.indexOf('-') !== -1){
+    if (
+      hyphenEnable === false &&
+      saveData.jesgo_case.his_id.indexOf('-') !== -1
+    ) {
       messages.push(`患者IDにハイフンが含まれています。`);
     }
-    if(!(saveData.jesgo_case.his_id.match(/^[0-9a-zA-Z\\-]*$/))){
+    if (!saveData.jesgo_case.his_id.match(/^[0-9a-zA-Z\\-]*$/)) {
       messages.push(`患者IDに使用できない文字が含まれています。`);
 
-    // 参照渡しなので桁揃えもここでする
-    }else if(
+      // 参照渡しなので桁揃えもここでする
+    } else if (
       alignment &&
-      alphabetEnable === false && 
-      hyphenEnable === false && 
-      saveData.jesgo_case.his_id.length < digit)
-    {
-        while(saveData.jesgo_case.his_id.length < digit){
-          // eslint-disable-next-line no-param-reassign
-          saveData.jesgo_case.his_id = `0${saveData.jesgo_case.his_id}`;
-       }
+      alphabetEnable === false &&
+      hyphenEnable === false &&
+      saveData.jesgo_case.his_id.length < digit
+    ) {
+      // eslint-disable-next-line no-restricted-globals
+      if(confirm('桁揃えを行いますか？'))
+      while (saveData.jesgo_case.his_id.length < digit) {
+        // eslint-disable-next-line no-param-reassign
+        saveData.jesgo_case.his_id = `0${saveData.jesgo_case.his_id}`;
+      }
     }
   }
 
   if (!saveData.jesgo_case.date_of_birth) {
     messages.push('生年月日を入力してください。');
+  }
+
+  // 自動生成部分のvalidation
+  const errors: RegistrationErrors[] = validateJesgoDocument(saveData);
+  // エラー解消も反映させるため、必ずsetする
+  setErrors(errors);
+  dispatch({ type: 'SET_ERROR', extraErrors: errors });
+
+  if (errors.length > 0) {
+    messages.push(
+      '症例ドキュメントに入力エラーがあります。エラー一覧を確認してください。'
+    );
   }
 
   if (messages.length > 0) {
@@ -274,16 +316,60 @@ const SaveCommand = (
   dispatch: Dispatch<any>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
-  isBack: boolean
+  isBack: boolean,
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>
 ) => {
-  if (hasJesgoCaseError(saveData)) {
+  if (hasJesgoCaseError(saveData, setErrors, dispatch)) {
     return;
   }
+
   setIsLoading(true);
 
   // 保存処理実行
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   SaveChanges(dispatch, formDatas, saveData, setSaveResponse, isBack);
+};
+
+/**
+ * スキーマファイル(zip)のアップロード処理
+ * @param zipFile
+ * @param setSchemaUploadResponse
+ */
+export const UploadSchemaFile = async (
+  zipFile: File,
+  setSchemaUploadResponse: React.Dispatch<React.SetStateAction<responseResult>>
+) => {
+  const res: responseResult = { message: '' };
+
+  // TODO: URLは今は適当
+  const apiResult = await apiAccess(
+    METHOD_TYPE.POST_ZIP,
+    `upload`,
+    zipFile
+  );
+
+  res.resCode = apiResult.statusNum;
+  switch (res.resCode) {
+    case RESULT.ABNORMAL_TERMINATION: {
+      if(apiResult.body !== null && apiResult.body !== ''){
+        res.message = apiResult.body as string;
+      }else{
+        res.message = 'スキーマの更新に失敗しました';
+      }
+
+      break;
+    }
+    case RESULT.NORMAL_TERMINATION: {
+      res.message = 'スキーマを更新しました';
+      break;
+    }
+    default:
+      res.message = 'スキーマの更新に失敗しました';
+      break;
+  }
+
+  // 呼び元に返す
+  setSchemaUploadResponse(res);
 };
 
 export default SaveCommand;

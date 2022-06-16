@@ -5,6 +5,7 @@ import './Settings.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
+import { Const } from '../common/Const';
 
 export type settingsFromApi = {
   hisid_alignment: string;
@@ -150,12 +151,21 @@ const Settings = () => {
   };
   const errorCheck = (): string[] => {
     const errorMessages: string[] = [];
+
     if (
       settingJson.hisid_digit < 6 ||
       settingJson.hisid_digit > 12 ||
       !Number.isInteger(settingJson.hisid_digit)
     ) {
-      errorMessages.push('桁数は6-12の整数を入力してください');
+      // 桁数指定が無効の場合、エラーだったら値を無警告で直す
+      if (
+        settingJson.hisid_alphabet_enable ||
+        settingJson.hisid_hyphen_enable
+      ) {
+        settingJson.hisid_digit = 8;
+      } else {
+        errorMessages.push('桁数は6-12の整数を入力してください');
+      }
     }
     if (
       settingJson.jsog_registration_number !== '' &&
@@ -250,6 +260,7 @@ const Settings = () => {
             <NavItem>
               <SystemMenu title="設定" i={0} />
             </NavItem>
+            <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
           </Nav>
         </Navbar.Collapse>
       </Navbar>
@@ -314,13 +325,20 @@ const Settings = () => {
               </td>
             </tr>
             <tr>
-              <td>患者ID 桁数</td>
+              <td>
+                患者ID 桁数
+                ※ハイフン/アルファベットを許容すると桁数指定は無効になります
+              </td>
               <td>
                 <input
                   type="text"
                   name="digit"
                   value={settingJson.hisid_digit_string}
                   onChange={handleSettingInputs}
+                  disabled={
+                    settingJson.hisid_hyphen_enable ||
+                    settingJson.hisid_alphabet_enable
+                  }
                 />
                 桁
               </td>

@@ -24,8 +24,8 @@ export const getSchemaItemNames = (schema: JSONSchema7) => {
 /** schemaのタイプを取得 */
 export const getSchemaType = (schema: JSONSchema7) => {
   if (schema == null) return undefined;
-  return schema.type
-}
+  return schema.type;
+};
 
 /** JSONSchema7のpropertiesのkeyと値を全て取得 */
 export const getPropItemsAndNames = (item: JSONSchema7) => {
@@ -39,7 +39,7 @@ export const getPropItemsAndNames = (item: JSONSchema7) => {
 
 /**
  * schemaのマージ
- * @param props 
+ * @param props
  */
 const mergeSchemaItem = (props: {
   targetSchema: JSONSchema7;
@@ -87,7 +87,7 @@ const mergeSchemaItem = (props: {
   });
 };
 
-/** 
+/**
  * Schemaの書き換え
  * - refをdefの内容に置き換え
  * - oneOfで複数Typeの指定がある場合、type:stringに置き換え
@@ -95,7 +95,7 @@ const mergeSchemaItem = (props: {
 export const transferSchemaItem = (
   schema: JSONSchema7,
   item: JSONSchema7,
-  itemNames: string[],
+  itemNames: string[]
 ) => {
   let result = lodash.cloneDeep(item);
   const itemType = getSchemaType(item);
@@ -160,7 +160,7 @@ export const transferSchemaItem = (
     } else if (iName === '$comment') {
       // $commentのみのフィールドになるとエラーになるためあらかじめ除去
       delete result.$comment;
-    }else if (iName === 'examples'){
+    } else if (iName === 'examples') {
       // 不要な選択肢が出るためあらかじめ除去
       delete result.examples;
     }
@@ -171,12 +171,12 @@ export const transferSchemaItem = (
 
 /**
  * if~then~elseの書き換え
- * @param allOfItem 
- * @param schema 
- * @param formData 
- * @returns 
+ * @param allOfItem
+ * @param schema
+ * @param formData
+ * @returns
  */
- const customSchemaIfThenElse = (
+const customSchemaIfThenElse = (
   allOfItem: JSONSchema7,
   schema: JSONSchema7,
   formData: any
@@ -213,7 +213,7 @@ export const transferSchemaItem = (
         }
         if (conditionPattern != null) {
           // patternの場合
-          const value = selectValue as string ?? '';
+          const value = (selectValue as string) ?? '';
           if (value.match(conditionPattern)) {
             matchFlg = true;
           }
@@ -248,24 +248,25 @@ export const transferSchemaItem = (
 
 /**
  * フィールド内のif~Then~elseの置き換え
- * @param schema 
- * @param formData 
- * @returns 
+ * @param schema
+ * @param formData
+ * @returns
  */
 const customSchemaIfThenElseOnField = (schema: JSONSchema7, formData: any) => {
   let result = lodash.cloneDeep(schema);
   const itemNames = getSchemaItemNames(result);
   itemNames.forEach((name: string) => {
-    
     if (name === Const.JSONSchema7Keys.IF) {
       result = customSchemaIfThenElse(result, result, formData);
-
     } else if (name === Const.JSONSchema7Keys.PROP) {
       const targetSchema = getPropItemsAndNames(result);
       targetSchema.pNames.forEach((iname: string) => {
         const targetItem = targetSchema.pItems[iname] as JSONSchema7;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        targetSchema.pItems[iname] = customSchemaIfThenElseOnField(targetItem, formData[iname] ?? {});
+        targetSchema.pItems[iname] = customSchemaIfThenElseOnField(
+          targetItem,
+          formData[iname] ?? {}
+        );
       });
     }
   });
@@ -274,7 +275,7 @@ const customSchemaIfThenElseOnField = (schema: JSONSchema7, formData: any) => {
 
 export const transferSchemaMaps = (
   rootSchema: JSONSchema7,
-  targetItems: { [key: string]: JSONSchema7Definition },
+  targetItems: { [key: string]: JSONSchema7Definition }
 ) => {
   const result = lodash.cloneDeep(targetItems);
 
@@ -288,9 +289,96 @@ export const transferSchemaMaps = (
 };
 
 /**
+ * データの種類からJSONSchemaを生成
+ * @param val
+ * @returns
+ */
+const GetSchemaFromPropItem = (val: any) => {
+  const schemaObj: JSONSchema7 = { type: 'string' };
+
+  // formDataの入力値の型からtype決定
+  if (typeof val === 'number') {
+    // 数値
+    schemaObj.type = 'number';
+  } else if (typeof val === 'boolean') {
+    // boolean
+    schemaObj.type = 'boolean';
+  } else if (Array.isArray(val)) {
+    // 配列
+    schemaObj.type = 'array';
+
+    const objVals = val.filter((p) => typeof p === 'object');
+    if (objVals.length > 0) {
+      // 配列の中身がオブジェクトの場合はプロパティをマージしてすべての値が表示されるようにする
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const unionVal = lodash.merge({}, ...(objVals as Object[]));
+
+      schemaObj.items = GetSchemaFromPropItem(unionVal);
+      // inline(横並び)で展開する
+      schemaObj.items[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] = 'inline';
+    } else if (val.length > 0) {
+      // オブジェクト以外
+      schemaObj.items = GetSchemaFromPropItem(val[0]);
+    } else {
+      schemaObj.items = { type: 'string' };
+    }
+  } else if (typeof val === 'object') {
+    // オブジェクト
+    schemaObj.type = 'object';
+    schemaObj.properties = {};
+    Object.entries(val).forEach((entryItem) => {
+      schemaObj.properties![entryItem[0]] = GetSchemaFromPropItem(entryItem[1]);
+    });
+  }
+
+  // フォームデータから生成したスキーマは編集不可とする
+  schemaObj.readOnly = true;
+
+  return schemaObj;
+};
+
+/**
+ * スキーマに未定義でformDataにある項目をスキーマに追加
+ * @param schema
+ * @param formData
+ * @returns
+ */
+const customSchemaAppendFormDataProperty = (
+  schema: JSONSchema7,
+  formData: any
+) => {
+  const copySchema = lodash.cloneDeep(schema);
+
+  if (
+    copySchema &&
+    copySchema.properties &&
+    formData &&
+    Object.keys(formData).length > 0
+  ) {
+    // formDataにしかない項目一覧取得
+    const formKeys = lodash.difference(
+      Object.keys(formData),
+      Object.keys(copySchema.properties)
+    );
+
+    Object.entries(formData)
+      .filter((p) => formKeys.includes(p[0]))
+      .forEach((item) => {
+        // formDataのプロパティからスキーマ生成
+        const schemaObj = GetSchemaFromPropItem(item[1]);
+
+        // 元スキーマのプロパティに追加
+        copySchema.properties![item[0]] = schemaObj;
+      });
+  }
+
+  return copySchema;
+};
+
+/**
  * Schemaの書き換え
- * @param props 
- * @returns 
+ * @param props
+ * @returns
  */
 export const CustomSchema = (props: {
   orgSchema: JSONSchema7;
@@ -315,7 +403,6 @@ export const CustomSchema = (props: {
   const targetNames = getSchemaItemNames(schema);
   schema = transferSchemaItem(schema, schema, targetNames);
 
-
   // フィールド内のif~Thenを入力値に合わせて書き換え
   if (schema.properties) {
     schema = customSchemaIfThenElseOnField(schema, formData);
@@ -333,6 +420,8 @@ export const CustomSchema = (props: {
     });
   }
 
+  // formDataにしかない項目を表示するため、スキーマ書き換え(途中でスキーマ変わった場合の対策)
+  schema = customSchemaAppendFormDataProperty(schema, formData);
+
   return schema;
 };
-

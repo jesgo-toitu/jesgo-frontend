@@ -14,10 +14,11 @@ export type JesgoDocumentSchema = {
   inherit_schema: number[];
   base_schema: number | null;
   version_major: number;
+  schema_primary_id: number;
 };
 
 export interface schemaDataState {
-  schemaDatas: Map<number, JesgoDocumentSchema>;
+  schemaDatas: Map<number, JesgoDocumentSchema[]>;
   rootSchemas: number[];
   inheritSchemaIds: Map<number, number[]>;
 }
@@ -54,7 +55,13 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
           // eslint-disable-next-line no-param-reassign
           schema.child_schema = [];
         }
-        copyState.schemaDatas.set(schema.schema_id, schema);
+        const tempSchemas = copyState.schemaDatas.get(schema.schema_id);
+        if(tempSchemas){
+          tempSchemas.push(schema);
+          copyState.schemaDatas.set(schema.schema_id, tempSchemas);
+        }else{
+          copyState.schemaDatas.set(schema.schema_id, [schema]);
+        }
 
         // 継承スキーマの設定
         let inheritIds: number[] = [];

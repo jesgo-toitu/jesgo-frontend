@@ -1,5 +1,9 @@
+import { formatDateStr } from './DBUtility';
+
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {
+  // JESGO Webアプリバージョン
+  export const VERSION = '1.0.0';
 
   // UiSchemaプロパティ
   export const UI_WIDGET = {
@@ -14,6 +18,7 @@ export namespace Const {
   // 拡張ボキャブラリー
   export const EX_VOCABULARY = {
     REQUIRED: 'jesgo:required',
+    UNIQUE: 'jesgo:unique',
     UI_TEXTAREA: 'jesgo:ui:textarea',
     UI_LISTTYPE: 'jesgo:ui:listtype',
     UI_SUBSCHEMA_STYLE: 'jesgo:ui:subschemastyle',
@@ -32,10 +37,11 @@ export namespace Const {
     TYPE: 'type',
     PROP: 'properties',
     FORMAT: 'format',
-    ONEOF:'oneOf',
+    ONEOF: 'oneOf',
     IF: 'if',
     THEN: 'then',
     ELSE: 'else',
+    PATTERN: 'pattern',
   } as const;
 
   /**
@@ -43,8 +49,10 @@ export namespace Const {
    */
   export const JSONSchema7Types = {
     ARRAY: 'array',
-    OBJECT:'object',
-    STRING:'string'
+    OBJECT: 'object',
+    STRING: 'string',
+    INTEGER: 'integer',
+    NUMBER: 'number',
   } as const;
 
   /**
@@ -53,7 +61,12 @@ export namespace Const {
   export const REQUIRED_FIELD_SYMBOL = '*';
 
   /**
+   * 日付入力コントロールの最小値
+   */
+  export const INPUT_DATE_MIN = '1900-01-01';
+
+  /**
    * 日付入力コントロールの最大値
    */
-  export const INPUT_DATE_MAX = '2100-12-31';
+  export const INPUT_DATE_MAX = () => formatDateStr(new Date().toString(), '-'); // 現在日を最大とする
 }

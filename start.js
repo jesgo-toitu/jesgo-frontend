@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const app = express();
-const port = 3030;
+const port = process.env.PORT || 3030; // port番号を指定
 
 app.use(express.static("dist"));
 app.use('/image', express.static('image'));
@@ -23,6 +23,7 @@ app.use("/", router);
 
 // サーバー起動
 app.listen(port, function () {
-  console.log(`express: start. port=${port}, mode=${app.settings.env}`)
+  console.log(`express: start. port=${port}, mode=${app.settings.env}`);
+  console.log('JESGO Webアプリ起動中...');
 });
 

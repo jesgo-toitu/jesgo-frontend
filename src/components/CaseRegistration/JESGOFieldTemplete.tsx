@@ -56,7 +56,7 @@ export namespace JESGOFiledTemplete {
     return (
       <div className={classNames}>
         {label && (
-          <div>
+          <div className='control-label'>
             <label className="label-type" htmlFor={id}>
               {label}
               {required ? '*' : null}
@@ -110,57 +110,6 @@ export namespace JESGOFiledTemplete {
       </fieldset>
     );
   };
-
-  // oneOfのテンプレート
-  // https://github.com/rjsf-team/react-jsonschema-form/blob/master/packages/core/src/components/fields/ObjectField.js
-  // Latest commit 89d8e43
-  // DefaultObjectFieldTemplate()
-  /* eslint-disable import/no-mutable-exports,no-var,react/destructuring-assignment */
-  export var OneOfFieldTemplate = (props: ObjectFieldTemplateProps) => {
-    const {
-      idSchema,
-      uiSchema,
-      DescriptionField,
-      // properties,
-      description,
-      title,
-      required,
-    } = props;
-    return (
-      <fieldset id={props.idSchema.$id}>
-        {(props.uiSchema['ui:title'] || props.title) && (
-          // <TitleField
-          //     id={`${props.idSchema.$id}__title`}
-          //     title={props.title || props.uiSchema["ui:title"]}
-          //     required={props.required}
-          //     // formContext={props.formContext}
-          // />
-          <div>
-            <label className="label-type" htmlFor={`${idSchema.$id}__title`}>
-              {title || uiSchema['ui:title']}
-              {required ? '*' : null}
-            </label>
-          </div>
-        )}
-        {props.description && (
-          <DescriptionField
-            id={`${idSchema.$id}__description`}
-            description={description}
-            // formContext={props.formContext}
-          />
-        )}
-        {props.properties.map((prop) => prop.content)}
-        {/* {canExpand(props.schema, props.uiSchema, props.formData) && (
-                    <AddButton
-                        className="object-property-expand"
-                        onClick={props.onAddClick(props.schema)}
-                        disabled={props.disabled || props.readonly}
-                    />
-                )} */}
-      </fieldset>
-    );
-  };
-  /* eslint-enable */
 
   // jesgo:ui:visibleWhenの条件
   type VisibleWhenItem = {

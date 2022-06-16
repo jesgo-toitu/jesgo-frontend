@@ -91,7 +91,7 @@
                     "type": "boolean",
                     "defalut": false
                 },
-                "jesgo:copydocument": {
+                "jesgo:copy": {
                     "$comment": "【スキーマ属性】 jesgo:unique false のドキュメントについて、選択されているドキュメントの内容で新規ドキュメントを同レベルに作成可能とする. eventdate のみ新規作成にあたって削除される.",
                     "type": "boolean",
                     "default": false

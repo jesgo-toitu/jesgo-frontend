@@ -3,7 +3,7 @@
     "$id": "/schema/treatment/radiotherapy",
     "jesgo:version": "1.0",
     "title": "放射線療法",
-    "jesgo:copydocument": true,
+    "jesgo:copy": true,
     "type": "object",
     "required": [
         "治療開始日"

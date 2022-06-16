@@ -45,9 +45,11 @@
         },
         "IC期の場合": {},
         "IIIA1期の場合": {},
-        "cTMN": {
+        "cTNM": {
             "$ref": "#/$defs/cTNM"
-        }
+        },
+        "pTNM": {},
+        "ypTNM": {}
     },
     "allOf": [
         {
@@ -69,41 +71,6 @@
         },
         {
             "if": {
-                "allOf": [
-                    {
-                        "properties": {
-                            "手術状況": {
-                                "const": "手術施行"
-                            }
-                        }
-                    },
-                    {
-                        "properties": {
-                            "pTNM": {
-                                "properties": {
-                                    "M": {
-                                        "pattern": "^1"
-                                    }    
-                                }
-                            }
-                        }
-                    }
-                ]
-            },
-            "then": {
-                "properties": {
-                    "pTNM": {
-                        "properties": {
-                            "遠隔転移部位": {
-                                "$ref": "#/$defs/locations"
-                            }    
-                        }
-                    }
-                }
-            }
-        },
-        {
-            "if": {
                 "properties": {
                     "手術状況": {
                         "const": "術前治療施行"
@@ -115,41 +82,6 @@
                     "pTNM": {},
                     "ypTNM": {
                         "$ref": "#/$defs/ypTNM"
-                    }
-                }
-            }
-        },
-        {
-            "if": {
-                "allOf": [
-                    {
-                        "properties": {
-                            "手術状況": {
-                                "const": "術前治療施行"
-                            }
-                        }
-                    },
-                    {
-                        "properties": {
-                            "ypTNM": {
-                                "properties": {
-                                    "M": {
-                                        "pattern": "^1"
-                                    }    
-                                }
-                            }
-                        }
-                    }
-                ]
-            },
-            "then": {
-                "properties": {
-                    "ypTNM": {
-                        "properties": {
-                            "遠隔転移部位": {
-                                "$ref": "#/$defs/locations"
-                            }    
-                        }
                     }
                 }
             }
@@ -244,6 +176,18 @@
                 },
                 "M": {
                     "$ref": "#/$defs/M"
+                },
+                "遠隔転移部位": {
+                    "$ref": "#/$defs/locations",
+                    "jesgo:ui:visibleWhen": {
+                        "properties": {
+                            "pTNM": {
+                                "M": {
+                                    "pattern": "^1"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -260,6 +204,18 @@
                 },
                 "M": {
                     "$ref": "#/$defs/M"
+                },
+                "遠隔転移部位": {
+                    "$ref": "#/$defs/locations",
+                    "jesgo:ui:visibleWhen": {
+                        "properties": {
+                            "ypTNM": {
+                                "M": {
+                                    "pattern": "^1"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },

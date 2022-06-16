@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/surveillance",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "経過・所見",
     "required": [
@@ -8,7 +9,7 @@
         "状態"
     ],
     "jesgo:parentschema": [
-        "/schema/surveillanceRoot"
+        "/schema/surveillance_root"
     ],
     "properties": {
         "確認日": {
@@ -35,9 +36,6 @@
         }
     },
     "jesgo:ui:subschemastyle": "tab",
-    "jesgo:subschema": [
-        "/schema/evaluation/*"
-    ],
     "if": {
         "properties": {
             "状態": {

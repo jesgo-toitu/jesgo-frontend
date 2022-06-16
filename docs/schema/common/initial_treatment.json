@@ -6,22 +6,20 @@
     "description": "初回治療情報.",
     "jesgo:unique": true,
     "properties": {
-        "初回治療開始日": {
+        "治療サマリー": {
             "type": "string",
-            "format": "date",
-            "jesgo:required": ["JSOG"],
-            "jesgo:set": "eventdate",
-            "$comment": "治療開始日が同じものは同時性重複癌としてマークされます."
+            "jesgo:ui:textarea": 8,
+            "$comment": "将来的にはプラグインスクリプトで自動要約を実装したい."
         }
     },
     "jesgo:ui:subschemastyle": "tab",
     "jesgo:subschema": [
-        "/schema/treatment/treatment_summary",
         "/schema/treatment/operation",
         "/schema/treatment/chemotherapy",
         "/schema/treatment/radiotherapy"
     ],
     "jesgo:childschema": [
-        "/schema/treatment/supportive_care"
+        "/schema/treatment/supportive_care",
+        "/schema/evaluation/recist_assessment"
     ]
 }

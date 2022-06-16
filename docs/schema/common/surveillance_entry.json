@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/surveillanceRoot",
+    "$id": "/schema/surveillance_root",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "経過",
     "jesgo:parentschema": [

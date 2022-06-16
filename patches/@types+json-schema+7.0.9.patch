@@ -1,8 +1,8 @@
 diff --git a/node_modules/@types/json-schema/index.d.ts b/node_modules/@types/json-schema/index.d.ts
-index 9841de0..07edd89 100644
+index 9841de0..8c9ad93 100644
 --- a/node_modules/@types/json-schema/index.d.ts
 +++ b/node_modules/@types/json-schema/index.d.ts
-@@ -714,6 +714,31 @@ export interface JSONSchema7 {
+@@ -714,6 +714,36 @@ export interface JSONSchema7 {
      readOnly?: boolean | undefined;
      writeOnly?: boolean | undefined;
      examples?: JSONSchema7Type | undefined;
@@ -31,6 +31,11 @@ index 9841de0..07edd89 100644
 +    'jesgo:ui:listtype'?: string | undefined;
 +    'jesgo:ui:hidden'?:boolean | undefined;
 +    'jesgo:version'?:string | undefined;
++
++    /**
++     * 内部処理用拡張ボキャブラリー
++     */
++    'jesgo:validation:haserror'?:boolean | undefined;
  }
  
  export interface ValidationResult {

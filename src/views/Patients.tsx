@@ -24,6 +24,50 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
+import { formatDate } from '../common/DBUtility';
+import { Const } from '../common/Const';
+
+const UNIT_TYPE = {
+  DAY: 0,
+  MONTH: 1,
+  YEAR: 2,
+};
+const makeSelectDate = (
+  unit: number,
+  startDate: Date,
+  optionNum: number,
+  startWithNewest = true
+): string[] => {
+  const dateList: string[] = [];
+  // eslint-disable-next-line no-plusplus
+  for (let index = 0; index < optionNum; index++) {
+    const newDate = new Date(startDate.getTime());
+    switch (unit) {
+      case UNIT_TYPE.DAY:
+        newDate.setDate(newDate.getDate() - index);
+        dateList.push(formatDate(newDate, '-'));
+        break;
+
+      case UNIT_TYPE.MONTH:
+        newDate.setDate(1); // 1日に設定し、月ごとの最終日関連の想定しない戻り値を避ける
+        newDate.setMonth(newDate.getMonth() - index);
+        dateList.push(formatDate(newDate, '-').substring(0, 7));
+        break;
+
+      case UNIT_TYPE.YEAR:
+        newDate.setMonth(0); // 1月に設定し、うるう年関連の想定しない戻り値を避ける
+        newDate.setFullYear(newDate.getFullYear() - index);
+        dateList.push(formatDate(newDate, '-').substring(0, 4));
+        break;
+
+      default:
+    }
+  }
+  if (startWithNewest === false) {
+    dateList.reverse();
+  }
+  return dateList;
+};
 
 const Patients = () => {
   const navigate = useNavigate();
@@ -74,8 +118,6 @@ const Patients = () => {
   }, []);
 
   useEffect(() => {
-    console.log('useeff');
-    console.log(userListJson);
     const newData: patientListCsv[] = [];
     if (userListJson !== null && userListJson !== '') {
       const decordedJson = JSON.parse(userListJson) as userDataList;
@@ -121,12 +163,12 @@ const Patients = () => {
   }, [userListJson]);
 
   const [searchWord, setSearchWord] = useState({
-    registrationYear: 'all',
+    treatmentStartYear: 'all',
     cancerType: 'all',
     showOnlyTumorRegistry: false,
-    startOfTreatmentStartDate: '202101',
-    endOfTreatmentStartDate: '202110',
-    checkOfTreatmentStartDate: false,
+    startOfDiagnosisDate: makeSelectDate(UNIT_TYPE.MONTH, new Date(), 1)[0],
+    endOfDiagnosisDate: makeSelectDate(UNIT_TYPE.MONTH, new Date(), 1)[0],
+    checkOfDiagnosisDate: false,
     checkOfBlankFields: false,
     blankFields: {
       advancedStage: false,
@@ -185,8 +227,8 @@ const Patients = () => {
 
     let blankFields = searchWord.blankFields;
     switch (eventTarget.name) {
-      case 'registrationYear':
-        setSearchWord({ ...searchWord, registrationYear: eventTarget.value });
+      case 'treatmentStartYear':
+        setSearchWord({ ...searchWord, treatmentStartYear: eventTarget.value });
         break;
 
       case 'cancerType':
@@ -200,24 +242,24 @@ const Patients = () => {
         });
         break;
 
-      case 'checkOfTreatmentStartDate':
+      case 'checkOfDiagnosisDate':
         setSearchWord({
           ...searchWord,
-          checkOfTreatmentStartDate: eventTarget.checked,
+          checkOfDiagnosisDate: eventTarget.checked,
         });
         break;
 
-      case 'startOfTreatmentStartDate':
+      case 'startOfDiagnosisDate':
         setSearchWord({
           ...searchWord,
-          startOfTreatmentStartDate: eventTarget.value,
+          startOfDiagnosisDate: eventTarget.value,
         });
         break;
 
-      case 'endOfTreatmentStartDate':
+      case 'endOfDiagnosisDate':
         setSearchWord({
           ...searchWord,
-          endOfTreatmentStartDate: eventTarget.value,
+          endOfDiagnosisDate: eventTarget.value,
         });
         break;
 
@@ -307,8 +349,8 @@ const Patients = () => {
 
     const makeQueryString = () => {
       let query = `type=${type}`;
-      query += `&registrationYear=${encodeURIComponent(
-        searchWord.registrationYear
+      query += `&treatmentStartYear=${encodeURIComponent(
+        searchWord.treatmentStartYear
       )}`;
       query += `&cancerType=${encodeURIComponent(searchWord.cancerType)}`;
       query += `&showOnlyTumorRegistry=${encodeURIComponent(
@@ -316,12 +358,12 @@ const Patients = () => {
       )}`;
 
       if (type === 'detail') {
-        if (searchWord.checkOfTreatmentStartDate) {
-          query += `&startOfTreatmentStartDate=${encodeURIComponent(
-            searchWord.startOfTreatmentStartDate
+        if (searchWord.checkOfDiagnosisDate) {
+          query += `&startOfDiagnosisDate=${encodeURIComponent(
+            searchWord.startOfDiagnosisDate
           )}`;
-          query += `&endOfTreatmentStartDate=${encodeURIComponent(
-            searchWord.endOfTreatmentStartDate
+          query += `&endOfDiagnosisDate=${encodeURIComponent(
+            searchWord.endOfDiagnosisDate
           )}`;
         }
 
@@ -401,6 +443,7 @@ const Patients = () => {
             <NavItem>
               <SystemMenu title="設定" i={0} />
             </NavItem>
+            <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
           </Nav>
         </Navbar.Collapse>
       </Navbar>
@@ -441,16 +484,18 @@ const Patients = () => {
       <div className="search-form-outer">
         <Jumbotron className={searchFormOpen}>
           <div className="flex">
-            登録年次：
+            初回治療開始日：
             <FormControl
-              name="registrationYear"
+              name="treatmentStartYear"
               onChange={handleSearchCondition}
               componentClass="select"
             >
               <option value="all">すべて</option>
-              <option value="2022">2022年</option>
-              <option value="2021">2021年</option>
-              <option value="2020">2020年</option>
+              {makeSelectDate(UNIT_TYPE.YEAR, new Date(), 3).map(
+                (date: string) => (
+                  <option value={date}>{`${date}年`}</option>
+                )
+              )}
             </FormControl>
             <div className="spacer10" />
             がん種：
@@ -506,30 +551,34 @@ const Patients = () => {
             </div>
             <div className="detail-column">
               <Checkbox
-                name="checkOfTreatmentStartDate"
+                name="checkOfDiagnosisDate"
                 onChange={handleSearchCondition}
                 inline
               >
-                <span className="detail-setting-content">初回治療開始日：</span>
+                <span className="detail-setting-content">診断日：</span>
               </Checkbox>
               <FormControl
-                name="startOfTreatmentStartDate"
+                name="startOfDiagnosisDate"
                 onChange={handleSearchCondition}
                 componentClass="select"
               >
-                <option value="202101">2021-01</option>
-                <option value="202102">2021-02</option>
-                <option value="202103">2021-03</option>
+                {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
+                  (date: string) => (
+                    <option value={`${date}`}>{date}</option>
+                  )
+                )}
               </FormControl>
               ～
               <FormControl
-                name="endOfTreatmentStartDate"
+                name="endOfDiagnosisDate"
                 onChange={handleSearchCondition}
                 componentClass="select"
               >
-                <option value="202110">2021-10</option>
-                <option value="202111">2021-11</option>
-                <option value="202112">2021-12</option>
+                {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
+                  (date: string) => (
+                    <option value={`${date}`}>{date}</option>
+                  )
+                )}
               </FormControl>
             </div>
             <div className="detail-column">
@@ -554,7 +603,7 @@ const Patients = () => {
                 onChange={handleSearchCondition}
                 inline
               >
-                病理診断
+                診断
               </Checkbox>
               <Checkbox
                 name="initialTreatment"
@@ -567,6 +616,7 @@ const Patients = () => {
                 name="copilacations"
                 onChange={handleSearchCondition}
                 inline
+                disabled
               >
                 合併症
               </Checkbox>
@@ -574,6 +624,7 @@ const Patients = () => {
                 name="threeYearPrognosis"
                 onChange={handleSearchCondition}
                 inline
+                disabled
               >
                 3年予後
               </Checkbox>
@@ -581,20 +632,12 @@ const Patients = () => {
                 name="fiveYearPrognosis"
                 onChange={handleSearchCondition}
                 inline
+                disabled
               >
                 5年予後
               </Checkbox>
             </div>
             <div className="detail-column flex">
-              <Checkbox
-                name="showProgressAndRecurrence"
-                onChange={handleSearchCondition}
-                inline
-              >
-                <span className="detail-setting-content">
-                  経過・再発情報を表示する
-                </span>
-              </Checkbox>
               <Button bsStyle="primary" onClick={() => submit('detail')}>
                 表示更新
               </Button>

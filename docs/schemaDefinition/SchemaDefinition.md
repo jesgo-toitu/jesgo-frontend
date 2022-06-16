@@ -1004,6 +1004,73 @@ UI自動生成（使用ライブラリ：react-jsonschema-form）で作成して
 },
 ```
 
+## minItems/maxItems
+- `type:array`でのみ使用できます。
+- minItemsは最小件数、maxItemsは最大件数が設定できます。
+- ※maxItemsはスキーマでは未使用
+
+### minItems
+表示件数が最小件数を下回るとエラーとする。
+
+|![](./image/validation_minItems.jpg) |
+|:-:|
+
+- エラーメッセージ
+ [ 術者 ] 1件以上入力してください。
+
+```json
+"術者": {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "title": "名前",
+                "type": "string"
+            },
+            "property": {
+                "title": "資格",
+                "type": "string",
+                "enum": [
+                    "婦人科腫瘍専門医",
+                    "産婦人科内視鏡技術認定医",
+                    "婦人科腫瘍専門医+産婦人科内視鏡技術認定医",
+                    "産婦人科専門医",
+                    "その他",
+                    "不明"
+                ]
+            }
+        }
+    },
+    "minItems": 1
+},
+```
+
+### maxItems
+表示件数が最大件数と同じになった時点で、「＋」ボタンが表示されなくなる。  
+(ライブラリの既存の仕様)
+そのため、validationエラーはそもそも起こらないが、念のためvalidationは実装済み。
+
+|![](./image/validation_maxItems_1.jpg) |
+|:-:|
+
+|![](./image/validation_maxItems_2.jpg) |
+|:-:|
+
+
+- エラーメッセージ
+ [ 術者 ] 2件以下で入力してください。
+
+```json
+"術者": {
+    "type": "array",
+    "items": {
+        "type": "string"
+    },
+    "maxItems": 2
+}
+```
+
 ## pattern
 - `type:string`でのみ使用できます。
 - 正規表現を使って、入力値を制限できます。

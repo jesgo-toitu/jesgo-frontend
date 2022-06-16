@@ -45,7 +45,7 @@ export namespace JESGOComp {
 
     const tooltip = (
       <Tooltip>
-        <div className='description-tooptip'>
+        <div className="description-tooptip">
           {/* <br>,<br/>タグを改行に置き換え */}
           {descriptionText.split(/<br>|<br\/>/).map((item: string) => (
             <>
@@ -80,7 +80,8 @@ export namespace JESGOComp {
     return (
       <BaseInput
         type="date"
-        max={Const.INPUT_DATE_MAX}
+        min={Const.INPUT_DATE_MIN}
+        max={Const.INPUT_DATE_MAX()}
         // eslint-disable-next-line react/jsx-props-no-spreading
         {...props}
       />
@@ -92,8 +93,8 @@ export namespace JESGOComp {
    * ・既存のTextareaWidgetを流用
    * ・props.options.rowsが正の数なら入力行数分コントロールを拡張、
    *   負の数なら絶対値を高さに設定、入力でそれを超える場合はスクロールバー表示
-   * @param props 
-   * @returns 
+   * @param props
+   * @returns
    */
   export const CustomTextareaWidget = (props: WidgetProps) => {
     const {
@@ -125,9 +126,9 @@ export namespace JESGOComp {
       return rowsHeight;
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>{
-      onChange(e.target.value === "" ? options.emptyValue : e.target.value);
-    } 
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      onChange(e.target.value === '' ? options.emptyValue : e.target.value);
+    };
 
     return (
       <textarea
@@ -149,7 +150,6 @@ export namespace JESGOComp {
       />
     );
   };
-
 
   /**
    * 単位付きのTextWidget
@@ -263,7 +263,7 @@ export namespace JESGOComp {
     // selectの選択肢を作成
     const createSelectItem = (
       item: JSONSchema7,
-      level = 0,
+      level = 0
     ): JSX.Element | null => {
       // 最上位のグループタイトル
       const title = item.title ?? '';
@@ -296,10 +296,7 @@ export namespace JESGOComp {
             ) {
               const itemValue = subItem?.toString() ?? '';
               return (
-                <option
-                  key={`select-item-${itemValue}`}
-                  value={`${itemValue}`}
-                >
+                <option key={`select-item-${itemValue}`} value={`${itemValue}`}>
                   {`${indent + INDENT_SPACE}${itemValue}`}
                 </option>
               );

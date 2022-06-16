@@ -94,7 +94,6 @@ export const Login = () => {
         `getJsonSchema`
       );
 
-      // ルートスキーマID取得処理
       if (returnSchemaApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
         dispatch({
           type: 'SCHEMA',
@@ -102,6 +101,7 @@ export const Login = () => {
         });
       }
 
+      // ルートスキーマID取得処理
       const returnRootSchemaIdsApiObject = await apiAccess(
         METHOD_TYPE.GET,
         `getRootSchemaIds`

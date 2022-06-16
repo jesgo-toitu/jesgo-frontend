@@ -9,16 +9,24 @@ import store from '../../store/index';
 import SaveCommand, { responseResult } from '../../common/DBUtility';
 import { RESULT } from '../../common/ApiAccess';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
+import { RegistrationErrors,IsNotUpdate } from '../../common/CaseRegistrationUtility';
 
 interface ButtonProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setLoadedJesgoCase: React.Dispatch<React.SetStateAction<responseResult>>;
   setCaseId: React.Dispatch<React.SetStateAction<number | undefined>>;
   setIsReload: React.Dispatch<React.SetStateAction<boolean>>;
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
 }
 
 const SubmitButton = (props: ButtonProps) => {
-  const { setIsLoading, setLoadedJesgoCase, setCaseId, setIsReload } = props;
+  const {
+    setIsLoading,
+    setLoadedJesgoCase,
+    setCaseId,
+    setIsReload,
+    setErrors,
+  } = props;
 
   // 保存時の応答
   const [saveResponse, setSaveResponse] = useState<responseResult>({
@@ -96,13 +104,15 @@ const SubmitButton = (props: ButtonProps) => {
       dispatch,
       setIsLoading,
       setSaveResponse,
-      isBack
+      isBack,
+      setErrors
     );
   };
 
   // 保存せずリストに戻る
   const clickCancel = () => {
     if (
+      IsNotUpdate() ||
       confirm(
         '画面を閉じて患者リストに戻ります。保存してないデータは失われます。\nよろしいですか？'
       )

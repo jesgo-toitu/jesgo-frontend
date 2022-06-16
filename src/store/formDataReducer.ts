@@ -2,6 +2,7 @@ import lodash from 'lodash';
 import { Reducer } from 'redux';
 import React from 'react';
 import { JesgoDocumentSchema } from './schemaDataReducer';
+import { RegistrationErrors } from '../common/CaseRegistrationUtility';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -24,6 +25,7 @@ export type jesgoDocumentValueItem = {
   document: any;
   child_documents: string[];
   schema_id: number;
+  schema_primary_id: number;
   schema_major_version: number;
   registrant: number;
   last_updated: string;
@@ -49,14 +51,21 @@ export interface SaveDataObjDefine {
 export interface formDataState {
   formDatas: Map<string, any>;
   saveData: SaveDataObjDefine;
+  loadData: SaveDataObjDefine;
   nextSeqNo: number;
   nextCompSeqNo: number;
+  extraErrors: RegistrationErrors[];
   selectedTabIds: Map<string, string>;
   allTabList: Map<string, string[]>;
   maxDocumentCount: number | undefined; // ドキュメント追加時のサブスキーマ含む全ドキュメント数
   addedDocumentCount: number; // 追加されたドキュメント数
   tabSelectEvent?: (isTabSelected: boolean, eventKey: any) => void; // 保存後に実行するタブ選択イベント
   selectedTabKeyName: string;
+  deletedDocuments: {
+    parentDocumentId: string;
+    deletedChildDocuments: jesgoDocumentObjDefine[];
+  }[];
+  processedDocumentIds: Set<string>;
 }
 
 export interface dispSchemaIdAndDocumentIdDefine {
@@ -65,6 +74,9 @@ export interface dispSchemaIdAndDocumentIdDefine {
   deleted: boolean;
   compId: string;
   isSchemaChange?: boolean;
+  isParentSchemaChange?: boolean;
+  title: string;
+  titleNum?: number;
 }
 
 // フォームデータ用Action
@@ -95,12 +107,17 @@ export interface formDataAction {
   schemaInfo: JesgoDocumentSchema;
   selectedChildTabId: string;
   parentTabsId: string;
+  extraErrors: RegistrationErrors[];
   tabList: string[];
 
   maxDocumentCount: number | undefined;
   setAddedDocumentCount: React.Dispatch<React.SetStateAction<number>>;
   tabSelectEvent: (isTabSelected: boolean, eventKey: any) => void;
   selectedTabKeyName: string;
+
+  isUpdateInput: boolean;
+  isNotUniqueSubSchemaAdded: boolean;
+  processedDocId: string;
 }
 
 // ユーザID取得
@@ -138,14 +155,32 @@ const initialState: formDataState = {
     },
     jesgo_document: [],
   },
+  loadData: {
+    jesgo_case: {
+      case_id: '',
+      name: '',
+      his_id: '',
+      sex: 'F',
+      decline: false,
+      date_of_death: '',
+      date_of_birth: '',
+      registrant: -1,
+      last_updated: '',
+      is_new_case: true,
+    },
+    jesgo_document: [],
+  },
   nextSeqNo: 1,
   nextCompSeqNo: 0,
+  extraErrors:[],
   selectedTabIds: new Map(),
   allTabList: new Map(),
   maxDocumentCount: undefined,
   addedDocumentCount: 0,
   tabSelectEvent: undefined,
   selectedTabKeyName: '',
+  deletedDocuments: [],
+  processedDocumentIds: new Set(),
 };
 
 // 保存用オブジェクト作成(1スキーマ1オブジェクト)
@@ -161,6 +196,7 @@ const createJesgoDocumentValueItem = (
     document: null,
     child_documents: [],
     schema_id: -1,
+    schema_primary_id: -1,
     schema_major_version: -1,
     registrant: -1,
     last_updated: '',
@@ -175,6 +211,12 @@ const createJesgoDocumentValueItem = (
     if (schemaInfo) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       valueItem.schema_major_version = schemaInfo.version_major;
+    }
+
+    // スキーマのサロゲートID
+    if (schemaInfo) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      valueItem.schema_primary_id = schemaInfo.schema_primary_id;
     }
   }
 
@@ -213,8 +255,6 @@ const deleteDocument = (
   jesgoDocument: jesgoDocumentObjDefine[],
   documentId: string
 ) => {
-  // TODO: 未保存データの削除は物理削除したい
-
   const deletedDocumentIds: string[] = [];
 
   const idx = jesgoDocument.findIndex((p) => p.key === documentId);
@@ -336,29 +376,61 @@ const formDataReducer: Reducer<
         // ルートドキュメントを追加した場合はルートドキュメント同士の並び順を設定
         // 末尾に追加されるので、表示スキーマの個数を設定
         if (action.isRootSchema) {
-          objDefine.root_order = dispChildSchemaIds.length;
+          objDefine.root_order = dispChildSchemaIds.filter(
+            (p) => p.deleted === false
+          ).length;
         }
         saveData.jesgo_document.push(objDefine);
 
-        // 親ドキュメントがある場合は親のchildDdocumentsに追加
+        // #region [ childDocuments更新処理 ]
+        // 親ドキュメントがある場合は親のchildDdocumentsを更新
         if (parentDocId) {
           const parentDocData = saveData.jesgo_document.find(
             (p) => p.key === parentDocId
           );
           if (parentDocData) {
-            parentDocData.value.child_documents.push(docId);
+            // unique=falseのサブスキーマ追加時は同スキーマの右に追加する
+            if (action.isNotUniqueSubSchemaAdded) {
+              for (
+                let i = parentDocData.value.child_documents.length - 1;
+                i >= 0;
+                i -= 1
+              ) {
+                // 子のdocumentIdの中で同スキーマのものを検索
+                const childDocId = parentDocData.value.child_documents[i];
+                const searchChildDoc = saveData.jesgo_document.find(
+                  (p) =>
+                    p.key === childDocId &&
+                    p.value.schema_id === action.schemaId &&
+                    p.value.deleted === false
+                );
+                if (searchChildDoc) {
+                  // 同スキーマの右に追加(+1)
+                  parentDocData.value.child_documents.splice(i + 1, 0, docId);
+                  break;
+                }
+              }
+            } else {
+              // サブスキーマの自動展開、または子スキーマの場合は末尾に追加
+              parentDocData.value.child_documents.push(docId);
+            }
           }
         }
+        // #endregion
 
-        // 子ドキュメントの並び順保持用のdocumentIdを更新。追加時は末尾なので最後の要素を書き換える
+        // 子ドキュメントの並び順保持用のdocumentIdを更新
         if (
           dispChildSchemaIds &&
           dispChildSchemaIds.length > 0 &&
           action.setDispChildSchemaIds
         ) {
-          dispChildSchemaIds[dispChildSchemaIds.length - 1].documentId = docId;
-          dispChildSchemaIds[dispChildSchemaIds.length - 1].compId = compId;
-          action.setDispChildSchemaIds([...dispChildSchemaIds]);
+          // documentIdがないもの=新規追加したもの
+          const target = dispChildSchemaIds.find((p) => p.documentId === '');
+          if (target) {
+            target.documentId = docId;
+            target.compId = compId;
+            action.setDispChildSchemaIds([...dispChildSchemaIds]);
+          }
         }
 
         // 追加通知
@@ -388,8 +460,11 @@ const formDataReducer: Reducer<
             jesgoDoc.value.schema_id = action.schemaId;
           }
           jesgoDoc.value.document = action.formData; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-          jesgoDoc.value.registrant = getLoginUserId();
-          jesgoDoc.value.last_updated = updateDate;
+          // 値の入力時のみ更新者情報を更新する
+          if (action.isUpdateInput) {
+            jesgoDoc.value.registrant = getLoginUserId();
+            jesgoDoc.value.last_updated = updateDate;
+          }
 
           // 新規文書の継承の場合、継承元の子ドキュメントは削除してリセットする
           if (action.isInherit) {
@@ -403,6 +478,35 @@ const formDataReducer: Reducer<
             });
 
             if (deletedDocIds.length > 0) {
+              // #region 継承後のデータ引継ぎ用に削除した子ドキュメントの情報を持っておく
+              copyState.deletedDocuments = []; // 初期化
+              copyState.processedDocumentIds = new Set(); // 反映済みドキュメントID初期化
+              deletedDocIds.forEach((deleteDocId) => {
+                // 親ドキュメント
+                const pDoc = saveData.jesgo_document.find((p) =>
+                  p.value.child_documents.includes(deleteDocId)
+                );
+                // 子ドキュメント
+                const cDoc = saveData.jesgo_document.find(
+                  (p) => p.key === deleteDocId
+                );
+
+                const target = copyState.deletedDocuments.find(
+                  (p) => p.parentDocumentId === pDoc?.key ?? ''
+                );
+                if (target && cDoc) {
+                  target.deletedChildDocuments.push(lodash.cloneDeep(cDoc));
+                } else if (cDoc) {
+                  copyState.deletedDocuments.push({
+                    parentDocumentId: pDoc?.key ?? '',
+                    deletedChildDocuments: [lodash.cloneDeep(cDoc)],
+                  });
+                }
+              });
+
+              // #endregion
+
+              // 新規文書の場合は物理削除
               if (docId.startsWith('K')) {
                 // saveDataから子ドキュメントを物理削除
                 saveData.jesgo_document = saveData.jesgo_document.filter(
@@ -422,6 +526,14 @@ const formDataReducer: Reducer<
         break;
       }
 
+      // データ引継ぎ済みdocumentIdの更新
+      case 'DATA_TRANSFER_PROCESSED': {
+        if (action.processedDocId) {
+          copyState.processedDocumentIds.add(action.processedDocId);
+        }
+        break;
+      }
+
       case 'DEL': {
         // 削除フラグを立てる
         const deletedIds = deleteDocument(
@@ -435,6 +547,17 @@ const formDataReducer: Reducer<
         //   .forEach(id => saveData.delete_document_keys.push(id))
         // }
 
+        // 新規作成して保存せずに削除したドキュメントは物理削除する
+        if (deletedIds.length > 0) {
+          const deleteInsertIds = deletedIds.filter((id) => id.startsWith('K'));
+          if (deleteInsertIds.length > 0) {
+            // 削除するドキュメント以外でフィルターする
+            saveData.jesgo_document = saveData.jesgo_document.filter(
+              (p) => !deleteInsertIds.includes(p.key)
+            );
+          }
+        }
+
         break;
       }
 
@@ -442,12 +565,16 @@ const formDataReducer: Reducer<
       case 'SORT': {
         const dispChildSchemaIds = action.dispChildSchemaIds;
         if (action.isRootSchema) {
+          const dispChildSchemaIdsNotDeleted = dispChildSchemaIds.filter(
+            (p) => p.deleted === false
+          );
+
           // ルートタブを移動した場合、jesgo_documentのrootOrder(並び順)を更新
           // dispChildSchemaIdsに並び替え後の状態が入っているのでそれに応じてrootOrder振り直す
           // eslint-disable-next-line no-plusplus
-          for (let i = 0; i < dispChildSchemaIds.length; i++) {
+          for (let i = 0; i < dispChildSchemaIdsNotDeleted.length; i++) {
             const idx = saveData.jesgo_document.findIndex(
-              (p) => p.key === dispChildSchemaIds[i].documentId
+              (p) => p.key === dispChildSchemaIdsNotDeleted[i].documentId
             );
             if (idx > -1) {
               saveData.jesgo_document[idx].root_order = i + 1;
@@ -495,6 +622,9 @@ const formDataReducer: Reducer<
             doc.compId = getCompId(copyState);
           });
 
+        // 差分比較用に読込時点のデータを保存
+        copyState.loadData = lodash.cloneDeep(copyState.saveData);
+
         copyState.formDatas.clear();
 
         // フォームデータの更新
@@ -519,6 +649,10 @@ const formDataReducer: Reducer<
         break;
       }
 
+      case 'SET_ERROR': {
+        copyState.extraErrors = action.extraErrors;
+        break;
+      }
       // 親タブにある子タブも含めたタブ名一覧を保持する
       case 'TAB_LIST': {
         copyState.allTabList.set(action.parentTabsId, action.tabList);

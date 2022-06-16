@@ -23,6 +23,13 @@ export const SystemMenu = (props: { title: string; i: number }) => {
     else alert('権限がありません');
   }, []);
 
+  const handlSchemaManager = useCallback(() => {
+    const auth = localStorage.getItem('is_system_manage_roll');
+    if (auth === 'true') navigate('/SchemaManager');
+    // eslint-disable-next-line no-alert
+    else alert('権限がありません');
+  }, []);
+
   return (
     <ButtonToolbar>
       <DropdownButton
@@ -33,6 +40,7 @@ export const SystemMenu = (props: { title: string; i: number }) => {
         id={`dropdown-basic-${i}`}
       >
         <MenuItem onSelect={handlUserMaintenance}>利用者管理</MenuItem>
+        <MenuItem onSelect={handlSchemaManager}>スキーマ管理</MenuItem>
         <MenuItem onSelect={handlSystemSettings}>システム設定</MenuItem>
       </DropdownButton>
     </ButtonToolbar>

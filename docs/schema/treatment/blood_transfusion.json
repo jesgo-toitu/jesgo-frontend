@@ -6,60 +6,34 @@
     "title": "輸血・血液製剤",
     "jesgo:unique": true,
     "properties": {
+        "実施日": {
+            "type": "string",
+            "format": "date",
+            "jesgo:set": "eventdate"
+        },
         "赤血球輸血": {
-            "description": "使用量(単位,ml,g)もしくは「なし」が入力できます.",
-            "oneOf": [
-                {
-                    "type": "string",
-                    "pattern": "なし"
-                },
-                {
-                    "type": "number",
-                    "pattern": "^([0-9]+(単位|ml|g))$"
-                }
-            ]
+            "description": "総使用量(単位,ml,g)もしくは「なし」が入力できます.",
+            "type": "string",
+            "pattern": "^([0-9]+(単位|ml|g)|なし)$"
         },
         "凍結新鮮血漿輸血": {
-            "description": "使用量(単位,ml,g)もしくは「なし」が入力できます.",
-            "oneOf": [
-                {
-                    "type": "string",
-                    "pattern": "なし"
-                },
-                {
-                    "type": "number",
-                    "pattern": "^([0-9]+(単位|ml|g))$"
-                }
-            ]
+            "description": "総使用量(単位,ml,g)もしくは「なし」が入力できます.",
+            "type": "string",
+            "pattern": "^([0-9]+(単位|ml|g)|なし)$"
         },
         "血小板輸血": {
-            "description": "使用量(単位,ml,g)もしくは「なし」が入力できます.",
-            "oneOf": [
-                {
-                    "type": "string",
-                    "pattern": "なし"
-                },
-                {
-                    "type": "number",
-                    "pattern": "^([0-9]+(単位|ml|g))$"
-                }
-            ]
+            "description": "総使用量(単位,ml,g)もしくは「なし」が入力できます.",
+            "type": "string",
+            "pattern": "^([0-9]+(単位|ml|g)|なし)$"
         },
         "術中回収血輸血": {
             "description": "使用量(ml)もしくは「なし」が入力できます.",
-            "oneOf": [
-                {
-                    "type": "string",
-                    "pattern": "なし"
-                },
-                {
                     "type": "number",
-                    "pattern": "^([0-9]+(ml))$"
-                }
-            ]
+                    "pattern": "^([0-9]+(ml)|なし)$"
         },
         "その他輸血・血液製剤": {
-            "type": "string"
+            "type": "string",
+            "jesgo:ui:textarea": true
         }
     }
 }

@@ -231,5 +231,21 @@
                 }
             ]
         }
-    }
+    },
+    "jesgo:childschema": [
+        "/schema/evaluations/exam",
+        "/schema/evaluations/cervix",
+        "/schema/evaluations/colposcopy",
+        "/schema/evaluations/hysteroscopy",
+        "/schema/evaluations/cystoscopy",
+        "/schema/evaluation/colonoscopy",
+        "/schema/evaluation/tumor_markers",
+        "/schema/evaluations/imaging",
+        "/schema/evaluations/ascites",
+        "/schema/evaluations/pleural_effusion",
+        "/schema/evaluation/immunohistochemistry",
+        "/schema/evaluation/oncogenes",
+        "/schema/evaluation/performance_status",
+        "/schema/evaluation/physical_status"
+    ]
 }

@@ -15,7 +15,7 @@
             "jesgo:ui:textarea": true
         }
     },
-    "jesgo:subschema": [
+    "jesgo:childschema": [
         "/schema/record/meeting_record"
     ]
 }

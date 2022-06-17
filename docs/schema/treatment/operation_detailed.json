@@ -155,6 +155,7 @@
         "/schema/treatment/operation_procedures"
     ],
     "jesgo:childschema": [
-        "/schema/treatment/operation_adverse_events"
+        "/schema/treatment/operation_adverse_events",
+        "/schema/treatment/blood_transfusion"
     ]
 }

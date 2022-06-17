@@ -13,7 +13,7 @@
         "判定日": {
             "type": "string",
             "format": "date",
-            
+            "jesgo:set": "eventdate"            
         },
         "判定": {
             "type": "string",

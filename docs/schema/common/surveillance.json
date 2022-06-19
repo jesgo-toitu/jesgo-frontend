@@ -5,8 +5,7 @@
     "type": "object",
     "title": "経過・所見",
     "required": [
-        "確認日",
-        "状態"
+        "確認日"
     ],
     "jesgo:parentschema": [
         "/schema/surveillance_root"

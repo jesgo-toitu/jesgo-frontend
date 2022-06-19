@@ -11,9 +11,6 @@
         "procedure": {
             "$id": "#procedure",
             "type": "object",
-            "required": [
-                "術式"
-            ],
             "properties": {
                 "術式": {
                     "type": "string",

@@ -5,9 +5,6 @@
     "title": "放射線療法",
     "jesgo:copy": true,
     "type": "object",
-    "required": [
-        "治療開始日"
-    ],
     "properties": {
         "治療開始日": {
             "type": "string",

@@ -4,9 +4,6 @@
     "jesgo:version": "1.0",
     "type": "object",
     "title": "手術療法 詳細",
-    "required": [
-        "手術日"
-    ],
     "properties": {
         "手術日": {
             "type": "string",

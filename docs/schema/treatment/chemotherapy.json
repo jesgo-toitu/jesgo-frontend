@@ -5,9 +5,6 @@
     "title": "化学療法",
     "jesgo:copy": true,
     "type": "object",
-    "required": [
-        "投与開始日"
-    ],
     "properties": {
         "投与開始日": {
             "type": "string",

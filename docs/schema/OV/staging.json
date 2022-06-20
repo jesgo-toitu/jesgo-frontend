@@ -180,8 +180,10 @@
                     "jesgo:ui:visibleWhen": {
                         "properties": {
                             "pTNM": {
-                                "M": {
-                                    "pattern": "^1"
+                                "properties": {
+                                    "M": {
+                                        "pattern": "^1"
+                                    }
                                 }
                             }
                         }
@@ -208,8 +210,10 @@
                     "jesgo:ui:visibleWhen": {
                         "properties": {
                             "ypTNM": {
-                                "M": {
-                                    "pattern": "^1"
+                                "properties": {
+                                    "M": {
+                                        "pattern": "^1"
+                                    }
                                 }
                             }
                         }

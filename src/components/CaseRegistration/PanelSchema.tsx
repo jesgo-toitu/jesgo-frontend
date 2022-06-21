@@ -111,7 +111,6 @@ const PanelSchema = React.memo((props: Props) => {
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
   const isTab = customSchema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'tab';
 
-
   // unique=falseの追加可能なサブスキーマ
   const addableSubSchemaIds = useMemo(() => {
     const retIds: number[] = [];
@@ -119,7 +118,10 @@ const PanelSchema = React.memo((props: Props) => {
       subschema.forEach((id) => {
         const info = GetSchemaInfo(id);
         if (info) {
-          if (info.document_schema[Const.EX_VOCABULARY.UNIQUE] === false) {
+          if (
+            (info.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false) ===
+            false
+          ) {
             retIds.push(id);
           }
         }

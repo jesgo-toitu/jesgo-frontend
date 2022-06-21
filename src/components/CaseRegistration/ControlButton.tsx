@@ -141,8 +141,11 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
 
   const schemaDocument = GetSchemaInfo(schemaId)?.document_schema;
   let isTab = true;
-  if (schemaDocument) {
-    isTab = schemaDocument[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'tab';
+  // ルートは必ずタブ。それ以外はsubschemastyleで判断
+  if (Type !== COMP_TYPE.ROOT && Type !== COMP_TYPE.ROOT_TAB) {
+    if (schemaDocument) {
+      isTab = schemaDocument[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'tab';
+    }
   }
 
   const childrenSchemaIds: number[] = [];

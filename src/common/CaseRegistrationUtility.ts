@@ -311,6 +311,87 @@ const customSchemaValidation = (
   return result;
 };
 
+// 同一スキーマ複数時のナンバリングタブタイトル取得(saveData使用)
+const GetNumberingTabTitle = (
+  saveData: SaveDataObjDefine,
+  document: jesgoDocumentObjDefine,
+  baseTitle: string
+) => {
+  let title = baseTitle;
+
+  // ルートドキュメントの場合
+  if (document.root_order > -1) {
+    // ルートドキュメント内で同一スキーマIDを持つドキュメントを取得
+    const sameSchemaDocs = saveData.jesgo_document
+      .filter(
+        (p) =>
+          p.root_order > -1 &&
+          p.value.schema_id === document.value.schema_id &&
+          p.value.deleted === false
+      )
+      .sort((f, s) => f.root_order - s.root_order);
+
+    // 2件以上あれば番号を振る
+    if (sameSchemaDocs.length > 1) {
+      const index = sameSchemaDocs.findIndex((p) => p.key === document.key);
+      title += (index + 1).toString();
+    }
+  } else {
+    // 子ドキュメントの場合
+    const parentDoc = saveData.jesgo_document.find((p) =>
+      p.value.child_documents.includes(document.key)
+    );
+
+    if (parentDoc) {
+      // 親ドキュメントのchildDocumentから同一スキーマIDを持つドキュメントを検索
+      const sameSchemaDocs = parentDoc.value.child_documents.filter(
+        (childDocId) =>
+          saveData.jesgo_document.find(
+            (p) =>
+              p.key === childDocId &&
+              p.value.deleted === false &&
+              p.value.schema_id === document.value.schema_id
+          )
+      );
+      // 2件以上あれば番号を振る
+      if (sameSchemaDocs.length > 1) {
+        const index = sameSchemaDocs.indexOf(document.key);
+        title += (index + 1).toString();
+      }
+    }
+  }
+  return title;
+};
+
+// 親ドキュメントのタイトル取得
+const GetParentDocumentTitle = (saveData: SaveDataObjDefine, docId: string) => {
+  const titleNames: string[] = [];
+
+  // childDocumentから親ドキュメントを検索
+  const parentDoc = saveData.jesgo_document.find((p) =>
+    p.value.child_documents.includes(docId)
+  );
+  // 最上位まで取れたら終了
+  if (!parentDoc) {
+    return titleNames;
+  }
+  const schemaInfo = GetSchemaInfo(parentDoc.value.schema_id);
+  if (!schemaInfo) {
+    return titleNames;
+  }
+
+  // スキーマ情報からタイトル取得
+  let title = `${schemaInfo.title ?? ''} ${schemaInfo.subtitle ?? ''}`.trim();
+  title = GetNumberingTabTitle(saveData, parentDoc, title);
+
+  titleNames.push(title);
+
+  // 再帰で更に上位の親を取得
+  titleNames.push(...GetParentDocumentTitle(saveData, parentDoc.key));
+
+  return titleNames;
+};
+
 /**
  * 自動生成部分のvalidation
  * @param saveData
@@ -340,9 +421,20 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
         []
       );
       if (validResult.messages.length > 0) {
+        // 親のタイトル取得
+        let titleList = GetParentDocumentTitle(saveData, documentId);
+        // 親→子の順にしたいのでリバース
+        titleList = titleList.reverse();
+        // 自身のタイトル追加
+        let title = `${schemaInfo.title ?? ''} ${
+          schemaInfo.subtitle ?? ''
+        }`.trim();
+        title = GetNumberingTabTitle(saveData, doc, title);
+        titleList.push(title);
+
         errors.push({
           validationResult: validResult,
-          errDocTitle: schema.title ?? '',
+          errDocTitle: titleList.join(' > ') ?? '',
           schemaId,
           documentId,
         });

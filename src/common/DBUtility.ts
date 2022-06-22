@@ -8,12 +8,15 @@ import {
   CustomSchema,
   getPropItemsAndNames,
 } from '../components/CaseRegistration/SchemaUtility';
-import {
-  SaveDataObjDefine,
-} from '../store/formDataReducer';
+import { SaveDataObjDefine } from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
-import { GetSchemaInfo, RegistrationErrors, validateJesgoDocument } from './CaseRegistrationUtility';
+import {
+  GetSchemaInfo,
+  RegistrationErrors,
+  validateJesgoDocument,
+} from './CaseRegistrationUtility';
+import { Const } from './Const';
 
 export interface responseResult {
   resCode?: number;
@@ -23,7 +26,7 @@ export interface responseResult {
   anyValue?: unknown;
 }
 // 日付(Date形式)をyyyy/MM/ddなどの形式に変換
-export const formatDate = (dateObj: Date, separator = ''):string => {
+export const formatDate = (dateObj: Date, separator = ''): string => {
   try {
     const y = dateObj.getFullYear();
     const m = `00${dateObj.getMonth() + 1}`.slice(-2);
@@ -35,7 +38,7 @@ export const formatDate = (dateObj: Date, separator = ''):string => {
 };
 
 // 日付文字列をyyyy/MM/ddなどの形式に変換
-export const formatDateStr = (dtStr: string, separator: string):string => {
+export const formatDateStr = (dtStr: string, separator: string): string => {
   if (!dtStr) return '';
   try {
     const dateObj = new Date(dtStr);
@@ -220,7 +223,6 @@ const SaveChanges = async (
   await SaveFormDataToDB(copySaveData, setSaveResponse, isBack);
 };
 
-
 // ヘッダのエラーチェック
 // TODO: ここはvalidationにすべき
 export const hasJesgoCaseError = (
@@ -236,9 +238,9 @@ export const hasJesgoCaseError = (
   if (!saveData.jesgo_case.his_id) {
     messages.push('患者IDを入力してください。');
   } else if (saveData.jesgo_case.is_new_case) {
-    if ((alphabetEnable || hyphenEnable)){
+    if (alphabetEnable || hyphenEnable) {
       // アルファベットかハイフン許容の場合、桁数は20までで固定
-      if(saveData.jesgo_case.his_id.length > 20){
+      if (saveData.jesgo_case.his_id.length > 20) {
         messages.push(`患者IDは20桁以内で入力してください。`);
       }
     } else if (saveData.jesgo_case.his_id.length > digit) {
@@ -267,16 +269,36 @@ export const hasJesgoCaseError = (
       saveData.jesgo_case.his_id.length < digit
     ) {
       // eslint-disable-next-line no-restricted-globals
-      if(confirm('桁揃えを行いますか？'))
-      while (saveData.jesgo_case.his_id.length < digit) {
-        // eslint-disable-next-line no-param-reassign
-        saveData.jesgo_case.his_id = `0${saveData.jesgo_case.his_id}`;
-      }
+      if (confirm('桁揃えを行いますか？'))
+        while (saveData.jesgo_case.his_id.length < digit) {
+          // eslint-disable-next-line no-param-reassign
+          saveData.jesgo_case.his_id = `0${saveData.jesgo_case.his_id}`;
+        }
     }
   }
 
   if (!saveData.jesgo_case.date_of_birth) {
     messages.push('生年月日を入力してください。');
+  } else {
+    const value: Date = new Date(saveData.jesgo_case.date_of_birth);
+
+    const min = new Date(Const.INPUT_DATE_MIN);
+    const max = new Date(Const.INPUT_DATE_MAX());
+    max.setHours(23);
+    max.setMinutes(59);
+
+    // minとmaxの範囲にあるかチェック
+    if (min.getTime() > value.getTime() || max.getTime() < value.getTime()) {
+      messages.push(
+        `生年月日は${Const.INPUT_DATE_MIN.replace(
+          /-/g,
+          '/'
+        )} ～ ${Const.INPUT_DATE_MAX().replace(
+          /-/g,
+          '/'
+        )}の範囲で入力してください。`
+      );
+    }
   }
 
   // 自動生成部分のvalidation
@@ -286,9 +308,8 @@ export const hasJesgoCaseError = (
   dispatch({ type: 'SET_ERROR', extraErrors: errors });
 
   if (errors.length > 0) {
-    messages.push(
-      '症例ドキュメントに入力エラーがあります。エラー一覧を確認してください。'
-    );
+    messages.push('症例ドキュメントに入力エラーがあるため保存できません。');
+    messages.push('エラー一覧を確認し、再度保存してください。');
   }
 
   if (messages.length > 0) {
@@ -342,18 +363,14 @@ export const UploadSchemaFile = async (
   const res: responseResult = { message: '' };
 
   // TODO: URLは今は適当
-  const apiResult = await apiAccess(
-    METHOD_TYPE.POST_ZIP,
-    `upload`,
-    zipFile
-  );
+  const apiResult = await apiAccess(METHOD_TYPE.POST_ZIP, `upload`, zipFile);
 
   res.resCode = apiResult.statusNum;
   switch (res.resCode) {
     case RESULT.ABNORMAL_TERMINATION: {
-      if(apiResult.body !== null && apiResult.body !== ''){
+      if (apiResult.body !== null && apiResult.body !== '') {
         res.message = apiResult.body as string;
-      }else{
+      } else {
         res.message = 'スキーマの更新に失敗しました';
       }
 

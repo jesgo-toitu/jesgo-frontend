@@ -16,7 +16,7 @@ ReactDOM.render(
   <Provider store={store}>
     <BrowserRouter>
       <Routes>
-        <Route path="/"><Navigate to="/Login" /></Route>
+        <Route path="/" element={<RedirectToLogin />} />
         <Route path="/Login" element={<Login />} />
         <Route path="/Patients" element={<Patients />} />
         <Route path="/Registration" element={<Registration />} />
@@ -28,3 +28,9 @@ ReactDOM.render(
   </Provider>,
   document.getElementById('root')
 );
+
+function RedirectToLogin () {
+  return (
+    <Navigate to="/Login"/>
+  )
+}

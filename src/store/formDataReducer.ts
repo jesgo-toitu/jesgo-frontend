@@ -172,7 +172,7 @@ const initialState: formDataState = {
   },
   nextSeqNo: 1,
   nextCompSeqNo: 0,
-  extraErrors:[],
+  extraErrors: [],
   selectedTabIds: new Map(),
   allTabList: new Map(),
   maxDocumentCount: undefined,
@@ -555,6 +555,17 @@ const formDataReducer: Reducer<
             saveData.jesgo_document = saveData.jesgo_document.filter(
               (p) => !deleteInsertIds.includes(p.key)
             );
+
+            // 親ドキュメントがある場合はchild_documentsから削除
+            deleteInsertIds.forEach((delId) => {
+              const delParentDoc = saveData.jesgo_document.find((p) =>
+                p.value.child_documents.includes(delId)
+              );
+              if (delParentDoc) {
+                delParentDoc.value.child_documents =
+                  delParentDoc.value.child_documents.filter((p) => p !== delId);
+              }
+            });
           }
         }
 

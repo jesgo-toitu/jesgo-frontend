@@ -183,6 +183,12 @@ export const createTabs = (
         : undefined,
     });
 
+    dispatch({
+      type: 'SELECTED_TAB',
+      parentTabsId: id,
+      selectedChildTabId: eventKey as string,
+    });
+
     // インデックスからタブ名に変換
     const convTabKey = convertTabKey(id, eventKey);
 

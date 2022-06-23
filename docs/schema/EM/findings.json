@@ -19,6 +19,7 @@
             "type": "object",
             "title": "筋層浸潤の有無",
             "description": "初回手術未施行例では画像診断での判定所見",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",

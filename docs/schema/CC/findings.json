@@ -8,6 +8,7 @@
     "properties": {
         "腫瘍最大腫瘍径": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "oneOf": [
@@ -40,6 +41,7 @@
         },
         "基靭帯浸潤": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -61,6 +63,7 @@
         },
         "腟壁浸潤": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -82,6 +85,7 @@
         },
         "膀胱粘膜浸潤": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -103,6 +107,7 @@
         },
         "直腸粘膜浸潤": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -124,6 +129,7 @@
         },
         "骨盤リンパ節転移": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -148,6 +154,7 @@
         },
         "傍大動脈リンパ節": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -172,6 +179,7 @@
         },
         "その他のリンパ節転移": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -196,6 +204,7 @@
         },
         "リンパ節以外の遠隔転移": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -217,18 +226,10 @@
         },
         "再発リスク": {
             "type": "string",
-            "jesgo:ui:listtype": "combo",
-            "oneOf": [
-                {
-                    "enum": [
-                        "低リスク",
-                        "中リスク",
-                        "高リスク"
-                    ]
-                },
-                {
-                    "pattern": ".*"
-                }
+            "enum": [
+                "低リスク",
+                "中リスク",
+                "高リスク"
             ]
         }
     },

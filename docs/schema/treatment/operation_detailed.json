@@ -11,7 +11,7 @@
             "jesgo:set": "eventdate"
         },
         "手術時間": {
-            "description": "加刀~終刀までの時間(分)",
+            "description": "加刀~終刀までの時間(分) もしくは 時:分 で入力",
             "oneOf": [
                 {
                     "type": "integer",
@@ -72,7 +72,7 @@
             "minItems": 1
         },
         "出血量": {
-            "description": "加刀~終刀までの出血量(g)",
+            "description": "加刀~終刀までの出血量(g) 不明の時は 不明 と入力",
             "oneOf": [
                 {
                     "type": "integer",
@@ -81,7 +81,9 @@
                 },
                 {
                     "type": "string",
-                    "const": "不明"
+                    "enum": [
+                        "不明"
+                    ]
                 }
             ]
         },

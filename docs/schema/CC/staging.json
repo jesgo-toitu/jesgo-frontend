@@ -167,6 +167,7 @@
             "$id": "#T",
             "type": "object",
             "title": "T分類",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "T": {
                     "type": "string",
@@ -202,6 +203,7 @@
             "$id": "#cN",
             "title": "N分類",
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "N": {
                     "type": "string",

@@ -55,6 +55,7 @@
         "脈管侵襲": {
             "type": "object",
             "title": "脈管侵襲の詳細",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "リンパ管侵襲": {
                     "type": "string",
@@ -96,6 +97,7 @@
             "type": "array",
             "items": {
                 "type": "object",
+                "jesgo:ui:subschemastyle": "inline",
                 "properties": {
                     "部位": {
                         "type": "string"

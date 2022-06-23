@@ -84,14 +84,7 @@
                 }
             ]
         },
-        "その他組織型": {
-            "type": "string",
-            "jesgo:ui:visibleWhen": {
-                "properties": {
-                    "組織型": "その他"
-                }
-            }
-        },
+        "その他組織型": {},
         "組織学的異型度": {
             "type": "string",
             "enum": [
@@ -103,10 +96,24 @@
             ]
         }
     },
+    "if": {
+        "properties": {
+            "組織型": {
+                "const": "その他"
+            }
+        }
+    },
+    "then": {
+        "properties": {
+            "その他組織型": {
+                "type": "string",
+                "jesgo:ui:textarea": 1
+            }
+        }
+    },
     "jesgo:childschema": [
         "/schema/evaluation/immunohistochemistry",
         "/schema/evaluation/oncogenes",
         "/schema/record/pathlogy_report"
     ]
-
 }

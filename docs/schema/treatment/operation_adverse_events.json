@@ -50,115 +50,21 @@
             "type": "string",
             "jesgo:ui:listtype": "list",
             "title": "合併症のGrade",
-            "oneOf": [
-                {
-                    "const": "1",
-                    "title": "Grade 1: 正常な術後経過からの逸脱"
-                },
-                {
-                    "const": "2",
-                    "title": "Grade 2: 中等症 輸血および中心静脈栄養を要する場合を含む"
-                },
-                {
-                    "const": "3a",
-                    "title": "Grade 3a: 全身麻酔を要さない治療介入を要する"
-                },
-                {
-                    "const": "3b",
-                    "title": "Grade 3b: 全身麻酔下での治療介入を要する"
-                },
-                {
-                    "const": "4",
-                    "title": "Grade 4: ICU管理を要する、合併症により生命を脅かす状態"
-                },
-                {
-                    "const": "5",
-                    "title": "Grade 5: 死亡"
-                }
+            "enum": [
+                "Grade 1: 正常な術後経過からの逸脱",
+                "Grade 2: 中等症 輸血および中心静脈栄養を要する場合を含む",
+                "Grade 3a: 全身麻酔を要さない治療介入を要する",
+                "Grade 3b: 全身麻酔下での治療介入を要する",
+                "Grade 4: ICU管理を要する、合併症により生命を脅かす状態",
+                "Grade 5: 死亡"
             ]
         },
         "転帰": {
             "type": "array",
+            "jesgo:ui:listtype": "list",
             "title": "合併症の転帰",
             "items": {
-                "type": "string",
-                "jesgo:ui:listtype": "list",
-                "oneOf": [
-                    {
-                        "title": "Grade 1-2",
-                        "enum": [
-                            "経過観察",
-                            "周術期管理の延長",
-                            "入院期間の延長",
-                            "再入院"
-                        ]
-                    },
-                    {
-                        "title": "Grade 2",
-                        "enum": [
-                            "自己血輸血・術中回収血",
-                            "輸血・血液製剤"
-                        ]
-                    },
-                    {
-                        "title": "Grade 3 術中の追加手術",
-                        "oneOf": [
-                            {
-                                "const": "術中の追加手術～開腹",
-                                "title": "開腹"
-                            },
-                            {
-                                "const": "術中の追加手術～腹腔鏡",
-                                "title": "腹腔鏡"
-                            },
-                            {
-                                "const": "術中の追加手術～子宮鏡",
-                                "title": "子宮鏡"
-                            },
-                            {
-                                "const": "術中の追加手術～経腟",
-                                "title": "経腟"
-                            },
-                            {
-                                "const": "術中の追加手術～その他",
-                                "title": "その他"
-                            }
-                        ]
-                    },
-                    {
-                        "title": "Grade 3 術後の再手術",
-                        "oneOf": [
-                            {
-                                "const": "術後の再手術～開腹",
-                                "title": "開腹"
-                            },
-                            {
-                                "const": "術後の再手術～腹腔鏡",
-                                "title": "腹腔鏡"
-                            },
-                            {
-                                "const": "術後の再手術～子宮鏡",
-                                "title": "子宮鏡"
-                            },
-                            {
-                                "const": "術後の再手術～経腟",
-                                "title": "経腟"
-                            },
-                            {
-                                "const": "術後の再手術～その他",
-                                "title": "その他"
-                            }
-                        ]
-                    },
-                    {
-                        "const": "ICU管理",
-                        "title": "Grade 4 - 合併症管理のためICU入室"
-                    },
-                    {
-                        "const": "死亡",
-                        "title": "Grade 5 - 死亡"
-                    }
-                ]
+                "$ref": "#/$defs/JOED_course"
             },
             "minItems": 1
         }
@@ -175,10 +81,21 @@
             "then": {
                 "properties": {
                     "出血量": {
-                        "type": "string",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "不明"
+                                ]
+                            },
+                            {
+                                "type": "integer",
+                                "units": "ml",
+                                "minimum": "500"
+                            }
+                        ],
                         "$comment": "JSGOEではAE.*.BloodCountにマップ",
-                        "pattern": "(不明|([1-9][0-9]+|[5-9])[0-9][0-9])",
-                        "jesgo:ref": "../出血量"
+                        "description": "500g以上の出血を合併症と判断します."
                     },
                     "発生した合併症": {},
                     "関連する機器": {},
@@ -879,6 +796,59 @@
                 ],
                 "minItems": 1
             }
+        },
+        "JOED_course": {
+            "type": "string",
+            "anyOf": [
+                {
+                    "title": "Grade 1-2",
+                    "enum": [
+                        "経過観察",
+                        "周術期管理の延長",
+                        "入院期間の延長",
+                        "再入院"
+                    ]
+                },
+                {
+                    "title": "Grade 2",
+                    "enum": [
+                        "自己血輸血・術中回収血",
+                        "輸血・血液製剤"
+                    ]
+                },
+                {
+                    "title": "Grade 3 術中の追加手術",
+                    "enum": [
+                        "術中の追加手術～開腹",
+                        "術中の追加手術～腹腔鏡",
+                        "術中の追加手術～子宮鏡",
+                        "術中の追加手術～経腟",
+                        "術中の追加手術～その他"
+                    ]
+                },
+                {
+                    "title": "Grade 3 術後の再手術",
+                    "enum": [
+                        "術後の再手術～開腹",
+                        "術後の再手術～腹腔鏡",
+                        "術後の再手術～子宮鏡",
+                        "術後の再手術～経腟",
+                        "術後の再手術～その他"
+                    ]
+                },
+                {
+                    "title": "Grade 4 - 合併症管理のためICU入室",
+                    "enum": [
+                        "ICU管理"
+                    ]
+                },
+                {
+                    "title": "Grade 5 - 死亡",
+                    "enum": [
+                        "死亡"
+                    ]
+                }
+            ]
         }
     }
 }

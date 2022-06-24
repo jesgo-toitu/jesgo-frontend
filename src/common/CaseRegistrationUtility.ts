@@ -705,19 +705,18 @@ export const SetTabStyle = (tabId: string, formData: any, schemaId: number) => {
   if (schemaInfo?.document_schema) {
     const schema = schemaInfo.document_schema;
 
-    // type未設定のスキーマもしくはプロパティなし＝入力項目がないスキーマ
-    // 基本的にこのルートを通るはず
-    if (
+    if (schema.type === 'array') {
+      // arrayだけどitemsの定義がないスキーマ
+      if (!schema.items) {
+        hasInput = true;
+      }
+    } else if (
+      // type未設定のスキーマもしくはプロパティなし＝入力項目がないスキーマ
       schema.type === undefined ||
       !schema.properties ||
       Object.keys(schema.properties).length === 0
     ) {
       hasInput = true;
-    } else if (schema.type === 'array') {
-      // arrayだけどitemsの定義がないスキーマ
-      if (!schema.items) {
-        hasInput = true;
-      }
     }
 
     // フォームデータがあるスキーマの場合は入力値を見て判断

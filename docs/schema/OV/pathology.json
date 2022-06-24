@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/OV/pathology",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "組織診断",
     "description": "WHO分類2014年",
@@ -153,6 +154,19 @@
                     ]
                 }
             ]
+        },
+        "その他組織型": {
+            "type": "string",
+            "jesgo:ui:visibleWhen": {
+                "properties": {
+                    "組織型": "その他"
+                }
+            }
         }
-    }
+    },
+    "jesgo:childschema": [
+        "/schema/evaluation/immunohistochemistry",
+        "/schema/evaluation/oncogenes",
+        "/schema/record/pathlogy_report"
+    ]
 }

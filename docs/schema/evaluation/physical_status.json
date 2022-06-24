@@ -1,0 +1,33 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/evaluation/physical_status",
+    "jesgo:version": "1.0",
+    "jesgo:parentschema": [
+        "/schema/surveillance"
+    ],
+    "jesgo:unique": true,
+    "type": "object",
+    "title": "身体所見",
+    "properties": {
+        "身長": {
+            "type": "number",
+            "default": 0,
+            "minimum": 0,
+            "units": "cm"
+        },
+        "体重": {
+            "type": "number",
+            "default": 0,
+            "minimum": 0,
+            "units": "kg"
+        },
+        "BSA": {
+            "type": "number",
+            "title": "体表面積",
+            "default": 0.0,
+            "units": "㎡",
+            "description": "DuBoisの式を推奨 : BSA(cm^2) = 71.84 * HT(cm)^0.725 * BW(kg)^0.425",
+            "$comment:": "将来的にはスクリプトからの半自動計算を実装（電子カルテの情報との乖離を避ける為手入力は用意しておく）"
+        }
+    }
+}

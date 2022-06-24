@@ -1,0 +1,77 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/recurrence",
+    "jesgo:version": "1.0",
+    "type": "object",
+    "title": "再発",
+    "description": "再発診断に関わる所見情報も併せて設定して下さい.",
+    "jesgo:parentschema": [
+        "/"
+    ],
+    "required": [
+        "再発確認日",
+        "再発したがん種"
+    ],
+    "properties": {
+        "再発確認日": {
+            "type": "string",
+            "format": "date",
+            "jesgo:set": "eventdate"
+        },
+        "再発したがん種": {
+            "type": "string",
+            "enum": [
+                "子宮頸がん",
+                "子宮体がん",
+                "卵巣がん・卵管がん・腹膜がん",
+                "その他がん種"
+            ]
+        },
+        "再発評価": {
+            "type": "object",
+            "properties": {
+                "腹腔内の再発箇所": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "腟断端",
+                            "骨盤内",
+                            "骨盤外",
+                            "肝転移",
+                            "骨盤内リンパ節",
+                            "傍大動脈リンパ節"
+                        ]
+                    }
+                },
+                "腹腔外の再発箇所": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "肺転移",
+                            "骨転移",
+                            "脳転移",
+                            "骨髄転移",
+                            "胸膜転移",
+                            "皮膚転移",
+                            "その他リンパ節転移"
+                        ]
+                    }
+                },
+                "その他の再発箇所": {
+                    "type": "string",
+                    "jesgo:ui:textarea": 2
+                },
+                "測定可能病変": {
+                    "type": "string",
+                    "jesgo:ui:textarea": 2
+                }
+            }
+        }
+    },
+    "jesgo:childschema": [
+        "/schema/treatment/relapse_treatment",
+        "/schema/evaluation/*"
+    ]
+}

@@ -1,20 +1,26 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/treatment/supportive_care",
+    "$id": "/schema/record/pathlogy_report",
     "jesgo:version": "1.0",
     "type": "object",
-    "title": "緩和治療",
+    "title": "病理診断レポート",
+    "jesgo:parentschema": [
+        "/schema/*/pathology"
+    ],
     "properties": {
-        "評価日": {
+        "検査実施日": {
             "type": "string",
             "format": "date",
             "jesgo:set": "eventdate"
         },
-        "評価": {
+        "標本番号": {
+            "type": "string"
+        },
+        "病理診断": {
             "type": "string",
             "jesgo:ui:textarea": true
         },
-        "対応": {
+        "所見": {
             "type": "string",
             "jesgo:ui:textarea": true
         }

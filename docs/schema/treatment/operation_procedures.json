@@ -1,6 +1,8 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/operation_procedures",
+    "jesgo:version": "1.0",
+    "jesgo:unique": true,
     "type": "array",
     "title": "実施手術",
     "items": {
@@ -10,9 +12,7 @@
         "procedure": {
             "$id": "#procedure",
             "type": "object",
-            "required": [
-                "術式"
-            ],
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "術式": {
                     "type": "string",
@@ -192,7 +192,33 @@
                             }
                         }
                     }
-                }        
+                },
+                "卵巣・卵管の状態": {
+                    "type": "object",
+                    "jesgo:ui:visibleWhen": {
+                        "properties": {
+                            "術式": {
+                                "pattern": "子宮全摘出術"
+                            }
+                        }
+                    },
+                    "properties": {
+                        "卵管": {
+                            "type": "string",
+                            "enum": [
+                                "摘出",
+                                "温存"
+                            ]
+                        },
+                        "卵巣": {
+                            "type": "string",
+                            "enum": [
+                                "摘出",
+                                "温存"
+                            ]
+                        }
+                    }
+                }
             } 
         }
     }

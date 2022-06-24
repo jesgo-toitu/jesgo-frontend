@@ -14,7 +14,6 @@
     "title": "JESGOのスキーマ",
     "$defs": {
         "meta": {
-            "$id": "#meta",
             "type": "object",
             "$comment": "スキーマの $id の命名は /schema/ で開始する. また /schema/foo/bar は /schema/foo の派生スキーマである.",
             "properties": {
@@ -47,17 +46,8 @@
                     "type": "array",
                     "minItems": 1,
                     "items": {
-                        "anyOf": [
-                            {
-                                "type": "string",
-                                "$comment": "ドキュメント全体に対するエラーメッセージ"
-                            },
-                            {
-                                "type": "object",
-                                "$comment": "propertyName: stringでのエラーメッセージの形式でフィールドに対してエラーメッセージを設定する",
-                                "minProperties": 1
-                            }
-                        ]
+                        "type": "string",
+                        "$comment": "ドキュメント全体に対するエラーメッセージ"
                     }
                 },
                 "jesgo:parentschema": {
@@ -88,9 +78,14 @@
                     "uniqueItems": true
                 },
                 "jesgo:unique": {
-                    "$comment": "【スキーマ属性】 親ドキュメントの下位として、ユニークであることを明示",
+                    "$comment": "【スキーマ属性】 親ドキュメントの下位として、ユニークであることを明示. この値は継承され、変更は不可.",
                     "type": "boolean",
                     "defalut": false
+                },
+                "jesgo:copy": {
+                    "$comment": "【スキーマ属性】 jesgo:unique false のドキュメントについて、選択されているドキュメントの内容で新規ドキュメントを同レベルに作成可能とする. eventdate のみ新規作成にあたって削除される.",
+                    "type": "boolean",
+                    "default": false
                 },
                 "jesgo:required": {
                     "$comment": "【フィールド属性】 項目の入力が必要とされるセット名称を指定.今のところJSOGとJSGOEしかない.",
@@ -100,6 +95,10 @@
                     },
                     "minItems": 0,
                     "uniqueItems": true
+                },
+                "jesgo:validationalert": {
+                    "$comment": "【フィールド属性】 項目のtypeやpatternによる基本的なvalidationが生じた場合に表示されるエラーメッセージ.",
+                    "type": "string"
                 },
                 "jesgo:get": {
                     "type": "string",
@@ -124,6 +123,10 @@
                         {
                             "const": "day",
                             "$comment": "ドキュメントに指定もしくは継承されたeventdate時点での患者日齢"
+                        },
+                        {
+                            "const": "initial_treatment_date",
+                            "$comment": "現在のドキュメントの連なるツリーの近い位置にある /schema/initial_treatment が保持する event_date を取得する.未設定の場合は空白扱い."
                         }
                     ]
                 },
@@ -145,7 +148,7 @@
                         }
                     ]
                 },
-                "jesgo:ui:enabledwhen": {
+                "jesgo:ui:enabledWhen": {
                     "$comment": "【フィールド属性/UI】 ifと同様に指定条件を満たした場合有効化される",
                     "type": "object",
                     "defalut": {

@@ -1,11 +1,12 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/EM/findings",
+    "jesgo:version": "1.0",
     "jesgo:unique": true,
     "type": "object",
     "title": "診断所見",
     "properties": {
-        "洗浄細胞診": {
+        "腹水細胞診": {
             "type": "string",
             "enum": [
                 "陽性",
@@ -18,6 +19,7 @@
             "type": "object",
             "title": "筋層浸潤の有無",
             "description": "初回手術未施行例では画像診断での判定所見",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -40,5 +42,20 @@
             }
         }
     },
-    "$defs": {}
+    "jesgo:childschema": [
+        "/schema/evaluations/exam",
+        "/schema/evaluations/cervix",
+        "/schema/evaluations/colposcopy",
+        "/schema/evaluations/hysteroscopy",
+        "/schema/evaluations/cystoscopy",
+        "/schema/evaluation/colonoscopy",
+        "/schema/evaluation/tumor_markers",
+        "/schema/evaluations/imaging",
+        "/schema/evaluations/ascites",
+        "/schema/evaluations/pleural_effusion",
+        "/schema/evaluation/immunohistochemistry",
+        "/schema/evaluation/oncogenes",
+        "/schema/evaluation/performance_status",
+        "/schema/evaluation/physical_status"
+    ]
 }

@@ -1,10 +1,12 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/records/meeting_record",
+    "$id": "/schema/record/meeting_record",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "カンファレンス記録",
+    "jesgo:unique": false,
     "jesgo:parentschema": [
-        "/"
+        "/schema/meeting"
     ],
     "properties": {
         "日付": {
@@ -15,7 +17,7 @@
         },
         "記録": {
             "type": "string",
-            "title": "カンファレンス記録.",
+            "title": "カンファレンス記録",
             "jesgo:ui:textarea": 5
         }
     }

@@ -1,11 +1,10 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/chemotherapy",
+    "jesgo:version": "1.0",
     "title": "化学療法",
+    "jesgo:copy": true,
     "type": "object",
-    "required": [
-        "投与開始日"
-    ],
     "properties": {
         "投与開始日": {
             "type": "string",
@@ -32,6 +31,7 @@
             "type": "array",
             "items": {
                 "type": "object",
+                "jesgo:ui:subschemastyle": "inline",
                 "properties": {
                     "薬剤名": {
                         "$ref": "#/$defs/drugs"
@@ -44,13 +44,13 @@
                         "type": "string",
                         "enum": [
                             "AUC",
-                            "mg/m<SUP>2</SUP>",
+                            "mg/㎡",
                             "mg/kg",
+                            "mg/body",
                             "mg/日"
                         ]
                     }
-                },
-                "jesgo:ui:subschemastyle": "inline"
+                }
             }
         }
     },

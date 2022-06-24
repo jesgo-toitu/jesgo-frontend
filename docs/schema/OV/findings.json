@@ -1,0 +1,46 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/OV/findings",
+    "jesgo:version": "1.0",
+    "type": "object",
+    "title": "術中腹腔内所見",
+    "jesgo:unique": true,
+    "properties": {
+        "皮膜破綻の有無": {
+            "type": "string",
+            "enum": [
+                "なし",
+                "あり",
+                "不明"
+            ]
+        },
+        "腹腔細胞診": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "骨盤内臓器進展": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "腹腔内臓器進展": {
+            "type": "string",
+            "jesgo:ui:textarea": true
+        }
+    },
+    "jesgo:childschema": [
+        "/schema/evaluations/exam",
+        "/schema/evaluations/cervix",
+        "/schema/evaluations/colposcopy",
+        "/schema/evaluations/hysteroscopy",
+        "/schema/evaluations/cystoscopy",
+        "/schema/evaluation/colonoscopy",
+        "/schema/evaluation/tumor_markers",
+        "/schema/evaluations/imaging",
+        "/schema/evaluations/ascites",
+        "/schema/evaluations/pleural_effusion",
+        "/schema/evaluation/immunohistochemistry",
+        "/schema/evaluation/oncogenes",
+        "/schema/evaluation/performance_status",
+        "/schema/evaluation/physical_status"
+    ]
+}

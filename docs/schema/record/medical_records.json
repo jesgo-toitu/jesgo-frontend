@@ -1,0 +1,26 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/record/medical_record",
+    "jesgo:version": "1.0",
+    "type": "object",
+    "title": "併存症",
+    "jesgo:unique": true,
+    "properties": {
+        "併存疾患": {
+            "type": "string",
+            "jesgo:ui:textarea": 2
+        },
+        "内服薬": {
+            "type": "string",
+            "jesgo:ui:textarea": 2
+        },
+        "食物アレルギー": {
+            "type": "string",
+            "jesgo:ui:textarea": 2
+        },
+        "薬剤アレルギー": {
+            "type": "string",
+            "jesgo:ui:textarea": 2
+        }
+    }
+}

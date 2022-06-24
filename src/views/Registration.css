@@ -225,3 +225,8 @@ input[type="number"] {
 .has-error legend {
   color: red
 }
+
+/* textarea 横方向へのリサイズ抑制 */
+textarea.form-control {
+  resize: vertical;
+}

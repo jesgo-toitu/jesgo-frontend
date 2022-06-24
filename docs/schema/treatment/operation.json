@@ -45,6 +45,7 @@
             "type": "array",
             "items": {
                 "type": "object",
+                "jesgo:ui:subschemastyle": "inline",
                 "properties": {
                     "役割": {
                         "type": "string",

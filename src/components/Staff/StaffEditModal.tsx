@@ -272,7 +272,7 @@ export const StaffEditModalDialog = (props: {
             </FormControl>
           </FormGroup>
           <FormGroup controlId="password">
-            <ControlLabel>パスワード</ControlLabel>
+            <ControlLabel>パスワード<br/>※半角英数字をそれぞれ1種類以上含む8文字以上20文字以内で入力してください</ControlLabel>
             <FormControl
               required
               autoComplete="new-password"

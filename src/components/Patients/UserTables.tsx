@@ -1,88 +1,226 @@
-import React from "react";
-import { Button, ButtonGroup, ButtonToolbar, Glyphicon } from "react-bootstrap";
+import React, { useEffect, useState } from 'react';
+import {
+  Button,
+  ButtonGroup,
+  ButtonToolbar,
+  Glyphicon,
+  Table,
+} from 'react-bootstrap';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { formatDateStr } from '../../common/DBUtility';
+import IconList from './IconList';
 
-export namespace UserTables {
-
-
-
-    export const makeTable = (props: { userListJson: string, search: string, noSearch: string, progressAndRecurrenceColumn: string }) => {
-
-        interface userDataList {
-            data: userData[]
-        };
-
-        interface userData {
-            patientId: string,
-            patientName: string,
-            age: number,
-            registedCancerGroup: string,
-            startDate: string,
-            lastUpdate: string,
-            diagnosis: string,
-            advancedStage: string,
-            pathlogicalDiagnosis: string,
-            initialTreatment: string,
-            copilacations: string,
-            progress: string,
-            postRelapseTreatment: string,
-            threeYearPrognosis: string,
-            fiveYearPrognosis: string,
-            status: string[],
-        };
-
-        const { userListJson, search, noSearch, progressAndRecurrenceColumn } = props;
-        let userDataListJson: userDataList;
-        let userList: userData[] = [];
-        if (userListJson.length > 0) {
-            userDataListJson = JSON.parse(userListJson) as userDataList;
-            userList = userDataListJson.data;
-        }
-
-        return (
-            <>
-                {
-                    userList.map(user => (
-                        <tr className={(user.status.includes("died") && "died") as string}>
-                            <td>{user.patientId}</td>
-                            <td>{user.patientName}</td>
-                            <td>{user.age}</td>
-                            <td className={search}>{user.registedCancerGroup}</td>
-                            <td className={search}>{user.startDate}</td>
-                            <td className={noSearch}>{user.startDate} <br /> {user.lastUpdate}</td>
-                            <td className={noSearch}>{user.diagnosis}</td>
-                            <td>{user.advancedStage}</td>
-                            <td className={search}>{user.pathlogicalDiagnosis}</td>
-                            <td className={search}>{user.initialTreatment && <img src="./image/icon_ope.png" alt="手" />}</td>
-                            <td className={search}>{user.copilacations && <img src="./image/icon_gou.png" alt="合" />}</td>
-                            <td className={progressAndRecurrenceColumn}>{user.progress && <img src="./image/icon_keika.png" alt="経過" />}</td>
-                            <td className={progressAndRecurrenceColumn}>{user.postRelapseTreatment && <img src="./image/icon_sai.png" alt="再" />}</td>
-                            <td className={search}>{user.threeYearPrognosis && <img src="./image/icon_3.png" alt="3" />}</td>
-                            <td className={search}>{user.fiveYearPrognosis && <img src="./image/icon_5.png" alt="5" />}</td>
-                            <td className={noSearch}>
-                                {user.initialTreatment && <img src="./image/icon_ope.png" alt="手" />}
-                                {user.copilacations && <img src="./image/icon_gou.png" alt="合" />}
-                                {user.progress && <img src="./image/icon_keika.png" alt="経過" />}
-                                {user.postRelapseTreatment && <img src="./image/icon_sai.png" alt="再" />}
-                                {user.threeYearPrognosis && <img src="./image/icon_3.png" alt="3" />}
-                                {user.fiveYearPrognosis && <img src="./image/icon_5.png" alt="5" />}
-                                {user.status.includes("died") && <img src="./image/icon_dead.png" alt="died" />}
-                            </td >
-                            <td>
-                                <ButtonToolbar>
-                                    <ButtonGroup>
-                                        <Button href={"/registration?id=" + user.patientId}>
-                                            <Glyphicon glyph="edit" />
-                                        </Button>
-                                        <Button>
-                                            <Glyphicon glyph="trash" />
-                                        </Button>
-                                    </ButtonGroup>
-                                </ButtonToolbar>
-                            </td>
-                        </tr >
-                    ))
-                }
-            </>
-        )
-    }
+export interface userData {
+  caseId: number;
+  patientId: string;
+  patientName: string;
+  age: number;
+  registedCancerGroup: string;
+  since: string | null;
+  startDate: string | null;
+  lastUpdate: string;
+  diagnosis: string;
+  diagnosisCervical: string;
+  diagnosisEndometrial: string;
+  diagnosisOvarian: string;
+  advancedStage: string;
+  advancedStageCervical: string;
+  advancedStageEndometrial: string;
+  advancedStageOvarian: string;
+  pathlogicalDiagnosis: string;
+  initialTreatment: string[];
+  copilacations: string[];
+  progress: string[];
+  postRelapseTreatment: string[];
+  registration: string[];
+  threeYearPrognosis: string[];
+  fiveYearPrognosis: string[];
+  status: string[];
 }
+export interface userDataList {
+  data: userData[];
+}
+
+const makeTable = (props: {
+  userListJson: string;
+  search: string;
+  noSearch: string;
+  setUserListJson: React.Dispatch<React.SetStateAction<string>>;
+}) => {
+  const [userList, setUserList] = useState<userData[]>([]);
+  const { userListJson, search, noSearch, setUserListJson } = props;
+  let userDataListJson: userDataList;
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (userListJson.length > 0) {
+      userDataListJson = JSON.parse(userListJson) as userDataList;
+      setUserList(userDataListJson.data);
+    }
+  }, [userListJson]);
+
+  const deletePatient = async (
+    caseId: number,
+    hisId: string,
+    name: string
+  ): Promise<void> => {
+    // eslint-disable-next-line
+    const result = confirm(
+      `患者番号:${hisId} 氏名:${name} の患者を削除しても良いですか？`
+    );
+    if (result) {
+      const token = localStorage.getItem('token');
+      if (token == null) {
+        // eslint-disable-next-line no-alert
+        alert('処理に失敗しました。');
+        return;
+      }
+
+      // 削除APIを呼ぶ
+      const returnApiObject = await apiAccess(
+        METHOD_TYPE.DELETE,
+        `deleteCase/${caseId}`
+      );
+
+      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        // eslint-disable-next-line no-alert
+        alert('削除しました。');
+        const index = userList.findIndex((user) => user.caseId === caseId);
+        const userListCopy = userList.splice(0, userList.length);
+        userListCopy.splice(index, 1);
+        setUserList(userListCopy);
+
+        // CSV用に削除したデータを上で使ってるJSONからも消す
+        const newJson = { data: userListCopy };
+        const strJson = JSON.stringify(newJson);
+        setUserListJson(strJson);
+      } else {
+        // eslint-disable-next-line no-alert
+        alert('処理に失敗しました。');
+      }
+    }
+  };
+
+  // 編集ボタンクリック
+  const clickEdit = (caseId: number) => {
+    // 遷移前にstoreを初期化
+    dispatch({ type: 'INIT_STORE' });
+    // 保存確認ダイアログ表示設定を初期化
+    navigate(`/registration?id=${caseId}`);
+  };
+
+  return (
+    <Table striped className="patients">
+      <thead>
+        <tr>
+          <th>患者ID</th>
+          <th>患者名</th>
+          <th className={noSearch}>年齢</th>
+          <th className={noSearch}>
+            初回治療開始日
+            <br />
+            ／最終更新日
+          </th>
+          <th>診断</th>
+          <th>進行期</th>
+          <th className={search}>初回治療</th>
+          <th className={search}>登録</th>
+          <th className={search}>3年予後</th>
+          <th className={search}>5年予後</th>
+          <th className={noSearch}>ステータス</th>
+          {(localStorage.getItem('is_edit_roll') === 'true' ||
+            localStorage.getItem('is_remove_roll') === 'true') && (
+            <th>
+              {localStorage.getItem('is_edit_roll') === 'true' && '編集'}
+              {localStorage.getItem('is_edit_roll') === 'true' &&
+                localStorage.getItem('is_remove_roll') === 'true' &&
+                '/'}
+              {localStorage.getItem('is_remove_roll') === 'true' && '削除'}
+            </th>
+          )}
+        </tr>
+      </thead>
+      <tbody>
+        {userList.map((user) => (
+          <tr
+            className={user.status.includes('death') ? 'died' : ''}
+            key={user.caseId.toString()}
+          >
+            <td>
+              {user.patientId}
+            </td>
+            <td>{user.patientName}</td>
+            <td className={noSearch}>{user.age}</td>
+            <td className={noSearch}>
+              {formatDateStr(user.startDate ?? '', '/')}
+              {user.startDate && <br />}
+              {formatDateStr(user.lastUpdate, '/')}
+            </td>
+            <td>
+              {user.diagnosis === '未' ? (
+                <img src="./image/icon_not_completed.svg" alt="未" />
+              ) : (
+                user.diagnosis
+              )}
+            </td>
+            <td>
+              {user.advancedStage === '未' ? (
+                <img src="./image/icon_not_completed.svg" alt="未" />
+              ) : (
+                user.advancedStage
+              )}
+            </td>
+            <td className={search}>
+              <IconList iconList={user.initialTreatment} />
+            </td>
+            <td className={search}>
+              <IconList iconList={user.registration} />
+            </td>
+            <td className={search}>
+              <IconList iconList={user.threeYearPrognosis} />
+            </td>
+            <td className={search}>
+              <IconList iconList={user.fiveYearPrognosis} />
+            </td>
+            <td className={noSearch}>
+              <IconList iconList={user.status} />
+            </td>
+            {(localStorage.getItem('is_edit_roll') === 'true' ||
+              localStorage.getItem('is_remove_roll') === 'true') && (
+              <td>
+                <ButtonToolbar>
+                  <ButtonGroup>
+                    {localStorage.getItem('is_edit_roll') === 'true' && (
+                      <Button onClick={() => clickEdit(user.caseId)}>
+                        <Glyphicon glyph="edit" />
+                      </Button>
+                    )}
+                    {localStorage.getItem('is_remove_roll') === 'true' && (
+                      <Button
+                        onClick={() =>
+                          deletePatient(
+                            user.caseId,
+                            user.patientId,
+                            user.patientName
+                          )
+                        }
+                      >
+                        <Glyphicon glyph="trash" />
+                      </Button>
+                    )}
+                  </ButtonGroup>
+                </ButtonToolbar>
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+};
+
+export default makeTable;

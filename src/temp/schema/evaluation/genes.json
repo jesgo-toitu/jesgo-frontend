@@ -1,6 +1,7 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/evaluation/genes",
+    "$id": "/schema/evaluation/oncogenes",
+    "jesgo:unique": true,
     "type": "object",
     "title": "腫瘍遺伝子検査",
     "properties": {

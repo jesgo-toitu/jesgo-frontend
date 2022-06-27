@@ -1,10 +1,12 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/EM/findigns/details",
+    "$id": "/schema/EM/findings/details",
+    "jesgo:version": "1.0",
     "type": "object",
+    "jesgo:unique": true,
     "title": "診断所見 詳細",
     "properties": {
-        "洗浄細胞診": {
+        "腹水細胞診": {
             "type": "string",
             "enum": [
                 "陽性",
@@ -12,10 +14,6 @@
                 "未施行",
                 "不明"
             ]
-        },
-        "頸管浸潤": {
-            "type": "string",
-            "jesgo:ui:textarea": true
         },
         "筋層浸潤": {
             "type": "object",
@@ -40,6 +38,14 @@
                         "PET/CT"
                     ]
                 },
+                "筋層の厚さ": {
+                    "type": "number",
+                    "units": "mm"
+                },
+                "腫瘍浸潤の深さ": {
+                    "type": "number",
+                    "units": "mm"
+                },
                 "詳細": {
                     "type": "string",
                     "jesgo:ui:textarea": true
@@ -49,6 +55,7 @@
         "脈管侵襲": {
             "type": "object",
             "title": "脈管侵襲の詳細",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "リンパ管侵襲": {
                     "type": "string",
@@ -59,6 +66,21 @@
                     "jesgo:ui:textarea": true
                 }
             }
+        },
+        "子宮頸部間質浸潤": {
+            "title": "子宮頸部間質浸潤の詳細",
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "子宮傍組織浸潤": {
+            "title": "子宮傍組織浸潤の詳細",
+            "type": "string",
+            "jesgo:ui:textarea": true
+        },
+        "子宮漿膜浸潤": {
+            "title": "子宮漿膜浸潤の詳細",
+            "type": "string",
+            "jesgo:ui:textarea": true
         },
         "付属器転移": {
             "title": "付属器転移の詳細",
@@ -72,15 +94,20 @@
         },
         "リンパ節転移": {
             "title": "リンパ節転移の詳細",
-            "type": "object",
-            "properties": {
-                "部位と個数": {
-                    "type": "string",
-                    "jesgo:ui:textarea": true
-                },
-                "詳細": {
-                    "type": "string",
-                    "jesgo:ui:textarea": true
+            "type": "array",
+            "items": {
+                "type": "object",
+                "jesgo:ui:subschemastyle": "inline",
+                "properties": {
+                    "部位": {
+                        "type": "string"
+                    },
+                    "摘出リンパ節数": {
+                        "type": "integer"
+                    },
+                    "転移陽性リンパ節数": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -88,7 +115,38 @@
             "title": "他臓器への転移の詳細",
             "type": "string",
             "jesgo:ui:textarea": true
+        },
+        "再発リスク": {
+            "type": "string",
+            "jesgo:ui:listtype": "combo",
+            "oneOf": [
+                {
+                    "enum": [
+                        "低リスク",
+                        "中リスク",
+                        "高リスク"
+                    ]
+                },
+                {
+                    "pattern": ".*"
+                }
+            ]
         }
     },
-    "$defs": {}
+    "jesgo:childschema": [
+        "/schema/evaluations/exam",
+        "/schema/evaluations/cervix",
+        "/schema/evaluations/colposcopy",
+        "/schema/evaluations/hysteroscopy",
+        "/schema/evaluations/cystoscopy",
+        "/schema/evaluation/colonoscopy",
+        "/schema/evaluation/tumor_markers",
+        "/schema/evaluations/imaging",
+        "/schema/evaluations/ascites",
+        "/schema/evaluations/pleural_effusion",
+        "/schema/evaluation/immunohistochemistry",
+        "/schema/evaluation/oncogenes",
+        "/schema/evaluation/performance_status",
+        "/schema/evaluation/physical_status"
+    ]
 }

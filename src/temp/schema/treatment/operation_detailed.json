@@ -33,33 +33,26 @@
             "type": "array",
             "description": "筆頭に執刀医、以下を助手として入力",
             "items": {
-                "oneOf": [
-                    {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "title": "名前",
-                                "type": "string"
-                            },
-                            "property": {
-                                "title": "資格",
-                                "type": "string",
-                                "enum": [
-                                    "婦人科腫瘍専門医",
-                                    "産婦人科内視鏡技術認定医",
-                                    "婦人科腫瘍専門医+産婦人科内視鏡技術認定医",
-                                    "産婦人科専門医",
-                                    "その他",
-                                    "不明"
-                                ]
-                            }
-                        }        
+                "type": "object",
+                "jesgo:ui:subschemastyle": "inline",
+                "properties": {
+                    "name": {
+                        "title": "名前",
+                        "type": "string"
                     },
-                    {
+                    "property": {
+                        "title": "資格",
                         "type": "string",
-                        "title": "名前"
+                        "enum": [
+                            "婦人科腫瘍専門医",
+                            "産婦人科内視鏡技術認定医",
+                            "婦人科腫瘍専門医+産婦人科内視鏡技術認定医",
+                            "産婦人科専門医",
+                            "その他",
+                            "不明"
+                        ]
                     }
-                ]
+                }
             },
             "minItems": 1
         },

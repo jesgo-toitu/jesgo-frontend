@@ -1,6 +1,8 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/CC/pathology",
+    "jesgo:version": "1.0",
+    "jesgo:unique": true,
     "type": "object",
     "title": "組織診断",
     "description": "WHO分類2014年",
@@ -82,6 +84,7 @@
                 }
             ]
         },
+        "その他組織型": {},
         "組織学的異型度": {
             "type": "string",
             "enum": [
@@ -92,5 +95,25 @@
                 "不明"
             ]
         }
-    }
+    },
+    "if": {
+        "properties": {
+            "組織型": {
+                "const": "その他"
+            }
+        }
+    },
+    "then": {
+        "properties": {
+            "その他組織型": {
+                "type": "string",
+                "jesgo:ui:textarea": 1
+            }
+        }
+    },
+    "jesgo:childschema": [
+        "/schema/evaluation/immunohistochemistry",
+        "/schema/evaluation/oncogenes",
+        "/schema/record/pathlogy_report"
+    ]
 }

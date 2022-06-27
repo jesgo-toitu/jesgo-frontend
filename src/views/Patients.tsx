@@ -1,363 +1,660 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
-import axios from "axios";
-import { UserTables } from '../components/Patients/UserTables'
-import "./Patients.css";
-import { Navbar, Button, FormControl, FormGroup, ControlLabel, Label, Grid, Row, Col, Panel, Checkbox, Nav, NavItem, ButtonToolbar, ButtonGroup, Glyphicon, Jumbotron, Table } from 'react-bootstrap';
+// ★TODO: JSXの属性を修正する
+/* eslint-disable jsx-a11y/control-has-associated-label */
+/* eslint-disable jsx-a11y/anchor-has-content */
+/* eslint-disable jsx-a11y/anchor-is-valid */
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  Navbar,
+  Button,
+  FormControl,
+  Checkbox,
+  Nav,
+  NavItem,
+  ButtonToolbar,
+  ButtonGroup,
+  Glyphicon,
+  Jumbotron,
+} from 'react-bootstrap';
+import { CSVLink } from 'react-csv';
+import UserTables, { userDataList } from '../components/Patients/UserTables';
+import './Patients.css';
+import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
+import { UserMenu } from '../components/common/UserMenu';
+import { SystemMenu } from '../components/common/SystemMenu';
+import { settingsFromApi } from './Settings';
+import { csvHeader, patientListCsv } from '../common/MakeCsv';
+import { formatDate } from '../common/DBUtility';
 import { Const } from '../common/Const';
 
+const UNIT_TYPE = {
+  DAY: 0,
+  MONTH: 1,
+  YEAR: 2,
+};
+const makeSelectDate = (
+  unit: number,
+  startDate: Date,
+  optionNum: number,
+  startWithNewest = true
+): string[] => {
+  const dateList: string[] = [];
+  // eslint-disable-next-line no-plusplus
+  for (let index = 0; index < optionNum; index++) {
+    const newDate = new Date(startDate.getTime());
+    switch (unit) {
+      case UNIT_TYPE.DAY:
+        newDate.setDate(newDate.getDate() - index);
+        dateList.push(formatDate(newDate, '-'));
+        break;
 
-export function Patients() {
-    useEffect(() => {
-        console.log('firstload');
+      case UNIT_TYPE.MONTH:
+        newDate.setDate(1); // 1日に設定し、月ごとの最終日関連の想定しない戻り値を避ける
+        newDate.setMonth(newDate.getMonth() - index);
+        dateList.push(formatDate(newDate, '-').substring(0, 7));
+        break;
 
-        const token = localStorage.getItem("token");
-        if (token == null) {
-            navigate("/login");
-            return;
-        }
-        axios.get(Const.END_POINT + "search/", { headers: { token: token } })
-            .then((response) => {
-                (response);
-                console.log(response.data);
-                // ★TODO: 仮データ受信
-                setUserListJson('{"data": [{"patientId": "1122-34","patientName": "テスト 患者1","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-35","patientName": "テスト 患者2","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2021-02-05","lastUpdate": "2021-03-04","diagnosis": "子宮頸がん","advancedStage": "AA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "","copilacations": "","progress": "","postRelapseTreatment": "sai","threeYearPrognosis": "","fiveYearPrognosis": "5","status": ["sai","5"]},{"patientId": "1122-37","patientName": "テスト 患者3","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3","died"]},{"patientId": "1122-38","patientName": "テスト 患者4","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-39","patientName": "テスト 患者5","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-40","patientName": "テスト 患者6","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-41","patientName": "テスト 患者7","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-42","patientName": "テスト 患者8","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-43","patientName": "テスト 患者9","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-44","patientName": "テスト 患者10","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]}]}')
-            }).catch((err) => {
-                navigate("/login");
-            });
-    }, [])
+      case UNIT_TYPE.YEAR:
+        newDate.setMonth(0); // 1月に設定し、うるう年関連の想定しない戻り値を避ける
+        newDate.setFullYear(newDate.getFullYear() - index);
+        dateList.push(formatDate(newDate, '-').substring(0, 4));
+        break;
 
-    const [searchWord, setSearchWord] = useState({
-        registrationYear: "2022",
-        cancetType: "all",
-        showOnlyTumorRegistry: false,
-        startOfTreatmentStartDate: "202101",
-        endOfTreatmentStartDate: "202110",
-        checkOfTreatmentStartDate: false,
-        checkOfBlankFields: false,
-        blankFields: {
-            advancedStage: false,
-            pathlogicalDiagnosis: false,
-            initialTreatment: false,
-            copilacations: false,
-            threeYearPrognosis: false,
-            fiveYearPrognosis: false,
-        },
-        showProgressAndRecurrence: false,
-    });
-    const navigate = useNavigate();
-    const [searchFormOpen, setSearchFormOpen] = useState('hidden');
-    const [simpleSearchButtons, setSimpleSearchButtons] = useState('hidden');
-    const [detailSearchOpen, setDetailSearchOpen] = useState('hidden');
-    const [noSearch, setNoSearch] = useState('table-cell');
-    const [search, setSearch] = useState('hidden');
-    const [progressAndRecurrenceColumn, setProgressAndRecurrenceColumn] = useState('hidden');
-    const [listMode, setListMode] = useState(['blue', '']);
-    const [userListJson, setUserListJson] = useState('');
+      default:
+    }
+  }
+  if (startWithNewest === false) {
+    dateList.reverse();
+  }
+  return dateList;
+};
 
-    const setShowProgressAndRecurrence = (check: boolean, searchStyle: string) => {
-        console.log("check = " + check + ", search = " + search);
-        if (check && (searchStyle == 'table-cell')) {
-            setProgressAndRecurrenceColumn('table-cell');
-        } else {
-            setProgressAndRecurrenceColumn('hidden');
-        }
+const Patients = () => {
+  const navigate = useNavigate();
+  const url: string = useLocation().search;
+  const userName = localStorage.getItem('display_name');
+  const [searchFormOpen, setSearchFormOpen] = useState('hidden');
+  const [simpleSearchButtons, setSimpleSearchButtons] = useState('hidden');
+  const [detailSearchOpen, setDetailSearchOpen] = useState('hidden');
+  const [noSearch, setNoSearch] = useState('table-cell');
+  const [search, setSearch] = useState('hidden');
+  const [progressAndRecurrenceColumn, setProgressAndRecurrenceColumn] =
+    useState('hidden');
+  const [listMode, setListMode] = useState(['blue', '']);
+  const [userListJson, setUserListJson] = useState('');
+  const [tableMode, setTableMode] = useState('normal');
+  const [facilityName, setFacilityName] = useState('');
+  const [csvData, setCsvData] = useState<object[]>([]);
+
+  useEffect(() => {
+    const f = async () => {
+      // 設定情報取得APIを呼ぶ
+      const returnSettingApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `getSettings`
+      );
+
+      // 正常に取得できた場合施設名を設定
+      if (returnSettingApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = returnSettingApiObject.body as settingsFromApi;
+        setFacilityName(returned.facility_name);
+      }
+
+      // 患者情報取得APIを呼ぶ
+      const returnApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `patientlist${url}`
+      );
+
+      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        setUserListJson(JSON.stringify(returnApiObject.body));
+      } else {
+        navigate('/login');
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
+  }, []);
+
+  useEffect(() => {
+    const newData: patientListCsv[] = [];
+    if (userListJson !== null && userListJson !== '') {
+      const decordedJson = JSON.parse(userListJson) as userDataList;
+
+      // eslint-disable-next-line no-plusplus
+      for (let index = 0; index < decordedJson.data.length; index++) {
+        const userData = decordedJson.data[index];
+        const patientCsv: patientListCsv = {
+          patientId: userData.patientId,
+          patinetName: userData.patientName,
+          age: userData.age.toString(),
+          startDate: userData.startDate!,
+          lastUpdate: userData.lastUpdate,
+          diagnosisCervical: userData.diagnosisCervical,
+          diagnosisEndometrial: userData.diagnosisEndometrial,
+          diagnosisOvarian: userData.diagnosisOvarian,
+          advancedStageCervical: userData.advancedStageCervical,
+          advancedStageEndometrial: userData.advancedStageEndometrial,
+          advancedStageOvarian: userData.advancedStageOvarian,
+          recurrence: userData.status.includes('recurrence') ? '有' : '無',
+          chemotherapy: userData.status.includes('chemo') ? '有' : '無',
+          operation: userData.status.includes('surgery') ? '有' : '無',
+          radiotherapy: userData.status.includes('radio') ? '有' : '無',
+          supportiveCare: userData.status.includes('surveillance')
+            ? '有'
+            : '無',
+          registration:
+            // eslint-disable-next-line no-nested-ternary
+            userData.registration.includes('decline')
+              ? '拒否'
+              : userData.registration.includes('not_completed')
+              ? '無'
+              : '有',
+          death: userData.status.includes('death') ? '有' : '無',
+          threeYearPrognosis: `無`,
+          fiveYearPrognosis: `無`,
+        };
+        newData.push(patientCsv);
+      }
+
+      setCsvData(newData);
+    }
+  }, [userListJson]);
+
+  const [searchWord, setSearchWord] = useState({
+    treatmentStartYear: 'all',
+    cancerType: 'all',
+    showOnlyTumorRegistry: false,
+    startOfDiagnosisDate: makeSelectDate(UNIT_TYPE.MONTH, new Date(), 1)[0],
+    endOfDiagnosisDate: makeSelectDate(UNIT_TYPE.MONTH, new Date(), 1)[0],
+    checkOfDiagnosisDate: false,
+    checkOfBlankFields: false,
+    blankFields: {
+      advancedStage: false,
+      pathlogicalDiagnosis: false,
+      initialTreatment: false,
+      copilacations: false,
+      threeYearPrognosis: false,
+      fiveYearPrognosis: false,
+    },
+    showProgressAndRecurrence: false,
+  });
+
+  const setShowProgressAndRecurrence = (
+    check: boolean,
+    searchStyle: string
+  ) => {
+    if (check && searchStyle === 'table-cell') {
+      setProgressAndRecurrenceColumn('table-cell');
+    } else {
+      setProgressAndRecurrenceColumn('hidden');
+    }
+  };
+
+  const changeView = (type: string) => {
+    switch (type) {
+      case 'close':
+        setSearchFormOpen('hidden');
+        setSimpleSearchButtons('hidden');
+        setDetailSearchOpen('hidden');
+        setTableMode('normal');
+        break;
+
+      case 'simpleSearch':
+        setSearchFormOpen('search-form-opened block');
+        setSimpleSearchButtons('block');
+        setDetailSearchOpen('hidden');
+        setTableMode('search_on');
+        break;
+
+      case 'detailSearch':
+        setSearchFormOpen('search-form-opened block');
+        setSimpleSearchButtons('hidden');
+        setDetailSearchOpen('detail-form-opened block');
+        setTableMode('detail_on');
+        break;
+
+      default:
+    }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSearchCondition = (event: any) => {
+    const eventTarget: EventTarget & HTMLInputElement =
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      event.target as EventTarget & HTMLInputElement;
+
+    let blankFields = searchWord.blankFields;
+    switch (eventTarget.name) {
+      case 'treatmentStartYear':
+        setSearchWord({ ...searchWord, treatmentStartYear: eventTarget.value });
+        break;
+
+      case 'cancerType':
+        setSearchWord({ ...searchWord, cancerType: eventTarget.value });
+        break;
+
+      case 'showOnlyTumorRegistry':
+        setSearchWord({
+          ...searchWord,
+          showOnlyTumorRegistry: eventTarget.checked,
+        });
+        break;
+
+      case 'checkOfDiagnosisDate':
+        setSearchWord({
+          ...searchWord,
+          checkOfDiagnosisDate: eventTarget.checked,
+        });
+        break;
+
+      case 'startOfDiagnosisDate':
+        setSearchWord({
+          ...searchWord,
+          startOfDiagnosisDate: eventTarget.value,
+        });
+        break;
+
+      case 'endOfDiagnosisDate':
+        setSearchWord({
+          ...searchWord,
+          endOfDiagnosisDate: eventTarget.value,
+        });
+        break;
+
+      case 'checkOfBlankFields':
+        setSearchWord({
+          ...searchWord,
+          checkOfBlankFields: eventTarget.checked,
+        });
+        break;
+
+      case 'advancedStage':
+        blankFields = { ...blankFields, advancedStage: eventTarget.checked };
+        setSearchWord({ ...searchWord, blankFields });
+        break;
+
+      case 'pathlogicalDiagnosis':
+        blankFields = {
+          ...blankFields,
+          pathlogicalDiagnosis: eventTarget.checked,
+        };
+        setSearchWord({ ...searchWord, blankFields });
+        break;
+
+      case 'initialTreatment':
+        blankFields = { ...blankFields, initialTreatment: eventTarget.checked };
+        setSearchWord({ ...searchWord, blankFields });
+        break;
+
+      case 'copilacations':
+        blankFields = { ...blankFields, copilacations: eventTarget.checked };
+        setSearchWord({ ...searchWord, blankFields });
+        break;
+
+      case 'threeYearPrognosis':
+        blankFields = {
+          ...blankFields,
+          threeYearPrognosis: eventTarget.checked,
+        };
+        setSearchWord({ ...searchWord, blankFields });
+        break;
+
+      case 'fiveYearPrognosis':
+        blankFields = {
+          ...blankFields,
+          fiveYearPrognosis: eventTarget.checked,
+        };
+        setSearchWord({ ...searchWord, blankFields });
+        break;
+
+      case 'showProgressAndRecurrence':
+        setSearchWord({
+          ...searchWord,
+          showProgressAndRecurrence: eventTarget.checked,
+        });
+        setShowProgressAndRecurrence(eventTarget.checked, search);
+        break;
+      default:
+    }
+  };
+
+  const changeListColumn = (isDetail: boolean) => {
+    if (isDetail) {
+      setListMode(['', 'blue']);
+      setNoSearch('hidden');
+      setSearch('table-cell');
+      setShowProgressAndRecurrence(
+        searchWord.showProgressAndRecurrence,
+        'table-cell'
+      );
+    } else {
+      setListMode(['blue', '']);
+      setNoSearch('table-cell');
+      setSearch('hidden');
+      setShowProgressAndRecurrence(
+        searchWord.showProgressAndRecurrence,
+        'hidden'
+      );
+    }
+  };
+
+  const submit = async (type: string) => {
+    const token = localStorage.getItem('token');
+    if (token == null) {
+      navigate('/login');
+      return;
     }
 
-    const changeView = (type: string) => {
-        switch (type) {
-            case "close":
-                setSearchFormOpen('hidden');
-                setSimpleSearchButtons('hidden');
-                setDetailSearchOpen('hidden');
-                break;
+    const makeQueryString = () => {
+      let query = `type=${type}`;
+      query += `&treatmentStartYear=${encodeURIComponent(
+        searchWord.treatmentStartYear
+      )}`;
+      query += `&cancerType=${encodeURIComponent(searchWord.cancerType)}`;
+      query += `&showOnlyTumorRegistry=${encodeURIComponent(
+        searchWord.showOnlyTumorRegistry
+      )}`;
 
-            case "simpleSearch":
-                setSearchFormOpen('search-form-opened block');
-                setSimpleSearchButtons('block');
-                setDetailSearchOpen('hidden');
-                break;
-
-            case "detailSearch":
-                setSearchFormOpen('search-form-opened block');
-                setSimpleSearchButtons('hidden');
-                setDetailSearchOpen('detail-form-opened block');
-                break;
-
-            default:
-        }
-    }
-
-    const handleSearchCondition = (event: any) => {
-        let blankFields = searchWord.blankFields;
-        switch (event.target.name) {
-            case "registrationYear":
-                setSearchWord({ ...searchWord, registrationYear: event.target.value });
-                break;
-
-            case "cancetType":
-                setSearchWord({ ...searchWord, cancetType: event.target.value });
-                break;
-
-            case "showOnlyTumorRegistry":
-                setSearchWord({ ...searchWord, showOnlyTumorRegistry: event.target.checked });
-                break;
-
-            case "checkOfTreatmentStartDate":
-                setSearchWord({ ...searchWord, checkOfTreatmentStartDate: event.target.checked });
-                break;
-
-            case "startOfTreatmentStartDate":
-                setSearchWord({ ...searchWord, startOfTreatmentStartDate: event.target.value });
-                break;
-
-            case "endOfTreatmentStartDate":
-                setSearchWord({ ...searchWord, endOfTreatmentStartDate: event.target.value });
-                break;
-
-            case "checkOfBlankFields":
-                setSearchWord({ ...searchWord, checkOfBlankFields: event.target.checked });
-                break;
-
-            case "advancedStage":
-                blankFields = { ...blankFields, advancedStage: event.target.checked };
-                setSearchWord({ ...searchWord, blankFields: blankFields });
-                break;
-
-            case "pathlogicalDiagnosis":
-                blankFields = { ...blankFields, pathlogicalDiagnosis: event.target.checked };
-                setSearchWord({ ...searchWord, blankFields: blankFields });
-                break;
-
-            case "initialTreatment":
-                blankFields = { ...blankFields, initialTreatment: event.target.checked };
-                setSearchWord({ ...searchWord, blankFields: blankFields });
-                break;
-
-            case "copilacations":
-                blankFields = { ...blankFields, copilacations: event.target.checked };
-                setSearchWord({ ...searchWord, blankFields: blankFields });
-                break;
-
-            case "threeYearPrognosis":
-                blankFields = { ...blankFields, threeYearPrognosis: event.target.checked };
-                setSearchWord({ ...searchWord, blankFields: blankFields });
-                break;
-
-            case "fiveYearPrognosis":
-                blankFields = { ...blankFields, fiveYearPrognosis: event.target.checked };
-                setSearchWord({ ...searchWord, blankFields: blankFields });
-                break;
-
-            case "showProgressAndRecurrence":
-                setSearchWord({ ...searchWord, showProgressAndRecurrence: event.target.checked });
-                setShowProgressAndRecurrence(event.target.checked, search);
-                break;
-            default:
-
-        }
-        console.log(searchWord);
-    }
-
-    const changeListColumn = (isDetail: boolean) => {
-        if (isDetail) {
-            setListMode(['', 'blue']);
-            setNoSearch('hidden');
-            setSearch('table-cell');
-            setShowProgressAndRecurrence(searchWord.showProgressAndRecurrence, 'table-cell');
-        } else {
-            setListMode(['blue', '']);
-            setNoSearch('table-cell');
-            setSearch('hidden');
-            setShowProgressAndRecurrence(searchWord.showProgressAndRecurrence, 'hidden');
-        }
-    }
-
-    const submit = (type: string) => {
-        const token = localStorage.getItem("token");
-        if (token == null) {
-            navigate("/login");
-            return;
+      if (type === 'detail') {
+        if (searchWord.checkOfDiagnosisDate) {
+          query += `&startOfDiagnosisDate=${encodeURIComponent(
+            searchWord.startOfDiagnosisDate
+          )}`;
+          query += `&endOfDiagnosisDate=${encodeURIComponent(
+            searchWord.endOfDiagnosisDate
+          )}`;
         }
 
-        const param: string = makeQueryString(type);
-
-        axios.get(Const.END_POINT + "search?" + param, { headers: { token: token } })
-            .then((response) => {
-                (response);
-                console.log(response.data);
-                // ★TODO: 仮データ受信
-                setUserListJson('{"data": [{"patientId": "1122-34","patientName": "テスト 検索1","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2022-02-05","lastUpdate": "2022-03-04","diagnosis": "子宮頸がん","advancedStage": "IA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "ope","copilacations": "gou","progress": "keika","postRelapseTreatment": "","threeYearPrognosis": "3","fiveYearPrognosis": "","status": ["ope","gou","3"]},{"patientId": "1122-345","patientName": "テスト 検索2","age": 35,"registedCancerGroup": "子宮頸がん","startDate": "2021-02-05","lastUpdate": "2021-03-04","diagnosis": "子宮頸がん","advancedStage": "AA","pathlogicalDiagnosis": "角化型扁平上皮癌","initialTreatment": "","copilacations": "","progress": "","postRelapseTreatment": "sai","threeYearPrognosis": "","fiveYearPrognosis": "5","status": ["sai","5"]}]}');
-                navigate("/patients?" + param);
-            }).catch((err) => {
-                navigate("/login");
-            });
-    }
-
-    const makeQueryString = (type: string) => {
-        let query = "type=" + type;
-        query += "&registrationYear=" + encodeURIComponent(searchWord.registrationYear);
-        query += "&cancetType=" + encodeURIComponent(searchWord.cancetType);
-        query += "&showOnlyTumorRegistry=" + encodeURIComponent(searchWord.showOnlyTumorRegistry);
-        console.log("makequery");
-        console.log(type);
-        console.log(searchWord.checkOfTreatmentStartDate);
-
-        console.log(searchWord.checkOfBlankFields);
-
-        if (type == "detail") {
-            if (searchWord.checkOfTreatmentStartDate) {
-                query += "&startOfTreatmentStartDate=" + encodeURIComponent(searchWord.startOfTreatmentStartDate);
-                query += "&endOfTreatmentStartDate=" + encodeURIComponent(searchWord.endOfTreatmentStartDate);
-            }
-
-            if (searchWord.checkOfBlankFields) {
-                query += "&advancedStage=" + encodeURIComponent(searchWord.blankFields.advancedStage);
-                query += "&pathlogicalDiagnosis=" + encodeURIComponent(searchWord.blankFields.pathlogicalDiagnosis);
-                query += "&initialTreatment=" + encodeURIComponent(searchWord.blankFields.initialTreatment);
-                query += "&copilacations=" + encodeURIComponent(searchWord.blankFields.copilacations);
-                query += "&threeYearPrognosis=" + encodeURIComponent(searchWord.blankFields.threeYearPrognosis);
-                query += "&fiveYearPrognosis=" + encodeURIComponent(searchWord.blankFields.fiveYearPrognosis);
-            }
+        if (searchWord.checkOfBlankFields) {
+          query += `&advancedStage=${encodeURIComponent(
+            searchWord.blankFields.advancedStage
+          )}`;
+          query += `&pathlogicalDiagnosis=${encodeURIComponent(
+            searchWord.blankFields.pathlogicalDiagnosis
+          )}`;
+          query += `&initialTreatment=${encodeURIComponent(
+            searchWord.blankFields.initialTreatment
+          )}`;
+          query += `&copilacations=${encodeURIComponent(
+            searchWord.blankFields.copilacations
+          )}`;
+          query += `&threeYearPrognosis=${encodeURIComponent(
+            searchWord.blankFields.threeYearPrognosis
+          )}`;
+          query += `&fiveYearPrognosis=${encodeURIComponent(
+            searchWord.blankFields.fiveYearPrognosis
+          )}`;
         }
+      }
+      return query;
+    };
 
-        console.log(query);
-        return query;
-    }
+    const param: string = makeQueryString();
 
-    return (
-        <div className='relative'>
-            <Navbar collapseOnSelect fixedTop>
-                <Navbar.Header>
-                    <Navbar.Brand>
-                        <img src="./image/logo.png" alt="JESGO" />
-                    </Navbar.Brand>
-                    <Navbar.Toggle />
-                </Navbar.Header>
-                <Navbar.Collapse>
-                    <Nav>
-                        <NavItem eventKey={1} href="/patients#" className={listMode[0]} onClick={() => changeListColumn(false)}>
-                            患者リスト表示
-                        </NavItem>
-                        <NavItem eventKey={2} href="/patients#" className={listMode[1]} onClick={() => changeListColumn(true)}>
-                            腫瘍登録管理表示
-                        </NavItem>
-                    </Nav>
-                    <Nav pullRight>
-                        <Navbar.Text>
-                            ○○病院
-                        </Navbar.Text>
-                        <Navbar.Text>
-                            田中太郎
-                        </Navbar.Text>
-                        <NavItem eventKey={3} href="#">
-                            <span className="glyphicon glyphicon-cog" aria-hidden="true"></span>
-                        </NavItem>
-                    </Nav>
-                </Navbar.Collapse>
-            </Navbar>
-            <div className="page-menu">
-                <div className="search-form-closed flex">
-                    <ButtonToolbar>
-                        <ButtonGroup>
-                            <Button onClick={() => changeView('simpleSearch')}>
-                                <Glyphicon glyph="search" />
-                            </Button>
-                            <Button onClick={() => changeView('detailSearch')}>
-                                <Glyphicon glyph="eye-open" />
-                            </Button>
-                        </ButtonGroup>
-                    </ButtonToolbar>
-                    <div className='spacer10'></div>
-                    <Button bsStyle="primary" href={"/registration"}>新規作成</Button>
-                </div>
-            </div>
-            <div className="search-form-outer">
-                <Jumbotron className={searchFormOpen}>
-                    <div className='flex'>
-                        登録年次：
-                        <FormControl name="registrationYear" onChange={handleSearchCondition} componentClass="select">
-                            <option value="2022">2022年</option>
-                            <option value="2021">2021年</option>
-                            <option value="2020">2020年</option>
-                        </FormControl>
-                        <div className='spacer10'></div>
-                        がん種：
-                        <FormControl name="cancetType" onChange={handleSearchCondition} componentClass="select">
-                            <option value="all">すべて</option>
-                            <option value="cervical">子宮頸がん</option>
-                        </FormControl>
-                        <div className='spacer10'></div>
-                        <Checkbox name="showOnlyTumorRegistry" onChange={handleSearchCondition} inline>腫瘍登録対象のみ表示</Checkbox>
-                        <div className='close-icon'><a href="#" onClick={() => changeView('close')}><span className="glyphicon glyphicon-remove" aria-hidden="true"></span></a></div>
-                    </div>
-                    <div className={simpleSearchButtons}>
-                        <a href="#" onClick={() => changeView('detailSearch')}><span className="glyphicon glyphicon-eye-open" aria-hidden="true"></span>詳細表示設定</a>
-                        <div className='spacer10'></div>
-                        <div className='spacer10'></div>
-                        <a href="#" onClick={() => submit("search")}><span className="glyphicon glyphicon-search" aria-hidden="true"></span>検索</a>
-                    </div>
-                    <div className={detailSearchOpen}>
-                        <div className='detail-column'>
-                            <span className="detail-setting-icon glyphicon glyphicon-eye-open" aria-hidden="true"></span><span className='detail-setting-text'>詳細表示設定：</span>
-                        </div>
-                        <div className='detail-column'>
-                            <Checkbox name="checkOfTreatmentStartDate" onChange={handleSearchCondition} inline><span className='detail-setting-content'>初回治療開始日：</span></Checkbox>
-                            <FormControl name="startOfTreatmentStartDate" onChange={handleSearchCondition} componentClass="select">
-                                <option value="202101">2021-01</option>
-                                <option value="202102">2021-02</option>
-                                <option value="202103">2021-03</option>
-                            </FormControl>
-                            ～
-                            <FormControl name="endOfTreatmentStartDate" onChange={handleSearchCondition} componentClass="select">
-                                <option value="202110">2021-10</option>
-                                <option value="202111">2021-11</option>
-                                <option value="202112">2021-12</option>
-                            </FormControl>
-                        </div>
-                        <div className='detail-column'>
-                            <Checkbox name="checkOfBlankFields" onChange={handleSearchCondition} inline><span className='detail-setting-content'>未入力項目で絞り込み：</span></Checkbox>
-                            <Checkbox name="advancedStage" onChange={handleSearchCondition} inline>進行期</Checkbox>
-                            <Checkbox name="pathlogicalDiagnosis" onChange={handleSearchCondition} inline>病理診断</Checkbox>
-                            <Checkbox name="initialTreatment" onChange={handleSearchCondition} inline>初回治療</Checkbox>
-                            <Checkbox name="copilacations" onChange={handleSearchCondition} inline>合併症</Checkbox>
-                            <Checkbox name="threeYearPrognosis" onChange={handleSearchCondition} inline>3年予後</Checkbox>
-                            <Checkbox name="fiveYearPrognosis" onChange={handleSearchCondition} inline>5年予後</Checkbox>
-                        </div>
-                        <div className='detail-column flex'>
-                            <Checkbox name="showProgressAndRecurrence" onChange={handleSearchCondition} inline><span className='detail-setting-content'>経過・再発情報を表示する</span></Checkbox>
-                            <Button bsStyle="primary" onClick={() => submit('detail')}>表示更新</Button>
-                        </div>
-                    </div>
-                </Jumbotron>
-
-            </div>
-
-            <div className='search-result'>
-                <Table striped className='patients'>
-                    <tr>
-                        <th>患者ID</th>
-                        <th>患者名</th>
-                        <th>年齢</th>
-                        <th className={search}>登録がん種</th>
-                        <th className={search}>初回治療開始日</th>
-                        <th className={noSearch}>初回治療開始日<br />／最終更新日</th>
-                        <th className={noSearch}>診断</th>
-                        <th>進行期</th>
-                        <th className={search}>病理診断</th>
-                        <th className={search}>初回治療</th>
-                        <th className={search}>合併症</th>
-                        <th className={progressAndRecurrenceColumn}>経過</th>
-                        <th className={progressAndRecurrenceColumn}>再発後治療</th>
-                        <th className={search}>3年予後</th>
-                        <th className={search}>5年予後</th>
-                        <th className={noSearch}>ステータス</th>
-                        <th>編集/削除</th>
-                    </tr>
-                    <UserTables.makeTable userListJson={userListJson} search={search} noSearch={noSearch} progressAndRecurrenceColumn={progressAndRecurrenceColumn} />
-                </Table>
-            </div>
-
-        </div>
+    // 患者情報取得APIを呼ぶ
+    const returnApiObject = await apiAccess(
+      METHOD_TYPE.GET,
+      `patientlist?${param}`
     );
-}
+
+    if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      setUserListJson(JSON.stringify(returnApiObject.body));
+      navigate(`/Patients?${param}`);
+    } else {
+      navigate('/login');
+    }
+  };
+
+  return (
+    <div className="relative">
+      <Navbar collapseOnSelect fixedTop>
+        <Navbar.Header>
+          <Navbar.Brand>
+            <img src="./image/logo.png" alt="JESGO" className="img" />
+          </Navbar.Brand>
+          <Navbar.Toggle />
+        </Navbar.Header>
+        <Navbar.Collapse>
+          <Nav>
+            <NavItem
+              eventKey={1}
+              href="#"
+              className={`header-text ${listMode[0]}`}
+              onClick={() => changeListColumn(false)}
+            >
+              患者リスト表示
+            </NavItem>
+            <NavItem
+              eventKey={2}
+              href="#"
+              className={`header-text ${listMode[1]}`}
+              onClick={() => changeListColumn(true)}
+            >
+              腫瘍登録管理表示
+            </NavItem>
+          </Nav>
+          <Nav pullRight>
+            <Navbar.Text>{facilityName}</Navbar.Text>
+            <NavItem>
+              <UserMenu title={userName} i={0} />
+            </NavItem>
+            <NavItem>
+              <SystemMenu title="設定" i={0} />
+            </NavItem>
+            <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
+          </Nav>
+        </Navbar.Collapse>
+      </Navbar>
+      <div className="page-menu">
+        <div className="search-form-closed flex">
+          <ButtonToolbar style={{ marginTop: '14px', marginBottom: '14px' }}>
+            <ButtonGroup>
+              <Button onClick={() => changeView('simpleSearch')}>
+                <Glyphicon glyph="search" />
+              </Button>
+              <Button onClick={() => changeView('detailSearch')}>
+                <Glyphicon glyph="eye-open" />
+              </Button>
+            </ButtonGroup>
+          </ButtonToolbar>
+          <div className="spacer10" />
+          {localStorage.getItem('is_add_roll') === 'true' && (
+            <Button
+              bsStyle="primary"
+              href="/registration"
+              className="normal-button"
+            >
+              新規作成
+            </Button>
+          )}
+          <CSVLink
+            data={csvData}
+            headers={csvHeader}
+            // eslint-disable-next-line
+            onClick={() => confirm('CSVファイルをダウンロードしますか？')}
+          >
+            <Button bsStyle="success" className="normal-button">
+              CSV作成
+            </Button>
+          </CSVLink>
+        </div>
+      </div>
+      <div className="search-form-outer">
+        <Jumbotron className={searchFormOpen}>
+          <div className="flex">
+            初回治療開始日：
+            <FormControl
+              name="treatmentStartYear"
+              onChange={handleSearchCondition}
+              componentClass="select"
+            >
+              <option value="all">すべて</option>
+              {makeSelectDate(UNIT_TYPE.YEAR, new Date(), 3).map(
+                (date: string) => (
+                  <option value={date}>{`${date}年`}</option>
+                )
+              )}
+            </FormControl>
+            <div className="spacer10" />
+            がん種：
+            <FormControl
+              name="cancerType"
+              onChange={handleSearchCondition}
+              componentClass="select"
+            >
+              <option value="all">すべて</option>
+              <option value="cervical">子宮頸がん</option>
+              <option value="endometrial">子宮体がん</option>
+              <option value="ovarian">卵巣がん</option>
+            </FormControl>
+            <div className="spacer10" />
+            <Checkbox
+              name="showOnlyTumorRegistry"
+              onChange={handleSearchCondition}
+              inline
+            >
+              腫瘍登録対象のみ表示
+            </Checkbox>
+            <div className="close-icon">
+              <a href="#" onClick={() => changeView('close')}>
+                <span
+                  className="glyphicon glyphicon-remove"
+                  aria-hidden="true"
+                />
+              </a>
+            </div>
+          </div>
+          <div className={simpleSearchButtons}>
+            <a href="#" onClick={() => changeView('detailSearch')}>
+              <span
+                className="glyphicon glyphicon-eye-open"
+                aria-hidden="true"
+              />
+              詳細表示設定
+            </a>
+            <div className="spacer10" />
+            <div className="spacer10" />
+            <a href="#" onClick={() => submit('search')}>
+              <span className="glyphicon glyphicon-search" aria-hidden="true" />
+              検索
+            </a>
+          </div>
+          <div className={detailSearchOpen}>
+            <div className="detail-column">
+              <span
+                className="detail-setting-icon glyphicon glyphicon-eye-open"
+                aria-hidden="true"
+              />
+              <span className="detail-setting-text">詳細表示設定：</span>
+            </div>
+            <div className="detail-column">
+              <Checkbox
+                name="checkOfDiagnosisDate"
+                onChange={handleSearchCondition}
+                inline
+              >
+                <span className="detail-setting-content">診断日：</span>
+              </Checkbox>
+              <FormControl
+                name="startOfDiagnosisDate"
+                onChange={handleSearchCondition}
+                componentClass="select"
+              >
+                {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
+                  (date: string) => (
+                    <option value={`${date}`}>{date}</option>
+                  )
+                )}
+              </FormControl>
+              ～
+              <FormControl
+                name="endOfDiagnosisDate"
+                onChange={handleSearchCondition}
+                componentClass="select"
+              >
+                {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
+                  (date: string) => (
+                    <option value={`${date}`}>{date}</option>
+                  )
+                )}
+              </FormControl>
+            </div>
+            <div className="detail-column">
+              <Checkbox
+                name="checkOfBlankFields"
+                onChange={handleSearchCondition}
+                inline
+              >
+                <span className="detail-setting-content">
+                  未入力項目で絞り込み：
+                </span>
+              </Checkbox>
+              <Checkbox
+                name="advancedStage"
+                onChange={handleSearchCondition}
+                inline
+              >
+                進行期
+              </Checkbox>
+              <Checkbox
+                name="pathlogicalDiagnosis"
+                onChange={handleSearchCondition}
+                inline
+              >
+                診断
+              </Checkbox>
+              <Checkbox
+                name="initialTreatment"
+                onChange={handleSearchCondition}
+                inline
+              >
+                初回治療
+              </Checkbox>
+              <Checkbox
+                name="copilacations"
+                onChange={handleSearchCondition}
+                inline
+                disabled
+              >
+                合併症
+              </Checkbox>
+              <Checkbox
+                name="threeYearPrognosis"
+                onChange={handleSearchCondition}
+                inline
+                disabled
+              >
+                3年予後
+              </Checkbox>
+              <Checkbox
+                name="fiveYearPrognosis"
+                onChange={handleSearchCondition}
+                inline
+                disabled
+              >
+                5年予後
+              </Checkbox>
+            </div>
+            <div className="detail-column flex">
+              <Button bsStyle="primary" onClick={() => submit('detail')}>
+                表示更新
+              </Button>
+            </div>
+          </div>
+        </Jumbotron>
+      </div>
+
+      <div className={`search-result ${tableMode}`}>
+        <UserTables
+          userListJson={userListJson}
+          search={search}
+          noSearch={noSearch}
+          setUserListJson={setUserListJson}
+        />
+      </div>
+    </div>
+  );
+};
+export default Patients;

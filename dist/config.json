@@ -1,0 +1,5 @@
+{
+    "config": {
+        "endPointUrl": "http://localhost:3000/"
+    }
+}

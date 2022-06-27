@@ -42,6 +42,24 @@
                     "type": "string",
                     "pattern": "^[0-9]+(\u002e[0-9]+).$"
                 },
+                "jesgo:error": {
+                    "$comment": "【スキーマ属性】 スクリプトなどのvalidationによって生成されたエラーメッセージを保持する.編集・保存によりユーザへの確認後に削除される.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "$comment": "ドキュメント全体に対するエラーメッセージ"
+                            },
+                            {
+                                "type": "object",
+                                "$comment": "propertyName: stringでのエラーメッセージの形式でフィールドに対してエラーメッセージを設定する",
+                                "minProperties": 1
+                            }
+                        ]
+                    }
+                },
                 "jesgo:parentschema": {
                     "$comment": "【スキーマ属性】 上位となるスキーマの$idを指定する.",
                     "type": "array",
@@ -172,9 +190,9 @@
                     ]
                 },
                 "jesgo:ui:subschemastyle": {
-                    "$comment": "【フィールド属性/UI】 サブスキーマの展開方法を指定する.",
+                    "$comment": "【フィールド属性/UI】 サブスキーマ（配列やオブジェクトプロパティ）の展開方法を指定する.",
                     "type": "string",
-                    "defalut": "row",
+                    "defalut": "noindent",
                     "oneOf": [
                         {
                             "const": "row",
@@ -187,6 +205,10 @@
                         {
                             "const": "inline",
                             "$comment": "入力カラムに行方向に展開"
+                        },
+                        {
+                            "const": "tab",
+                            "$comment": "ドキュメントレベルのプロパティとして指定した場合のみ有効、ドキュメントの直下にあたる子ドキュメントをタブとして展開する"
                         }
                     ]
                 },
@@ -194,12 +216,13 @@
                     "$comment": "【フィールド属性/UI】 文字列入力を複数行入力が可能なフォームとして展開する.",
                     "anyOf": [
                         {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "$comment": "未入力の際はデフォルトの3行を入力領域として用意する. 入力がある場合は全ての行を表示する."
                         },
                         {
                             "type": "integer",
                             "defalut": 3,
-                            "minimum": 1
+                            "$comment": "指定行数を超えて入力された場合は全ての行を表示する. 0はデフォルトと同義. 負の数が与えられた場合は,その絶対値の表示行数を用意してスクロールで表示する."
                         }
                     ],
                     "defalut": false

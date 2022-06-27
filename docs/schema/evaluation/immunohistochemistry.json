@@ -1,6 +1,11 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluation/immunohistochemistry",
+    "jesgo:version": "1.0",
+    "jesgo:parentschema": [
+        "/schema/surveillance"
+    ],
+    "jesgo:unique": true,
     "type": "object",
     "title": "免疫組織化学",
     "properties": {

@@ -1,8 +1,10 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/operation",
+    "jesgo:version": "1.0",
     "type": "object",
     "title": "手術療法",
+    "jesgo:ui:subschemastyle": "tab",
     "properties": {
         "手術日": {
             "type": "string",
@@ -10,7 +12,7 @@
             "jesgo:set": "eventdate"
         },
         "手術時間": {
-            "description": "加刀~終刀までの時間(分)",
+            "description": "加刀~終刀までの時間(分) もしくは 時:分 で入力",
             "oneOf": [
                 {
                     "type": "integer",
@@ -24,7 +26,7 @@
             ]
         },
         "出血量": {
-            "description": "加刀~終刀までの出血量(g)",
+            "description": "加刀~終刀までの出血量(g) 不明の時は 不明 と入力",
             "oneOf": [
                 {
                     "type": "integer",
@@ -33,46 +35,59 @@
                 },
                 {
                     "type": "string",
-                    "const": "不明"
+                    "enum": [
+                        "不明"
+                    ]
                 }
             ]
         },
         "術者": {
             "type": "array",
-            "description": "筆頭に執刀医、以下を助手として入力",
             "items": {
-                "oneOf": [
-                    {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "title": "名前",
-                                "type": "string"
-                            },
-                            "property": {
-                                "title": "資格",
-                                "type": "string",
-                                "enum": [
-                                    "婦人科腫瘍専門医",
-                                    "産婦人科内視鏡技術認定医",
-                                    "婦人科腫瘍専門医+産婦人科内視鏡技術認定医",
-                                    "産婦人科専門医",
-                                    "その他",
-                                    "不明"
-                                ]
-                            }
-                        }        
+                "type": "object",
+                "jesgo:ui:subschemastyle": "inline",
+                "properties": {
+                    "役割": {
+                        "type": "string",
+                        "enum": [
+                            "術者",
+                            "指導",
+                            "助手",
+                            "第一助手",
+                            "第二助手",
+                            "第三助手～"
+                        ]
                     },
-                    {
+                    "名前": {
                         "type": "string"
                     }
-                ]
+                }
             }
+        },
+        "手術完遂度": {
+            "type": "string",
+            "enum": [
+                "完全摘出",
+                "不完全摘出（残存腫瘍径が 1cm未満）",
+                "不完全摘出（残存腫瘍径が 1cm～2cm）",
+                "不完全摘出（2cmをこえる）",
+                "不明",
+                "施行せず"
+            ]
+        },
+        "合併症の有無": {
+            "type": "string",
+            "enum": [
+                "なし",
+                "あり"
+            ]
         }
-
     },
     "jesgo:subschema": [
-        "/schema/treatment/operation_procedures",
-        "/schema/treatment/operation_adverse_events"
+        "/schema/treatment/operation_procedures"
+    ],
+    "jesgo:childschema": [
+        "/schema/treatment/operation_adverse_events",
+        "/schema/treatment/blood_transfusion"
     ]
 }

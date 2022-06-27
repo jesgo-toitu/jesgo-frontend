@@ -1,0 +1,10 @@
+.search-result-staff {
+  width: 96%;
+  margin: 5rem 2%;
+  margin-top: 9rem;
+}
+
+.staff-table tbody {
+  overflow-y: auto;
+  height: calc(100vh - 17.2rem);
+}

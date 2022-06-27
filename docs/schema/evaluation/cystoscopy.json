@@ -1,9 +1,13 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/cystoscopy",
+    "jesgo:version": "1.0",
+    "jesgo:parentschema": [
+        "/schema/surveillance"
+    ],
+    "jesgo:unique": true,
     "type": "object",
     "title": "膀胱鏡",
-    "jesgo:unique": true,
     "properties": {
         "検査実施日": {
             "type": "string",

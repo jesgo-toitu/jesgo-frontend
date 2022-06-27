@@ -1,98 +1,194 @@
-import React, { useState } from 'react';
+// ★TODO: JSXの属性を修正する
+/* eslint-disable jsx-a11y/label-has-associated-control */
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from "axios";
-import "./Login.css"
-import { Const } from '../common/Const';
+import { useDispatch } from 'react-redux';
+import './Login.css';
+import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
+import { settingsFromApi } from './Settings';
 
-export interface Jwt {
-    token: string,
+export interface localStorageObject {
+  user_id: number;
+  display_name: string;
+  token: string;
+  reflesh_token: string;
+  roll_id: number;
+  is_view_roll: boolean;
+  is_add_roll: boolean;
+  is_edit_roll: boolean;
+  is_remove_roll: boolean;
+  is_data_manage_roll: boolean;
+  is_system_manage_roll: boolean;
 }
 
 export const Login = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const navigate = useNavigate();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-    const submit = async () => {
-        console.log('submit:');
+  const [facilityName, setFacilityName] = useState('');
 
-        let result: Jwt | null = null;
-        const loginInfo = { name: username, password: password };
-        axios.post(Const.END_POINT + "login/", loginInfo)
-            .then((response) => {
-                // エラーが返ってきた時
-                if (response.data.token == "error") {
-                    alert(`ログインに失敗しました。ユーザ名かパスワードが間違っています。`);
-                    return;
-                }
+  useEffect(() => {
+    const f = async () => {
+      // 設定情報取得APIを呼ぶ
+      const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
 
-                localStorage.setItem("token", response.data.token);
-                navigate("/patients");
-                return;
+      // 正常に取得できた場合施設名を設定
+      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = returnApiObject.body as settingsFromApi;
+        localStorage.setItem('alignment', returned.hisid_alignment);
+        localStorage.setItem('digit', returned.hisid_digit);
+        localStorage.setItem('alphabet_enable', returned.hisid_alphabet_enable);
+        localStorage.setItem('hyphen_enable', returned.hisid_hyphen_enable);
+        setFacilityName(returned.facility_name);
+      }
+    };
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
+  }, []);
 
-            }).catch((err) => {
-                alert(`ログインに失敗しました。ユーザ名かパスワードが間違っています。`);
-                return;
-            });
-
-    }
-
-    // formを使うとブラウザによるパスワード保存の確認あり。
-    const onSubmit = (event: React.ChangeEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        submit();
-    }
-
-    const onChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {
-        event.preventDefault();
-        const value = event.currentTarget.value;
-        setUsername(value);
-    }
-
-    const onChangePassword = (event: React.ChangeEvent<HTMLInputElement>) => {
-        event.preventDefault();
-        const value = event.currentTarget.value;
-        setPassword(value);
-    }
-
-    return (
-        <div className='login-box'>
-            <div className='login-left'></div>
-            <div className='login-right'>
-                <div className='login-inputarea'>
-                    <div className='login-inputarea-title'>
-                        <p>ログイン</p>
-                        <p className='ml40'>○○病院</p>
-                    </div>
-                    <div className='login-inputarea-inner'>
-                        <form onSubmit={onSubmit}>
-                            <div className='flex'>
-                                <div>
-                                    <div className='mb10'>
-                                        <label className='login-label'>
-                                            ユーザ名
-                                        </label>
-                                        <div>
-                                            <input type='text' className='login-input' placeholder='ユーザ名を入力してください' value={username} onChange={onChangeName} />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className='login-label'>
-                                            パスワード
-                                        </label>
-                                        <div>
-                                            <input type='password' className='login-input' placeholder='パスワードを入力してください' value={password} onChange={onChangePassword} />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className='login-button-outer'>
-                                    <button type='submit' className='login-button'>ログイン</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div >
+  const submit = async () => {
+    const loginInfo = { name: username, password };
+    // ログインAPIを呼ぶ
+    const returnApiObject = await apiAccess(
+      METHOD_TYPE.POST,
+      `login`,
+      loginInfo
     );
-}
+    if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      const localStorageObj = returnApiObject.body as localStorageObject;
+      localStorage.setItem('token', localStorageObj.token);
+      localStorage.setItem('reflesh_token', localStorageObj.reflesh_token);
+      localStorage.setItem('user_id', localStorageObj.user_id.toString());
+      localStorage.setItem('display_name', localStorageObj.display_name);
+      localStorage.setItem('roll_id', localStorageObj.roll_id.toString());
+      localStorage.setItem(
+        'is_view_roll',
+        localStorageObj.is_view_roll.toString()
+      );
+      localStorage.setItem(
+        'is_add_roll',
+        localStorageObj.is_add_roll.toString()
+      );
+      localStorage.setItem(
+        'is_edit_roll',
+        localStorageObj.is_edit_roll.toString()
+      );
+      localStorage.setItem(
+        'is_remove_roll',
+        localStorageObj.is_remove_roll.toString()
+      );
+      localStorage.setItem(
+        'is_data_manage_roll',
+        localStorageObj.is_data_manage_roll.toString()
+      );
+      localStorage.setItem(
+        'is_system_manage_roll',
+        localStorageObj.is_system_manage_roll.toString()
+      );
+
+      // スキーマ取得処理
+      const returnSchemaApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `getJsonSchema`
+      );
+
+      if (returnSchemaApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        dispatch({
+          type: 'SCHEMA',
+          schemaDatas: returnSchemaApiObject.body,
+        });
+      }
+
+      // ルートスキーマID取得処理
+      const returnRootSchemaIdsApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `getRootSchemaIds`
+      );
+      if (
+        returnRootSchemaIdsApiObject.statusNum === RESULT.NORMAL_TERMINATION
+      ) {
+        dispatch({
+          type: 'ROOT',
+          rootSchemas: returnRootSchemaIdsApiObject.body,
+        });
+      }
+      navigate('/Patients');
+    } else if (returnApiObject.statusNum === RESULT.NETWORK_ERROR) {
+      // eslint-disable-next-line no-alert
+      alert(`サーバーへの接続に失敗しました。`);
+    } else {
+      // eslint-disable-next-line no-alert
+      alert(`ログインに失敗しました。ユーザ名かパスワードが間違っています。`);
+    }
+  };
+
+  const onSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await submit();
+  };
+
+  const onChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const value = event.currentTarget.value;
+    setUsername(value);
+  };
+
+  const onChangePassword = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    const value = event.currentTarget.value;
+    setPassword(value);
+  };
+
+  return (
+    <div className="login-box">
+      <div className="login-left" />
+      <div className="login-right">
+        <div className="login-inputarea">
+          <div className="login-inputarea-title">
+            <p>ログイン</p>
+            <p className="ml40">{facilityName}</p>
+          </div>
+          <div className="login-inputarea-inner">
+            <form onSubmit={onSubmit}>
+              <div className="flex">
+                <div>
+                  <div className="mb10">
+                    <label className="login-label">ユーザ名</label>
+                    <div>
+                      <input
+                        type="text"
+                        className="login-input"
+                        placeholder="ユーザ名を入力してください"
+                        value={username}
+                        onChange={onChangeName}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="login-label">パスワード</label>
+                    <div>
+                      <input
+                        type="password"
+                        className="login-input"
+                        placeholder="パスワードを入力してください"
+                        value={password}
+                        onChange={onChangePassword}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="login-button-outer">
+                  <button type="submit" className="login-button">
+                    ログイン
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -60,7 +60,7 @@
                                 ]
                             }
                         },
-                        "jesgo:ui:subschemastyle": "column"
+                        "jesgo:ui:subschemastyle": "inline"
                     }
                 }
             }
@@ -70,6 +70,7 @@
         "radiotherapy": {
             "$id": "#radiotherapy",
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "照射開始日": {
                     "type": "string",
@@ -95,7 +96,7 @@
                 },
                 "核種": {
                     "type": "string",
-                    "jesgo:when": {
+                    "jesgo:ui:visibleWhen": {
                         "properties": {
                             "照射方法": {
                                 "const": "核医学治療"
@@ -107,10 +108,10 @@
         },
         "drugs": {
             "$id": "#drugs",
+            "type": "string",
             "oneOf": [
                 {
                     "title": "白金製剤",
-                    "type": "string",
                     "enum": [
                         "シスプラチン",
                         "カルボプラチン",
@@ -120,7 +121,6 @@
                 },
                 {
                     "title": "アルキル化薬",
-                    "type": "string",
                     "enum": [
                         "シクロホスファミド",
                         "イホスファミド",
@@ -134,7 +134,6 @@
                 },
                 {
                     "title": "微小管阻害薬",
-                    "type": "string",
                     "enum": [
                         "パクリタキセル",
                         "ドセタキセル",
@@ -145,7 +144,6 @@
                 },
                 {
                     "title": "トポイソメラーぜ阻害薬",
-                    "type": "string",
                     "enum": [
                         "イリノテカン",
                         "ノギテカン",
@@ -155,7 +153,6 @@
                 },
                 {
                     "title": "代謝拮抗薬",
-                    "type": "string",
                     "enum": [
                         "ゲムシタビン",
                         "メトトレキサート",
@@ -170,7 +167,6 @@
                 },
                 {
                     "title": "抗がん性抗生物質",
-                    "type": "string",
                     "enum": [
                         "ドキソルビシン",
                         "リポソーマルドキソルビシン",
@@ -188,7 +184,6 @@
                 },
                 {
                     "title": "分子標的治療",
-                    "type": "string",
                     "enum": [
                         "血管新生阻害薬",
                         "免疫チェックポイント阻害薬",
@@ -198,14 +193,12 @@
                 },
                 {
                     "title": "血管新生阻害薬",
-                    "type": "string",
                     "enum": [
                         "ベバシズマブ"
                     ]
                 },
                 {
                     "title": "免疫チェックポイント阻害薬",
-                    "type": "string",
                     "enum": [
                         "ニボルブマブ",
                         "ペムブロリズマブ",
@@ -214,7 +207,6 @@
                 },
                 {
                     "title": "PARP阻害薬",
-                    "type": "string",
                     "enum": [
                         "オラパリブ",
                         "ニラパリブ",
@@ -223,7 +215,6 @@
                 },
                 {
                     "title": "チロシンキナーゼ阻害薬",
-                    "type": "string",
                     "enum": [
                         "パゾパニブ",
                         "ゲフィチニブ",
@@ -234,7 +225,6 @@
                         "ラパチニブ",
                         "アキシチニブ",
                         "スニチニブ",
-                        "パゾパニブ",
                         "パンデタニブ",
                         "レゴラフェニブ",
                         "カボザンチニブ",
@@ -260,7 +250,6 @@
                 },
                 {
                     "title": "ホルモン治療",
-                    "type": "string",
                     "enum": [
                         "メドロキシプロゲステロン酢酸エステル(MPA)",
                         "アナストロゾール",

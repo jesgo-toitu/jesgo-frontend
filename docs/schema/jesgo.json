@@ -14,7 +14,6 @@
     "title": "JESGOのスキーマ",
     "$defs": {
         "meta": {
-            "$id": "#meta",
             "type": "object",
             "$comment": "スキーマの $id の命名は /schema/ で開始する. また /schema/foo/bar は /schema/foo の派生スキーマである.",
             "properties": {
@@ -41,6 +40,15 @@
                     "$comment": "【スキーマ属性】 継承スキーマにおいて基底スキーマのバージョンを明示. すくなくともメジャーバージョンのみでも指定する.",
                     "type": "string",
                     "pattern": "^[0-9]+(\u002e[0-9]+).$"
+                },
+                "jesgo:error": {
+                    "$comment": "【スキーマ属性】 スクリプトなどのvalidationによって生成されたエラーメッセージを保持する.編集・保存によりユーザへの確認後に削除される.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string",
+                        "$comment": "ドキュメント全体に対するエラーメッセージ"
+                    }
                 },
                 "jesgo:parentschema": {
                     "$comment": "【スキーマ属性】 上位となるスキーマの$idを指定する.",
@@ -70,9 +78,14 @@
                     "uniqueItems": true
                 },
                 "jesgo:unique": {
-                    "$comment": "【スキーマ属性】 親ドキュメントの下位として、ユニークであることを明示",
+                    "$comment": "【スキーマ属性】 親ドキュメントの下位として、ユニークであることを明示. この値は継承され、変更は不可.",
                     "type": "boolean",
                     "defalut": false
+                },
+                "jesgo:copy": {
+                    "$comment": "【スキーマ属性】 jesgo:unique false のドキュメントについて、選択されているドキュメントの内容で新規ドキュメントを同レベルに作成可能とする. eventdate のみ新規作成にあたって削除される.",
+                    "type": "boolean",
+                    "default": false
                 },
                 "jesgo:required": {
                     "$comment": "【フィールド属性】 項目の入力が必要とされるセット名称を指定.今のところJSOGとJSGOEしかない.",
@@ -82,6 +95,10 @@
                     },
                     "minItems": 0,
                     "uniqueItems": true
+                },
+                "jesgo:validationalert": {
+                    "$comment": "【フィールド属性】 項目のtypeやpatternによる基本的なvalidationが生じた場合に表示されるエラーメッセージ.",
+                    "type": "string"
                 },
                 "jesgo:get": {
                     "type": "string",
@@ -106,6 +123,10 @@
                         {
                             "const": "day",
                             "$comment": "ドキュメントに指定もしくは継承されたeventdate時点での患者日齢"
+                        },
+                        {
+                            "const": "initial_treatment_date",
+                            "$comment": "現在のドキュメントの連なるツリーの近い位置にある /schema/initial_treatment が保持する event_date を取得する.未設定の場合は空白扱い."
                         }
                     ]
                 },
@@ -127,7 +148,7 @@
                         }
                     ]
                 },
-                "jesgo:ui:enabledwhen": {
+                "jesgo:ui:enabledWhen": {
                     "$comment": "【フィールド属性/UI】 ifと同様に指定条件を満たした場合有効化される",
                     "type": "object",
                     "defalut": {
@@ -172,9 +193,9 @@
                     ]
                 },
                 "jesgo:ui:subschemastyle": {
-                    "$comment": "【フィールド属性/UI】 サブスキーマの展開方法を指定する.",
+                    "$comment": "【フィールド属性/UI】 サブスキーマ（配列やオブジェクトプロパティ）の展開方法を指定する.",
                     "type": "string",
-                    "defalut": "row",
+                    "defalut": "noindent",
                     "oneOf": [
                         {
                             "const": "row",
@@ -187,6 +208,10 @@
                         {
                             "const": "inline",
                             "$comment": "入力カラムに行方向に展開"
+                        },
+                        {
+                            "const": "tab",
+                            "$comment": "ドキュメントレベルのプロパティとして指定した場合のみ有効、ドキュメントの直下にあたる子ドキュメントをタブとして展開する"
                         }
                     ]
                 },
@@ -194,12 +219,13 @@
                     "$comment": "【フィールド属性/UI】 文字列入力を複数行入力が可能なフォームとして展開する.",
                     "anyOf": [
                         {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "$comment": "未入力の際はデフォルトの3行を入力領域として用意する. 入力がある場合は全ての行を表示する."
                         },
                         {
                             "type": "integer",
                             "defalut": 3,
-                            "minimum": 1
+                            "$comment": "指定行数を超えて入力された場合は全ての行を表示する. 0はデフォルトと同義. 負の数が与えられた場合は,その絶対値の表示行数を用意してスクロールで表示する."
                         }
                     ],
                     "defalut": false

@@ -1,25 +1,32 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/CC/staging",
+    "jesgo:version": "1.0",
+    "jesgo:unique": true,
     "type": "object",
     "title": "病期診断",
     "$comment": "子宮頸がんの病期診断.",
     "properties": {
+        "治療施行状況": {
+            "type": "string",
+            "enum": [
+                "初回手術施行",
+                "術前治療後に手術施行",
+                "術前治療および手術未施行例",
+                "治療施行せず"
+            ],
+            "description": "術前に放射線治療や化学療法を施行した症例は「術前治療施行例」となり、ypTNMとして手術時所見に即してpTNM分類を入力する。"
+        },
         "進行期分類の選択": {
             "type": "string",
-            "oneOf": [
-                {
-                    "const": "手術により進行期を決定した症例"
-                },
-                {
-                    "const": "治療開始前に進行期を決定した症例",
-                    "description": "根治的放射線療法、術前化学療法・術前放射線療法実施例など"
-                }
-            ],
-            "description": "術前に放射線治療や化学療法を施行した症例は「術前治療施行例」となり、pTNM欄は術後所見、ypTNMとして手術時所見に即してpTNM分類を入力する。"
+            "enum": [
+                "手術により進行期を決定した症例",
+                "治療開始前に進行期を決定した症例"
+            ]
         },
         "FIGO": {
             "type": "string",
+            "jesgo:ui:listtype": "suggestlist",
             "title": "FIGO分類(FIGO2018, 日産婦2020)",
             "enum": [
                 "I期(亜分類不明)",
@@ -49,65 +56,121 @@
             ]
         },
         "cTNM": {
-            "type": "object",
-            "title": "cTMN分類(日産婦2020暫定版)",
-            "description": "cTNM分類は、治療を開始する前に、内診・直腸診による局所所見に画像所見を加味して総合的に判断し報告する。\n子宮頸部円錐切除術は臨床検査とみなし,これによる組織検査の結果は原則としてcTNM分類に入れる。",
-            "properties": {
-                "cT": {
-                    "$ref": "#T"
-                },
-                "cN": {
-                    "$ref": "#cN"
-                },
-                "cM": {
-                    "$ref": "#cM"
+            "$ref": "#/$defs/cTNM"
+        }
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "治療施行状況": {
+                        "const": "初回手術施行"
+                    }
                 }
             },
-            "additionalProperties": false
+            "then": {
+                "properties": {
+                    "pTNM": {
+                        "$ref": "#/$defs/pTNM"
+                    },
+                    "ypTNM": {}
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "治療施行状況": {
+                        "const": "術前治療後に手術施行"
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "pTNM": {},
+                    "ypTNM": {
+                        "$ref": "#/$defs/ypTNM"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "治療施行状況": {
+                        "enum": [
+                            "術前治療および手術未施行例",
+                            "治療施行せず"
+                        ]
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "pTNM": {},
+                    "ypTNM": {}
+                }
+            }
+        }
+    ],
+    "$defs": {
+        "cTNM": {
+            "type": "object",
+            "title": "cTNM分類(日産婦2020暫定版)",
+            "description": "cTNM分類は、治療を開始する前に、内診・直腸診による局所所見に画像所見を加味して総合的に判断し報告する。<br>子宮頸部円錐切除術は臨床検査とみなし,これによる組織検査の結果は原則としてcTNM分類に入れる。",
+            "jesgo:ui:subschemastyle": "row",
+            "properties": {
+                "T": {
+                    "$ref": "#/$defs/T"
+                },
+                "N": {
+                    "$ref": "#/$defs/cN"
+                },
+                "M": {
+                    "$ref": "#/$defs/cM"
+                }
+            }
         },
         "pTNM": {
             "type": "object",
-            "title": "pTNM分類(手術を実施した症例のみ)",
+            "title": "pTNM分類(初回手術を実施した症例のみ)",
+            "jesgo:ui:subschemastyle": "row",
             "properties": {
-                "pT": {
-                    "$ref": "#T"
+                "T": {
+                    "$ref": "#/$defs/T"
                 },
-                "pN": {
-                    "$ref": "#pN"
+                "N": {
+                    "$ref": "#/$defs/pN"
                 },
-                "pM": {
-                    "$ref": "#pM"
+                "M": {
+                    "$ref": "#/$defs/pM"
                 }
-            },
-            "additionalProperties": false
+            }
         },
         "ypTNM": {
             "type": "object",
-            "title": "ypTNM分類(手術前に放射線治療や化学療法を実施した症例)",
+            "title": "ypTNM分類(初回手術を実施した症例のみ)",
+            "jesgo:ui:subschemastyle": "row",
             "properties": {
-                "ypT": {
-                    "$ref": "#T"
+                "T": {
+                    "$ref": "#/$defs/T"
                 },
-                "ypN": {
-                    "$ref": "#pN"
+                "N": {
+                    "$ref": "#/$defs/pN"
                 },
-                "ypM": {
-                    "$ref": "#pM"
+                "M": {
+                    "$ref": "#/$defs/pM"
                 }
-            },
-            "additionalProperties": false
-        }
-    },
-    "additionalProperties": true,
-    "$defs": {
+            }
+        },
         "T": {
             "$id": "#T",
             "type": "object",
             "title": "T分類",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "T": {
                     "type": "string",
-                    "title": "T分類",
                     "enum": [
                         "TX",
                         "T0",
@@ -133,57 +196,26 @@
                         "T3b",
                         "T4"
                     ]
-                },
-                "T1a期の広がり": {
-                    "type": "string",
-                    "title": "T1a期の腫瘍の水平方向の広がり",
-                    "oneOf": [
-                        {
-                            "type": "number",
-                            "minimum": 0,
-                            "units": "mm"
-                        },
-                        {
-                            "type": "string",
-                            "enum": [
-                                "7mm以下",
-                                "7mmを超える",
-                                "不明"
-                            ]
-                        }
-                    ]
                 }
-            },
-            "if": {
-                "properties": {
-                    "T": {
-                        "pattern": "^T1a"
-                    }
-                }
-            },
-            "then": {
-                "required": [
-                    "T",
-                    "T1a期の広がり"
-                ]
-            },
-            "else": {
-                "required": [
-                    "T"
-                ]
             }
         },
         "cN": {
-            "$id": "cN",
+            "$id": "#cN",
             "title": "N分類",
-            "type": "string",
-            "enum": [
-                "領域リンパ節転移なし",
-                "骨盤リンパ節のみに転移を認める",
-                "傍大動脈リンパ節のみに転移を認める",
-                "骨盤および傍大動脈リンパ節転移を認める",
-                "画像診断をしなかった"
-            ]
+            "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
+            "properties": {
+                "N": {
+                    "type": "string",
+                    "enum": [
+                        "領域リンパ節転移なし",
+                        "骨盤リンパ節のみに転移を認める",
+                        "傍大動脈リンパ節のみに転移を認める",
+                        "骨盤および傍大動脈リンパ節転移を認める",
+                        "画像診断をしなかった"
+                    ]
+                }
+            }
         },
         "pN": {
             "$id": "#pN",
@@ -234,12 +266,13 @@
             }
         },
         "cM": {
-            "$id": "#M",
+            "$id": "#cM",
+            "title": "M分類",
             "type": "object",
             "properties": {
                 "M": {
                     "type": "string",
-                    "title": "M分類",
+                    "title": "遠隔転移の評価",
                     "description": "鼠径リンパ節転移や腹腔内病変は遠隔転移に含む。腟,骨盤漿膜,付属器への転移は遠隔転移から除外する。",
                     "enum": [
                         "遠隔転移なし",
@@ -271,16 +304,21 @@
         "pM": {
             "$id": "#pM",
             "title": "M分類",
-            "type": "string",
             "description": "腟、骨盤漿膜、付属器への転移は除外する。",
-            "enum": [
-                "M0: 遠隔転移なし",
-                "MA1: 傍大動脈リンパ節の明らかな腫大を認めるが、病理学的検索が行われなかった",
-                "MA2: 傍大動脈リンパ節の明らかな腫大は認めないが、病理学的検索にて転移を認める",
-                "MA3: 傍大動脈リンパ節の明らかな腫大を認め、病理学的検索にて転移を認める",
-                "M1: その他の遠隔転移の存在",
-                "M9: 遠隔転移の判定不十分なとき"
-            ]
+            "type": "object",
+            "properties": {
+                "M": {
+                    "type": "string",
+                    "enum": [
+                        "M0: 遠隔転移なし",
+                        "MA1: 傍大動脈リンパ節の明らかな腫大を認めるが、病理学的検索が行われなかった",
+                        "MA2: 傍大動脈リンパ節の明らかな腫大は認めないが、病理学的検索にて転移を認める",
+                        "MA3: 傍大動脈リンパ節の明らかな腫大を認め、病理学的検索にて転移を認める",
+                        "M1: その他の遠隔転移の存在",
+                        "M9: 遠隔転移の判定不十分なとき"
+                    ]
+                }
+            }
         }
     }
 }

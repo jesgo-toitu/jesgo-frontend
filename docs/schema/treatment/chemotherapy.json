@@ -1,11 +1,10 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/treatment/chemotharapy",
+    "$id": "/schema/treatment/chemotherapy",
+    "jesgo:version": "1.0",
     "title": "化学療法",
+    "jesgo:copy": true,
     "type": "object",
-    "required": [
-        "投与開始日"
-    ],
     "properties": {
         "投与開始日": {
             "type": "string",
@@ -32,9 +31,10 @@
             "type": "array",
             "items": {
                 "type": "object",
+                "jesgo:ui:subschemastyle": "inline",
                 "properties": {
                     "薬剤名": {
-                        "$ref": "#drugs"
+                        "$ref": "#/$defs/drugs"
                     },
                     "投与量": {
                         "type": "number",
@@ -44,13 +44,13 @@
                         "type": "string",
                         "enum": [
                             "AUC",
-                            "mg/m<SUP>2</SUP>",
+                            "mg/㎡",
                             "mg/kg",
+                            "mg/body",
                             "mg/日"
                         ]
                     }
-                },
-                "jesgo:ui:subschemastyle": "column"
+                }
             }
         }
     },
@@ -58,6 +58,7 @@
         "drugs": {
             "$id": "#drugs",
             "type": "string",
+            "jesgo:ui:listtype": "suggestlist",
             "oneOf": [
                 {
                     "title": "白金製剤",
@@ -174,7 +175,6 @@
                         "ラパチニブ",
                         "アキシチニブ",
                         "スニチニブ",
-                        "パゾパニブ",
                         "パンデタニブ",
                         "レゴラフェニブ",
                         "カボザンチニブ",

@@ -29,7 +29,6 @@
         "閉経": {
             "oneOf": [
                 {
-                    "title":"入力形式：有無",
                     "type": "string",
                     "enum": [
                         "あり",
@@ -37,7 +36,6 @@
                     ]
                 },
                 {
-                    "title":"入力形式：年齢",
                     "type": "integer",
                     "units": "歳",
                     "minimum": 0

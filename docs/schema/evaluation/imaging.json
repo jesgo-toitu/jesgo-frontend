@@ -1,6 +1,11 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/imaging",
+    "jesgo:version": "1.0",
+    "jesgo:parentschema": [
+        "/schema/surveillance"
+    ],
+    "jesgo:unique": false,
     "type": "object",
     "title": "画像",
     "properties": {
@@ -24,7 +29,8 @@
             ]
         },
         "所見": {
-            "type": "string"
+            "type": "string",
+            "jesgo:ui:textarea": true
         }
     }
 }

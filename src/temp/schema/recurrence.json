@@ -71,8 +71,6 @@
         }
     },
     "jesgo:subschema": [
-        "/schema/treatment/chemotherapy",
-        "/schema/treatment/radiotherapy",
-        "/schema/treatment/operation"
+        "/schema/treatment/relapse_treatment"
     ]
 }

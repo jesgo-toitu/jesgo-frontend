@@ -1,9 +1,13 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/corpus",
+    "jesgo:version": "1.0",
+    "jesgo:parentschema": [
+        "/schema/surveillance"
+    ],
+    "jesgo:unique": true,
     "type": "object",
     "title": "子宮内膜検査",
-    "jesgo:unique": true,
     "properties": {
         "検査実施日": {
             "type": "string",
@@ -27,7 +31,7 @@
         },
         "生検組織診": {
             "type": "string",
-            "$textarea": true
+            "jesgo:ui:textarea": true
         }
     }
 }

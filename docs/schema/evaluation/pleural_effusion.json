@@ -1,6 +1,11 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/evaluations/pleural_effusion",
+    "jesgo:version": "1.0",
+    "jesgo:parentschema": [
+        "/schema/surveillance"
+    ],
+    "jesgo:unique": true,
     "type": "object",
     "title": "胸水",
     "properties": {

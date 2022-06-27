@@ -19,7 +19,7 @@
         },
         "状態": {
             "type": "string",
-            "description": "がんによる死亡で当該がんによるものか、他の癌による死亡か不明のときは 当該がんによる死亡 とする。\n死因がはっきりしないががんによる死亡が十分疑われる症例は 当該がんによる死亡 とする(「死因不明」にしない)。",
+            "description": "がんによる死亡で当該がんによるものか、他の癌による死亡か不明のときは 当該がんによる死亡 とする。<br>死因がはっきりしないががんによる死亡が十分疑われる症例は 当該がんによる死亡 とする(「死因不明」にしない)。",
             "enum": [
                 "生存(非担癌)",
                 "生存(担癌)",
@@ -30,12 +30,6 @@
                 "生死不明"
             ]
         },
-        "死亡": {
-            "type": "boolean",
-            "defalut": false,
-            "readOnly": true,
-            "jesgo:hidden": true
-        },
         "備考": {
             "type": "string",
             "jesgo:ui:textarea": true
@@ -44,28 +38,32 @@
     "if": {
         "properties": {
             "状態": {
-                "anyOf": [
-                    {
-                        "const": "当該がん腫による死亡"
-                    },
-                    {
-                        "const": "他のがんによる死亡"
-                    },
-                    {
-                        "const": "がんと直接関係のない死亡"
-                    },
-                    {
-                        "const": "死因不明"
-                    }
+                "enum": [
+                    "当該がん腫による死亡",
+                    "他のがんによる死亡",
+                    "癌と直接関係のない死亡",
+                    "死因不明"
                 ]
             }
-        },
-        "then": {
-            "properties": {
-                "死亡": {
-                    "const": true,
-                    "jesgo:set": "death"
-                }
+        }
+    },
+    "then": {
+        "properties": {
+            "死亡": {
+                "type": "boolean",
+                "default": true,
+                "jesgo:ui:hidden": true,
+                "jesgo:set": "death"
+            }
+        }
+    },
+    "else": {
+        "properties": {
+            "死亡": {
+                "type": "boolean",
+                "default": false,
+                "jesgo:ui:hidden": true,
+                "jesgo:set": "death"
             }
         }
     }

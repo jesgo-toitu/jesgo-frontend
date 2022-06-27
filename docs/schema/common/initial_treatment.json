@@ -1,0 +1,27 @@
+{
+    "$schema": "../jesgo.json",
+    "$id": "/schema/treatment/initial_treatment",
+    "jesgo:version": "1.0",
+    "type": "object",
+    "title": "初回治療",
+    "description": "初回治療情報.",
+    "jesgo:unique": true,
+    "properties": {
+        "治療サマリー": {
+            "type": "string",
+            "jesgo:ui:textarea": 8,
+            "$comment": "将来的にはプラグインスクリプトで自動要約を実装したい."
+        }
+    },
+    "jesgo:ui:subschemastyle": "tab",
+    "jesgo:subschema": [
+        "/schema/treatment/operation",
+        "/schema/treatment/chemotherapy",
+        "/schema/treatment/radiotherapy"
+    ],
+    "jesgo:childschema": [
+        "/schema/treatment/supportive_care",
+        "/schema/treatment/blood_transfusion",
+        "/schema/evaluation/recist_assessment"
+    ]
+}

@@ -1,147 +1,377 @@
-import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
-import { UiSchema } from "@rjsf/core"
-import {JESGOFiledTemplete} from "./JESGOFieldTemplete";
-import { Const } from "../../common/Const"
+import { UiSchema } from '@rjsf/core';
+// TODO eslintのエラーが消えないので一旦コメントで抑制
+// eslint-disable-next-line import/no-unresolved
+import {
+  JSONSchema7,
+  JSONSchema7Definition,
+  JSONSchema7Type,
+} from 'json-schema'; // eslint-disable-line import/no-unresolved
+import lodash from 'lodash';
+import { JESGOFiledTemplete } from './JESGOFieldTemplete';
+import { Const } from '../../common/Const';
+import { getPropItemsAndNames, getSchemaType } from './SchemaUtility';
 
 // uiSchema作成用Utility
 
 export type UiSchemaProp = {
-    schema:JSONSchema7;
-}
+  schema: JSONSchema7;
+};
 
-export const createUiSchemaProperties = (propNames: string[], items: { [key: string]: JSONSchema7Definition }, uiSchema: UiSchema, orderList: string[]) => {
-    propNames.map((propName: string) => {
-        const item = items[propName] as JSONSchema7;
+/**
+ * 各プロパティに合ったuiSchemaを追加
+ * @param schema 定義スキーマ
+ * @param uiSchema UiSchema
+ * @param isRequired 必須かどうか
+ * @returns 書き換え後UiSchema
+ */
+const AddUiSchema = (
+  schema: JSONSchema7,
+  uiSchema: UiSchema,
+  isRequired: boolean
+) => {
+  let resultUiSchema: UiSchema = lodash.cloneDeep(uiSchema);
+  if (resultUiSchema === undefined) {
+    resultUiSchema = {};
+  }
+  if (schema === undefined) return resultUiSchema;
+  const itemPropName = Object.keys(schema);
 
-        if(uiSchema === undefined){
-            uiSchema = {};
-        }
+  const kType: keyof JSONSchema7 = Const.JSONSchema7Keys.TYPE;
+  const classNames: string[] = [];
 
-        // 直下のproperties
-        AddUiSchema(propName, items, uiSchema, orderList);
-        CreateOrderList(orderList, propName);
+  // requiredの場合
+  if (isRequired) {
+    classNames.push('required-item');
+  }
 
-        // objectの場合は再帰的に呼び出し
-        if (item.type === "object") {
-            const childItems: { [key: string]: JSONSchema7Definition } | undefined = item.properties!;
-            if (childItems === undefined) return;
-            let childPropNames = Object.keys(childItems);
-            createUiSchemaProperties(childPropNames, childItems, uiSchema[propName], orderList);
-        }
+  // "jesgo:validation:haserror"
+  if(schema["jesgo:validation:haserror"] === true){
+    classNames.push('has-error');
+  }
 
-        // TODO:oneofの対応も必要
-    })
-}
-
-export const CreateUISchema = (schema: JSONSchema7) => {
-    let uiSchema: UiSchema = {};
-
-    // uischemaの作成
-    const items: { [key: string]: JSONSchema7Definition } | undefined = schema.properties!;
-    if (items === undefined) return uiSchema;
-    let propNames = Object.keys(schema.properties!)
-    if (propNames === undefined) return uiSchema;
-    let orderList: string[] = [];
-
-    // properties
-    createUiSchemaProperties(propNames, items, uiSchema, orderList);
-
-    // dependencies
-    const depItems = schema.dependencies;
-    if (depItems !== undefined) {
-        const depPropNames = Object.keys(schema.dependencies!);
-        if (depPropNames !== undefined) {
-            depPropNames.map((depName: string) => {
-                const item: JSONSchema7Definition = depItems![depName] as JSONSchema7;
-                if (item === undefined) return;
-                const itemPropName = Object.keys(item);
-
-                // oneOf
-                if (itemPropName.includes("oneOf")) {
-                    const oneOfItems = item["oneOf"]! as JSONSchema7[];
-                    if (oneOfItems === undefined) return;
-                    for (const oneOfItem of oneOfItems) {
-                        const oneOfItems = oneOfItem.properties!;
-                        if(oneOfItems === undefined) continue;
-                        const oneOfItemNames = Object.keys(oneOfItems);
-                        if(oneOfItemNames === undefined) continue;
-
-                        oneOfItemNames.map((oneOfItemName: string) => {
-                            // TODO dependenciesに同項目に対し条件が複数あるとおかしくなる（uischemaが重複する）。要修正
-                            if (oneOfItemName !== depName) {
-                                AddUiSchema(oneOfItemName, oneOfItems, uiSchema, orderList);
-                                CreateOrderList(orderList, oneOfItemName, depName);
-                            }
-                        })
-                    }
-                }
-            })
-        }
+  // "jesgo:ui:subschemastyle"
+  if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE]) {
+    if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'inline') {
+      classNames.push('subschemastyle-inline');
+    } else if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'column') {
+      classNames.push('subschemastyle-column');
     }
-    // TODO $defの場合の対応も必要。defはorderlistそのまま並べたらNGなので、あらかじめ保持して出てきたら都度orderlistに入れるイメージになるかも
+  }
 
-    // Schemaの指定順に項目を並べる
-    uiSchema[Const.UI_WIDGET.ORDER] = orderList;
+  // "jesgo:ui:visiblewhen"
+  if (schema[Const.EX_VOCABULARY.UI_VISIBLE_WHWN]) {
+    classNames.push('visiblewhen');
+  }
 
-    return uiSchema;
-}
-
-// 各プロパティに沿ったuiSchemaを追加
-const AddUiSchema = (propName: string, items: { [key: string]: JSONSchema7Definition }, uiSchema: UiSchema, orderList: string[]) => {
-    const item: JSONSchema7 = items![propName] as JSONSchema7;
-    if (item === undefined) return;
-    const itemPropName = Object.keys(item);
-    if(uiSchema[propName] === undefined){
-        uiSchema[propName] = {};
+  // "jesgo:required"、または"description"がある場合、カスタムラベルを使用
+  // ※type:arrayの場合は除く
+  if (
+    !(getSchemaType(schema) === Const.JSONSchema7Types.ARRAY) &&
+    (itemPropName.includes(Const.EX_VOCABULARY.REQUIRED) ||
+      itemPropName.includes(Const.JSONSchema7Keys.DESCRIPTION))
+  ) {
+    if (getSchemaType(schema) === Const.JSONSchema7Types.OBJECT) {
+      resultUiSchema[Const.UI_WIDGET.OBJECT_FIELD_TEMPLATE] =
+        JESGOFiledTemplete.CustomObjectFieldTemplate;
+    } else {
+      resultUiSchema[Const.UI_WIDGET.FIELD_TEMPLATE] =
+        JESGOFiledTemplete.CustomLableTemplete;
     }
+  }
 
-    // "jesgo:required"
-    if (itemPropName.includes(Const.EX_VOCABULARY.REQUIRED)) {
-        uiSchema[propName][Const.UI_WIDGET.FIELD_TEMPLATE] = JESGOFiledTemplete.WithTypeLableTemplete;
+  // "jesgo:ui:textarea"
+  if (itemPropName.includes(Const.EX_VOCABULARY.UI_TEXTAREA)) {
+    let rows = 3; // 3行がデフォルト
+    resultUiSchema[Const.UI_WIDGET.WIDGET] = 'textarea';
+    if (typeof schema[Const.EX_VOCABULARY.UI_TEXTAREA] === 'number') {
+      rows = schema[Const.EX_VOCABULARY.UI_TEXTAREA] as number;
     }
+    resultUiSchema[Const.UI_WIDGET.OPTIONS] = { rows };
+  }
 
-    // "jesgo:ui:textarea"
-    if (itemPropName.includes(Const.EX_VOCABULARY.UI_TEXTAREA)) {
-        const rows = item[Const.EX_VOCABULARY.UI_TEXTAREA] as number | boolean;
-        uiSchema[propName][Const.UI_WIDGET.WIDGET] = "textarea";
-        if (typeof rows === "number") {
-            uiSchema[propName][Const.UI_WIDGET.OPTIONS] = { rows: rows };
-        }
-    }
+  // units
+  if (schema.units) {
+    resultUiSchema[Const.UI_WIDGET.WIDGET] = 'withUnits';
+  }
 
-    // 日付入力Widget
-    const key: keyof JSONSchema7 = "format";
-    if (itemPropName.includes(key) && item[key] === "date") {
-        uiSchema[propName][Const.UI_WIDGET.CLASS] = "input-date";
-    }
+  // 日付入力Widget
+  const kFormat: keyof JSONSchema7 = Const.JSONSchema7Keys.FORMAT;
+  if (itemPropName.includes(kFormat) && schema[kFormat] === 'date') {
+    classNames.push('input-date');
+  }
 
-    // 数値入力Widget
-    const kType: keyof JSONSchema7 = "type";
-    if (itemPropName.includes(kType) && ["integer", "number"].includes(item[kType] as string)) {
-        uiSchema[propName][Const.UI_WIDGET.CLASS] = "input-integer";
-    }
+  // 数値入力Widget
+  if (['integer', 'number'].includes(getSchemaType(schema) as string)) {
+    classNames.push('input-integer');
+  }
 
-    // oneOf
-    // 「typeがobject」「oneOfを持つ」
-    // ・個々のラベル非表示
-    // ・タイトルを他Widgetと同様のスタイルに変更
-    const keyType = "type";
-    const keyOneOf = "oneOf"
-    if (itemPropName.includes(keyType) && item[keyType] === "object") {
-        if (itemPropName.includes(keyOneOf)) {
-            uiSchema[propName][Const.UI_WIDGET.OBJECT_FIELD_TEMPLATE] = JESGOFiledTemplete.OneOfFieldTemplate;
-            uiSchema[propName][Const.UI_WIDGET.OPTIONS] = { label: false };
-        }
+  if (itemPropName.includes(kType)) {
+    switch (getSchemaType(schema)) {
+      case Const.JSONSchema7Types.STRING:
+        classNames.push('input-text');
+        break;
+      case Const.JSONSchema7Types.ARRAY:
+        classNames.push('input-text');
+        break;
+      default:
+        break;
     }
-}
+  }
+
+  // oneOf
+  if (itemPropName.includes(Const.JSONSchema7Keys.ONEOF)) {
+    if (itemPropName.includes(kType)) {
+      switch (getSchemaType(schema)) {
+        case Const.JSONSchema7Types.STRING:
+          if (schema[Const.EX_VOCABULARY.UI_LISTTYPE] === 'combo') {
+            // oneOfの中身解析
+            const oneOfItems = schema[
+              Const.JSONSchema7Keys.ONEOF
+            ] as JSONSchema7[];
+            let selectItem: JSONSchema7Type[] = [];
+            oneOfItems.forEach((oneOfItem: JSONSchema7) => {
+              if (
+                getSchemaType(oneOfItem) === Const.JSONSchema7Types.STRING &&
+                oneOfItem.enum != null
+              ) {
+                // selectがある
+                selectItem = oneOfItem.enum;
+                classNames.push('input-select');
+              }
+            });
+            if (selectItem.length > 0) {
+              resultUiSchema[Const.UI_WIDGET.WIDGET] = 'datalistTextBox';
+            } else {
+              resultUiSchema[Const.UI_WIDGET.WIDGET] = 'multiTypeTextBox';
+            }
+            resultUiSchema[Const.UI_WIDGET.FIELD_TEMPLATE] =
+              JESGOFiledTemplete.CustomLableTemplete;
+          } else {
+            // 階層表示用selectの適用
+            resultUiSchema[Const.UI_WIDGET.WIDGET] = 'layerDropdown';
+            resultUiSchema[Const.UI_WIDGET.FIELD_TEMPLATE] =
+              JESGOFiledTemplete.CustomLableTemplete;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  // "jesgo:ui:hidden"
+  // 非表示は最後に設定
+  if (schema[Const.EX_VOCABULARY.UI_HIDDEN]) {
+    resultUiSchema[Const.UI_WIDGET.WIDGET] = 'hidden';
+  }
+
+  // classNameは最後に入れる
+  if (classNames.length > 0) {
+    resultUiSchema[Const.UI_WIDGET.CLASS] = classNames.join(' ');
+  }
+
+  // eslint-disable-next-line no-param-reassign
+  return resultUiSchema;
+};
 
 // ソート順の追加
-const CreateOrderList = (orderList: string[], propName: string, parentPropName?: string) => {
-    if (parentPropName) {
-        // 親の次に追加
-        const index = orderList.indexOf(parentPropName!);
-        orderList.splice(index + 1, 0, propName);
-    }else{
-        orderList.push(propName);
+const CreateOrderList = (
+  orderList: string[],
+  propName: string,
+  parentPropName?: string
+) => {
+  if (parentPropName) {
+    // 親の次に追加
+    const index = orderList.indexOf(parentPropName);
+    orderList.splice(index + 1, 0, propName);
+  } else {
+    orderList.push(propName);
+  }
+};
+
+/**
+ * properties のUISchema作成
+ * @param requiredNames 必須対象の項目名
+ * @param propNames
+ * @param items
+ * @param uiSchema
+ * @param orderList
+ * @returns
+ */
+export const createUiSchemaProperties = (
+  requiredNames: string[],
+  propNames: string[],
+  items: { [key: string]: JSONSchema7Definition },
+  uiSchema: UiSchema,
+  orderList: string[]
+) => {
+  let resUiSchema: UiSchema = lodash.cloneDeep(uiSchema);
+  if (resUiSchema == null) {
+    // eslint-disable-next-line no-param-reassign
+    resUiSchema = {};
+  }
+
+  propNames.forEach((propName: string) => {
+    const item = items[propName] as JSONSchema7;
+
+    // 直下のproperties
+    resUiSchema[propName] = AddUiSchema(
+      item,
+      resUiSchema[propName] as UiSchema,
+      requiredNames.includes(propName)
+    );
+    CreateOrderList(orderList, propName);
+
+    const type = getSchemaType(item);
+    // object,Arrayの場合は再帰的に呼び出し
+    if (type === Const.JSONSchema7Types.OBJECT) {
+      const childItems: { [key: string]: JSONSchema7Definition } | undefined =
+        item.properties;
+      if (childItems === undefined) return;
+      const childPropNames = Object.keys(childItems);
+      resUiSchema[propName] = createUiSchemaProperties(
+        item.required ?? [],
+        childPropNames,
+        childItems,
+        resUiSchema[propName] as UiSchema,
+        orderList
+      );
+    } else if (type === Const.JSONSchema7Types.ARRAY) {
+      const childItem = item.items;
+      if (childItem === undefined) return;
+
+      // TODO childItemが配列だった場合の判定はしていない。現状のスキーマにもない。要制限事項
+      const propItem = getPropItemsAndNames(childItem as JSONSchema7);
+      let itemsUiSchema = lodash.cloneDeep(resUiSchema[propName]) as UiSchema;
+
+      itemsUiSchema = createUiSchemaProperties(
+        item.required ?? [],
+        propItem.pNames,
+        propItem.pItems,
+        itemsUiSchema,
+        orderList
+      );
+
+      // 配列は'items'の中にuiSchemaを定義
+      const propUiSchema = resUiSchema[propName] as UiSchema;
+      propUiSchema['items' as string] = itemsUiSchema;
     }
-}
+
+    // TODO:oneofの対応も必要
+  });
+
+  return resUiSchema;
+};
+
+/**
+ * UISchemaの作成
+ * @param schema
+ * @returns
+ */
+export const CreateUISchema = (schema: JSONSchema7) => {
+  let uiSchema: UiSchema = {};
+  const orderList: string[] = [];
+  // ルート
+  uiSchema = AddUiSchema(schema, uiSchema, false);
+
+  // ルートのitems
+  const rootPropsName = Object.keys(schema);
+  // "jesgo:ui:subschemastyle"
+  const subchemaStyle = rootPropsName.find(
+    (p) => p === Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE
+  );
+  if (
+    subchemaStyle &&
+    schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'column'
+  ) {
+    uiSchema[Const.UI_WIDGET.CLASS] = 'subschemastyle-column';
+  }
+
+  // items
+  const items = schema.items;
+  if (items) {
+    // TODO itemsが配列はあり得る？
+    if (Array.isArray(items)) {
+      items.forEach((item: JSONSchema7Definition) => {
+        const propItems = getPropItemsAndNames(item as JSONSchema7);
+        if (propItems) {
+          uiSchema['items' as string] = createUiSchemaProperties(
+            schema.required ?? [],
+            propItems.pNames,
+            propItems.pItems,
+            uiSchema,
+            orderList
+          );
+        }
+      });
+    } else {
+      const propItems = getPropItemsAndNames(items as JSONSchema7);
+      if (propItems) {
+        uiSchema['items' as string] = createUiSchemaProperties(
+          schema.required ?? [],
+          propItems.pNames,
+          propItems.pItems,
+          uiSchema,
+          orderList
+        );
+      }
+    }
+  }
+
+  // properties
+  const properties = schema.properties;
+  if (properties) {
+    uiSchema = createUiSchemaProperties(
+      schema.required ?? [],
+      Object.keys(properties),
+      properties,
+      uiSchema,
+      orderList
+    );
+  }
+
+  // dependencies
+  const depItems = schema.dependencies;
+  if (depItems != null) {
+    const depPropNames = Object.keys(depItems);
+    if (depPropNames !== undefined) {
+      depPropNames.forEach((depName: string) => {
+        const item: JSONSchema7Definition = depItems[depName] as JSONSchema7;
+        if (item === undefined) return;
+        const itemPropName = Object.keys(item);
+
+        // oneOf
+        if (itemPropName.includes('oneOf')) {
+          const oneOfItems = item.oneOf as JSONSchema7[];
+          if (oneOfItems === undefined) return;
+          oneOfItems.forEach((oneOfItem: JSONSchema7) => {
+            const oneOfItemProp = oneOfItem.properties;
+            const oneOfRequired = oneOfItem.required ?? [];
+
+            if (oneOfItemProp != null) {
+              const oneOfItemNames = Object.keys(oneOfItemProp);
+              if (oneOfItemNames != null) {
+                oneOfItemNames.forEach((oneOfItemName: string) => {
+                  // TODO dependenciesに同項目に対し条件が複数あるとおかしくなる（uischemaが重複する）。要修正
+                  if (oneOfItemName !== depName) {
+                    uiSchema[oneOfItemName] = AddUiSchema(
+                      oneOfItemProp[oneOfItemName] as JSONSchema7,
+                      uiSchema[oneOfItemName] as UiSchema,
+                      oneOfRequired.includes(oneOfItemName)
+                    );
+                    CreateOrderList(orderList, oneOfItemName, depName);
+                  }
+                });
+              }
+            }
+          });
+        }
+      });
+    }
+  }
+
+  // Schemaの指定順に項目を並べる
+  uiSchema[Const.UI_WIDGET.ORDER] = orderList;
+
+  return uiSchema;
+};

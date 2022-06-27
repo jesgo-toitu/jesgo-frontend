@@ -1,21 +1,32 @@
 {
     "$schema": "../jesgo.json",
-    "$id": "/schema/CC/findigns",
+    "$id": "/schema/CC/findings",
+    "jesgo:version": "1.0",
+    "jesgo:unique": true,
     "type": "object",
     "title": "診断所見",
     "properties": {
         "腫瘍最大腫瘍径": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
-                    "type": "string",
-                    "enum": [
-                        "顕微鏡的病変",
-                        "～2㎝",
-                        "～4㎝",
-                        "～6㎝",
-                        "6㎝をこえる",
-                        "測定不能"
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "enum": [
+                                "顕微鏡的病変",
+                                "～2㎝",
+                                "～4㎝",
+                                "～6㎝",
+                                "6㎝をこえる",
+                                "測定不能"
+                            ]
+                        },
+                        {
+                            "type": "number",
+                            "units": "cm"
+                        }
                     ]
                 },
                 "診断方法": {
@@ -30,6 +41,7 @@
         },
         "基靭帯浸潤": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -51,6 +63,7 @@
         },
         "腟壁浸潤": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -72,6 +85,7 @@
         },
         "膀胱粘膜浸潤": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -93,6 +107,7 @@
         },
         "直腸粘膜浸潤": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -114,6 +129,7 @@
         },
         "骨盤リンパ節転移": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -138,6 +154,7 @@
         },
         "傍大動脈リンパ節": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -162,6 +179,7 @@
         },
         "その他のリンパ節転移": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -186,6 +204,7 @@
         },
         "リンパ節以外の遠隔転移": {
             "type": "object",
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "所見": {
                     "type": "string",
@@ -204,7 +223,30 @@
                     ]
                 }
             }
+        },
+        "再発リスク": {
+            "type": "string",
+            "enum": [
+                "低リスク",
+                "中リスク",
+                "高リスク"
+            ]
         }
     },
-    "$defs": {}
+    "jesgo:childschema": [
+        "/schema/evaluations/exam",
+        "/schema/evaluations/cervix",
+        "/schema/evaluations/colposcopy",
+        "/schema/evaluations/hysteroscopy",
+        "/schema/evaluations/cystoscopy",
+        "/schema/evaluation/colonoscopy",
+        "/schema/evaluation/tumor_markers",
+        "/schema/evaluations/imaging",
+        "/schema/evaluations/ascites",
+        "/schema/evaluations/pleural_effusion",
+        "/schema/evaluation/immunohistochemistry",
+        "/schema/evaluation/oncogenes",
+        "/schema/evaluation/performance_status",
+        "/schema/evaluation/physical_status"
+    ]
 }

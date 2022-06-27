@@ -1,11 +1,9 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/operation/detailed",
+    "jesgo:version": "1.0",
     "type": "object",
-    "title": "手術療法",
-    "required": [
-        "手術日"
-    ],
+    "title": "手術療法 詳細",
     "properties": {
         "手術日": {
             "type": "string",
@@ -13,7 +11,7 @@
             "jesgo:set": "eventdate"
         },
         "手術時間": {
-            "description": "加刀~終刀までの時間(分)",
+            "description": "加刀~終刀までの時間(分) もしくは 時:分 で入力",
             "oneOf": [
                 {
                     "type": "integer",
@@ -27,44 +25,54 @@
             ]
         },
         "麻酔方法": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+                "全身麻酔",
+                "全身麻酔+硬膜外麻酔",
+                "腰椎麻酔",
+                "静脈麻酔",
+                "神経ブロック"
+            ]
         },
         "術者": {
             "type": "array",
-            "description": "筆頭に執刀医、以下を助手として入力",
             "items": {
-                "oneOf": [
-                    {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "title": "名前",
-                                "type": "string"
-                            },
-                            "property": {
-                                "title": "資格",
-                                "type": "string",
-                                "enum": [
-                                    "婦人科腫瘍専門医",
-                                    "産婦人科内視鏡技術認定医",
-                                    "婦人科腫瘍専門医+産婦人科内視鏡技術認定医",
-                                    "産婦人科専門医",
-                                    "その他",
-                                    "不明"
-                                ]
-                            }
-                        }        
-                    },
-                    {
+                "type": "object",
+                "jesgo:ui:subschemastyle": "inline",
+                "properties": {
+                    "役割": {
                         "type": "string",
-                        "title": "名前"
+                        "enum": [
+                            "術者",
+                            "指導",
+                            "助手",
+                            "第一助手",
+                            "第二助手",
+                            "第三助手～"
+                        ]
+                    },
+                    "名前": {
+                        "type": "string"
+                    },
+                    "資格": {
+                        "type": "string",
+                        "enum": [
+                            "婦人科腫瘍専門医",
+                            "産婦人科内視鏡技術認定医",
+                            "婦人科腫瘍専門医+産婦人科内視鏡技術認定医",
+                            "婦人科腫瘍修錬医",
+                            "産婦人科専門医",
+                            "産婦人科専攻医",
+                            "その他",
+                            "不明"
+                        ]
                     }
-                ]
+                }
             },
             "minItems": 1
         },
         "出血量": {
-            "description": "加刀~終刀までの出血量(g)",
+            "description": "加刀~終刀までの出血量(g) 不明の時は 不明 と入力",
             "oneOf": [
                 {
                     "type": "integer",
@@ -73,15 +81,10 @@
                 },
                 {
                     "type": "string",
-                    "const": "不明"
+                    "enum": [
+                        "不明"
+                    ]
                 }
-            ]
-        },
-        "妊孕性温存": {
-            "type": "string",
-            "enum": [
-                "あり",
-                "なし"
             ]
         },
         "手術完遂度": {
@@ -91,7 +94,8 @@
                 "不完全摘出（残存腫瘍径が 1cm未満）",
                 "不完全摘出（残存腫瘍径が 1cm～2cm）",
                 "不完全摘出（2cmをこえる）",
-                "不明"
+                "不明",
+                "施行せず"
             ]
         },
         "残存腫瘍部位": {
@@ -99,10 +103,58 @@
         },
         "腹腔内所見": {
             "type": "string"
+        },
+        "内性器の摘出状態": {
+            "type": "object",
+            "properties": {
+                "子宮": {
+                    "type": "string",
+                    "enum": [
+                        "頸部摘出",
+                        "全摘出",
+                        "温存"
+                    ]
+                },
+                "妊孕性温存": {
+                    "type": "string",
+                    "enum": [
+                        "あり",
+                        "なし"
+                    ]
+                },
+                "卵管": {
+                    "type": "string",
+                    "enum": [
+                        "両側摘出",
+                        "左側摘出",
+                        "右側摘出",
+                        "温存"
+                    ]
+                },
+                "卵巣": {
+                    "type": "string",
+                    "enum": [
+                        "両側摘出",
+                        "左側摘出",
+                        "右側摘出",
+                        "温存"
+                    ]
+                }
+            }
+        },
+        "合併症の有無": {
+            "type": "string",
+            "enum": [
+                "なし",
+                "あり"
+            ]
         }
     },
     "jesgo:subschema": [
-        "/schema/treatment/operation_procedures",
-        "/schema/treatment/operation_adverse_events"
+        "/schema/treatment/operation_procedures"
+    ],
+    "jesgo:childschema": [
+        "/schema/treatment/operation_adverse_events",
+        "/schema/treatment/blood_transfusion"
     ]
 }

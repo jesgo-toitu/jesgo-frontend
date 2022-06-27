@@ -1,15 +1,16 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/CC/pathology",
+    "jesgo:unique": true,
     "type": "object",
     "title": "組織診断",
     "description": "WHO分類2014年",
     "properties": {
         "組織型": {
+            "type": "string",
             "oneOf": [
                 {
                     "title": "上皮性腫瘍 (扁平上皮癌)",
-                    "type": "string",
                     "enum": [
                         "角化型扁平上皮癌",
                         "非角化型扁平上皮癌",
@@ -24,7 +25,6 @@
                 },
                 {
                     "title": "上皮性腫瘍 (腺癌)",
-                    "type": "string",
                     "enum": [
                         "通常型内頸部腺癌",
                         "粘液性癌",
@@ -42,7 +42,6 @@
                 },
                 {
                     "title": "上皮性腫瘍(その他)",
-                    "type": "string",
                     "enum": [
                         "腺扁平上皮癌",
                         "すりガラス細胞癌",
@@ -58,7 +57,6 @@
                 },
                 {
                     "title": "間葉性腫瘍および腫瘍類似病変",
-                    "type": "string",
                     "enum": [
                         "平滑筋肉腫",
                         "横紋筋肉腫",
@@ -72,7 +70,6 @@
                 },
                 {
                     "title": "上皮性・間葉性混合腫瘍",
-                    "type": "string",
                     "enum": [
                         "腺肉腫",
                         "癌肉腫"
@@ -80,7 +77,6 @@
                 },
                 {
                     "title": "メラノサイト腫瘍",
-                    "type": "string",
                     "enum": [
                         "悪性黒色腫"
                     ]

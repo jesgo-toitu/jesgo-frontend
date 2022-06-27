@@ -1,25 +1,25 @@
 {
     "$schema": "../jesgo.json",
     "$id": "/schema/treatment/operation_procedures",
+    "jesgo:version": "1.0",
+    "jesgo:unique": true,
     "type": "array",
     "title": "実施手術",
     "items": {
-        "$ref": "#procedure"
+        "$ref": "#/$defs/procedure"
     },
     "$defs": {
         "procedure": {
             "$id": "#procedure",
             "type": "object",
-            "required": [
-                "術式"
-            ],
+            "jesgo:ui:subschemastyle": "inline",
             "properties": {
                 "術式": {
                     "type": "string",
-                    "anyOf": [
+                    "oneOf": [
                         {
                             "title": "開腹手術",
-                            "anyOf": [
+                            "oneOf": [
                                 {
                                     "title": "子宮摘出・子宮頸部摘出術式",
                                     "enum": [
@@ -93,7 +93,7 @@
                         },
                         {
                             "title": "腹腔鏡手術",
-                            "anyOf": [
+                            "oneOf": [
                                 {
                                     "title": "子宮摘出術式",
                                     "enum": [
@@ -150,7 +150,7 @@
                         },
                         {
                             "title": "ロボット支援下手術",
-                            "anyOf": [
+                            "oneOf": [
                                 {
                                     "title": "子宮摘出術式",
                                     "enum": [
@@ -192,7 +192,33 @@
                             }
                         }
                     }
-                }        
+                },
+                "卵巣・卵管の状態": {
+                    "type": "object",
+                    "jesgo:ui:visibleWhen": {
+                        "properties": {
+                            "術式": {
+                                "pattern": "子宮全摘出術"
+                            }
+                        }
+                    },
+                    "properties": {
+                        "卵管": {
+                            "type": "string",
+                            "enum": [
+                                "摘出",
+                                "温存"
+                            ]
+                        },
+                        "卵巣": {
+                            "type": "string",
+                            "enum": [
+                                "摘出",
+                                "温存"
+                            ]
+                        }
+                    }
+                }
             } 
         }
     }

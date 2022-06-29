@@ -19,6 +19,7 @@ export namespace Const {
   export const EX_VOCABULARY = {
     REQUIRED: 'jesgo:required',
     UNIQUE: 'jesgo:unique',
+    VALIDATION_ALERT: 'jesgo:validationalert',
     UI_TEXTAREA: 'jesgo:ui:textarea',
     UI_LISTTYPE: 'jesgo:ui:listtype',
     UI_SUBSCHEMA_STYLE: 'jesgo:ui:subschemastyle',

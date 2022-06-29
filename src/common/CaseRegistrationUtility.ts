@@ -58,6 +58,15 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
   const messages: string[] = [];
   const type = resultSchema.type;
 
+  // validation用独自メッセージ
+  const validationAlertMessage =
+    resultSchema[Const.EX_VOCABULARY.VALIDATION_ALERT] ?? '';
+
+  // エラーメッセージ取得Func
+  const getErrMsg = (defaultMessage: string) =>
+    // スキーマでエラーメッセージの内容が定義されていればそちらを優先する
+    validationAlertMessage === '' ? defaultMessage : validationAlertMessage;
+
   // 入力がある場合のみチェック
   if (formData != null && typeof formData !== 'object') {
     if (type === Const.JSONSchema7Types.STRING) {
@@ -76,13 +85,15 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
         ) {
           // messages.push(`未来日は入力できません。`);
           messages.push(
-            `${Const.INPUT_DATE_MIN.replace(
-              /-/g,
-              '/'
-            )} ～ ${Const.INPUT_DATE_MAX().replace(
-              /-/g,
-              '/'
-            )}の範囲で入力してください。`
+            getErrMsg(
+              `${Const.INPUT_DATE_MIN.replace(
+                /-/g,
+                '/'
+              )} ～ ${Const.INPUT_DATE_MAX().replace(
+                /-/g,
+                '/'
+              )}の範囲で入力してください。`
+            )
           );
         }
       }
@@ -91,15 +102,16 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
         const reg = new RegExp(resultSchema.pattern);
         const value: string = (formData as string) ?? '';
         if (!value.match(reg)) {
-          // TODO 正規表現の部分をどうわかりやすく表現するか？
-          messages.push(`${resultSchema.pattern}の形式で入力してください。`);
+          messages.push(
+            getErrMsg(`${resultSchema.pattern}の形式で入力してください。`)
+          );
         }
       }
       if (resultSchema.const != null) {
         // const
         if (resultSchema.const !== formData) {
           messages.push(
-            `「${resultSchema.const as string}」のみ入力できます。`
+            getErrMsg(`「${resultSchema.const as string}」のみ入力できます。`)
           );
         }
       }
@@ -111,7 +123,7 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
           enumValues.forEach((enumValue: string) => {
             subMsgs.push(`「${enumValue}」`);
           });
-          messages.push(`${subMsgs.join('、')}のみ入力できます。`);
+          messages.push(getErrMsg(`${subMsgs.join('、')}のみ入力できます。`));
         }
       }
     } else if (
@@ -122,13 +134,13 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
       let isNotNumber = false;
 
       if (Number.isNaN(value)) {
-        messages.push(`数値で入力してください。`);
+        messages.push(getErrMsg(`数値で入力してください。`));
         isNotNumber = true;
       } else if (
         type === Const.JSONSchema7Types.INTEGER &&
         !Number.isInteger(value)
       ) {
-        messages.push(`整数で入力してください。`);
+        messages.push(getErrMsg(`整数で入力してください。`));
         isNotNumber = true;
       }
       // 数値の場合のみ以降のチェックを行う
@@ -137,7 +149,7 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
           // const
           if (resultSchema.const !== value) {
             messages.push(
-              `「${resultSchema.const as string}」のみ入力できます。`
+              getErrMsg(`「${resultSchema.const as string}」のみ入力できます。`)
             );
           }
         }
@@ -145,7 +157,7 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
           // minimum
           if (value < resultSchema.minimum) {
             messages.push(
-              `${resultSchema.minimum}以上の値を入力してください。`
+              getErrMsg(`${resultSchema.minimum}以上の値を入力してください。`)
             );
           }
         }
@@ -153,7 +165,7 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
           // maximum
           if (value > resultSchema.maximum) {
             messages.push(
-              `${resultSchema.maximum}以下の値を入力してください。`
+              getErrMsg(`${resultSchema.maximum}以下の値を入力してください。`)
             );
           }
         }

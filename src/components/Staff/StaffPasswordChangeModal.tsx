@@ -109,7 +109,7 @@ export const StaffPasswordChangeModalDialog = (props: {
       alert('変更しました');
       props.onOk();
     } else {
-      alert('パスワード変更に失敗しました');
+      alert('【エラー】\nパスワード変更に失敗しました');
     }
   };
 
@@ -135,7 +135,11 @@ export const StaffPasswordChangeModalDialog = (props: {
         </Modal.Header>
         <Modal.Body>
           <FormGroup controlId="password">
-            <ControlLabel>パスワード<br/>※半角英数字をそれぞれ1種類以上含む8文字以上20文字以内で入力してください</ControlLabel>
+            <ControlLabel>
+              パスワード
+              <br />
+              ※半角英数字をそれぞれ1種類以上含む8文字以上20文字以内で入力してください
+            </ControlLabel>
             <FormControl
               required
               autoComplete="new-password"

@@ -333,7 +333,7 @@ const TabSchema = React.memo((props: Props) => {
           (p) => p.key === documentId
         );
       // 継承した場合は編集中のデータをセットする
-      if (saveParentDoc && isSchemaChange) {
+      if (saveParentDoc) {
         parentDoc = saveParentDoc;
       }
 

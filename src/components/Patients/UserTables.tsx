@@ -100,7 +100,7 @@ const makeTable = (props: {
         setUserListJson(strJson);
       } else {
         // eslint-disable-next-line no-alert
-        alert('処理に失敗しました。');
+        alert('【エラー】\n処理に失敗しました。');
       }
     }
   };
@@ -150,9 +150,7 @@ const makeTable = (props: {
             className={user.status.includes('death') ? 'died' : ''}
             key={user.caseId.toString()}
           >
-            <td>
-              {user.patientId}
-            </td>
+            <td>{user.patientId}</td>
             <td>{user.patientName}</td>
             <td className={noSearch}>{user.age}</td>
             <td className={noSearch}>

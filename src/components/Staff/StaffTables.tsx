@@ -79,7 +79,7 @@ const makeTable = (props: {}) => {
       const token = localStorage.getItem('token');
       if (token == null) {
         // eslint-disable-next-line no-alert
-        alert('処理に失敗しました。');
+        alert('【エラー】\n処理に失敗しました。');
         return;
       }
 
@@ -93,7 +93,7 @@ const makeTable = (props: {}) => {
         setUpdate((prevState) => !prevState);
       } else {
         // eslint-disable-next-line no-alert
-        alert('削除に失敗しました。');
+        alert('【エラー】\n削除に失敗しました。');
       }
     }
   };

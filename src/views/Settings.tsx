@@ -234,7 +234,7 @@ const Settings = () => {
       navigate('/patients');
     } else {
       // eslint-disable-next-line no-alert
-      alert('設定に失敗しました');
+      alert('【エラー】\n設定に失敗しました');
       navigate('/patients');
     }
   };

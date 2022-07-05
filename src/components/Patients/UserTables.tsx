@@ -80,7 +80,7 @@ const makeTable = (props: {
       const token = localStorage.getItem('token');
       if (token == null) {
         // eslint-disable-next-line no-alert
-        alert('処理に失敗しました。');
+        alert('【エラー】\n処理に失敗しました。');
         setIsLoading(false);
         return;
       }

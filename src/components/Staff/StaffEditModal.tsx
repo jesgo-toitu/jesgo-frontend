@@ -23,6 +23,7 @@ import {
   StaffErrorMessage,
 } from '../../common/StaffMaster';
 import { staffData } from '../../views/Stafflist';
+import Loading from '../CaseRegistration/Loading';
 import ModalDialog from '../common/ModalDialog';
 import './StaffEditModal.css';
 
@@ -45,6 +46,8 @@ export const StaffEditModalDialog = (props: {
 
   const [errShow, setErrShow] = useState(false);
   const [message, setMessage] = useState<string>('');
+
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     console.log(props.insert);
@@ -201,12 +204,14 @@ export const StaffEditModalDialog = (props: {
     }
   };
 
-  const onSave = () => {
+  const onSave = async () => {
+    setIsLoading(true);
     if (props.insert) {
-      addUser();
+      await addUser();
     } else {
-      updateUser();
+      await updateUser();
     }
+    setIsLoading(false);
   };
 
   const errModalHide = useCallback(() => {}, []);
@@ -308,6 +313,7 @@ export const StaffEditModalDialog = (props: {
             登録
           </Button>
         </Modal.Footer>
+        {isLoading && <Loading />}
       </Modal>
       <ModalDialog
         show={errShow}

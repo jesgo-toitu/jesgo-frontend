@@ -24,6 +24,7 @@ import {
   StaffErrorMessage,
 } from '../../common/StaffMaster';
 import { staffData } from '../../views/Stafflist';
+import Loading from '../CaseRegistration/Loading';
 import ModalDialog from '../common/ModalDialog';
 import './StaffEditModal.css';
 
@@ -42,6 +43,8 @@ export const StaffPasswordChangeModalDialog = (props: {
   const [message, setMessage] = useState<string>('');
 
   const userId = localStorage.getItem('user_id');
+
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setPassword('');
@@ -113,8 +116,10 @@ export const StaffPasswordChangeModalDialog = (props: {
     }
   };
 
-  const onSave = () => {
-    updatePassword();
+  const onSave = async () => {
+    setIsLoading(true);
+    await updatePassword();
+    setIsLoading(false);
   };
 
   const errModalHide = useCallback(() => {}, []);
@@ -171,6 +176,7 @@ export const StaffPasswordChangeModalDialog = (props: {
             登録
           </Button>
         </Modal.Footer>
+        {isLoading && <Loading />}
       </Modal>
       <ModalDialog
         show={errShow}

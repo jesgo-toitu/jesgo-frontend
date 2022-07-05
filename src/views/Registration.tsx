@@ -340,11 +340,6 @@ const Registration = () => {
           },
         });
       }
-    } else if (loadedJesgoCase.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
-      // ログイン画面に戻る
-      setIsLoading(false);
-      RemoveBeforeUnloadEvent();
-      navigate('/login');
     } else {
       // eslint-disable-next-line no-alert
       alert('【エラー】\n読み込みに失敗しました。');

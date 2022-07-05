@@ -341,8 +341,12 @@ const Registration = () => {
         });
       }
     } else {
+      let errMsg = '【エラー】\n読み込みに失敗しました。';
+      if (loadedJesgoCase.resCode === RESULT.NOT_FOUND_CASE) {
+        errMsg = '【エラー】\n存在しない症例情報です。';
+      }
       // eslint-disable-next-line no-alert
-      alert('【エラー】\n読み込みに失敗しました。');
+      alert(errMsg);
       setIsLoading(false);
       RemoveBeforeUnloadEvent();
       navigate('/Patients');

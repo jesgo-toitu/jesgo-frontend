@@ -22,13 +22,9 @@ export interface userData {
   startDate: string | null;
   lastUpdate: string;
   diagnosis: string;
-  diagnosisCervical: string;
-  diagnosisEndometrial: string;
-  diagnosisOvarian: string;
+  diagnosisMajor: string;
+  diagnosisMinor: string;
   advancedStage: string;
-  advancedStageCervical: string;
-  advancedStageEndometrial: string;
-  advancedStageOvarian: string;
   pathlogicalDiagnosis: string;
   initialTreatment: string[];
   copilacations: string[];
@@ -150,9 +146,7 @@ const makeTable = (props: {
             className={user.status.includes('death') ? 'died' : ''}
             key={user.caseId.toString()}
           >
-            <td>
-              {user.patientId}
-            </td>
+            <td>{user.patientId}</td>
             <td>{user.patientName}</td>
             <td className={noSearch}>{user.age}</td>
             <td className={noSearch}>

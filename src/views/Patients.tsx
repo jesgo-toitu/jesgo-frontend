@@ -27,6 +27,10 @@ import { csvHeader, patientListCsv } from '../common/MakeCsv';
 import { formatDate } from '../common/DBUtility';
 import { Const } from '../common/Const';
 
+export type searchColumnsFromApi = {
+  cancerTypes: string[];
+};
+
 const UNIT_TYPE = {
   DAY: 0,
   MONTH: 1,
@@ -67,6 +71,20 @@ const makeSelectDate = (
     dateList.reverse();
   }
   return dateList;
+};
+
+const makeSelectDataFromStorage = (columnType: string): string[] => {
+  const localStorageItem = localStorage.getItem(columnType);
+  const dataList = localStorageItem
+    ? (JSON.parse(localStorageItem) as string[])
+    : [];
+
+  const dataMap: Map<number, string> = new Map();
+  // eslint-disable-next-line no-plusplus
+  for (let index = 0; index < dataList.length; index++) {
+    dataMap.set(index + 1, dataList[index]);
+  }
+  return dataList;
 };
 
 const Patients = () => {
@@ -131,12 +149,9 @@ const Patients = () => {
           age: userData.age.toString(),
           startDate: userData.startDate!,
           lastUpdate: userData.lastUpdate,
-          diagnosisCervical: userData.diagnosisCervical,
-          diagnosisEndometrial: userData.diagnosisEndometrial,
-          diagnosisOvarian: userData.diagnosisOvarian,
-          advancedStageCervical: userData.advancedStageCervical,
-          advancedStageEndometrial: userData.advancedStageEndometrial,
-          advancedStageOvarian: userData.advancedStageOvarian,
+          diagnosisMajor: userData.diagnosisMajor,
+          diagnosisMinor: userData.diagnosisMinor,
+          advancedStage: userData.advancedStage,
           recurrence: userData.status.includes('recurrence') ? '有' : '無',
           chemotherapy: userData.status.includes('chemo') ? '有' : '無',
           operation: userData.status.includes('surgery') ? '有' : '無',
@@ -505,9 +520,11 @@ const Patients = () => {
               componentClass="select"
             >
               <option value="all">すべて</option>
-              <option value="cervical">子宮頸がん</option>
-              <option value="endometrial">子宮体がん</option>
-              <option value="ovarian">卵巣がん</option>
+              {makeSelectDataFromStorage('cancer_type').map(
+                (value: string, index: number) => (
+                  <option value={index + 1}>{value}</option>
+                )
+              )}
             </FormControl>
             <div className="spacer10" />
             <Checkbox

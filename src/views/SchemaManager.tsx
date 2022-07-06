@@ -19,6 +19,7 @@ import { settingsFromApi } from './Settings';
 import { responseResult, UploadSchemaFile } from '../common/DBUtility';
 import Loading from '../components/CaseRegistration/Loading';
 import { Const } from '../common/Const';
+import { searchColumnsFromApi } from './Patients';
 
 type settings = {
   facility_name: string;
@@ -75,8 +76,8 @@ const SchemaManager = () => {
   const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (fileList) {
-      const file = fileList[0]
-      const fileName:string = file.name.toLocaleLowerCase()
+      const file = fileList[0];
+      const fileName: string = file.name.toLocaleLowerCase();
       if (!fileName.endsWith('.zip') && !fileName.endsWith('.json')) {
         alert('ZIPファイルもしくはJSONファイルを選択してください');
         return;
@@ -90,12 +91,36 @@ const SchemaManager = () => {
 
   useEffect(() => {
     if (schemaUploadResponse.resCode !== undefined) {
+      // 検索カラム情報読み込みなおし
+      const f = async () => {
+        // 検索カラム取得APIを呼ぶ
+        const returnSearchColumnsApiObject = await apiAccess(
+          METHOD_TYPE.GET,
+          'getSearchColumns'
+        );
+
+        // 正常に取得できた場合検索カラムをlocalStorageに格納
+        if (
+          returnSearchColumnsApiObject.statusNum === RESULT.NORMAL_TERMINATION
+        ) {
+          const returned =
+            returnSearchColumnsApiObject.body as searchColumnsFromApi;
+          localStorage.setItem(
+            'cancer_type',
+            JSON.stringify(returned.cancerTypes)
+          );
+        }
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      f();
+
       alert(schemaUploadResponse.message);
       setSchemaUploadResponse({ message: '', resCode: undefined });
       setIsLoading(false);
 
       // アップロード対象ファイルクリア
-      if(refBtnUpload.current) {
+      if (refBtnUpload.current) {
         refBtnUpload.current.value = '';
       }
     }

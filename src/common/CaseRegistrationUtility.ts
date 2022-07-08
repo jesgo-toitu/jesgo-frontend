@@ -672,7 +672,7 @@ export const IsNotUpdate = () => {
 };
 
 // オブジェクトの空チェック
-const isNotEmptyObject = (obj: any) => {
+export const isNotEmptyObject = (obj: any) => {
   let hasInput = false;
 
   if (obj === undefined || obj === null) {

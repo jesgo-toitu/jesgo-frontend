@@ -696,8 +696,13 @@ const isNotEmptyObject = (obj: any) => {
   return hasInput;
 };
 
-// フォームの入力内容に応じてタブのスタイルを設定
-export const SetTabStyle = (tabId: string, formData: any, schemaId: number) => {
+/**
+ * formData入力値判定
+ * @param formData
+ * @param schemaId
+ * @returns
+ */
+export const hasFormDataInput = (formData: any, schemaId: number) => {
   let hasInput = false;
 
   // フォームデータの定義がないスキーマ(タブしかないもの)は入力あり扱いとする
@@ -730,6 +735,11 @@ export const SetTabStyle = (tabId: string, formData: any, schemaId: number) => {
     }
   }
 
+  return hasInput;
+};
+
+// フォームの入力内容に応じてタブのスタイルを設定
+export const SetTabStyle = (tabId: string, hasInput: boolean) => {
   // タブ文字色を変えるのでAタグ取得
   const aTag = document.getElementById(tabId) as HTMLAnchorElement;
 

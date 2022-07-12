@@ -9,7 +9,7 @@ import { settingsFromApi } from './Settings';
 import { responseResult, UploadSchemaFile } from '../common/DBUtility';
 import Loading from '../components/CaseRegistration/Loading';
 import { Const } from '../common/Const';
-
+import './SchemaManager.css';
 type settings = {
   facility_name: string;
 };
@@ -118,8 +118,8 @@ const SchemaManager = () => {
         </Navbar.Collapse>
       </Navbar>
 
-      <div className="page-menu">
-        <div className="search-form-closed flex">
+      <div className="schema-buttons">
+        <div className="schema-inner">
           <Button
             bsStyle="success"
             className="normal-button"
@@ -145,11 +145,15 @@ const SchemaManager = () => {
           </Button>
         </div>
       </div>
-      <Panel className="error-msg-panel">
-        {errorMessages.map((error: string) => (
-          <p>{error}</p>
-        ))}
-      </Panel>
+      <div className="schema-main">
+        {errorMessages.length > 0 && (
+          <Panel className="error-msg-panel">
+            {errorMessages.map((error: string) => (
+              <p>{error}</p>
+            ))}
+          </Panel>
+        )}
+      </div>
       {isLoading && <Loading />}
     </div>
   );

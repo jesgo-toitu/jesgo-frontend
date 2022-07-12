@@ -1,0 +1,23 @@
+.schema-buttons {
+  margin: 0;
+  top: 4.3rem;
+  width: 100%;
+  position: fixed;
+  background-color: #f9f9f9;
+  z-index: 150;
+  padding: 0rem;
+}
+
+.schema-inner {
+  width: 96%;
+  padding: 0rem;
+  margin: 0 2% 0 2%;
+  display: flex;
+  height: auto;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.schema-main {
+  margin-top: 7.7rem;
+}

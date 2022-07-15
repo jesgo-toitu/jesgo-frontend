@@ -230,3 +230,14 @@ input[type="number"] {
 textarea.form-control {
   resize: vertical;
 }
+
+/* 階層付きラジオボタンのdiv */
+div.radio-item-div {
+  margin-left: 10px;
+}
+
+/* 階層付きラジオボタンのlabel */
+label.radio-label {
+  margin-top: 5px;
+  margin-bottom: 0px;
+}

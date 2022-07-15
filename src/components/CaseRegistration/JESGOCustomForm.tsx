@@ -158,6 +158,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     multiTypeTextBox: JESGOComp.MultiTypeTextBox,
     datalistTextBox: JESGOComp.DatalistTextBox,
     withUnits: JESGOComp.WithUnits,
+    layerRadioButton: JESGOComp.LayerRadioButton,
   };
 
   return (

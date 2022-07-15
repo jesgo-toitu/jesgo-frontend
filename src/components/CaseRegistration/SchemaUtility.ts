@@ -135,7 +135,7 @@ export const transferSchemaItem = (
       if (Array.isArray(oneOfValue)) {
         // Type:stringにしないとCustomWidgetが反映されない
         result.type = 'string';
-        result['jesgo:ui:listtype'] = 'combo';
+        result[Const.EX_VOCABULARY.UI_LISTTYPE] = Const.JESGO_UI_LISTTYPE.COMBO;
       }
     } else if (iName === 'allOf') {
       const allOfItems = result.allOf;

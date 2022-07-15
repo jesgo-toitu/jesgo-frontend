@@ -39,20 +39,33 @@ const AddUiSchema = (
   const kType: keyof JSONSchema7 = Const.JSONSchema7Keys.TYPE;
   const classNames: string[] = [];
 
+  const schemaType = getSchemaType(schema);
+
   // requiredの場合
   if (isRequired) {
     classNames.push('required-item');
   }
 
   // "jesgo:validation:haserror"
-  if(schema["jesgo:validation:haserror"] === true){
+  if (schema['jesgo:validation:haserror'] === true) {
     classNames.push('has-error');
   }
 
   // "jesgo:ui:subschemastyle"
   if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE]) {
     if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'inline') {
-      classNames.push('subschemastyle-inline');
+      if (
+        schema.properties &&
+        Object.entries(schema.properties).find(
+          (prop) =>
+            (prop[1] as JSONSchema7).type === Const.JSONSchema7Types.ARRAY
+        )
+      ) {
+        // arrayの項目が含まれている場合はarray用のものを適応する
+        classNames.push('array-subschemastyle-inline');
+      } else {
+        classNames.push('subschemastyle-inline');
+      }
     } else if (schema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'column') {
       classNames.push('subschemastyle-column');
     }
@@ -66,11 +79,11 @@ const AddUiSchema = (
   // "jesgo:required"、または"description"がある場合、カスタムラベルを使用
   // ※type:arrayの場合は除く
   if (
-    !(getSchemaType(schema) === Const.JSONSchema7Types.ARRAY) &&
+    !(schemaType === Const.JSONSchema7Types.ARRAY) &&
     (itemPropName.includes(Const.EX_VOCABULARY.REQUIRED) ||
       itemPropName.includes(Const.JSONSchema7Keys.DESCRIPTION))
   ) {
-    if (getSchemaType(schema) === Const.JSONSchema7Types.OBJECT) {
+    if (schemaType === Const.JSONSchema7Types.OBJECT) {
       resultUiSchema[Const.UI_WIDGET.OBJECT_FIELD_TEMPLATE] =
         JESGOFiledTemplete.CustomObjectFieldTemplate;
     } else {
@@ -101,12 +114,12 @@ const AddUiSchema = (
   }
 
   // 数値入力Widget
-  if (['integer', 'number'].includes(getSchemaType(schema) as string)) {
+  if (['integer', 'number'].includes(schemaType as string)) {
     classNames.push('input-integer');
   }
 
   if (itemPropName.includes(kType)) {
-    switch (getSchemaType(schema)) {
+    switch (schemaType) {
       case Const.JSONSchema7Types.STRING:
         classNames.push('input-text');
         break;
@@ -118,12 +131,38 @@ const AddUiSchema = (
     }
   }
 
+  // jesgo:ui:listtype=buttonsによるチェックボックス、ラジオボタン(oneOfは除く)
+  if (
+    schema[Const.EX_VOCABULARY.UI_LISTTYPE] ===
+      Const.JESGO_UI_LISTTYPE.BUTTONS &&
+    !itemPropName.includes(Const.JSONSchema7Keys.ONEOF)
+  ) {
+    // チェックボックスグループ
+    if (schemaType === Const.JSONSchema7Types.ARRAY && schema.items) {
+      resultUiSchema[Const.UI_WIDGET.WIDGET] = 'checkboxes';
+      resultUiSchema[Const.UI_WIDGET.OPTIONS] = { inline: true }; // 横並びにする
+      // eslint-disable-next-line no-param-reassign
+      schema.uniqueItems = true; // これがないとエラーになる
+    } else if (
+      schemaType === Const.JSONSchema7Types.STRING &&
+      schema.enum &&
+      schema.enum.length > 0
+    ) {
+      // 通常のラジオボタン
+      resultUiSchema[Const.UI_WIDGET.WIDGET] = 'radio';
+      resultUiSchema[Const.UI_WIDGET.OPTIONS] = { inline: true }; // 横並びにする
+    }
+  }
+
   // oneOf
   if (itemPropName.includes(Const.JSONSchema7Keys.ONEOF)) {
     if (itemPropName.includes(kType)) {
-      switch (getSchemaType(schema)) {
+      switch (schemaType) {
         case Const.JSONSchema7Types.STRING:
-          if (schema[Const.EX_VOCABULARY.UI_LISTTYPE] === 'combo') {
+          if (
+            schema[Const.EX_VOCABULARY.UI_LISTTYPE] ===
+            Const.JESGO_UI_LISTTYPE.COMBO
+          ) {
             // oneOfの中身解析
             const oneOfItems = schema[
               Const.JSONSchema7Keys.ONEOF
@@ -146,6 +185,12 @@ const AddUiSchema = (
             }
             resultUiSchema[Const.UI_WIDGET.FIELD_TEMPLATE] =
               JESGOFiledTemplete.CustomLableTemplete;
+          } else if (
+            schema[Const.EX_VOCABULARY.UI_LISTTYPE] ===
+            Const.JESGO_UI_LISTTYPE.BUTTONS
+          ) {
+            // 階層表示用ラジオボタンの適用
+            resultUiSchema[Const.UI_WIDGET.WIDGET] = 'layerRadioButton';
           } else {
             // 階層表示用selectの適用
             resultUiSchema[Const.UI_WIDGET.WIDGET] = 'layerDropdown';
@@ -244,6 +289,12 @@ export const createUiSchemaProperties = (
       const propItem = getPropItemsAndNames(childItem as JSONSchema7);
       let itemsUiSchema = lodash.cloneDeep(resUiSchema[propName]) as UiSchema;
 
+      itemsUiSchema = AddUiSchema(
+        childItem as JSONSchema7,
+        itemsUiSchema,
+        requiredNames.includes(propName)
+      );
+
       itemsUiSchema = createUiSchemaProperties(
         item.required ?? [],
         propItem.pNames,
@@ -254,7 +305,7 @@ export const createUiSchemaProperties = (
 
       // 配列は'items'の中にuiSchemaを定義
       const propUiSchema = resUiSchema[propName] as UiSchema;
-      propUiSchema['items' as string] = itemsUiSchema;
+      propUiSchema.items = itemsUiSchema;
     }
 
     // TODO:oneofの対応も必要
@@ -295,7 +346,7 @@ export const CreateUISchema = (schema: JSONSchema7) => {
       items.forEach((item: JSONSchema7Definition) => {
         const propItems = getPropItemsAndNames(item as JSONSchema7);
         if (propItems) {
-          uiSchema['items' as string] = createUiSchemaProperties(
+          uiSchema.items = createUiSchemaProperties(
             schema.required ?? [],
             propItems.pNames,
             propItems.pItems,
@@ -307,7 +358,7 @@ export const CreateUISchema = (schema: JSONSchema7) => {
     } else {
       const propItems = getPropItemsAndNames(items as JSONSchema7);
       if (propItems) {
-        uiSchema['items' as string] = createUiSchemaProperties(
+        uiSchema.items = createUiSchemaProperties(
           schema.required ?? [],
           propItems.pNames,
           propItems.pItems,

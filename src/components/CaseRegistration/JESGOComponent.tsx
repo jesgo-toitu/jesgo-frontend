@@ -450,5 +450,200 @@ export namespace JESGOComp {
       </div>
     );
   }
+
+  interface RadioItem {
+    label?: string; // 表示用項目名
+    value?: string; // 実際の値
+    title?: string; // 階層見出し
+    items?: RadioItem[][]; // 子のラジオ項目
+  }
+
+  /**
+   * oneOfで定義された階層表示可能なラジオボタン
+   * @param props
+   * @returns
+   */
+  export function LayerRadioButton(props: WidgetProps) {
+    const {
+      options,
+      value,
+      required,
+      disabled,
+      readonly,
+      autofocus,
+      onBlur,
+      onFocus,
+      onChange,
+      id,
+      schema,
+    } = props;
+    // Generating a unique field name to identify this set of radio buttons
+    const name = Math.random().toString();
+    // const { enumOptions, enumDisabled, inline } = options;
+
+    // 選択肢を作成
+    const createSelectItem = (
+      radioItem: RadioItem,
+      i: number
+    ): JSX.Element | null => {
+      const disabledCls = disabled || readonly ? 'disabled' : '';
+
+      const radio = (checked: boolean, value: string, label: string) => {
+        return (
+          <span>
+            <input
+              type="radio"
+              checked={checked}
+              name={name}
+              required={required}
+              value={radioItem.value}
+              disabled={disabled || readonly}
+              autoFocus={autofocus && i === 0}
+              onChange={(_) => onChange(value)}
+              onBlur={onBlur && ((event) => onBlur(id, event.target.value))}
+              onFocus={onFocus && ((event) => onFocus(id, event.target.value))}
+            />
+            <span>{label}</span>
+          </span>
+        );
+      };
+
+      return (
+        <>
+          {radioItem.items && (
+            <>
+              {radioItem.title && (
+                <div className="control-label">
+                  <label className="radio-label">{radioItem.title}</label>
+                </div>
+              )}
+              {radioItem.items.map((radioItems) => {
+                return (
+                  <>
+                    <div className={radioItem.title ? 'radio-item-div' : ''}>
+                      {radioItems.map((oneItem) => {
+                        return (
+                          <>
+                            {oneItem.items ? (
+                              createSelectItem(oneItem, 1)
+                            ) : (
+                              <>
+                                <label
+                                  key={i}
+                                  className={`radio-inline ${disabledCls} radio-label`}
+                                >
+                                  {radio(
+                                    oneItem.value === value,
+                                    oneItem.value ?? '',
+                                    oneItem.label ?? ''
+                                  )}
+                                </label>
+                              </>
+                            )}
+                          </>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })}
+            </>
+          )}
+          {radioItem.label && radioItem.value && (
+            <label
+              key={i}
+              className={`radio-inline ${disabledCls} radio-label`}
+            >
+              {radio(
+                radioItem.value === value,
+                radioItem.value,
+                radioItem.label
+              )}
+            </label>
+          )}
+        </>
+      );
+    };
+
+    // ラジオボタンのスキーマを解析して扱いやすい形式に変換する
+    const createRadioItem = (radioItemList: RadioItem[], item: JSONSchema7) => {
+      // const: 階層なし
+      if (item.const) {
+        radioItemList.push({
+          label: item.title ? item.title : (item.const as string),
+          value: item.const as string,
+        });
+      } else if (item.enum) {
+        //enum: 1行に展開される選択肢一覧
+
+        // enumの値から選択肢生成
+        const enumItemList: RadioItem[] = [];
+        item.enum.forEach((enumItem) => {
+          const enumVal = enumItem as string;
+          enumItemList.push({ label: enumVal, value: enumVal });
+        });
+
+        let isAdded = false;
+        if (!item.title) {
+          // タイトルなしのenumの場合は以前のセクションとして追加する
+          const hasTitleItems = radioItemList.filter((p) => p.title && p.items);
+          if (hasTitleItems.length > 0) {
+            // 1つ前のタイトルありenumのitemsに追加する
+            const prevRadioItem = hasTitleItems[hasTitleItems.length - 1];
+
+            if (!prevRadioItem.items) {
+              prevRadioItem.items = [];
+            }
+            prevRadioItem.items.push(enumItemList);
+            isAdded = true;
+          }
+        }
+
+        if (!isAdded) {
+          // 新規セクションとして追加
+          const newItem: RadioItem = { title: item.title ?? '' };
+          newItem.items = [];
+          newItem.items.push(enumItemList);
+          radioItemList.push(newItem);
+        }
+      } else if (item.title && item.oneOf) {
+        // oneOf(入れ子)
+        const newItem: RadioItem = { title: item.title };
+        newItem.items = [];
+
+        const oneOfRadioItemList: RadioItem[] = [];
+        (item.oneOf as JSONSchema7[]).forEach((tmpItem) => {
+          createRadioItem(oneOfRadioItemList, tmpItem);
+        });
+        newItem.items.push(oneOfRadioItemList);
+
+        const hasItems = radioItemList.filter((p) => p.items);
+        if (hasItems.length > 0) {
+          // 1つ前のitemsに追加する
+          const prevRadioItem = hasItems[hasItems.length - 1];
+          (prevRadioItem.items as RadioItem[][]).push([newItem]);
+        } else {
+          radioItemList.push(newItem);
+        }
+      }
+    };
+
+    const oneOf = schema.oneOf as JSONSchema7[];
+    const radioItemList: RadioItem[] = [];
+    // oneOfを解析してラジオ用のItem作成
+    if (oneOf) {
+      oneOf.forEach((item) => {
+        createRadioItem(radioItemList, item);
+      });
+    }
+    return (
+      <div className="field-radio-group radio-item-div" id={id}>
+        {radioItemList &&
+          radioItemList.map((item: RadioItem, index: number) =>
+            createSelectItem(item, index)
+          )}
+      </div>
+    );
+  }
 }
 /* eslint-enable */

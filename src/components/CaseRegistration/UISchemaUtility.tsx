@@ -171,7 +171,7 @@ const AddUiSchema = (
             oneOfItems.forEach((oneOfItem: JSONSchema7) => {
               if (
                 getSchemaType(oneOfItem) === Const.JSONSchema7Types.STRING &&
-                oneOfItem.enum != null
+                oneOfItem.enum
               ) {
                 // selectがある
                 selectItem = oneOfItem.enum;

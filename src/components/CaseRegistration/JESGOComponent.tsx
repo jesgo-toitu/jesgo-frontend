@@ -579,8 +579,10 @@ export namespace JESGOComp {
         // enumの値から選択肢生成
         const enumItemList: RadioItem[] = [];
         item.enum.forEach((enumItem) => {
-          const enumVal = enumItem as string;
-          enumItemList.push({ label: enumVal, value: enumVal });
+          if (typeof enumItem === 'string') {
+            const enumVal = enumItem as string;
+            enumItemList.push({ label: enumVal, value: enumVal });
+          }
         });
 
         let isAdded = false;

@@ -604,6 +604,7 @@ const Registration = () => {
                   onChange={onChangeItem}
                   value={patientId}
                   readOnly={isSaved}
+                  autoComplete="off"
                 />
               </FormGroup>
             </Col>
@@ -614,6 +615,7 @@ const Registration = () => {
                   type="text"
                   onChange={onChangeItem}
                   value={patientName}
+                  autoComplete="off"
                 />
               </FormGroup>
             </Col>

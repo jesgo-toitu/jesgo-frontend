@@ -45,7 +45,7 @@ const AddUiSchema = (
   }
 
   // "jesgo:validation:haserror"
-  if(schema["jesgo:validation:haserror"] === true){
+  if (schema['jesgo:validation:haserror'] === true) {
     classNames.push('has-error');
   }
 
@@ -169,6 +169,9 @@ const AddUiSchema = (
   if (classNames.length > 0) {
     resultUiSchema[Const.UI_WIDGET.CLASS] = classNames.join(' ');
   }
+
+  // autocompleteはoffにしておく
+  resultUiSchema[Const.UI_WIDGET.AUTOCOMPLETE] = 'off';
 
   // eslint-disable-next-line no-param-reassign
   return resultUiSchema;

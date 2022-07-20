@@ -10,6 +10,7 @@ export namespace Const {
     ORDER: 'ui:order',
     WIDGET: 'ui:widget',
     OPTIONS: 'ui:options',
+    AUTOCOMPLETE: 'ui:autocomplete',
     FIELD_TEMPLATE: 'ui:FieldTemplate',
     OBJECT_FIELD_TEMPLATE: 'ui:ObjectFieldTemplate',
     CLASS: 'classNames',
@@ -19,6 +20,7 @@ export namespace Const {
   export const EX_VOCABULARY = {
     REQUIRED: 'jesgo:required',
     UNIQUE: 'jesgo:unique',
+    VALIDATION_ALERT: 'jesgo:validationalert',
     UI_TEXTAREA: 'jesgo:ui:textarea',
     UI_LISTTYPE: 'jesgo:ui:listtype',
     UI_SUBSCHEMA_STYLE: 'jesgo:ui:subschemastyle',

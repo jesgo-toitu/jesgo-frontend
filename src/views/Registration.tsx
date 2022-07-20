@@ -106,7 +106,7 @@ const Registration = () => {
   const [birthday, setBirthday] = useState<string>('');
   const [decline, setDecline] = useState<boolean>(false);
 
-  const [patientIdReadOnly, setPatientIdReadOnly] = useState(false);
+  const [isSaved, setIsSaved] = useState(false); // 保存済みフラグ
 
   let age = ''; // 年齢
 
@@ -282,7 +282,7 @@ const Registration = () => {
       setBirthday(loadData.jesgo_case.date_of_birth);
       setDecline(loadData.jesgo_case.decline);
 
-      setPatientIdReadOnly(true);
+      setIsSaved(true);
 
       // 読み込んだデータをstoreに反映
       dispatch({ type: 'SAVE_LOADDATA', saveData: loadData });
@@ -537,6 +537,18 @@ const Registration = () => {
   }, [saveResponse]);
 
   const message: string[] = getErrMsg(errors);
+
+  // validationのメッセージを利用して注釈メッセージ表示
+  if (!isSaved) {
+    message.push(
+      'ドキュメントを作成する場合は患者情報を入力後、保存してから下のボタンより追加してください。'
+    );
+  } else if (dispRootSchemaIdsNotDeleted.length === 0) {
+    message.push(
+      'ドキュメントを作成する場合は下のボタンより追加してください。'
+    );
+  }
+
   // 選択されているタブをstoreに保存
   useEffect(() => {
     dispatch({
@@ -591,7 +603,7 @@ const Registration = () => {
                   type="text"
                   onChange={onChangeItem}
                   value={patientId}
-                  readOnly={patientIdReadOnly}
+                  readOnly={isSaved}
                   autoComplete="off"
                 />
               </FormGroup>
@@ -725,6 +737,7 @@ const Registration = () => {
                 fnAddDocument: onTabSelectEvent,
                 fnSchemaChange: undefined,
               }}
+              disabled={!isSaved}
             />
           </div>
         </>

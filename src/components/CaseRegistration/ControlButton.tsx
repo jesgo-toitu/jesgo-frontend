@@ -58,6 +58,7 @@ type ControlButtonProps = {
   setSelectedTabKey?: React.Dispatch<React.SetStateAction<any>>;
   subSchemaCount: number;
   tabSelectEvents?: ChildTabSelectedFuncObj;
+  disabled?: boolean;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -84,6 +85,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     setSelectedTabKey,
     subSchemaCount,
     tabSelectEvents,
+    disabled,
   } = props;
 
   // 追加可能判定
@@ -455,6 +457,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         }`}
         onSelect={selectMenuHandler}
         pullRight
+        disabled={disabled}
       >
         <Dropdown.Toggle noCaret>
           <Glyphicon glyph="th-list" />

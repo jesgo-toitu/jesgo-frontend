@@ -9,6 +9,7 @@ import {
   GetHiddenPropertyNames,
   GetSchemaInfo,
   GetSchemaTitle,
+  hasFormDataInput,
   RegistrationErrors,
   SetSameSchemaTitleNumbering,
   SetTabStyle,
@@ -85,6 +86,10 @@ const RootSchema = React.memo((props: Props) => {
 
   // ドキュメント追加検知用
   const [addedDocumentCount, setAddedDocumentCount] = useState<number>(-1);
+
+  // 子ドキュメントの更新有無
+  const [updateChildFormData, setUpdateChildFormData] =
+    useState<boolean>(false);
 
   const dispatch = useDispatch();
 
@@ -472,13 +477,46 @@ const RootSchema = React.memo((props: Props) => {
 
   useEffect(() => {
     // 入力内容に応じてタブのフォントを設定
-    const hiddenItems = GetHiddenPropertyNames(customSchema);
 
-    // 非表示項目は除外
-    const copyFormData = lodash.omit(formData, hiddenItems);
+    // 変更前の現在のドキュメントの入力状態
+    const beforeInputState =
+      store.getState().formDataReducer.formDataInputStates.get(documentId) ??
+      false;
 
-    SetTabStyle(`root-tabs-tab-${tabId}`, copyFormData, schemaId);
-  }, [formData]);
+    let hasInput = false;
+    // 子のドキュメントはsaveDataから検索
+    const docIdList = dispSubSchemaIdsNotDeleted.map((p) => p.documentId);
+    docIdList.push(...dispChildSchemaIdsNotDeleted.map((p) => p.documentId));
+
+    const formDataInputStates =
+      store.getState().formDataReducer.formDataInputStates;
+    // eslint-disable-next-line no-restricted-syntax
+    for (const docId of docIdList) {
+      if (formDataInputStates.get(docId)) {
+        hasInput = true;
+        break;
+      }
+    }
+    setUpdateChildFormData(false);
+
+    // 子ドキュメントに入力がなければ自身のドキュメントチェック
+    if (!hasInput) {
+      const hiddenItems = GetHiddenPropertyNames(customSchema);
+      // 非表示項目は除外
+      const copyFormData = lodash.omit(formData, hiddenItems);
+      hasInput = hasFormDataInput(copyFormData, schemaId);
+    }
+
+    if (beforeInputState !== hasInput) {
+      SetTabStyle(`root-tabs-tab-${tabId}`, hasInput);
+
+      dispatch({
+        type: 'SET_FORMDATA_INPUT_STATE',
+        documentId,
+        hasFormDataInput: hasInput,
+      });
+    }
+  }, [formData, updateChildFormData]);
 
   return (
     <>
@@ -529,7 +567,8 @@ const RootSchema = React.memo((props: Props) => {
         setSaveResponse,
         setErrors,
         childTabSelectedFunc,
-        setChildTabSelectedFunc
+        setChildTabSelectedFunc,
+        setUpdateChildFormData
       )}
     </>
   );

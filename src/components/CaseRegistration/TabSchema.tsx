@@ -7,12 +7,12 @@ import CustomDivForm from './JESGOCustomForm';
 import {
   GetBeforeInheritDocumentData,
   GetHiddenPropertyNames,
-  GetInheritFormData,
   GetSchemaInfo,
   RegistrationErrors,
   GetSchemaTitle,
   SetSameSchemaTitleNumbering,
   SetTabStyle,
+  hasFormDataInput,
 } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
@@ -53,6 +53,7 @@ type Props = {
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
   selectedTabKey: any;
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void;
+  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const TabSchema = React.memo((props: Props) => {
@@ -74,6 +75,7 @@ const TabSchema = React.memo((props: Props) => {
     setErrors,
     selectedTabKey,
     schemaAddModFunc,
+    setUpdateFormData,
   } = props;
 
   // schemaIdをもとに情報を取得
@@ -123,7 +125,8 @@ const TabSchema = React.memo((props: Props) => {
 
   const [addedDocumentCount, setAddedDocumentCount] = useState<number>(-1);
 
-  const [updateChildPanelFormData, setUpdateChildPanelFormData] =
+  // 子ドキュメントの更新有無
+  const [updateChildFormData, setUpdateChildFormData] =
     useState<boolean>(false);
 
   const dispatch = useDispatch();
@@ -532,62 +535,48 @@ const TabSchema = React.memo((props: Props) => {
   useEffect(() => {
     // 入力内容に応じてタブのフォントを設定
 
-    const hiddenItems = GetHiddenPropertyNames(customSchema);
-    // 非表示項目は除外
-    const copyFormData = lodash.omit(formData, hiddenItems);
+    // 変更前の現在のドキュメントの入力状態
+    const beforeInputState =
+      store.getState().formDataReducer.formDataInputStates.get(documentId) ??
+      false;
 
-    SetTabStyle(`${parentTabsId}-tabs-tab-${tabId}`, copyFormData, schemaId);
-  }, [formData]);
+    let hasInput = false;
+    // 子のドキュメントはsaveDataから検索
+    const docIdList = dispSubSchemaIdsNotDeleted.map((p) => p.documentId);
+    docIdList.push(...dispChildSchemaIdsNotDeleted.map((p) => p.documentId));
 
-  // 子のパネルスキーマの入力内容変更時のタブフォント設定
-  useEffect(() => {
-    if (updateChildPanelFormData) {
-      const formDataArray: any[] = [];
-
-      const hiddenItems = GetHiddenPropertyNames(customSchema);
-      const copyFormData = lodash.omit(formData, hiddenItems);
-      formDataArray.push(copyFormData); // 自分自身のフォームデータもチェック対象
-
-      // パネル表示の場合、子のドキュメントをチェックする
-      if (!isTab) {
-        const jesgoDocument =
-          store.getState().formDataReducer.saveData.jesgo_document;
-        // 子のドキュメントはsaveDataから検索
-        const docIdList = dispSubSchemaIdsNotDeleted.map((p) => p.documentId);
-        docIdList.push(
-          ...dispChildSchemaIdsNotDeleted.map((p) => p.documentId)
-        );
-
-        jesgoDocument
-          .filter((p) => docIdList.includes(p.key))
-          .forEach((document) => {
-            // スキーマ情報取得
-            const tmpSchemaInfo = GetSchemaInfo(document.value.schema_id);
-            if (tmpSchemaInfo) {
-              // UIスキーマ生成
-              const tmpCustomSchema = CustomSchema({
-                orgSchema: tmpSchemaInfo.document_schema,
-                formData: document.value.document,
-              }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-
-              // 非表示項目を除外したformDataを生成
-              const tmpHiddenItems = GetHiddenPropertyNames(tmpCustomSchema);
-              const tmpCopyFormData = lodash.omit(
-                document.value.document,
-                tmpHiddenItems
-              );
-
-              formDataArray.push(tmpCopyFormData);
-            }
-          });
+    const formDataInputStates =
+      store.getState().formDataReducer.formDataInputStates;
+    // eslint-disable-next-line no-restricted-syntax
+    for (const docId of docIdList) {
+      if (formDataInputStates.get(docId)) {
+        hasInput = true;
+        break;
       }
-
-      // 入力内容に応じてタブのフォントを設定
-      SetTabStyle(`${parentTabsId}-tabs-tab-${tabId}`, formDataArray, schemaId);
-
-      setUpdateChildPanelFormData(false);
     }
-  }, [updateChildPanelFormData]);
+    setUpdateChildFormData(false);
+
+    // 子ドキュメントに入力がなければ自身のドキュメントチェック
+    if (!hasInput) {
+      const hiddenItems = GetHiddenPropertyNames(customSchema);
+      // 非表示項目は除外
+      const copyFormData = lodash.omit(formData, hiddenItems);
+      hasInput = hasFormDataInput(copyFormData, schemaId);
+    }
+
+    if (beforeInputState !== hasInput) {
+      SetTabStyle(`${parentTabsId}-tabs-tab-${tabId}`, hasInput);
+
+      dispatch({
+        type: 'SET_FORMDATA_INPUT_STATE',
+        documentId,
+        hasFormDataInput: hasInput,
+      });
+
+      // 親タブに子タブの更新を伝える
+      setUpdateFormData(true);
+    }
+  }, [formData, updateChildFormData]);
 
   return (
     <>
@@ -639,7 +628,8 @@ const TabSchema = React.memo((props: Props) => {
             setSaveResponse,
             setErrors,
             childTabSelectedFunc,
-            setChildTabSelectedFunc
+            setChildTabSelectedFunc,
+            setUpdateChildFormData
           )
         : // パネル表示
           createPanels(
@@ -656,7 +646,7 @@ const TabSchema = React.memo((props: Props) => {
             selectedTabKey,
             schemaAddModFunc,
             tabId,
-            setUpdateChildPanelFormData
+            setUpdateChildFormData
           )}
     </>
   );

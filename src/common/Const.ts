@@ -10,6 +10,7 @@ export namespace Const {
     ORDER: 'ui:order',
     WIDGET: 'ui:widget',
     OPTIONS: 'ui:options',
+    AUTOCOMPLETE: 'ui:autocomplete',
     FIELD_TEMPLATE: 'ui:FieldTemplate',
     OBJECT_FIELD_TEMPLATE: 'ui:ObjectFieldTemplate',
     CLASS: 'classNames',

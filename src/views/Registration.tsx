@@ -260,18 +260,12 @@ const Registration = () => {
 
   // データ読み込み後のコールバック
   useEffect(() => {
-    if (loadedJesgoCase.resCode === RESULT.ABNORMAL_TERMINATION) {
-      // eslint-disable-next-line no-alert
-      alert('読み込みに失敗しました。');
-      setIsLoading(false);
-      RemoveBeforeUnloadEvent();
-      navigate('/Patients');
-    } else if (loadedJesgoCase.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
-      // ログイン画面に戻る
-      setIsLoading(false);
-      RemoveBeforeUnloadEvent();
-      navigate('/login');
-    } else if (loadedJesgoCase.resCode === RESULT.NORMAL_TERMINATION) {
+    // 初回描画時などコールバック以外で呼び出された場合は何もしない
+    if (loadedJesgoCase.resCode === undefined) {
+      return;
+    }
+
+    if (loadedJesgoCase.resCode === RESULT.NORMAL_TERMINATION) {
       // 読み込み成功
 
       loadData = loadedJesgoCase.loadedSaveData as SaveDataObjDefine;
@@ -346,6 +340,16 @@ const Registration = () => {
           },
         });
       }
+    } else {
+      let errMsg = '【エラー】\n読み込みに失敗しました。';
+      if (loadedJesgoCase.resCode === RESULT.NOT_FOUND_CASE) {
+        errMsg = '【エラー】\n存在しない症例情報です。';
+      }
+      // eslint-disable-next-line no-alert
+      alert(errMsg);
+      setIsLoading(false);
+      RemoveBeforeUnloadEvent();
+      navigate('/Patients');
     }
   }, [loadedJesgoCase]);
 
@@ -509,15 +513,19 @@ const Registration = () => {
 
   // 保存後のコールバック
   useEffect(() => {
-    if (saveResponse.resCode !== undefined) {
-      if (
-        saveResponse.resCode === RESULT.ABNORMAL_TERMINATION ||
-        saveResponse.resCode === RESULT.ID_DUPLICATION
-      ) {
-        alert(saveResponse.message);
-      }
+    // 初回描画時などコールバック以外で呼び出された場合は何もしない
+    if (saveResponse.resCode === undefined) {
+      return;
+    }
 
-      // TODO: 再読み込みする
+    if (saveResponse.resCode !== RESULT.NORMAL_TERMINATION) {
+      alert(saveResponse.message);
+    }
+
+    setIsLoading(false);
+
+    if (saveResponse.resCode === RESULT.NORMAL_TERMINATION) {
+      // 再読み込みする
       if (saveResponse.caseId) {
         setIsLoading(true);
         setLoadedJesgoCase({
@@ -528,11 +536,15 @@ const Registration = () => {
         setCaseId(saveResponse.caseId);
         setIsReload(true);
       } else {
-        // TODO: 読み込み失敗
+        // 読み込み失敗
         setIsLoading(false);
         RemoveBeforeUnloadEvent();
         navigate('/Patients');
       }
+    } else if (saveResponse.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
+      // トークン期限切れはログイン画面に戻る
+      RemoveBeforeUnloadEvent();
+      navigate('/login');
     }
   }, [saveResponse]);
 

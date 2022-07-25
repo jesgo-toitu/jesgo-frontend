@@ -76,13 +76,16 @@ export const SaveFormDataToDB = async (
   if (res.resCode === RESULT.NORMAL_TERMINATION) {
     res.message = '保存しました。';
   } else if (res.resCode === RESULT.ID_DUPLICATION) {
-    res.message = '既に登録されている患者IDです';
+    res.message =
+      '【エラー】\n既に登録されている患者IDです。\n入力内容をご確認の上、正しいIDを入力してください。';
   } else if (res.resCode === RESULT.TOO_LARGE_ERROR) {
-    res.message = '保存サイズが大きすぎます。';
+    res.message = '【エラー】\n保存サイズが大きすぎます。';
   } else if (res.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
-    res.message = 'トークン期限切れ';
+    res.message = '【エラー】\nトークン期限切れ';
+  } else if (res.resCode === RESULT.NETWORK_ERROR) {
+    res.message = '【エラー】\nサーバーへの接続に失敗しました。';
   } else {
-    res.message = '保存に失敗しました。';
+    res.message = '【エラー】\n保存に失敗しました。';
   }
 
   // case_idが返却される
@@ -362,7 +365,6 @@ export const UploadSchemaFile = async (
 ) => {
   const res: responseResult = { message: '' };
 
-  // TODO: URLは今は適当
   const apiResult = await apiAccess(METHOD_TYPE.POST_ZIP, `upload`, zipFile);
 
   res.resCode = apiResult.statusNum;
@@ -371,7 +373,7 @@ export const UploadSchemaFile = async (
       if (apiResult.body !== null && apiResult.body !== '') {
         res.message = apiResult.body as string;
       } else {
-        res.message = 'スキーマの更新に失敗しました';
+        res.message = '【エラー】\nスキーマの更新に失敗しました';
       }
 
       break;
@@ -381,7 +383,7 @@ export const UploadSchemaFile = async (
       break;
     }
     default:
-      res.message = 'スキーマの更新に失敗しました';
+      res.message = '【エラー】\nスキーマの更新に失敗しました';
       break;
   }
 

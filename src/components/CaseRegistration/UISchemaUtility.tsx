@@ -215,6 +215,9 @@ const AddUiSchema = (
     resultUiSchema[Const.UI_WIDGET.CLASS] = classNames.join(' ');
   }
 
+  // autocompleteはoffにしておく
+  resultUiSchema[Const.UI_WIDGET.AUTOCOMPLETE] = 'off';
+
   // eslint-disable-next-line no-param-reassign
   return resultUiSchema;
 };

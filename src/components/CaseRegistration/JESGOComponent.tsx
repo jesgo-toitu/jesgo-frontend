@@ -8,7 +8,6 @@ import { WidgetProps } from '@rjsf/core';
 import { JSONSchema7Type, JSONSchema7 } from 'json-schema'; // eslint-disable-line import/no-unresolved
 import { IconButton } from './RjsfDefaultComponents';
 import { Const } from '../../common/Const';
-import { makeStyles } from '@mui/styles';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace JESGOComp {
@@ -355,15 +354,16 @@ export namespace JESGOComp {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { id, schema, onChange, value } = props;
 
-    if (!schema.anyOf) return null;
-
-    const anyOfItems = schema.anyOf as JSONSchema7[];
-    if (!anyOfItems) {
-      return null;
+    let oneOfItems: JSONSchema7 | undefined;
+    // oneOfもしくはanyOf中のoneOfを取得
+    if (schema.oneOf) {
+      oneOfItems = schema;
+    } else {
+      const anyOfItems = schema.anyOf as JSONSchema7[];
+      oneOfItems = anyOfItems.find((p) => p.oneOf) as JSONSchema7;
     }
 
-    const oneOfItems = anyOfItems.find((p) => p.oneOf) as JSONSchema7;
-    if (!oneOfItems.oneOf) {
+    if (!oneOfItems || !oneOfItems.oneOf) {
       return null;
     }
 
@@ -388,6 +388,8 @@ export namespace JESGOComp {
     const comboItemList: ComboItemDefine[] = [];
 
     let nowGroupId = 0;
+
+    let units = ''; // 単位
 
     // selectの選択肢を作成
     const createSelectItem = (
@@ -438,6 +440,23 @@ export namespace JESGOComp {
               nowGroupId
             );
           }
+        } else if (
+          // 通常のコンボボックス
+          schemaItem.enum
+        ) {
+          schemaItem.enum.forEach((enumVal) => {
+            comboItemList.push({
+              label: enumVal as string,
+              value: enumVal,
+              level,
+              groupId: nowGroupId,
+            });
+          });
+        }
+
+        // 単位があったらそちらを表示
+        if (schemaItem.units) {
+          units = schemaItem.units;
         }
       });
     };
@@ -487,15 +506,6 @@ export namespace JESGOComp {
       }
     }, []);
 
-  //   const useStyles = makeStyles(theme => ({
-  //     btn: {
-  //        "&:hover fieldset": {
-  //            borderColor: "blue !important"
-  //        },
-  //     },
-  
-  // }));
-
     return (
       <Autocomplete
         key={`${id}-autocomplete`}
@@ -511,13 +521,16 @@ export namespace JESGOComp {
         onInputChange={comboOnChange}
         options={comboItemList}
         renderInput={(params) => (
-          <TextField
-            {...params}
-            className="input-text"
-            label=""
-            key={`${id}-combotext`}
-            id={`${id}-combotext`}
-          />
+          <div className="with-units-div">
+            <TextField
+              {...params}
+              className="input-text"
+              label=""
+              key={`${id}-combotext`}
+              id={`${id}-combotext`}
+            />
+            {units && <span>{`（${units}）`}</span>}
+          </div>
         )}
         renderOption={(renderProps, option: ComboItemDefine) => {
           const indent = ''.padStart(option.level, '　');
@@ -548,27 +561,30 @@ export namespace JESGOComp {
           }
           return option.label ?? '';
         }}
-        isOptionEqualToValue={(option, inputValue) =>
+        isOptionEqualToValue={(option, inputValue) => {
           // 選択中の選択肢ハイライト
-          option.label
-            ? option.label === (inputValue as unknown as string)
-            : option.value === inputValue
-        }
+          const inputStr =
+            typeof inputValue === 'string'
+              ? (inputValue as unknown as string)
+              : inputValue.label ?? '';
+          return option.label === inputStr;
+        }}
         filterOptions={(options, state) => {
-          // 前方一致で検索。同一グループのタイトルは表示させる
+          // 同一グループのタイトルは表示させる
           const groupIds = options
             // .filter((op) => (op.label ?? '').startsWith(state.inputValue)) // 前方一致
             .filter((op) => (op.label ?? '').includes(state.inputValue)) // 部分一致
             .map((op) => op.groupId);
 
-          return options.filter(
+          const filteredOptions = options.filter(
             (op) =>
               // (op.label ?? '').startsWith(state.inputValue) ||
               (op.label ?? '').includes(state.inputValue) ||
               (groupIds.includes(op.groupId) && op.title)
           );
+
+          return filteredOptions.length > 0 ? filteredOptions : options;
         }}
-        noOptionsText="検索結果がありません"
       />
     );
   };
@@ -885,5 +901,84 @@ export namespace JESGOComp {
       </div>
     );
   }
+
+  //#region 複数チェックボックス用
+  function selectValue(value: any, selected: any, all: any) {
+    const at = all.indexOf(value);
+
+    let selectedValues = selected;
+    if (!selectedValues) {
+      selectedValues = [];
+    }
+
+    const updated = selectedValues
+      .slice(0, at)
+      .concat(value, selectedValues.slice(at));
+    // As inserting values at predefined index positions doesn't work with empty
+    // arrays, we need to reorder the updated selection to match the initial order
+    return updated.sort((a: any, b: any) => all.indexOf(a) > all.indexOf(b));
+  }
+
+  function deselectValue(value: any, selected: any) {
+    return selected.filter((v: any) => v !== value);
+  }
+
+  /**
+   * 複数チェックボックス用Widget
+   * @param props
+   * @returns
+   */
+  export function CustomCheckboxesWidget(props: WidgetProps) {
+    const { id, disabled, options, value, autofocus, readonly, onChange } =
+      props;
+    const { enumOptions, enumDisabled, inline } = options;
+
+    // デフォルトのwidgetだとnullの考慮が不足しているので追加する
+    return (
+      <div className="checkboxes" id={id}>
+        {enumOptions &&
+          Array.isArray(enumOptions) &&
+          enumOptions.map((option, index) => {
+            const checked = value ? value.indexOf(option.value) !== -1 : false;
+            const itemDisabled =
+              enumDisabled &&
+              typeof enumDisabled === 'string' &&
+              enumDisabled.indexOf(option.value) != -1;
+            const disabledCls =
+              disabled || itemDisabled || readonly ? 'disabled' : '';
+            const checkbox = (
+              <span>
+                <input
+                  type="checkbox"
+                  id={`${id}_${index}`}
+                  checked={checked}
+                  disabled={disabled || itemDisabled || readonly}
+                  autoFocus={autofocus && index === 0}
+                  onChange={(event) => {
+                    const all = enumOptions.map(({ value }) => value);
+                    if (event.target.checked) {
+                      onChange(selectValue(option.value, value, all));
+                    } else {
+                      onChange(deselectValue(option.value, value));
+                    }
+                  }}
+                />
+                <span>{option.label}</span>
+              </span>
+            );
+            return inline ? (
+              <label key={index} className={`checkbox-inline ${disabledCls}`}>
+                {checkbox}
+              </label>
+            ) : (
+              <div key={index} className={`checkbox ${disabledCls}`}>
+                <label>{checkbox}</label>
+              </div>
+            );
+          })}
+      </div>
+    );
+  }
+  //#endregion 複数チェックボックス用
 }
 /* eslint-enable */

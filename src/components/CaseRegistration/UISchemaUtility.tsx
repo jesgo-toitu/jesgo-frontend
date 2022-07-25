@@ -139,7 +139,8 @@ const AddUiSchema = (
   ) {
     // チェックボックスグループ
     if (schemaType === Const.JSONSchema7Types.ARRAY && schema.items) {
-      resultUiSchema[Const.UI_WIDGET.WIDGET] = 'checkboxes';
+      // resultUiSchema[Const.UI_WIDGET.WIDGET] = 'checkboxes';
+      resultUiSchema[Const.UI_WIDGET.WIDGET] = 'customCheckboxesWidget';
       resultUiSchema[Const.UI_WIDGET.OPTIONS] = { inline: true }; // 横並びにする
       // eslint-disable-next-line no-param-reassign
       schema.uniqueItems = true; // これがないとエラーになる
@@ -180,7 +181,8 @@ const AddUiSchema = (
             });
 
             if (selectItem.length > 0) {
-              resultUiSchema[Const.UI_WIDGET.WIDGET] = 'datalistTextBox';
+              // resultUiSchema[Const.UI_WIDGET.WIDGET] = 'datalistTextBox';
+              resultUiSchema[Const.UI_WIDGET.WIDGET] = 'layerComboBox';
             } else {
               resultUiSchema[Const.UI_WIDGET.WIDGET] = 'multiTypeTextBox';
             }

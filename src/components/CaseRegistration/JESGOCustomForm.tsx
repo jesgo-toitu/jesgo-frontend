@@ -183,6 +183,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     withUnits: JESGOComp.WithUnits,
     layerRadioButton: JESGOComp.LayerRadioButton,
     layerComboBox: JESGOComp.LayerComboBox,
+    customCheckboxesWidget: JESGOComp.CustomCheckboxesWidget,
   };
 
   return (

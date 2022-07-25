@@ -168,6 +168,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   // TODO OneOfFieldについては他に影響ないか確認
   const customFields = {
     OneOfField: () => null, // defaultのOneOfFieldは使わない
+    AnyOfField: () => null, // defaultのAnyOfFieldは使わない
   };
 
   const customWidgets = {
@@ -181,6 +182,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     datalistTextBox: JESGOComp.DatalistTextBox,
     withUnits: JESGOComp.WithUnits,
     layerRadioButton: JESGOComp.LayerRadioButton,
+    layerComboBox: JESGOComp.LayerComboBox,
   };
 
   return (

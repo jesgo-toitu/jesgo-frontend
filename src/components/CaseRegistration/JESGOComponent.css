@@ -68,3 +68,39 @@
   width: 100%;
 }
 /** subschemastyle:inline end*/
+
+/* 階層表示用コンボボックス向けCSS start */
+
+/* mui固有のラベル非表示 */
+.css-hdw1oc {
+  display: none;
+}
+
+.MuiAutocomplete-root {
+  margin-top: 5px;
+  max-width: 100%;
+}
+
+.css-16awh2u-MuiAutocomplete-root .MuiOutlinedInput-root {
+  padding: 0px 39px 0px 0px !important;
+}
+
+.css-16awh2u-MuiAutocomplete-root .MuiOutlinedInput-root .MuiAutocomplete-input {
+  padding: 4px 4px 8px 12px !important;
+}
+
+.layer-combobox-group-title {
+  padding-left: 12px;
+  padding-top: 5px;
+  font-family: 'BIZ-UDPGothic';
+  font-weight: bold;
+}
+
+li.layer-combobox-item {
+  padding: 0px 0px 2px 12px !important;
+}
+
+li.layer-combobox-item div {
+  font-family: 'BIZ-UDPGothic' !important;
+}
+/* 階層表示用コンボボックス向けCSS end */

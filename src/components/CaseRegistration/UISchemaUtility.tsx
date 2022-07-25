@@ -178,6 +178,7 @@ const AddUiSchema = (
                 classNames.push('input-select');
               }
             });
+
             if (selectItem.length > 0) {
               resultUiSchema[Const.UI_WIDGET.WIDGET] = 'datalistTextBox';
             } else {
@@ -202,6 +203,14 @@ const AddUiSchema = (
           break;
       }
     }
+  }
+
+  if (
+    schema.anyOf &&
+    schema[Const.EX_VOCABULARY.UI_LISTTYPE] === Const.JESGO_UI_LISTTYPE.COMBO
+  ) {
+    // 階層表示用コンボボックスの適応
+    resultUiSchema[Const.UI_WIDGET.WIDGET] = 'layerComboBox';
   }
 
   // "jesgo:ui:hidden"

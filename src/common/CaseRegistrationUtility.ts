@@ -97,17 +97,28 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
           );
         }
       }
-      if (resultSchema.pattern != null) {
-        // pattern
-        const reg = new RegExp(resultSchema.pattern);
-        const value: string = (formData as string) ?? '';
-        if (!value.match(reg)) {
-          messages.push(
-            getErrMsg(`${resultSchema.pattern}の形式で入力してください。`)
+
+      let pattern = resultSchema.pattern;
+      if (!pattern) {
+        if (resultSchema.anyOf) {
+          const anyOfPattern = resultSchema.anyOf.find(
+            (s) => (s as JSONSchema7).pattern
           );
+          if (anyOfPattern) {
+            pattern = (anyOfPattern as JSONSchema7).pattern;
+          }
         }
       }
-      if (resultSchema.const != null) {
+
+      if (pattern) {
+        // pattern
+        const reg = new RegExp(pattern);
+        const value: string = (formData as string) ?? '';
+        if (!value.match(reg)) {
+          messages.push(getErrMsg(`${pattern}の形式で入力してください。`));
+        }
+      }
+      if (resultSchema.const) {
         // const
         if (resultSchema.const !== formData) {
           messages.push(
@@ -115,7 +126,7 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
           );
         }
       }
-      if (resultSchema.enum != null) {
+      if (resultSchema.enum) {
         // enum
         const enumValues = resultSchema.enum as string[];
         if (!enumValues.includes(formData as string)) {

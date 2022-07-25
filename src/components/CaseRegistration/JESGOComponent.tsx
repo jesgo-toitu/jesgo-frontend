@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
 import { Label, Tooltip, OverlayTrigger, Glyphicon } from 'react-bootstrap';
 import './JESGOComponent.css';
 import './JESGOFieldTemplete.css';
@@ -6,6 +8,7 @@ import { WidgetProps } from '@rjsf/core';
 import { JSONSchema7Type, JSONSchema7 } from 'json-schema'; // eslint-disable-line import/no-unresolved
 import { IconButton } from './RjsfDefaultComponents';
 import { Const } from '../../common/Const';
+import { makeStyles } from '@mui/styles';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace JESGOComp {
@@ -332,6 +335,241 @@ export namespace JESGOComp {
 
         {selectItems.map((item: JSONSchema7) => createSelectItem(item, 0))}
       </select>
+    );
+  };
+
+  type ComboItemDefine = {
+    title?: string;
+    label?: string;
+    value?: any;
+    level: number;
+    groupId: number;
+  };
+
+  /**
+   * 階層表示可能なコンボボックス(フリー入力可)
+   * @param props
+   * @returns
+   */
+  export const LayerComboBox = (props: WidgetProps) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const { id, schema, onChange, value } = props;
+
+    if (!schema.anyOf) return null;
+
+    const anyOfItems = schema.anyOf as JSONSchema7[];
+    if (!anyOfItems) {
+      return null;
+    }
+
+    const oneOfItems = anyOfItems.find((p) => p.oneOf) as JSONSchema7;
+    if (!oneOfItems.oneOf) {
+      return null;
+    }
+
+    const comboOnChange = (
+      e: React.SyntheticEvent<Element, Event>,
+      val: any
+    ) => {
+      if (
+        val &&
+        typeof val === 'object' &&
+        Object.keys(val).find((p) => p === 'label')
+      ) {
+        onChange(val.label);
+      } else {
+        const convertVal = val || '';
+
+        onChange(convertVal);
+      }
+    };
+
+    // コンボボックスのアイテム一覧
+    const comboItemList: ComboItemDefine[] = [];
+
+    let nowGroupId = 0;
+
+    // selectの選択肢を作成
+    const createSelectItem = (
+      items: JSONSchema7[],
+      level: number,
+      parentGroupId?: number
+    ) => {
+      items.forEach((schemaItem) => {
+        const newComboItem: ComboItemDefine = {
+          label: '',
+          value: '',
+          title: '',
+          level,
+          groupId: parentGroupId ?? 0,
+        };
+        const constItem = schemaItem.const;
+
+        if (constItem) {
+          // const (通常の選択肢)
+          newComboItem.value = constItem.toString();
+          newComboItem.label = schemaItem.title
+            ? schemaItem.title
+            : constItem.toString();
+          comboItemList.push(newComboItem);
+        } else if (schemaItem.title) {
+          // 見出し用
+          newComboItem.title = schemaItem.title;
+          nowGroupId += 1;
+          newComboItem.groupId = nowGroupId;
+          comboItemList.push(newComboItem);
+
+          if (schemaItem.enum) {
+            schemaItem.enum.forEach((enumVal) => {
+              if (typeof enumVal === 'string') {
+                comboItemList.push({
+                  label: enumVal,
+                  value: enumVal,
+                  level: level + 1,
+                  groupId: nowGroupId,
+                });
+              }
+            });
+          } else if (schemaItem.oneOf) {
+            // oneOfの入れ子
+            createSelectItem(
+              schemaItem.oneOf as JSONSchema7[],
+              level + 1,
+              nowGroupId
+            );
+          }
+        }
+      });
+    };
+
+    // comboItemListを生成
+    createSelectItem(oneOfItems.oneOf as JSONSchema7[], 0);
+
+    const comboComponent = useRef<HTMLDivElement>(null);
+
+    // リストの内容からコンボボックスの幅計算
+    useEffect(() => {
+      let comboWidth = 200; // デフォルト200px
+
+      // 一時的にdivに描画して幅を取得する
+
+      const div = document.createElement('div');
+      div.style.position = 'absolute';
+      div.style.top = '-30000px'; // 画面の見えないところへ飛ばす
+      div.style.left = '-30000px';
+      div.style.whiteSpace = 'pre'; // 折り返し禁止
+
+      let textList = comboItemList.map((item) => {
+        let str = item.title ? item.title : item.label ?? '';
+        str = `${''.padStart(item.level, '　')}${str}`;
+        return str;
+      });
+      if (textList.length > 0) {
+        // リストの中で最大長の選択肢を取得
+        textList = textList.sort((f, s) => s.length - f.length);
+        const maxLengthStr = textList[0];
+        div.innerHTML = maxLengthStr;
+        document.body.appendChild(div); // bodyに追加して描画
+
+        // divの幅を取得。マージンなどを考慮して補正かける
+        const tmpWidth = div.clientWidth + 60;
+        if (tmpWidth > comboWidth) {
+          comboWidth = tmpWidth;
+        }
+
+        // 一時的なdivは削除
+        div.parentElement?.removeChild(div);
+      }
+
+      // コンボボックスのwidth設定
+      if (comboComponent.current) {
+        comboComponent.current.style.width = `${comboWidth}px`;
+      }
+    }, []);
+
+  //   const useStyles = makeStyles(theme => ({
+  //     btn: {
+  //        "&:hover fieldset": {
+  //            borderColor: "blue !important"
+  //        },
+  //     },
+  
+  // }));
+
+    return (
+      <Autocomplete
+        key={`${id}-autocomplete`}
+        id={`${id}-autocomplete`}
+        disableClearable
+        disableListWrap
+        freeSolo
+        handleHomeEndKeys={false}
+        ref={comboComponent}
+        value={value}
+        inputValue={value}
+        onChange={comboOnChange}
+        onInputChange={comboOnChange}
+        options={comboItemList}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            className="input-text"
+            label=""
+            key={`${id}-combotext`}
+            id={`${id}-combotext`}
+          />
+        )}
+        renderOption={(renderProps, option: ComboItemDefine) => {
+          const indent = ''.padStart(option.level, '　');
+
+          return (
+            // eslint-disable-next-line react/jsx-no-useless-fragment
+            <>
+              {option.title ? (
+                // タイトル部
+                <div className="layer-combobox-group-title">
+                  {`${indent}${option.title}`}
+                </div>
+              ) : (
+                // 選択肢
+                <li
+                  {...renderProps}
+                  className="MuiAutocomplete-option layer-combobox-item"
+                >
+                  {option.label && <div>{`${indent}${option.label}`}</div>}
+                </li>
+              )}
+            </>
+          );
+        }}
+        getOptionLabel={(option) => {
+          if (typeof option === 'string') {
+            return option;
+          }
+          return option.label ?? '';
+        }}
+        isOptionEqualToValue={(option, inputValue) =>
+          // 選択中の選択肢ハイライト
+          option.label
+            ? option.label === (inputValue as unknown as string)
+            : option.value === inputValue
+        }
+        filterOptions={(options, state) => {
+          // 前方一致で検索。同一グループのタイトルは表示させる
+          const groupIds = options
+            // .filter((op) => (op.label ?? '').startsWith(state.inputValue)) // 前方一致
+            .filter((op) => (op.label ?? '').includes(state.inputValue)) // 部分一致
+            .map((op) => op.groupId);
+
+          return options.filter(
+            (op) =>
+              // (op.label ?? '').startsWith(state.inputValue) ||
+              (op.label ?? '').includes(state.inputValue) ||
+              (groupIds.includes(op.groupId) && op.title)
+          );
+        }}
+        noOptionsText="検索結果がありません"
+      />
     );
   };
 

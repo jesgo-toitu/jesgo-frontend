@@ -492,6 +492,10 @@ const Registration = () => {
         break;
       case 'decline':
         value = eventTarget.checked;
+        // eslint-disable-next-line
+        if (!decline && !confirm('登録拒否にしますか？')) {
+          return;
+        }
         setDecline(value);
         break;
 
@@ -655,7 +659,7 @@ const Registration = () => {
             </Col>
             <Col lg={2} md={2}>
               <FormGroup>
-                <ControlLabel>登録拒否</ControlLabel>
+                <ControlLabel />
                 <div>
                   <Checkbox
                     className="user-info-checkbox"
@@ -663,7 +667,7 @@ const Registration = () => {
                     onChange={onChangeItem}
                     checked={decline}
                   >
-                    なし
+                    登録拒否
                   </Checkbox>
                 </div>
               </FormGroup>

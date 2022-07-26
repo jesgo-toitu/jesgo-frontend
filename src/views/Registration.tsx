@@ -492,6 +492,10 @@ const Registration = () => {
         break;
       case 'decline':
         value = eventTarget.checked;
+        // eslint-disable-next-line
+        if (!decline && !confirm('登録拒否にしますか？')) {
+          return;
+        }
         setDecline(value);
         break;
 
@@ -506,18 +510,6 @@ const Registration = () => {
       value,
     };
     dispatch(action);
-  };
-
-  // 登録拒否チェックボックス確認用
-  const confirmCheck = (e: React.MouseEvent<Checkbox, MouseEvent>) => {
-    // 既に拒否状態になっているものを解除するときは警告しない
-    if (!decline) {
-      // eslint-disable-next-line
-      if (!confirm('登録拒否にしますか？')) {
-        // キャンセルであればイベントの通常の動作を抑制する
-        e.preventDefault();
-      }
-    }
   };
 
   // 年齢
@@ -672,7 +664,6 @@ const Registration = () => {
                   <Checkbox
                     className="user-info-checkbox"
                     id="decline"
-                    onClick={(e) => confirmCheck(e)}
                     onChange={onChangeItem}
                     checked={decline}
                   >

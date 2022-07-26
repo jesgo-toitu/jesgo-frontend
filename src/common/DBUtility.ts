@@ -376,7 +376,7 @@ export const UploadSchemaFile = async (
     res.message = 'スキーマの更新に失敗しました';
   }
 
-  if(apiBody.message.length > 0){
+  if(apiBody.message){
     setErrorMessages(apiBody.message);
   }
   

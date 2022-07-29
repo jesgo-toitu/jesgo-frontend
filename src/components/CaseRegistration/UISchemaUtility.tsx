@@ -207,12 +207,18 @@ const AddUiSchema = (
     }
   }
 
-  if (
-    schema.anyOf &&
-    schema[Const.EX_VOCABULARY.UI_LISTTYPE] === Const.JESGO_UI_LISTTYPE.COMBO
-  ) {
-    // 階層表示用コンボボックスの適応
-    resultUiSchema[Const.UI_WIDGET.WIDGET] = 'layerComboBox';
+  switch (schema[Const.EX_VOCABULARY.UI_LISTTYPE] ?? '') {
+    case Const.JESGO_UI_LISTTYPE.COMBO:
+    case Const.JESGO_UI_LISTTYPE.SUGGEST_COMBO:
+    case Const.JESGO_UI_LISTTYPE.SUGGEST_LIST: {
+      if (schema.oneOf || schema.anyOf || schema.enum) {
+        // 階層表示用コンボボックスの適応
+        resultUiSchema[Const.UI_WIDGET.WIDGET] = 'layerComboBox';
+      }
+      break;
+    }
+    default:
+      break;
   }
 
   // "jesgo:ui:hidden"

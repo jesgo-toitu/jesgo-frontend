@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import React, { useEffect, useRef, useState } from 'react';
 import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
+import Autocomplete, {
+  AutocompleteRenderOptionState,
+} from '@mui/material/Autocomplete';
 import { Label, Tooltip, OverlayTrigger, Glyphicon } from 'react-bootstrap';
 import './JESGOComponent.css';
 import './JESGOFieldTemplete.css';
@@ -249,6 +253,72 @@ export namespace JESGOComp {
     );
   };
 
+  type createSelectItemProps = {
+    item: JSONSchema7;
+    level: number;
+    id: string;
+  };
+
+  const seqNoMap = new Map<string, number>();
+
+  // selectの選択肢を作成
+  const CreateSelectItem = (argProps: createSelectItemProps) => {
+    const { item, level, id } = argProps;
+    // 最上位のグループタイトル
+    const title = item.title ?? '';
+    const constItem = item.const as JSONSchema7Type;
+
+    // 全角空白でインデントしているように見せる
+    const INDENT_SPACE = '　';
+    let indent = '';
+    for (let i = 0; i < level; i += 1) {
+      indent += INDENT_SPACE;
+    }
+
+    let seqNo = seqNoMap.get(id) ?? 0;
+    seqNo += 1;
+    seqNoMap.set(id, seqNo + 1);
+
+    return (
+      <>
+        {title && (
+          <option
+            key={`select-grp-${title}`}
+            label={`${indent}${title}`}
+            disabled
+            className="layer-dropdown-group-title"
+          />
+        )}
+        {(item.oneOf as JSONSchema7[])?.map((oneOfItem: JSONSchema7) => (
+          <CreateSelectItem item={oneOfItem} level={level + 1} id={id} />
+        ))}
+        {(item.enum as JSONSchema7Type[])?.map((subItem: JSONSchema7Type) => {
+          // array,object型以外を表示
+          if (
+            subItem != null &&
+            ['string', 'number', 'boolean'].includes(typeof subItem)
+          ) {
+            const itemValue = subItem?.toString() ?? '';
+            return (
+              <option key={`select-item-${itemValue}`} value={`${itemValue}`}>
+                {`${indent + INDENT_SPACE}${itemValue}`}
+              </option>
+            );
+          }
+          return null;
+        })}
+        {constItem && (
+          <option
+            key={`select-item-${constItem.toString()}`}
+            value={`${constItem.toString()}`}
+          >
+            {`${indent}${constItem.toString()}`}
+          </option>
+        )}
+      </>
+    );
+  };
+
   /**
    * 階層表示のドロップダウンリスト
    * @param props
@@ -262,66 +332,15 @@ export namespace JESGOComp {
       return null;
     }
 
-    // selectの選択肢を作成
-    const createSelectItem = (
-      item: JSONSchema7,
-      level = 0
-    ): JSX.Element | null => {
-      // 最上位のグループタイトル
-      const title = item.title ?? '';
-      const constItem = item.const as JSONSchema7Type;
-
-      // 全角空白でインデントしているように見せる
-      const INDENT_SPACE = '　';
-      let indent = '';
-      for (let i = 0; i < level; i += 1) {
-        indent += INDENT_SPACE;
-      }
-      return (
-        <>
-          {title && (
-            <option
-              key={`select-grp-${title}`}
-              label={`${indent}${title}`}
-              disabled
-              className="layer-dropdown-group-title"
-            />
-          )}
-          {(item.oneOf as JSONSchema7[])?.map((oneOfItem: JSONSchema7) =>
-            createSelectItem(oneOfItem, level + 1)
-          )}
-          {(item.enum as JSONSchema7Type[])?.map((subItem: JSONSchema7Type) => {
-            // array,object型以外を表示
-            if (
-              subItem != null &&
-              ['string', 'number', 'boolean'].includes(typeof subItem)
-            ) {
-              const itemValue = subItem?.toString() ?? '';
-              return (
-                <option key={`select-item-${itemValue}`} value={`${itemValue}`}>
-                  {`${indent + INDENT_SPACE}${itemValue}`}
-                </option>
-              );
-            }
-            return null;
-          })}
-          {constItem && (
-            <option
-              key={`select-item-${constItem.toString()}`}
-              value={`${constItem.toString()}`}
-            >
-              {`${indent}${constItem.toString()}`}
-            </option>
-          )}
-        </>
-      );
-    };
+    const seqNo = seqNoMap.get(id) ?? 0;
+    seqNoMap.set(id, seqNo + 1);
 
     return (
       // TODO こちらもReact-Bootstrapを使いたいが、onChangeがうまく設定できない。
       <select
         className="form-control input-text"
         id={id}
+        key={id}
         onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
           onChange(event.target.value)
         }
@@ -332,17 +351,34 @@ export namespace JESGOComp {
         {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
         <option key="select-item-empty" value="" />
 
-        {selectItems.map((item: JSONSchema7) => createSelectItem(item, 0))}
+        {selectItems.map((item: JSONSchema7) => (
+          <CreateSelectItem item={item} level={0} id={id} />
+        ))}
       </select>
     );
   };
 
   type ComboItemDefine = {
+    seqNo: number;
     title?: string;
     label?: string;
     value?: any;
     level: number;
     groupId: number;
+  };
+
+  // フリー入力可能なlistType
+  const comboTypes: string[] = [
+    Const.JESGO_UI_LISTTYPE.COMBO,
+    Const.JESGO_UI_LISTTYPE.SUGGEST_COMBO,
+  ];
+
+  const emptyOption: ComboItemDefine = {
+    seqNo: 0,
+    label: '',
+    value: '',
+    level: 0,
+    groupId: 0,
   };
 
   /**
@@ -352,35 +388,60 @@ export namespace JESGOComp {
    */
   export const LayerComboBox = (props: WidgetProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { id, schema, onChange, value } = props;
+    const { id, schema, onChange, value, readonly } = props;
+
+    const [selectedValue, setSelectedValue] = useState<
+      ComboItemDefine | undefined
+    >(undefined);
+    const [inputValue, setInputValue] = useState<string>('');
+
+    const hasEnum = !!schema.enum;
 
     let oneOfItems: JSONSchema7 | undefined;
-    // oneOfもしくはanyOf中のoneOfを取得
-    if (schema.oneOf) {
-      oneOfItems = schema;
-    } else {
-      const anyOfItems = schema.anyOf as JSONSchema7[];
-      oneOfItems = anyOfItems.find((p) => p.oneOf) as JSONSchema7;
+    if (!hasEnum) {
+      // oneOfもしくはanyOf中のoneOfを取得
+      if (schema.oneOf) {
+        oneOfItems = schema;
+      } else {
+        const anyOfItems = schema.anyOf as JSONSchema7[];
+        oneOfItems = anyOfItems.find((p) => p.oneOf) as JSONSchema7;
+      }
+
+      if (!oneOfItems || !oneOfItems.oneOf) {
+        return null;
+      }
     }
 
-    if (!oneOfItems || !oneOfItems.oneOf) {
-      return null;
-    }
+    const isFreeInput = comboTypes.includes(
+      schema[Const.EX_VOCABULARY.UI_LISTTYPE] ?? ''
+    );
+
+    useEffect(() => {
+      setInputValue(value ?? '');
+    }, []);
 
     const comboOnChange = (
-      e: React.SyntheticEvent<Element, Event>,
-      val: any
+      e: React.SyntheticEvent<Element, Event> | undefined,
+      val: any,
+      reason: string
     ) => {
+      if (reason === 'input') {
+        setInputValue(val);
+        return;
+      }
+
       if (
         val &&
         typeof val === 'object' &&
         Object.keys(val).find((p) => p === 'label')
       ) {
         onChange(val.label);
+        setSelectedValue(val);
+        setInputValue(val.label);
       } else {
         const convertVal = val || '';
-
         onChange(convertVal);
+        setInputValue(val);
       }
     };
 
@@ -388,23 +449,26 @@ export namespace JESGOComp {
     const comboItemList: ComboItemDefine[] = [];
 
     let nowGroupId = 0;
+    let nowSeqNo = 1;
 
     let units = ''; // 単位
 
-    // selectの選択肢を作成
-    const createSelectItem = (
+    // comboの選択肢を作成
+    const createComboItem = (
       items: JSONSchema7[],
       level: number,
       parentGroupId?: number
     ) => {
       items.forEach((schemaItem) => {
         const newComboItem: ComboItemDefine = {
+          seqNo: nowSeqNo,
           label: '',
           value: '',
           title: '',
           level,
           groupId: parentGroupId ?? 0,
         };
+        nowSeqNo += 1;
         const constItem = schemaItem.const;
 
         if (constItem) {
@@ -425,16 +489,18 @@ export namespace JESGOComp {
             schemaItem.enum.forEach((enumVal) => {
               if (typeof enumVal === 'string') {
                 comboItemList.push({
+                  seqNo: nowSeqNo,
                   label: enumVal,
                   value: enumVal,
                   level: level + 1,
                   groupId: nowGroupId,
                 });
+                nowSeqNo += 1;
               }
             });
           } else if (schemaItem.oneOf) {
             // oneOfの入れ子
-            createSelectItem(
+            createComboItem(
               schemaItem.oneOf as JSONSchema7[],
               level + 1,
               nowGroupId
@@ -446,11 +512,13 @@ export namespace JESGOComp {
         ) {
           schemaItem.enum.forEach((enumVal) => {
             comboItemList.push({
+              seqNo: nowSeqNo,
               label: enumVal as string,
               value: enumVal,
               level,
               groupId: nowGroupId,
             });
+            nowSeqNo += 1;
           });
         }
 
@@ -462,7 +530,25 @@ export namespace JESGOComp {
     };
 
     // comboItemListを生成
-    createSelectItem(oneOfItems.oneOf as JSONSchema7[], 0);
+    if (hasEnum) {
+      // enumがあればenumから生成
+      schema.enum?.forEach((enumVal) => {
+        comboItemList.push({
+          seqNo: nowSeqNo,
+          label: enumVal as string,
+          value: enumVal,
+          level: 0,
+          groupId: 0,
+        });
+      });
+    } else {
+      // oneOfまたはanyOfの場合はこちら
+      createComboItem(oneOfItems?.oneOf as JSONSchema7[], 0);
+    }
+
+    if (comboItemList.length > 0) {
+      comboItemList.unshift(emptyOption);
+    }
 
     const comboComponent = useRef<HTMLDivElement>(null);
 
@@ -510,15 +596,32 @@ export namespace JESGOComp {
       <Autocomplete
         key={`${id}-autocomplete`}
         id={`${id}-autocomplete`}
-        disableClearable
         disableListWrap
+        disableClearable
         freeSolo
+        clearOnBlur={false}
         handleHomeEndKeys={false}
+        disabled={readonly}
         ref={comboComponent}
-        value={value}
-        inputValue={value}
+        value={selectedValue}
+        inputValue={inputValue}
         onChange={comboOnChange}
         onInputChange={comboOnChange}
+        onBlur={() => {
+          // フリー入力不可の場合、リストにない入力値はクリアする
+          if (isFreeInput) {
+            onChange(inputValue);
+            return;
+          }
+          const findItem = comboItemList.find(
+            (item) => item.label === inputValue
+          );
+          if (!findItem) {
+            comboOnChange(undefined, '', 'onBlur');
+          } else if (findItem.seqNo === 0) {
+            onChange('');
+          }
+        }}
         options={comboItemList}
         renderInput={(params) => (
           <div className="with-units-div">
@@ -532,9 +635,12 @@ export namespace JESGOComp {
             {units && <span>{`（${units}）`}</span>}
           </div>
         )}
-        renderOption={(renderProps, option: ComboItemDefine) => {
+        renderOption={(
+          renderProps,
+          option: ComboItemDefine,
+          optionState: AutocompleteRenderOptionState
+        ) => {
           const indent = ''.padStart(option.level, '　');
-
           return (
             // eslint-disable-next-line react/jsx-no-useless-fragment
             <>
@@ -546,10 +652,11 @@ export namespace JESGOComp {
               ) : (
                 // 選択肢
                 <li
+                  key={`${id}-listitem-${option.seqNo}`}
                   {...renderProps}
                   className="MuiAutocomplete-option layer-combobox-item"
                 >
-                  {option.label && <div>{`${indent}${option.label}`}</div>}
+                  <div>{`${indent}${option.label ? option.label : ''}`}</div>
                 </li>
               )}
             </>
@@ -561,15 +668,25 @@ export namespace JESGOComp {
           }
           return option.label ?? '';
         }}
-        isOptionEqualToValue={(option, inputValue) => {
+        isOptionEqualToValue={(option, val) => {
           // 選択中の選択肢ハイライト
           const inputStr =
-            typeof inputValue === 'string'
-              ? (inputValue as unknown as string)
-              : inputValue.label ?? '';
+            typeof val === 'string'
+              ? (val as unknown as string)
+              : val.label ?? '';
           return option.label === inputStr;
         }}
         filterOptions={(options, state) => {
+          // 選択肢の検索
+
+          // comboの場合は選択肢の検索をしない
+          if (
+            schema[Const.EX_VOCABULARY.UI_LISTTYPE] ===
+            Const.JESGO_UI_LISTTYPE.COMBO
+          ) {
+            return options;
+          }
+
           // 同一グループのタイトルは表示させる
           const groupIds = options
             // .filter((op) => (op.label ?? '').startsWith(state.inputValue)) // 前方一致
@@ -585,6 +702,7 @@ export namespace JESGOComp {
 
           return filteredOptions.length > 0 ? filteredOptions : options;
         }}
+        noOptionsText="検索結果がありません"
       />
     );
   };

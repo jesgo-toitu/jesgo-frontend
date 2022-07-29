@@ -98,6 +98,7 @@
 
 li.layer-combobox-item {
   padding: 0px 0px 2px 12px !important;
+  height: 20px;
 }
 
 li.layer-combobox-item div {

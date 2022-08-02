@@ -20,4 +20,9 @@
 
 .schema-main {
   margin-top: 7.7rem;
+  display: flex;
+}
+
+.schema-tree {
+  width: 15rem;
 }

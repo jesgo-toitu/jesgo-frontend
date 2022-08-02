@@ -1,7 +1,10 @@
 /* eslint-disable no-alert */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar, Button, Nav, NavItem, Panel } from 'react-bootstrap';
+import { ExpandMore, ChevronRight } from '@mui/icons-material';
+import { TreeView, TreeItem } from '@mui/lab';
+import { Box } from '@mui/material';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
@@ -10,6 +13,11 @@ import { responseResult, UploadSchemaFile } from '../common/DBUtility';
 import Loading from '../components/CaseRegistration/Loading';
 import { Const } from '../common/Const';
 import './SchemaManager.css';
+import SchemaTree, {
+  SCHEMA_TYPE,
+  treeSchema,
+} from '../components/Schemamanager/SchemaTree';
+
 type settings = {
   facility_name: string;
 };
@@ -27,6 +35,8 @@ const SchemaManager = () => {
     useState<responseResult>({ message: '', resCode: undefined });
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedSchema, setSelectedSchema] = useState<string>('');
+  const [tree, setTree] = useState<treeSchema[]>([]);
 
   useEffect(() => {
     const f = async () => {
@@ -40,6 +50,16 @@ const SchemaManager = () => {
         };
         setFacilityName(returned.facility_name);
         setSettingJson(setting);
+      } else {
+        navigate('/login');
+      }
+
+      // スキーマツリーを取得する
+      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+
+      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = treeApiObject.body as treeSchema[];
+        setTree(returned);
       } else {
         navigate('/login');
       }
@@ -75,9 +95,34 @@ const SchemaManager = () => {
 
       setIsLoading(true);
 
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       UploadSchemaFile(file, setSchemaUploadResponse, setErrorMessages);
     }
   };
+
+  // ツリーアイテムクリック
+  const handleTreeItemClick = useCallback(
+    (
+      event:
+        | React.MouseEvent<HTMLLIElement, MouseEvent>
+        | React.MouseEvent<HTMLDivElement, MouseEvent>,
+      v = ''
+    ): void => {
+      event.stopPropagation();
+
+      if (event.target instanceof Element) {
+        const isIcon = !!event.target.closest('.MuiTreeItem-iconContainer');
+        // If the tree item has children the icon only collapse/expand
+        if (isIcon) {
+          return;
+        }
+      }
+      setSelectedSchema(v as string);
+      event.preventDefault();
+      // More logic to run on item click
+    },
+    []
+  );
 
   useEffect(() => {
     if (schemaUploadResponse.resCode !== undefined) {
@@ -146,13 +191,32 @@ const SchemaManager = () => {
         </div>
       </div>
       <div className="schema-main">
-        {errorMessages.length > 0 && (
-          <Panel className="error-msg-panel">
-            {errorMessages.map((error: string) => (
-              <p>{error}</p>
-            ))}
-          </Panel>
-        )}
+        <div className="schema-tree">
+          <TreeView>
+            <TreeItem
+              nodeId="root"
+              label={<Box>JESGOシステム</Box>}
+              collapseIcon={<ExpandMore />}
+              expandIcon={<ChevronRight />}
+            >
+              <SchemaTree
+                schemas={tree}
+                handleTreeItemClick={handleTreeItemClick}
+                schemaType={SCHEMA_TYPE.SUBSCHEMA}
+              />
+            </TreeItem>
+          </TreeView>
+        </div>
+        <div className="schema-detail">
+          {errorMessages.length > 0 && (
+            <Panel className="error-msg-panel">
+              {errorMessages.map((error: string) => (
+                <p>{error}</p>
+              ))}
+            </Panel>
+          )}
+          選択中のスキーマは {selectedSchema} です
+        </div>
       </div>
       {isLoading && <Loading />}
     </div>

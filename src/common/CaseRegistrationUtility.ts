@@ -77,7 +77,7 @@ const validateFormData = (
     validationAlertMessage === '' ? defaultMessage : validationAlertMessage;
 
   // 入力がある場合のみチェック
-  if (formData != null && typeof formData !== 'object') {
+  if (formData && typeof formData !== 'object') {
     if (type === Const.JSONSchema7Types.STRING) {
       if (resultSchema.format === 'date') {
         const value: Date = new Date(formData as string);
@@ -154,7 +154,7 @@ const validateFormData = (
       }
       // 数値の場合のみ以降のチェックを行う
       if (!isNotNumber) {
-        if (resultSchema.const != null) {
+        if (resultSchema.const) {
           // const
           if (resultSchema.const !== value) {
             messages.push(
@@ -162,7 +162,7 @@ const validateFormData = (
             );
           }
         }
-        if (resultSchema.minimum != null) {
+        if (resultSchema.minimum) {
           // minimum
           if (value < resultSchema.minimum) {
             messages.push(
@@ -170,7 +170,7 @@ const validateFormData = (
             );
           }
         }
-        if (resultSchema.maximum != null) {
+        if (resultSchema.maximum) {
           // maximum
           if (value > resultSchema.maximum) {
             messages.push(
@@ -222,7 +222,7 @@ const customSchemaValidation = (
   const resultSchema = lodash.cloneDeep(schema);
   let errFlg = false;
 
-  if (resultSchema.properties != null) {
+  if (resultSchema.properties) {
     // propertiesの場合はさらに下の階層を解析
     const targetSchema = getPropItemsAndNames(resultSchema);
     targetSchema.pNames.forEach((iname: string) => {
@@ -240,14 +240,14 @@ const customSchemaValidation = (
     });
   } else if (
     resultSchema.type === Const.JSONSchema7Types.ARRAY &&
-    resultSchema.items != null
+    resultSchema.items
   ) {
     // arrayの場合
     const targetSchema = resultSchema.items as JSONSchema7;
 
     if (Array.isArray(formData)) {
       // minItems,maxItemsの確認
-      if (resultSchema.minItems != null) {
+      if (resultSchema.minItems) {
         const minItems = resultSchema.minItems;
         if (formData.length < minItems) {
           errFlg = true;
@@ -255,7 +255,7 @@ const customSchemaValidation = (
             `　　[ ${propName} ] ${minItems}件以上入力してください。`
           );
         }
-      } else if (resultSchema.maxItems != null) {
+      } else if (resultSchema.maxItems) {
         const maxItems = resultSchema.maxItems;
         // maxItemsと件数がイコールになると＋ボタンが表示されなくなるが、念のためエラーチェックも追加。
         if (formData.length > maxItems) {
@@ -286,7 +286,7 @@ const customSchemaValidation = (
       });
     }
   } else if (
-    (resultSchema.oneOf != null || resultSchema.anyOf != null) &&
+    (resultSchema.oneOf || resultSchema.anyOf) &&
     typeof formData !== 'object'
   ) {
     // oneOfかつ中のアイテムにtypeがある＝複数type入力可能テキストボックス
@@ -485,7 +485,7 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
 
 export const getErrMsg = (errorList: RegistrationErrors[]) => {
   const message: string[] = [];
-  if (errorList != null) {
+  if (errorList) {
     errorList.forEach((error) => {
       const documentMsg: string[] = [];
       error.validationResult.messages.forEach((msg: string) => {

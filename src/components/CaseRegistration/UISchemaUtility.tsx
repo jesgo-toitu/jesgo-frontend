@@ -403,7 +403,7 @@ export const CreateUISchema = (schema: JSONSchema7) => {
 
   // dependencies
   const depItems = schema.dependencies;
-  if (depItems != null) {
+  if (depItems) {
     const depPropNames = Object.keys(depItems);
     if (depPropNames !== undefined) {
       depPropNames.forEach((depName: string) => {
@@ -419,9 +419,9 @@ export const CreateUISchema = (schema: JSONSchema7) => {
             const oneOfItemProp = oneOfItem.properties;
             const oneOfRequired = oneOfItem.required ?? [];
 
-            if (oneOfItemProp != null) {
+            if (oneOfItemProp) {
               const oneOfItemNames = Object.keys(oneOfItemProp);
-              if (oneOfItemNames != null) {
+              if (oneOfItemNames) {
                 oneOfItemNames.forEach((oneOfItemName: string) => {
                   // TODO dependenciesに同項目に対し条件が複数あるとおかしくなる（uischemaが重複する）。要修正
                   if (oneOfItemName !== depName) {

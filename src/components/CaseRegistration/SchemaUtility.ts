@@ -77,7 +77,7 @@ const mergeSchemaItem = (props: {
           tItem.readOnly === true
         ) {
           const value = tItem.default;
-          if (value != null) {
+          if (value) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             formData[pName] = value;
           }
@@ -182,7 +182,7 @@ const customSchemaIfThenElse = (
   formData: any
 ) => {
   const result = lodash.cloneDeep(schema);
-  if (allOfItem.if != null && allOfItem.then != null) {
+  if (allOfItem.if && allOfItem.then) {
     const rootSchemaItem = getPropItemsAndNames(result);
 
     // ifの確認
@@ -204,14 +204,14 @@ const customSchemaIfThenElse = (
           | null = formData[pName]; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
         const conditionValues = [];
         let conditionPattern: RegExp | undefined;
-        if (condValueMaps.const != null) {
+        if (condValueMaps.const) {
           conditionValues.push(condValueMaps.const);
-        } else if (condValueMaps.enum != null) {
+        } else if (condValueMaps.enum) {
           conditionValues.push(...condValueMaps.enum);
-        } else if (condValueMaps.pattern != null) {
+        } else if (condValueMaps.pattern) {
           conditionPattern = new RegExp(condValueMaps.pattern);
         }
-        if (conditionPattern != null) {
+        if (conditionPattern) {
           // patternの場合
           const value = (selectValue as string) ?? '';
           if (value.match(conditionPattern)) {
@@ -233,7 +233,7 @@ const customSchemaIfThenElse = (
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         formData,
       });
-    } else if (allOfItem.else != null) {
+    } else if (allOfItem.else) {
       // それ以外はelseの適用（あれば）
       mergeSchemaItem({
         targetSchema: result,
@@ -413,7 +413,7 @@ export const CustomSchema = (props: {
 
   // allOf
   // 入力値に合わせてスキーマの書き換え
-  if (schema.allOf != null) {
+  if (schema.allOf) {
     const allOfItemArray = schema.allOf as JSONSchema7[];
     allOfItemArray.forEach((allOfItem: JSONSchema7) => {
       schema = customSchemaIfThenElse(allOfItem, schema, formData);

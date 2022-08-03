@@ -295,7 +295,7 @@ export namespace JESGOComp {
         {(item.enum as JSONSchema7Type[])?.map((subItem: JSONSchema7Type) => {
           // array,object型以外を表示
           if (
-            subItem != null &&
+            subItem &&
             ['string', 'number', 'boolean'].includes(typeof subItem)
           ) {
             const itemValue = subItem?.toString() ?? '';

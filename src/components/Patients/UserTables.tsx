@@ -48,9 +48,11 @@ const makeTable = (props: {
   search: string;
   noSearch: string;
   setUserListJson: React.Dispatch<React.SetStateAction<string>>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const [userList, setUserList] = useState<userData[]>([]);
-  const { userListJson, search, noSearch, setUserListJson } = props;
+  const { userListJson, search, noSearch, setUserListJson, setIsLoading } =
+    props;
   let userDataListJson: userDataList;
 
   const navigate = useNavigate();
@@ -73,10 +75,13 @@ const makeTable = (props: {
       `患者番号:${hisId} 氏名:${name} の患者を削除しても良いですか？`
     );
     if (result) {
+      setIsLoading(true);
+
       const token = localStorage.getItem('token');
       if (token == null) {
         // eslint-disable-next-line no-alert
-        alert('処理に失敗しました。');
+        alert('【エラー】\n処理に失敗しました。');
+        setIsLoading(false);
         return;
       }
 
@@ -100,8 +105,10 @@ const makeTable = (props: {
         setUserListJson(strJson);
       } else {
         // eslint-disable-next-line no-alert
-        alert('処理に失敗しました。');
+        alert('【エラー】\n処理に失敗しました。');
       }
+
+      setIsLoading(false);
     }
   };
 
@@ -150,9 +157,7 @@ const makeTable = (props: {
             className={user.status.includes('death') ? 'died' : ''}
             key={user.caseId.toString()}
           >
-            <td>
-              {user.patientId}
-            </td>
+            <td>{user.patientId}</td>
             <td>{user.patientName}</td>
             <td className={noSearch}>{user.age}</td>
             <td className={noSearch}>

@@ -9,7 +9,10 @@ import store from '../../store/index';
 import SaveCommand, { responseResult } from '../../common/DBUtility';
 import { RESULT } from '../../common/ApiAccess';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
-import { RegistrationErrors,IsNotUpdate } from '../../common/CaseRegistrationUtility';
+import {
+  RegistrationErrors,
+  IsNotUpdate,
+} from '../../common/CaseRegistrationUtility';
 
 interface ButtonProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -39,6 +42,11 @@ const SubmitButton = (props: ButtonProps) => {
 
   // 保存時のコールバック
   useEffect(() => {
+    // 初回描画時などコールバック以外で呼び出された場合は何もしない
+    if (saveResponse.resCode === undefined) {
+      return;
+    }
+
     // 保存しましたなどのメッセージ表示
     if (
       saveResponse.resCode !== RESULT.TOKEN_EXPIRED_ERROR &&
@@ -47,9 +55,7 @@ const SubmitButton = (props: ButtonProps) => {
       alert(saveResponse.message);
     }
 
-    if (saveResponse.resCode !== undefined) {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
 
     if (saveResponse.resCode === RESULT.NORMAL_TERMINATION) {
       // 保存して戻る場合は症例一覧に戻る
@@ -70,7 +76,7 @@ const SubmitButton = (props: ButtonProps) => {
         setCaseId(saveResponse.caseId);
         setIsReload(true);
       } else {
-        // TODO: 読み込み失敗
+        // 読み込み失敗
         setIsLoading(false);
         RemoveBeforeUnloadEvent();
         navigate('/Patients');

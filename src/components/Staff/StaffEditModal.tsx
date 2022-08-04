@@ -23,6 +23,7 @@ import {
   StaffErrorMessage,
 } from '../../common/StaffMaster';
 import { staffData } from '../../views/Stafflist';
+import Loading from '../CaseRegistration/Loading';
 import ModalDialog from '../common/ModalDialog';
 import './StaffEditModal.css';
 
@@ -45,6 +46,8 @@ export const StaffEditModalDialog = (props: {
 
   const [errShow, setErrShow] = useState(false);
   const [message, setMessage] = useState<string>('');
+
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     console.log(props.insert);
@@ -173,9 +176,9 @@ export const StaffEditModalDialog = (props: {
     } else if (
       returnApiObject.statusNum === RESULT.FAILED_USER_ALREADY_REGISTERED
     ) {
-      alert('このIDは既に登録されています');
+      alert('【エラー】\nこのIDは既に登録されています');
     } else {
-      alert('登録エラー');
+      alert('【エラー】\n登録エラー');
     }
   };
 
@@ -197,16 +200,18 @@ export const StaffEditModalDialog = (props: {
       alert('更新しました');
       props.onOk();
     } else {
-      alert('登録エラー');
+      alert('【エラー】\n登録エラー');
     }
   };
 
-  const onSave = () => {
+  const onSave = async () => {
+    setIsLoading(true);
     if (props.insert) {
-      addUser();
+      await addUser();
     } else {
-      updateUser();
+      await updateUser();
     }
+    setIsLoading(false);
   };
 
   const errModalHide = useCallback(() => {}, []);
@@ -272,7 +277,11 @@ export const StaffEditModalDialog = (props: {
             </FormControl>
           </FormGroup>
           <FormGroup controlId="password">
-            <ControlLabel>パスワード<br/>※半角英数字をそれぞれ1種類以上含む8文字以上20文字以内で入力してください</ControlLabel>
+            <ControlLabel>
+              パスワード
+              <br />
+              ※半角英数字をそれぞれ1種類以上含む8文字以上20文字以内で入力してください
+            </ControlLabel>
             <FormControl
               required
               autoComplete="new-password"
@@ -304,6 +313,7 @@ export const StaffEditModalDialog = (props: {
             登録
           </Button>
         </Modal.Footer>
+        {isLoading && <Loading />}
       </Modal>
       <ModalDialog
         show={errShow}

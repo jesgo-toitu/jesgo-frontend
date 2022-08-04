@@ -106,7 +106,7 @@ const Registration = () => {
   const [birthday, setBirthday] = useState<string>('');
   const [decline, setDecline] = useState<boolean>(false);
 
-  const [patientIdReadOnly, setPatientIdReadOnly] = useState(false);
+  const [isSaved, setIsSaved] = useState(false); // 保存済みフラグ
 
   let age = ''; // 年齢
 
@@ -260,18 +260,12 @@ const Registration = () => {
 
   // データ読み込み後のコールバック
   useEffect(() => {
-    if (loadedJesgoCase.resCode === RESULT.ABNORMAL_TERMINATION) {
-      // eslint-disable-next-line no-alert
-      alert('読み込みに失敗しました。');
-      setIsLoading(false);
-      RemoveBeforeUnloadEvent();
-      navigate('/Patients');
-    } else if (loadedJesgoCase.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
-      // ログイン画面に戻る
-      setIsLoading(false);
-      RemoveBeforeUnloadEvent();
-      navigate('/login');
-    } else if (loadedJesgoCase.resCode === RESULT.NORMAL_TERMINATION) {
+    // 初回描画時などコールバック以外で呼び出された場合は何もしない
+    if (loadedJesgoCase.resCode === undefined) {
+      return;
+    }
+
+    if (loadedJesgoCase.resCode === RESULT.NORMAL_TERMINATION) {
       // 読み込み成功
 
       loadData = loadedJesgoCase.loadedSaveData as SaveDataObjDefine;
@@ -282,7 +276,7 @@ const Registration = () => {
       setBirthday(loadData.jesgo_case.date_of_birth);
       setDecline(loadData.jesgo_case.decline);
 
-      setPatientIdReadOnly(true);
+      setIsSaved(true);
 
       // 読み込んだデータをstoreに反映
       dispatch({ type: 'SAVE_LOADDATA', saveData: loadData });
@@ -346,6 +340,16 @@ const Registration = () => {
           },
         });
       }
+    } else {
+      let errMsg = '【エラー】\n読み込みに失敗しました。';
+      if (loadedJesgoCase.resCode === RESULT.NOT_FOUND_CASE) {
+        errMsg = '【エラー】\n存在しない症例情報です。';
+      }
+      // eslint-disable-next-line no-alert
+      alert(errMsg);
+      setIsLoading(false);
+      RemoveBeforeUnloadEvent();
+      navigate('/Patients');
     }
   }, [loadedJesgoCase]);
 
@@ -488,6 +492,10 @@ const Registration = () => {
         break;
       case 'decline':
         value = eventTarget.checked;
+        // eslint-disable-next-line
+        if (!decline && !confirm('登録拒否にしますか？')) {
+          return;
+        }
         setDecline(value);
         break;
 
@@ -509,15 +517,19 @@ const Registration = () => {
 
   // 保存後のコールバック
   useEffect(() => {
-    if (saveResponse.resCode !== undefined) {
-      if (
-        saveResponse.resCode === RESULT.ABNORMAL_TERMINATION ||
-        saveResponse.resCode === RESULT.ID_DUPLICATION
-      ) {
-        alert(saveResponse.message);
-      }
+    // 初回描画時などコールバック以外で呼び出された場合は何もしない
+    if (saveResponse.resCode === undefined) {
+      return;
+    }
 
-      // TODO: 再読み込みする
+    if (saveResponse.resCode !== RESULT.NORMAL_TERMINATION) {
+      alert(saveResponse.message);
+    }
+
+    setIsLoading(false);
+
+    if (saveResponse.resCode === RESULT.NORMAL_TERMINATION) {
+      // 再読み込みする
       if (saveResponse.caseId) {
         setIsLoading(true);
         setLoadedJesgoCase({
@@ -528,15 +540,31 @@ const Registration = () => {
         setCaseId(saveResponse.caseId);
         setIsReload(true);
       } else {
-        // TODO: 読み込み失敗
+        // 読み込み失敗
         setIsLoading(false);
         RemoveBeforeUnloadEvent();
         navigate('/Patients');
       }
+    } else if (saveResponse.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
+      // トークン期限切れはログイン画面に戻る
+      RemoveBeforeUnloadEvent();
+      navigate('/login');
     }
   }, [saveResponse]);
 
   const message: string[] = getErrMsg(errors);
+
+  // validationのメッセージを利用して注釈メッセージ表示
+  if (!isSaved) {
+    message.push(
+      'ドキュメントを作成する場合は患者情報を入力後、保存してから下のボタンより追加してください。'
+    );
+  } else if (dispRootSchemaIdsNotDeleted.length === 0) {
+    message.push(
+      'ドキュメントを作成する場合は下のボタンより追加してください。'
+    );
+  }
+
   // 選択されているタブをstoreに保存
   useEffect(() => {
     dispatch({
@@ -591,7 +619,8 @@ const Registration = () => {
                   type="text"
                   onChange={onChangeItem}
                   value={patientId}
-                  readOnly={patientIdReadOnly}
+                  readOnly={isSaved}
+                  autoComplete="off"
                 />
               </FormGroup>
             </Col>
@@ -602,6 +631,7 @@ const Registration = () => {
                   type="text"
                   onChange={onChangeItem}
                   value={patientName}
+                  autoComplete="off"
                 />
               </FormGroup>
             </Col>
@@ -629,7 +659,7 @@ const Registration = () => {
             </Col>
             <Col lg={2} md={2}>
               <FormGroup>
-                <ControlLabel>登録拒否</ControlLabel>
+                <ControlLabel />
                 <div>
                   <Checkbox
                     className="user-info-checkbox"
@@ -637,7 +667,7 @@ const Registration = () => {
                     onChange={onChangeItem}
                     checked={decline}
                   >
-                    なし
+                    登録拒否
                   </Checkbox>
                 </div>
               </FormGroup>
@@ -723,6 +753,7 @@ const Registration = () => {
                 fnAddDocument: onTabSelectEvent,
                 fnSchemaChange: undefined,
               }}
+              disabled={!isSaved}
             />
           </div>
         </>

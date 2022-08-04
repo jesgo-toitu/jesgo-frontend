@@ -5,7 +5,6 @@ import { Tabs, Tab } from 'react-bootstrap';
 import { useDispatch } from 'react-redux';
 import {
   convertTabKey,
-  GetSchemaInfo,
   IsNotUpdate,
   RegistrationErrors,
 } from '../../common/CaseRegistrationUtility';
@@ -40,7 +39,8 @@ export const createTab = (
   setSelectedTabKey: React.Dispatch<React.SetStateAction<any>>,
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
   selectedTabKey: any,
-  schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void
+  schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void,
+  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>
 ) =>
   // subschema表示
   filteredSchemaIds.map((info: dispSchemaIdAndDocumentIdDefine) => {
@@ -73,6 +73,7 @@ export const createTab = (
           setErrors={setErrors}
           selectedTabKey={selectedTabKey}
           schemaAddModFunc={schemaAddModFunc}
+          setUpdateFormData={setUpdateFormData}
         />
       </Tab>
     );
@@ -98,7 +99,8 @@ export const createTabs = (
   childTabSelectedFunc: ChildTabSelectedFuncObj,
   setChildTabSelectedFunc:
     | React.Dispatch<React.SetStateAction<ChildTabSelectedFuncObj>>
-    | undefined
+    | undefined,
+  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
   // 選択中のタブeventKey
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -295,7 +297,8 @@ export const createTabs = (
             setSelectedTabKey,
             setErrors,
             selectedTabKey,
-            onTabSelectEvent
+            onTabSelectEvent,
+            setUpdateFormData
           )}
 
           {/* childSchema表示 */}
@@ -312,7 +315,8 @@ export const createTabs = (
             setSelectedTabKey,
             setErrors,
             selectedTabKey,
-            onTabSelectEvent
+            onTabSelectEvent,
+            setUpdateFormData
           )}
         </Tabs>
         <SaveConfirmDialog

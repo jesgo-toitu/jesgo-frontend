@@ -6,13 +6,14 @@ import { useDispatch } from 'react-redux';
 import '../../views/Registration.css';
 import { useLocation } from 'react-router-dom';
 import CustomDivForm from './JESGOCustomForm';
-import { CreateUISchema } from './UISchemaUtility';
 import {
   GetBeforeInheritDocumentData,
   GetSchemaInfo,
   RegistrationErrors,
   GetSchemaTitle,
   SetSameSchemaTitleNumbering,
+  hasFormDataInput,
+  GetHiddenPropertyNames,
 } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
 import { CustomSchema } from './SchemaUtility';
@@ -99,6 +100,10 @@ const PanelSchema = React.memo((props: Props) => {
       fnAddDocument: schemaAddModFunc,
       fnSchemaChange: schemaAddModFunc,
     });
+
+  // 子ドキュメントの更新有無
+  const [updateChildFormData, setUpdateChildFormData] =
+    useState<boolean>(false);
 
   const dispatch = useDispatch();
   const { state } = useLocation();
@@ -317,7 +322,7 @@ const PanelSchema = React.memo((props: Props) => {
           (p) => p.key === documentId
         );
       // 継承した場合は編集中のデータをセットする
-      if (saveParentDoc && isSchemaChange) {
+      if (saveParentDoc) {
         parentDoc = saveParentDoc;
       }
 
@@ -532,9 +537,48 @@ const PanelSchema = React.memo((props: Props) => {
   }, []);
 
   useEffect(() => {
-    // 親タブに子のパネルスキーマの更新を伝える
-    setUpdateFormData(true);
-  }, [formData]);
+    // 入力内容に応じてタブのフォントを設定
+
+    // 変更前の現在のドキュメントの入力状態
+    const beforeInputState =
+      store.getState().formDataReducer.formDataInputStates.get(documentId) ??
+      false;
+
+    let hasInput = false;
+    // 子のドキュメントはsaveDataから検索
+    const docIdList = dispSubSchemaIdsNotDeleted.map((p) => p.documentId);
+    docIdList.push(...dispChildSchemaIdsNotDeleted.map((p) => p.documentId));
+
+    const formDataInputStates =
+      store.getState().formDataReducer.formDataInputStates;
+    // eslint-disable-next-line no-restricted-syntax
+    for (const docId of docIdList) {
+      if (formDataInputStates.get(docId)) {
+        hasInput = true;
+        break;
+      }
+    }
+    setUpdateChildFormData(false);
+
+    // 子ドキュメントに入力がなければ自身のドキュメントチェック
+    if (!hasInput) {
+      const hiddenItems = GetHiddenPropertyNames(customSchema);
+      // 非表示項目は除外
+      const copyFormData = lodash.omit(formData, hiddenItems);
+      hasInput = hasFormDataInput(copyFormData, schemaId);
+    }
+
+    if (beforeInputState !== hasInput) {
+      dispatch({
+        type: 'SET_FORMDATA_INPUT_STATE',
+        documentId,
+        hasFormDataInput: hasInput,
+      });
+
+      // 親タブに子タブの更新を伝える
+      setUpdateFormData(true);
+    }
+  }, [formData, updateChildFormData]);
 
   return (
     <Panel key={`panel-${schemaId}`} className="panel-style">
@@ -586,7 +630,8 @@ const PanelSchema = React.memo((props: Props) => {
             setSaveResponse,
             setErrors,
             childTabSelectedFunc,
-            setChildTabSelectedFunc
+            setChildTabSelectedFunc,
+            setUpdateChildFormData
           )
         : // パネル表示
           createPanels(
@@ -603,7 +648,7 @@ const PanelSchema = React.memo((props: Props) => {
             selectedTabKey,
             schemaAddModFunc,
             parentTabsId,
-            setUpdateFormData
+            setUpdateChildFormData
           )}
     </Panel>
   );

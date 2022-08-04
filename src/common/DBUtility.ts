@@ -364,22 +364,22 @@ export const UploadSchemaFile = async (
   type uploadApiBody = {
     number: number;
     message: string[];
-  }
+  };
   const res: responseResult = { message: '' };
   const apiResult = await apiAccess(METHOD_TYPE.POST_ZIP, `upload`, zipFile);
   const apiBody = apiResult.body as uploadApiBody;
   res.resCode = apiResult.statusNum;
-  
-  if(apiBody.number > 0){
+
+  if (apiBody && apiBody.number > 0) {
     res.message = `${apiBody.number}件のスキーマを更新しました`;
-  }else{
+  } else {
     res.message = 'スキーマの更新に失敗しました';
   }
 
-  if(apiBody.message){
+  if (apiBody && apiBody.message) {
     setErrorMessages(apiBody.message);
   }
-  
+
   // 呼び元に返す
   setSchemaUploadResponse(res);
 };

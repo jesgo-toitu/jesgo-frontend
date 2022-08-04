@@ -1,17 +1,7 @@
 /* eslint-disable no-alert */
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Navbar,
-  Button,
-  Nav,
-  NavItem,
-  Radio,
-  Table,
-  Form,
-  FormGroup,
-  FormControl,
-} from 'react-bootstrap';
+import { Navbar, Button, Nav, NavItem, Panel } from 'react-bootstrap';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
@@ -19,7 +9,7 @@ import { settingsFromApi } from './Settings';
 import { responseResult, UploadSchemaFile } from '../common/DBUtility';
 import Loading from '../components/CaseRegistration/Loading';
 import { Const } from '../common/Const';
-
+import './SchemaManager.css';
 type settings = {
   facility_name: string;
 };
@@ -31,6 +21,7 @@ const SchemaManager = () => {
   const [settingJson, setSettingJson] = useState<settings>({
     facility_name: '',
   });
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
   const [schemaUploadResponse, setSchemaUploadResponse] =
     useState<responseResult>({ message: '', resCode: undefined });
@@ -75,8 +66,8 @@ const SchemaManager = () => {
   const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (fileList) {
-      const file = fileList[0]
-      const fileName:string = file.name.toLocaleLowerCase()
+      const file = fileList[0];
+      const fileName: string = file.name.toLocaleLowerCase();
       if (!fileName.endsWith('.zip') && !fileName.endsWith('.json')) {
         alert('ZIPファイルもしくはJSONファイルを選択してください');
         return;
@@ -84,7 +75,7 @@ const SchemaManager = () => {
 
       setIsLoading(true);
 
-      UploadSchemaFile(file, setSchemaUploadResponse);
+      UploadSchemaFile(file, setSchemaUploadResponse, setErrorMessages);
     }
   };
 
@@ -95,7 +86,7 @@ const SchemaManager = () => {
       setIsLoading(false);
 
       // アップロード対象ファイルクリア
-      if(refBtnUpload.current) {
+      if (refBtnUpload.current) {
         refBtnUpload.current.value = '';
       }
     }
@@ -127,8 +118,8 @@ const SchemaManager = () => {
         </Navbar.Collapse>
       </Navbar>
 
-      <div className="page-menu">
-        <div className="search-form-closed flex">
+      <div className="schema-buttons">
+        <div className="schema-inner">
           <Button
             bsStyle="success"
             className="normal-button"
@@ -153,6 +144,15 @@ const SchemaManager = () => {
             リストに戻る
           </Button>
         </div>
+      </div>
+      <div className="schema-main">
+        {errorMessages.length > 0 && (
+          <Panel className="error-msg-panel">
+            {errorMessages.map((error: string) => (
+              <p>{error}</p>
+            ))}
+          </Panel>
+        )}
       </div>
       {isLoading && <Loading />}
     </div>

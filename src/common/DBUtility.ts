@@ -369,26 +369,17 @@ export const UploadSchemaFile = async (
     message: string[];
   };
   const res: responseResult = { message: '' };
-
   const apiResult = await apiAccess(METHOD_TYPE.POST_ZIP, `upload`, zipFile);
+  const apiBody = apiResult.body as uploadApiBody;
   res.resCode = apiResult.statusNum;
-  switch (res.resCode) {
-    case RESULT.ABNORMAL_TERMINATION: {
-      if (apiResult.body !== null && apiResult.body !== '') {
-        res.message = apiResult.body as string;
-      } else {
-        res.message = '【エラー】\nスキーマの更新に失敗しました';
-      }
+  if (apiBody && apiBody.number > 0) {
+    res.message = `${apiBody.number}件のスキーマを更新しました`;
+  } else {
+    res.message = '【エラー】\nスキーマの更新に失敗しました';
+  }
 
-      break;
-    }
-    case RESULT.NORMAL_TERMINATION: {
-      res.message = 'スキーマを更新しました';
-      break;
-    }
-    default:
-      res.message = '【エラー】\nスキーマの更新に失敗しました';
-      break;
+  if (apiBody && apiBody.message) {
+    setErrorMessages(apiBody.message);
   }
 
   // 呼び元に返す

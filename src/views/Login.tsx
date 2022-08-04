@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import './Login.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { settingsFromApi } from './Settings';
+import Loading from '../components/CaseRegistration/Loading';
 
 export interface localStorageObject {
   user_id: number;
@@ -28,6 +29,7 @@ export const Login = () => {
   const dispatch = useDispatch();
 
   const [facilityName, setFacilityName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const f = async () => {
@@ -117,16 +119,20 @@ export const Login = () => {
       navigate('/Patients');
     } else if (returnApiObject.statusNum === RESULT.NETWORK_ERROR) {
       // eslint-disable-next-line no-alert
-      alert(`サーバーへの接続に失敗しました。`);
+      alert(`【エラー】\nサーバーへの接続に失敗しました。`);
     } else {
       // eslint-disable-next-line no-alert
-      alert(`ログインに失敗しました。ユーザ名かパスワードが間違っています。`);
+      alert(
+        `【エラー】\nログインに失敗しました。ユーザ名かパスワードが間違っています。`
+      );
     }
   };
 
   const onSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsLoading(true);
     await submit();
+    setIsLoading(false);
   };
 
   const onChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,6 +195,7 @@ export const Login = () => {
           </div>
         </div>
       </div>
+      {isLoading && <Loading />}
     </div>
   );
 };

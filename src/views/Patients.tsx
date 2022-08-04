@@ -26,6 +26,7 @@ import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
 import { formatDate } from '../common/DBUtility';
 import { Const } from '../common/Const';
+import Loading from '../components/CaseRegistration/Loading';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -86,8 +87,12 @@ const Patients = () => {
   const [facilityName, setFacilityName] = useState('');
   const [csvData, setCsvData] = useState<object[]>([]);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     const f = async () => {
+      setIsLoading(true);
+
       // 設定情報取得APIを呼ぶ
       const returnSettingApiObject = await apiAccess(
         METHOD_TYPE.GET,
@@ -111,6 +116,8 @@ const Patients = () => {
       } else {
         navigate('/login');
       }
+
+      setIsLoading(false);
     };
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -341,6 +348,7 @@ const Patients = () => {
   };
 
   const submit = async (type: string) => {
+    setIsLoading(true);
     const token = localStorage.getItem('token');
     if (token == null) {
       navigate('/login');
@@ -405,256 +413,264 @@ const Patients = () => {
     } else {
       navigate('/login');
     }
+    setIsLoading(false);
   };
 
   return (
-    <div className="relative">
-      <Navbar collapseOnSelect fixedTop>
-        <Navbar.Header>
-          <Navbar.Brand>
-            <img src="./image/logo.png" alt="JESGO" className="img" />
-          </Navbar.Brand>
-          <Navbar.Toggle />
-        </Navbar.Header>
-        <Navbar.Collapse>
-          <Nav>
-            <NavItem
-              eventKey={1}
-              href="#"
-              className={`header-text ${listMode[0]}`}
-              onClick={() => changeListColumn(false)}
-            >
-              患者リスト表示
-            </NavItem>
-            <NavItem
-              eventKey={2}
-              href="#"
-              className={`header-text ${listMode[1]}`}
-              onClick={() => changeListColumn(true)}
-            >
-              腫瘍登録管理表示
-            </NavItem>
-          </Nav>
-          <Nav pullRight>
-            <Navbar.Text>{facilityName}</Navbar.Text>
-            <NavItem>
-              <UserMenu title={userName} i={0} />
-            </NavItem>
-            <NavItem>
-              <SystemMenu title="設定" i={0} />
-            </NavItem>
-            <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-      <div className="page-menu">
-        <div className="search-form-closed flex">
-          <ButtonToolbar style={{ marginTop: '14px', marginBottom: '14px' }}>
-            <ButtonGroup>
-              <Button onClick={() => changeView('simpleSearch')}>
-                <Glyphicon glyph="search" />
+    <>
+      <div className="relative">
+        <Navbar collapseOnSelect fixedTop>
+          <Navbar.Header>
+            <Navbar.Brand>
+              <img src="./image/logo.png" alt="JESGO" className="img" />
+            </Navbar.Brand>
+            <Navbar.Toggle />
+          </Navbar.Header>
+          <Navbar.Collapse>
+            <Nav>
+              <NavItem
+                eventKey={1}
+                href="#"
+                className={`header-text ${listMode[0]}`}
+                onClick={() => changeListColumn(false)}
+              >
+                患者リスト表示
+              </NavItem>
+              <NavItem
+                eventKey={2}
+                href="#"
+                className={`header-text ${listMode[1]}`}
+                onClick={() => changeListColumn(true)}
+              >
+                腫瘍登録管理表示
+              </NavItem>
+            </Nav>
+            <Nav pullRight>
+              <Navbar.Text>{facilityName}</Navbar.Text>
+              <NavItem>
+                <UserMenu title={userName} i={0} />
+              </NavItem>
+              <NavItem>
+                <SystemMenu title="設定" i={0} />
+              </NavItem>
+              <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
+            </Nav>
+          </Navbar.Collapse>
+        </Navbar>
+        <div className="page-menu">
+          <div className="search-form-closed flex">
+            <ButtonToolbar style={{ marginTop: '14px', marginBottom: '14px' }}>
+              <ButtonGroup>
+                <Button onClick={() => changeView('simpleSearch')}>
+                  <Glyphicon glyph="search" />
+                </Button>
+                <Button onClick={() => changeView('detailSearch')}>
+                  <Glyphicon glyph="eye-open" />
+                </Button>
+              </ButtonGroup>
+            </ButtonToolbar>
+            <div className="spacer10" />
+            {localStorage.getItem('is_add_roll') === 'true' && (
+              <Button
+                bsStyle="primary"
+                href="/registration"
+                className="normal-button"
+              >
+                新規作成
               </Button>
-              <Button onClick={() => changeView('detailSearch')}>
-                <Glyphicon glyph="eye-open" />
-              </Button>
-            </ButtonGroup>
-          </ButtonToolbar>
-          <div className="spacer10" />
-          {localStorage.getItem('is_add_roll') === 'true' && (
-            <Button
-              bsStyle="primary"
-              href="/registration"
-              className="normal-button"
+            )}
+            <CSVLink
+              data={csvData}
+              headers={csvHeader}
+              // eslint-disable-next-line
+              onClick={() => confirm('CSVファイルをダウンロードしますか？')}
             >
-              新規作成
-            </Button>
-          )}
-          <CSVLink
-            data={csvData}
-            headers={csvHeader}
-            // eslint-disable-next-line
-            onClick={() => confirm('CSVファイルをダウンロードしますか？')}
-          >
-            <Button bsStyle="success" className="normal-button">
-              CSV作成
-            </Button>
-          </CSVLink>
+              <Button bsStyle="success" className="normal-button">
+                CSV作成
+              </Button>
+            </CSVLink>
+          </div>
         </div>
-      </div>
-      <div className="search-form-outer">
-        <Jumbotron className={searchFormOpen}>
-          <div className="flex">
-            初回治療開始日：
-            <FormControl
-              name="treatmentStartYear"
-              onChange={handleSearchCondition}
-              componentClass="select"
-            >
-              <option value="all">すべて</option>
-              {makeSelectDate(UNIT_TYPE.YEAR, new Date(), 3).map(
-                (date: string) => (
-                  <option value={date}>{`${date}年`}</option>
-                )
-              )}
-            </FormControl>
-            <div className="spacer10" />
-            がん種：
-            <FormControl
-              name="cancerType"
-              onChange={handleSearchCondition}
-              componentClass="select"
-            >
-              <option value="all">すべて</option>
-              <option value="cervical">子宮頸がん</option>
-              <option value="endometrial">子宮体がん</option>
-              <option value="ovarian">卵巣がん</option>
-            </FormControl>
-            <div className="spacer10" />
-            <Checkbox
-              name="showOnlyTumorRegistry"
-              onChange={handleSearchCondition}
-              inline
-            >
-              腫瘍登録対象のみ表示
-            </Checkbox>
-            <div className="close-icon">
-              <a href="#" onClick={() => changeView('close')}>
+        <div className="search-form-outer">
+          <Jumbotron className={searchFormOpen}>
+            <div className="flex">
+              初回治療開始日：
+              <FormControl
+                name="treatmentStartYear"
+                onChange={handleSearchCondition}
+                componentClass="select"
+              >
+                <option value="all">すべて</option>
+                {makeSelectDate(UNIT_TYPE.YEAR, new Date(), 3).map(
+                  (date: string) => (
+                    <option value={date}>{`${date}年`}</option>
+                  )
+                )}
+              </FormControl>
+              <div className="spacer10" />
+              がん種：
+              <FormControl
+                name="cancerType"
+                onChange={handleSearchCondition}
+                componentClass="select"
+              >
+                <option value="all">すべて</option>
+                <option value="cervical">子宮頸がん</option>
+                <option value="endometrial">子宮体がん</option>
+                <option value="ovarian">卵巣がん</option>
+              </FormControl>
+              <div className="spacer10" />
+              <Checkbox
+                name="showOnlyTumorRegistry"
+                onChange={handleSearchCondition}
+                inline
+              >
+                腫瘍登録対象のみ表示
+              </Checkbox>
+              <div className="close-icon">
+                <a href="#" onClick={() => changeView('close')}>
+                  <span
+                    className="glyphicon glyphicon-remove"
+                    aria-hidden="true"
+                  />
+                </a>
+              </div>
+            </div>
+            <div className={simpleSearchButtons}>
+              <a href="#" onClick={() => changeView('detailSearch')}>
                 <span
-                  className="glyphicon glyphicon-remove"
+                  className="glyphicon glyphicon-eye-open"
                   aria-hidden="true"
                 />
+                詳細表示設定
+              </a>
+              <div className="spacer10" />
+              <div className="spacer10" />
+              <a href="#" onClick={() => submit('search')}>
+                <span
+                  className="glyphicon glyphicon-search"
+                  aria-hidden="true"
+                />
+                検索
               </a>
             </div>
-          </div>
-          <div className={simpleSearchButtons}>
-            <a href="#" onClick={() => changeView('detailSearch')}>
-              <span
-                className="glyphicon glyphicon-eye-open"
-                aria-hidden="true"
-              />
-              詳細表示設定
-            </a>
-            <div className="spacer10" />
-            <div className="spacer10" />
-            <a href="#" onClick={() => submit('search')}>
-              <span className="glyphicon glyphicon-search" aria-hidden="true" />
-              検索
-            </a>
-          </div>
-          <div className={detailSearchOpen}>
-            <div className="detail-column">
-              <span
-                className="detail-setting-icon glyphicon glyphicon-eye-open"
-                aria-hidden="true"
-              />
-              <span className="detail-setting-text">詳細表示設定：</span>
+            <div className={detailSearchOpen}>
+              <div className="detail-column">
+                <span
+                  className="detail-setting-icon glyphicon glyphicon-eye-open"
+                  aria-hidden="true"
+                />
+                <span className="detail-setting-text">詳細表示設定：</span>
+              </div>
+              <div className="detail-column">
+                <Checkbox
+                  name="checkOfDiagnosisDate"
+                  onChange={handleSearchCondition}
+                  inline
+                >
+                  <span className="detail-setting-content">診断日：</span>
+                </Checkbox>
+                <FormControl
+                  name="startOfDiagnosisDate"
+                  onChange={handleSearchCondition}
+                  componentClass="select"
+                >
+                  {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
+                    (date: string) => (
+                      <option value={`${date}`}>{date}</option>
+                    )
+                  )}
+                </FormControl>
+                ～
+                <FormControl
+                  name="endOfDiagnosisDate"
+                  onChange={handleSearchCondition}
+                  componentClass="select"
+                >
+                  {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
+                    (date: string) => (
+                      <option value={`${date}`}>{date}</option>
+                    )
+                  )}
+                </FormControl>
+              </div>
+              <div className="detail-column">
+                <Checkbox
+                  name="checkOfBlankFields"
+                  onChange={handleSearchCondition}
+                  inline
+                >
+                  <span className="detail-setting-content">
+                    未入力項目で絞り込み：
+                  </span>
+                </Checkbox>
+                <Checkbox
+                  name="advancedStage"
+                  onChange={handleSearchCondition}
+                  inline
+                >
+                  進行期
+                </Checkbox>
+                <Checkbox
+                  name="pathlogicalDiagnosis"
+                  onChange={handleSearchCondition}
+                  inline
+                >
+                  診断
+                </Checkbox>
+                <Checkbox
+                  name="initialTreatment"
+                  onChange={handleSearchCondition}
+                  inline
+                >
+                  初回治療
+                </Checkbox>
+                <Checkbox
+                  name="copilacations"
+                  onChange={handleSearchCondition}
+                  inline
+                  disabled
+                >
+                  合併症
+                </Checkbox>
+                <Checkbox
+                  name="threeYearPrognosis"
+                  onChange={handleSearchCondition}
+                  inline
+                  disabled
+                >
+                  3年予後
+                </Checkbox>
+                <Checkbox
+                  name="fiveYearPrognosis"
+                  onChange={handleSearchCondition}
+                  inline
+                  disabled
+                >
+                  5年予後
+                </Checkbox>
+              </div>
+              <div className="detail-column flex">
+                <Button bsStyle="primary" onClick={() => submit('detail')}>
+                  表示更新
+                </Button>
+              </div>
             </div>
-            <div className="detail-column">
-              <Checkbox
-                name="checkOfDiagnosisDate"
-                onChange={handleSearchCondition}
-                inline
-              >
-                <span className="detail-setting-content">診断日：</span>
-              </Checkbox>
-              <FormControl
-                name="startOfDiagnosisDate"
-                onChange={handleSearchCondition}
-                componentClass="select"
-              >
-                {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
-                  (date: string) => (
-                    <option value={`${date}`}>{date}</option>
-                  )
-                )}
-              </FormControl>
-              ～
-              <FormControl
-                name="endOfDiagnosisDate"
-                onChange={handleSearchCondition}
-                componentClass="select"
-              >
-                {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
-                  (date: string) => (
-                    <option value={`${date}`}>{date}</option>
-                  )
-                )}
-              </FormControl>
-            </div>
-            <div className="detail-column">
-              <Checkbox
-                name="checkOfBlankFields"
-                onChange={handleSearchCondition}
-                inline
-              >
-                <span className="detail-setting-content">
-                  未入力項目で絞り込み：
-                </span>
-              </Checkbox>
-              <Checkbox
-                name="advancedStage"
-                onChange={handleSearchCondition}
-                inline
-              >
-                進行期
-              </Checkbox>
-              <Checkbox
-                name="pathlogicalDiagnosis"
-                onChange={handleSearchCondition}
-                inline
-              >
-                診断
-              </Checkbox>
-              <Checkbox
-                name="initialTreatment"
-                onChange={handleSearchCondition}
-                inline
-              >
-                初回治療
-              </Checkbox>
-              <Checkbox
-                name="copilacations"
-                onChange={handleSearchCondition}
-                inline
-                disabled
-              >
-                合併症
-              </Checkbox>
-              <Checkbox
-                name="threeYearPrognosis"
-                onChange={handleSearchCondition}
-                inline
-                disabled
-              >
-                3年予後
-              </Checkbox>
-              <Checkbox
-                name="fiveYearPrognosis"
-                onChange={handleSearchCondition}
-                inline
-                disabled
-              >
-                5年予後
-              </Checkbox>
-            </div>
-            <div className="detail-column flex">
-              <Button bsStyle="primary" onClick={() => submit('detail')}>
-                表示更新
-              </Button>
-            </div>
-          </div>
-        </Jumbotron>
-      </div>
+          </Jumbotron>
+        </div>
 
-      <div className={`search-result ${tableMode}`}>
-        <UserTables
-          userListJson={userListJson}
-          search={search}
-          noSearch={noSearch}
-          setUserListJson={setUserListJson}
-        />
+        <div className={`search-result ${tableMode}`}>
+          <UserTables
+            userListJson={userListJson}
+            search={search}
+            noSearch={noSearch}
+            setUserListJson={setUserListJson}
+            setIsLoading={setIsLoading}
+          />
+        </div>
       </div>
-    </div>
+      {isLoading && <Loading />}
+    </>
   );
 };
 export default Patients;

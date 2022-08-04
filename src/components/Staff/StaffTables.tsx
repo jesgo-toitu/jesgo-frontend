@@ -14,10 +14,13 @@ import StaffEditModalDialog from './StaffEditModal';
 let insert: boolean = false;
 let srcData: staffData | undefined = undefined;
 
-const makeTable = (props: {}) => {
+const makeTable = (props: {
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
   interface staffDataList {
     data: staffData[];
   }
+  const { setIsLoading } = props;
 
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
@@ -36,6 +39,7 @@ const makeTable = (props: {}) => {
 
   const ReadStaffData = () => {
     const f = async () => {
+      setIsLoading(true);
       // jesgo_user list
       const returnApiObject = await apiAccess(
         METHOD_TYPE.GET,
@@ -52,6 +56,7 @@ const makeTable = (props: {}) => {
       } else {
         navigate('/login');
       }
+      setIsLoading(false);
     };
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     f();
@@ -79,9 +84,11 @@ const makeTable = (props: {}) => {
       const token = localStorage.getItem('token');
       if (token == null) {
         // eslint-disable-next-line no-alert
-        alert('処理に失敗しました。');
+        alert('【エラー】\n処理に失敗しました。');
         return;
       }
+
+      setIsLoading(true);
 
       // 削除APIを呼ぶ
       const returnApiObject = await apiAccess(METHOD_TYPE.POST, `deleteUser/`, {
@@ -93,8 +100,10 @@ const makeTable = (props: {}) => {
         setUpdate((prevState) => !prevState);
       } else {
         // eslint-disable-next-line no-alert
-        alert('削除に失敗しました。');
+        alert('【エラー】\n削除に失敗しました。');
       }
+
+      setIsLoading(false);
     }
   };
 

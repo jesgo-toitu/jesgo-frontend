@@ -24,6 +24,7 @@ import {
   StaffErrorMessage,
 } from '../../common/StaffMaster';
 import { staffData } from '../../views/Stafflist';
+import Loading from '../CaseRegistration/Loading';
 import ModalDialog from '../common/ModalDialog';
 import './StaffEditModal.css';
 
@@ -42,6 +43,8 @@ export const StaffPasswordChangeModalDialog = (props: {
   const [message, setMessage] = useState<string>('');
 
   const userId = localStorage.getItem('user_id');
+
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setPassword('');
@@ -109,12 +112,14 @@ export const StaffPasswordChangeModalDialog = (props: {
       alert('変更しました');
       props.onOk();
     } else {
-      alert('パスワード変更に失敗しました');
+      alert('【エラー】\nパスワード変更に失敗しました');
     }
   };
 
-  const onSave = () => {
-    updatePassword();
+  const onSave = async () => {
+    setIsLoading(true);
+    await updatePassword();
+    setIsLoading(false);
   };
 
   const errModalHide = useCallback(() => {}, []);
@@ -135,7 +140,11 @@ export const StaffPasswordChangeModalDialog = (props: {
         </Modal.Header>
         <Modal.Body>
           <FormGroup controlId="password">
-            <ControlLabel>パスワード<br/>※半角英数字をそれぞれ1種類以上含む8文字以上20文字以内で入力してください</ControlLabel>
+            <ControlLabel>
+              パスワード
+              <br />
+              ※半角英数字をそれぞれ1種類以上含む8文字以上20文字以内で入力してください
+            </ControlLabel>
             <FormControl
               required
               autoComplete="new-password"
@@ -167,6 +176,7 @@ export const StaffPasswordChangeModalDialog = (props: {
             登録
           </Button>
         </Modal.Footer>
+        {isLoading && <Loading />}
       </Modal>
       <ModalDialog
         show={errShow}

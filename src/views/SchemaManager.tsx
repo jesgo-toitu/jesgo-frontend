@@ -1,8 +1,8 @@
 /* eslint-disable no-alert */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Navbar, Button, Nav, NavItem, Panel } from 'react-bootstrap';
-import { ExpandMore, ChevronRight } from '@mui/icons-material';
+import { Navbar, Button, Nav, NavItem, Panel, Checkbox } from 'react-bootstrap';
+import { ExpandMore, ChevronRight, CheckBox } from '@mui/icons-material';
 import { TreeView, TreeItem } from '@mui/lab';
 import { Box } from '@mui/material';
 import { UserMenu } from '../components/common/UserMenu';
@@ -17,6 +17,8 @@ import SchemaTree, {
   SCHEMA_TYPE,
   treeSchema,
 } from '../components/Schemamanager/SchemaTree';
+import { GetSchemaInfo } from '../common/CaseRegistrationUtility';
+import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 
 type settings = {
   facility_name: string;
@@ -36,6 +38,8 @@ const SchemaManager = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedSchema, setSelectedSchema] = useState<string>('');
+  const [selectedSchemaInfo, setSelectedSchemaInfo] =
+    useState<JesgoDocumentSchema>();
   const [tree, setTree] = useState<treeSchema[]>([]);
 
   useEffect(() => {
@@ -68,6 +72,14 @@ const SchemaManager = () => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     f();
   }, []);
+
+  // 選択中のスキーマが変更されたとき
+  useEffect(() => {
+    const schema = GetSchemaInfo(Number(selectedSchema));
+    if (schema) {
+      setSelectedSchemaInfo(schema);
+    }
+  }, [selectedSchema]);
 
   const clickCancel = () => {
     navigate('/Patients');
@@ -215,7 +227,34 @@ const SchemaManager = () => {
               ))}
             </Panel>
           )}
-          選択中のスキーマは {selectedSchema} です
+          {selectedSchemaInfo && (
+            <>
+              <p>
+                <span>文書(スキーマタイトル) ： </span>
+                <span>
+                  {selectedSchemaInfo.title +
+                    (selectedSchemaInfo.subtitle.length > 0
+                      ? ` ${selectedSchemaInfo.subtitle}`
+                      : '')}
+                </span>
+              </p>
+              <p>
+                <span>スキーマID ： </span>
+                <span>{selectedSchemaInfo.schema_id_string}</span>
+              </p>
+              <p>
+                <span>継承スキーマ ： </span>
+                <Checkbox checked={false} disabled={false} />
+              </p>
+              <p>
+                <span>スキーマID ： </span>
+                <span>{selectedSchema}</span>
+              </p>
+              <p>上位スキーマ</p>
+              <p>下位スキーマ</p>
+              <p>初期設定を反映 設定を保存</p>
+            </>
+          )}
         </div>
       </div>
       {isLoading && <Loading />}

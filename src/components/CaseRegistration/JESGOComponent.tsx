@@ -420,31 +420,6 @@ export namespace JESGOComp {
       setInputValue(value ?? '');
     }, []);
 
-    const comboOnChange = (
-      e: React.SyntheticEvent<Element, Event> | undefined,
-      val: any,
-      reason: string
-    ) => {
-      if (reason === 'input') {
-        setInputValue(val);
-        return;
-      }
-
-      if (
-        val &&
-        typeof val === 'object' &&
-        Object.keys(val).find((p) => p === 'label')
-      ) {
-        onChange(val.label);
-        setSelectedValue(val);
-        setInputValue(val.label);
-      } else {
-        const convertVal = val || '';
-        onChange(convertVal);
-        setInputValue(val);
-      }
-    };
-
     // コンボボックスのアイテム一覧
     const comboItemList: ComboItemDefine[] = [];
 
@@ -591,6 +566,38 @@ export namespace JESGOComp {
         comboComponent.current.style.width = `${comboWidth}px`;
       }
     }, []);
+
+    /* コンボボックスの値変更イベント */
+    const comboOnChange = (
+      e: React.SyntheticEvent<Element, Event> | undefined,
+      val: any,
+      reason: string
+    ) => {
+      if (reason === 'input') {
+        setInputValue(val);
+        return;
+      }
+
+      if (
+        val &&
+        typeof val === 'object' &&
+        Object.keys(val).find((p) => p === 'label')
+      ) {
+        onChange(val.label);
+        setSelectedValue(val);
+        setInputValue(val.label);
+      } else {
+        const convertVal = val || '';
+        onChange(convertVal);
+        setInputValue(val);
+      }
+
+      // リストから選択時はフォーカス外す
+      if (reason === 'selectOption' && !isFreeInput) {
+        const activeCtrl = document.activeElement as HTMLElement;
+        activeCtrl?.blur();
+      }
+    };
 
     return (
       <Autocomplete

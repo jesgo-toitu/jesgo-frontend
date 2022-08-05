@@ -158,23 +158,24 @@ a.has-input {
 .input-text select {
   width: auto;
   min-width: 200px;
+  max-width: 100%;
   font-family: 'BIZ-UDPGothic';
-}
-
-/* input */
-.input-text input[type="text"] {
-  width: auto;
-  min-width: 200px;
-}
-.input-text select {
-  width: auto;
-  min-width: 200px;
 }
 
 /* 必須項目のスタイル */
 .required-item input,
 .required-item select {
   border-color: red;
+}
+
+/* 必須項目のスタイル(階層コンボ用) */
+.required-item fieldset,
+.required-item fieldset:hover {
+  border-color: red !important;
+}
+
+.MuiOutlinedInput-root > fieldset:hover {
+  border-color: red !important;
 }
 
 /* jesgo:ui:visibleWhen
@@ -229,4 +230,15 @@ input[type="number"] {
 /* textarea 横方向へのリサイズ抑制 */
 textarea.form-control {
   resize: vertical;
+}
+
+/* 階層付きラジオボタンのdiv */
+div.radio-item-div {
+  margin-left: 10px;
+}
+
+/* 階層付きラジオボタンのlabel */
+label.radio-label {
+  margin-top: 5px;
+  margin-bottom: 0px;
 }

@@ -406,7 +406,7 @@ export namespace JESGOComp {
         oneOfItems = schema;
       } else {
         const anyOfItems = schema.anyOf as JSONSchema7[];
-        oneOfItems = anyOfItems.find((p) => p.oneOf) as JSONSchema7;
+        oneOfItems = anyOfItems?.find((p) => p.oneOf) as JSONSchema7;
       }
 
       if (!oneOfItems || !oneOfItems.oneOf) {

@@ -390,10 +390,12 @@ export namespace JESGOComp {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { id, schema, onChange, value, readonly } = props;
 
-    const [selectedValue, setSelectedValue] = useState<
-      ComboItemDefine | undefined
-    >(undefined);
+    const [selectedValue, setSelectedValue] =
+      useState<ComboItemDefine>(emptyOption);
     const [inputValue, setInputValue] = useState<string>('');
+
+    // blur実行フラグ
+    const [blurFlg, setBlurFlg] = useState(false);
 
     const hasEnum = !!schema.enum;
 
@@ -404,7 +406,7 @@ export namespace JESGOComp {
         oneOfItems = schema;
       } else {
         const anyOfItems = schema.anyOf as JSONSchema7[];
-        oneOfItems = anyOfItems.find((p) => p.oneOf) as JSONSchema7;
+        oneOfItems = anyOfItems?.find((p) => p.oneOf) as JSONSchema7;
       }
 
       if (!oneOfItems || !oneOfItems.oneOf) {
@@ -594,10 +596,19 @@ export namespace JESGOComp {
 
       // リストから選択時はフォーカス外す
       if (reason === 'selectOption' && !isFreeInput) {
-        const activeCtrl = document.activeElement as HTMLElement;
-        activeCtrl?.blur();
+        setBlurFlg(true);
       }
     };
+
+    // リスト選択後のフォーカスアウト
+    // ここのタイミングでやらないと入力値が保存されない
+    useEffect(() => {
+      if (blurFlg) {
+        const activeCtrl = document.activeElement as HTMLElement;
+        activeCtrl?.blur();
+        setBlurFlg(false);
+      }
+    }, [blurFlg]);
 
     return (
       <Autocomplete

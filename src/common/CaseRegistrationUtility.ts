@@ -154,7 +154,7 @@ const validateFormData = (
       }
       // 数値の場合のみ以降のチェックを行う
       if (!isNotNumber) {
-        if (resultSchema.const) {
+        if (resultSchema.const !== undefined) {
           // const
           if (resultSchema.const !== value) {
             messages.push(
@@ -162,7 +162,7 @@ const validateFormData = (
             );
           }
         }
-        if (resultSchema.minimum) {
+        if (resultSchema.minimum !== undefined) {
           // minimum
           if (value < resultSchema.minimum) {
             messages.push(
@@ -170,7 +170,7 @@ const validateFormData = (
             );
           }
         }
-        if (resultSchema.maximum) {
+        if (resultSchema.maximum !== undefined) {
           // maximum
           if (value > resultSchema.maximum) {
             messages.push(

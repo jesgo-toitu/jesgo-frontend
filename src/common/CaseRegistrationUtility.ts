@@ -222,17 +222,19 @@ const customSchemaValidation = (
   const resultSchema = lodash.cloneDeep(schema);
   let errFlg = false;
 
+  // 表示用項目名
+  const displayName = schema.title || propName;
+
   if (resultSchema.properties) {
     // propertiesの場合はさらに下の階層を解析
     const targetSchema = getPropItemsAndNames(resultSchema);
     targetSchema.pNames.forEach((iname: string) => {
       const targetItem = targetSchema.pItems[iname] as JSONSchema7;
-      const itemName = targetItem.title ?? iname;
       const res = customSchemaValidation(
         targetItem,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         formData[iname] ?? {},
-        itemName,
+        iname,
         resultSchema.required ?? []
       );
       targetSchema.pItems[iname] = res.schema;
@@ -252,7 +254,7 @@ const customSchemaValidation = (
         if (formData.length < minItems) {
           errFlg = true;
           messages.push(
-            `　　[ ${propName} ] ${minItems}件以上入力してください。`
+            `　　[ ${displayName} ] ${minItems}件以上入力してください。`
           );
         }
       } else if (resultSchema.maxItems) {
@@ -261,7 +263,7 @@ const customSchemaValidation = (
         if (formData.length > maxItems) {
           errFlg = true;
           messages.push(
-            `　　[ ${propName} ] ${maxItems}件以下で入力してください。`
+            `　　[ ${displayName} ] ${maxItems}件以下で入力してください。`
           );
         }
       }
@@ -278,7 +280,7 @@ const customSchemaValidation = (
         );
         if (res.messages.length > 0) {
           errFlg = true;
-          messages.push(`　[ ${propName}:${index + 1}行目 ]`);
+          messages.push(`　[ ${displayName}:${index + 1}行目 ]`);
           res.messages.forEach((message: string) => {
             messages.push(`　　${message}`);
           });
@@ -297,7 +299,7 @@ const customSchemaValidation = (
     const requiredMsg = validateRequired(formData, propName, required);
     if (requiredMsg !== '') {
       errFlg = true;
-      messages.push(`　[ ${propName} ] ${requiredMsg}`);
+      messages.push(`　[ ${displayName} ] ${requiredMsg}`);
     } else {
       const oneOfMatchCondition: boolean[] = [];
       const subMessages: string[] = [];
@@ -323,7 +325,7 @@ const customSchemaValidation = (
       });
       if (oneOfMatchCondition.length === 0) {
         errFlg = true;
-        messages.push(`　[ ${propName} ] ${subMessages.join('または、')}`);
+        messages.push(`　[ ${displayName} ] ${subMessages.join('または、')}`);
       }
     }
   } else {
@@ -338,7 +340,7 @@ const customSchemaValidation = (
 
     if (errMsgs.length > 0) {
       errFlg = true;
-      messages.push(`　[ ${propName} ] ${errMsgs.join('')}`);
+      messages.push(`　[ ${displayName} ] ${errMsgs.join('')}`);
     }
   }
 

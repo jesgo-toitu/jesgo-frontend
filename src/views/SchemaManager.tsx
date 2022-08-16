@@ -252,6 +252,22 @@ const SchemaManager = () => {
               </p>
               <p>上位スキーマ</p>
               <p>下位スキーマ</p>
+              <p>
+                <span>サブスキーマ ： </span>
+                <span>{selectedSchemaInfo.subschema}</span>
+              </p>
+              <p>
+                <span>子スキーマ ： </span>
+                <span>{selectedSchemaInfo.child_schema}</span>
+              </p>
+              <p>
+                <span>初期サブスキーマ ： </span>
+                <span>{selectedSchemaInfo.subschema_default}</span>
+              </p>
+              <p>
+                <span>初期子スキーマ ： </span>
+                <span>{selectedSchemaInfo.child_schema_default}</span>
+              </p>
               <p>初期設定を反映 設定を保存</p>
             </>
           )}

@@ -15,6 +15,8 @@ export type JesgoDocumentSchema = {
   base_schema: number | null;
   version_major: number;
   schema_primary_id: number;
+  subschema_default: number[];
+  child_schema_default: number[];
 };
 
 export interface schemaDataState {

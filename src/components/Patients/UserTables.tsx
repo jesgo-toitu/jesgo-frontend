@@ -22,13 +22,9 @@ export interface userData {
   startDate: string | null;
   lastUpdate: string;
   diagnosis: string;
-  diagnosisCervical: string;
-  diagnosisEndometrial: string;
-  diagnosisOvarian: string;
+  diagnosisMajor: string;
+  diagnosisMinor: string;
   advancedStage: string;
-  advancedStageCervical: string;
-  advancedStageEndometrial: string;
-  advancedStageOvarian: string;
   pathlogicalDiagnosis: string;
   initialTreatment: string[];
   copilacations: string[];

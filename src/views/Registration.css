@@ -73,9 +73,9 @@ body {
 }
 
 .user-info-button-div {
-  display: table-cell;
+  display: flex;
   vertical-align: middle;
-  text-align: right;
+  justify-content: right;
 }
 
 /* ---タブ--- */

@@ -17,7 +17,11 @@ import SchemaTree, {
   SCHEMA_TYPE,
   treeSchema,
 } from '../components/Schemamanager/SchemaTree';
-import { GetSchemaInfo } from '../common/CaseRegistrationUtility';
+import {
+  GetSchemaInfo,
+  GetParentSchemas,
+  parentSchemaList,
+} from '../common/CaseRegistrationUtility';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 
 type settings = {
@@ -40,6 +44,8 @@ const SchemaManager = () => {
   const [selectedSchema, setSelectedSchema] = useState<string>('');
   const [selectedSchemaInfo, setSelectedSchemaInfo] =
     useState<JesgoDocumentSchema>();
+  const [selectedSchemaParentInfo, setSelectedSchemaParentInfo] =
+    useState<parentSchemaList>();
   const [tree, setTree] = useState<treeSchema[]>([]);
 
   useEffect(() => {
@@ -79,6 +85,7 @@ const SchemaManager = () => {
     if (schema) {
       setSelectedSchemaInfo(schema);
     }
+    setSelectedSchemaParentInfo(GetParentSchemas(Number(selectedSchema)));
   }, [selectedSchema]);
 
   const clickCancel = () => {
@@ -135,6 +142,8 @@ const SchemaManager = () => {
     },
     []
   );
+
+  const 
 
   useEffect(() => {
     if (schemaUploadResponse.resCode !== undefined) {
@@ -251,6 +260,16 @@ const SchemaManager = () => {
                 <span>{selectedSchema}</span>
               </p>
               <p>上位スキーマ</p>
+              <div>
+                <p>sub</p>
+                {selectedSchemaParentInfo?.fromSubSchema.map((v) => (
+                  <div>{v.schema_id_string}</div>
+                ))}
+                <p>child</p>
+                {selectedSchemaParentInfo?.fromChildSchema.map((v) => (
+                  <div>{v.schema_id_string}</div>
+                ))}
+              </div>
               <p>下位スキーマ</p>
               <p>
                 <span>サブスキーマ ： </span>

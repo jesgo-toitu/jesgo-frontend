@@ -239,6 +239,6 @@ div.radio-item-div {
 
 /* 階層付きラジオボタンのlabel */
 label.radio-label {
-  margin-top: 5px;
+  margin-top: 5px !important;
   margin-bottom: 0px;
 }

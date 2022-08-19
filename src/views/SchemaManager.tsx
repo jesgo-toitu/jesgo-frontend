@@ -17,12 +17,13 @@ import SchemaTree, {
   SCHEMA_TYPE,
   treeSchema,
 } from '../components/Schemamanager/SchemaTree';
+
+import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import {
+  parentSchemaList,
   GetSchemaInfo,
   GetParentSchemas,
-  parentSchemaList,
-} from '../common/CaseRegistrationUtility';
-import { JesgoDocumentSchema } from '../store/schemaDataReducer';
+} from '../components/CaseRegistration/SchemaUtility';
 
 type settings = {
   facility_name: string;
@@ -142,8 +143,6 @@ const SchemaManager = () => {
     },
     []
   );
-
-  const 
 
   useEffect(() => {
     if (schemaUploadResponse.resCode !== undefined) {

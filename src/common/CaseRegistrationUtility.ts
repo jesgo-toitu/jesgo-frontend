@@ -12,54 +12,12 @@ import {
 import {
   CustomSchema,
   getPropItemsAndNames,
+  GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import {} from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import { Const } from './Const';
 
-// スキーマIDからスキーマ情報を取得
-export const GetSchemaInfo = (id: number) => {
-  const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
-  const schemaList = schemaInfos.get(id);
-  if (schemaList && schemaList[0]) {
-    return schemaList[0];
-  }
-  return undefined;
-};
-
-// ルートスキーマのschema_idを取得
-export const GetRootSchema = () => {
-  const roots = store.getState().schemaDataReducer.rootSchemas;
-  return roots;
-};
-
-export type parentSchemaList = {
-  fromSubSchema: JesgoDocumentSchema[];
-  fromChildSchema: JesgoDocumentSchema[];
-}
-
-// 指定したスキーマIDをサブスキーマ、子スキーマに持つスキーマ情報のリストを取得
-export const GetParentSchemas = (childId: number) => {
-  const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
-  const schemaList = schemaInfos.values();
-  const parentFromSubSchemaList:JesgoDocumentSchema[] = [];
-  const parentFromChildSchemaList:JesgoDocumentSchema[] = [];
-  // eslint-disable-next-line no-restricted-syntax
-  for(const v of schemaList){
-    if(v[0].child_schema.includes(childId)){
-      parentFromChildSchemaList.push(v[0]);
-    }
-    else if(v[0].subschema.includes(childId)){
-      parentFromSubSchemaList.push(v[0]);
-    }
-  }
-  const parentList:parentSchemaList = {
-    fromSubSchema:parentFromSubSchemaList,
-    fromChildSchema:parentFromChildSchemaList
-  };
-  
-  return parentList;
-}
 export type validationResult = {
   schema: JSONSchema7;
   messages: string[];

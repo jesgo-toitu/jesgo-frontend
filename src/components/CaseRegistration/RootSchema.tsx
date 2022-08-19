@@ -7,7 +7,6 @@ import CustomDivForm from './JESGOCustomForm';
 import {
   GetBeforeInheritDocumentData,
   GetHiddenPropertyNames,
-  GetSchemaInfo,
   GetSchemaTitle,
   hasFormDataInput,
   RegistrationErrors,
@@ -15,7 +14,7 @@ import {
   SetTabStyle,
 } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
-import { CustomSchema } from './SchemaUtility';
+import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
 import {
   dispSchemaIdAndDocumentIdDefine,
   jesgoDocumentObjDefine,

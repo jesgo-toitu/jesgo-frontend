@@ -5,8 +5,6 @@ import {
   GetAllSubSchemaIds,
   GetCreatedDocCountAfterInherit,
   GetInheritFormData,
-  GetRootSchema,
-  GetSchemaInfo,
   GetSchemaTitle,
 } from '../../common/CaseRegistrationUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
@@ -15,6 +13,7 @@ import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import store from '../../store/index';
 import { ChildTabSelectedFuncObj } from './FormCommonComponents';
 import { Const } from '../../common/Const';
+import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
 
 export const COMP_TYPE = {
   ROOT: 'root',

@@ -344,17 +344,49 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
       const copyIds: dispSchemaIdAndDocumentIdDefine[] = [];
       let isSubSchema = false;
       let subschemaLastIdx = -1; // 同サブスキーマの位置
+
+      const targetSchemaInfo = GetSchemaInfo(eventKey);
+      // 継承/回帰関係にあるスキーマを取得
+      const relatedSchemaIds: Set<number> = new Set();
+      if (targetSchemaInfo?.base_schema) {
+        relatedSchemaIds.add(targetSchemaInfo.base_schema);
+      }
+      targetSchemaInfo?.inherit_schema.forEach((inhId) =>
+        relatedSchemaIds.add(inhId)
+      );
+
       // 子ドキュメントの追加
       // unique=falseのサブスキーマ
       if (addableSubSchemaIds && addableSubSchemaIds.length > 0) {
-        if (addableSubSchemaIds.includes(eventKey)) {
+        // サブスキーマから継承/回帰できるスキーマID取得
+        const addableSubSchemaInheritIds: Set<number> = new Set();
+        addableSubSchemaIds.forEach((id) => {
+          const sInfo = GetSchemaInfo(id);
+          if (sInfo?.base_schema) {
+            addableSubSchemaInheritIds.add(sInfo.base_schema);
+          }
+          if (sInfo?.inherit_schema) {
+            sInfo.inherit_schema.forEach((inhId) =>
+              addableSubSchemaInheritIds.add(inhId)
+            );
+          }
+        });
+
+        if (
+          addableSubSchemaIds.includes(eventKey) ||
+          addableSubSchemaInheritIds.has(eventKey) // サブスキーマから継承したスキーマもサブスキーマ扱い
+        ) {
           isSubSchema = true;
           copyIds.push(...dispSubSchemaIds);
 
           // 追加済みのサブスキーマ探索
           for (let index = copyIds.length - 1; index >= 0; index -= 1) {
             const item = copyIds[index];
-            if (item.deleted === false && item.schemaId === eventKey) {
+            if (
+              item.deleted === false &&
+              (item.schemaId === eventKey ||
+                relatedSchemaIds.has(item.schemaId))
+            ) {
               subschemaLastIdx = index;
               break;
             }
@@ -438,9 +470,18 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
 
   // サブスキーマの場合は同一スキーマが2件以上あれば削除可とする
   if (!isChildSchema) {
-    const sameSchema = dispSchemaIds.filter(
-      (p) => p.deleted === false && p.schemaId === schemaId
-    );
+    const sameSchema = dispSchemaIds.filter((p) => {
+      if (p.deleted === true) return false;
+      if (p.schemaId === schemaId) {
+        return true;
+      }
+      // 継承/回帰関係のスキーマは同一と扱う
+      const sInfo = GetSchemaInfo(p.schemaId);
+      return (
+        (sInfo?.base_schema && sInfo.base_schema === schemaId) ||
+        (sInfo?.inherit_schema && sInfo.inherit_schema.includes(schemaId))
+      );
+    });
     canDelete = !!(sameSchema.length >= 2);
   }
   // 追加可否

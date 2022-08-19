@@ -396,6 +396,8 @@ const TabSchema = React.memo((props: Props) => {
                 title: GetSchemaTitle(childDoc.value.schema_id),
               };
 
+              const cDocSchemaInfo = GetSchemaInfo(childDoc.value.schema_id);
+
               // サブスキーマに追加
               // unique=falseのサブスキーマの場合もサブスキーマに追加する必要あり
               if (
@@ -406,6 +408,12 @@ const TabSchema = React.memo((props: Props) => {
                   addableSubSchemaIds.includes(childDoc.value.schema_id)) &&
                 subSchemaAndInherit.includes(childDoc.value.schema_id)
               ) {
+                dispSubSchemaIds.push(item);
+              } else if (
+                cDocSchemaInfo?.base_schema &&
+                addableSubSchemaIds.includes(cDocSchemaInfo.base_schema)
+              ) {
+                // 継承元のスキーマがサブスキーマの場合もサブスキーマに追加
                 dispSubSchemaIds.push(item);
               } else {
                 // childスキーマに追加

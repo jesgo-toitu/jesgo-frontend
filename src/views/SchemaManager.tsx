@@ -226,8 +226,52 @@ const SchemaManager = () => {
     UP: 0,
     DOWN: 1,
   };
-  // チェックボックス状態変更
-  const handleArrowClick = (arrow: number, type: number, v = ''): void => {};
+  // 上下移動用
+  const handleArrowClick = (arrow: number, type: number, v = ''): void => {
+    if (type === SCHEMA_TYPE.SUBSCHEMA) {
+      const copySchemaList = lodash.cloneDeep(subSchemaList);
+      const targetIndex = copySchemaList.findIndex(
+        (s) => s.schema.schema_id === Number(v)
+      );
+      if (arrow === ARROW_TYPE.UP && targetIndex !== 0) {
+        // バッファを使って配列の位置を入れ替える
+        const temp = copySchemaList[targetIndex - 1];
+        copySchemaList[targetIndex - 1] = copySchemaList[targetIndex];
+        copySchemaList[targetIndex] = temp;
+      } else if (
+        arrow === ARROW_TYPE.DOWN &&
+        targetIndex !== copySchemaList.length - 1
+      ) {
+        // バッファを使って配列の位置を入れ替える
+        const temp = copySchemaList[targetIndex + 1];
+        copySchemaList[targetIndex + 1] = copySchemaList[targetIndex];
+        copySchemaList[targetIndex] = temp;
+      }
+      // stateに設定
+      setSubSchemaList(copySchemaList);
+    } else if (type === SCHEMA_TYPE.CHILDSCHEMA) {
+      const copySchemaList = lodash.cloneDeep(childSchemaList);
+      const targetIndex = copySchemaList.findIndex(
+        (s) => s.schema.schema_id === Number(v)
+      );
+      if (arrow === ARROW_TYPE.UP && targetIndex !== 0) {
+        // バッファを使って配列の位置を入れ替える
+        const temp = copySchemaList[targetIndex - 1];
+        copySchemaList[targetIndex - 1] = copySchemaList[targetIndex];
+        copySchemaList[targetIndex] = temp;
+      } else if (
+        arrow === ARROW_TYPE.DOWN &&
+        targetIndex !== copySchemaList.length - 1
+      ) {
+        // バッファを使って配列の位置を入れ替える
+        const temp = copySchemaList[targetIndex + 1];
+        copySchemaList[targetIndex + 1] = copySchemaList[targetIndex];
+        copySchemaList[targetIndex] = temp;
+      }
+      // stateに設定
+      setChildSchemaList(copySchemaList);
+    }
+  };
 
   useEffect(() => {
     if (schemaUploadResponse.resCode !== undefined) {
@@ -391,8 +435,28 @@ const SchemaManager = () => {
                   {subSchemaList.map((v) => (
                     <tr>
                       <td>
-                        <div>↑</div>
-                        <div>↓</div>
+                        <Button
+                          onClick={() =>
+                            handleArrowClick(
+                              ARROW_TYPE.UP,
+                              SCHEMA_TYPE.SUBSCHEMA,
+                              v.schema.schema_id.toString()
+                            )
+                          }
+                        >
+                          ↑
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            handleArrowClick(
+                              ARROW_TYPE.DOWN,
+                              SCHEMA_TYPE.SUBSCHEMA,
+                              v.schema.schema_id.toString()
+                            )
+                          }
+                        >
+                          ↓
+                        </Button>
                       </td>
                       <td>
                         {v.schema.title}
@@ -419,8 +483,28 @@ const SchemaManager = () => {
                   {childSchemaList.map((v) => (
                     <tr>
                       <td>
-                        <div>↑</div>
-                        <div>↓</div>
+                        <Button
+                          onClick={() =>
+                            handleArrowClick(
+                              ARROW_TYPE.UP,
+                              SCHEMA_TYPE.CHILDSCHEMA,
+                              v.schema.schema_id.toString()
+                            )
+                          }
+                        >
+                          ↑
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            handleArrowClick(
+                              ARROW_TYPE.DOWN,
+                              SCHEMA_TYPE.CHILDSCHEMA,
+                              v.schema.schema_id.toString()
+                            )
+                          }
+                        >
+                          ↓
+                        </Button>
                       </td>
                       <td>
                         {v.schema.title}

@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar, Button, Nav, NavItem, Panel, Checkbox } from 'react-bootstrap';
-import { ExpandMore, ChevronRight, CheckBox } from '@mui/icons-material';
+import { ExpandMore, ChevronRight, Fort } from '@mui/icons-material';
 import { TreeView, TreeItem } from '@mui/lab';
 import { Box } from '@mui/material';
 import { UserMenu } from '../components/common/UserMenu';
@@ -23,7 +23,9 @@ import {
   parentSchemaList,
   GetSchemaInfo,
   GetParentSchemas,
+  schemaWithValid,
 } from '../components/CaseRegistration/SchemaUtility';
+import lodash from 'lodash';
 
 type settings = {
   facility_name: string;
@@ -47,6 +49,8 @@ const SchemaManager = () => {
     useState<JesgoDocumentSchema>();
   const [selectedSchemaParentInfo, setSelectedSchemaParentInfo] =
     useState<parentSchemaList>();
+  const [childSchemaList, setChildSchemaList] = useState<schemaWithValid[]>([]);
+  const [subSchemaList, setSubSchemaList] = useState<schemaWithValid[]>([]);
   const [tree, setTree] = useState<treeSchema[]>([]);
 
   useEffect(() => {
@@ -83,9 +87,45 @@ const SchemaManager = () => {
   // 選択中のスキーマが変更されたとき
   useEffect(() => {
     const schema = GetSchemaInfo(Number(selectedSchema));
-    if (schema) {
+    if (schema !== undefined) {
       setSelectedSchemaInfo(schema);
+
+      // サブスキーマ、子スキーマも更新する
+      // subschema
+      // 現在のサブスキーマリストは全て有効なので、後ろに初期サブスキーマを合体させ重複を削除する
+      const tempSubSchemaList = lodash.union(
+        schema.subschema,
+        schema.subschema_default
+      );
+      const currentSubSchemaList: schemaWithValid[] = [];
+      // eslint-disable-next-line no-plusplus
+      for (let i = 0; i < tempSubSchemaList.length; i++) {
+        // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
+        currentSubSchemaList.push({
+          valid: i <= schema.subschema.length,
+          schema: GetSchemaInfo(tempSubSchemaList[i])!,
+        });
+      }
+      setSubSchemaList(currentSubSchemaList);
+
+      // childschema
+      // 現在の子スキーマリストは全て有効なので、後ろに初期子スキーマを合体させ重複を削除する
+      const tempChildSchemaList = lodash.union(
+        schema.child_schema,
+        schema.child_schema_default
+      );
+      const currentChildSchemaList: schemaWithValid[] = [];
+      // eslint-disable-next-line no-plusplus
+      for (let i = 0; i < tempChildSchemaList.length; i++) {
+        // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
+        currentChildSchemaList.push({
+          valid: i <= schema.child_schema.length,
+          schema: GetSchemaInfo(tempChildSchemaList[i])!,
+        });
+      }
+      setChildSchemaList(currentChildSchemaList);
     }
+
     setSelectedSchemaParentInfo(GetParentSchemas(Number(selectedSchema)));
   }, [selectedSchema]);
 
@@ -143,6 +183,51 @@ const SchemaManager = () => {
     },
     []
   );
+
+  // チェックボックス分岐用定数
+  const CHECK_TYPE = {
+    SUBSCHEMA: 0,
+    CHILDSCHEMA: 1,
+  };
+  // チェックボックス状態変更
+  const handleCheckClick = (type: number, v = ''): void => {
+    const copyParentInfo = lodash.cloneDeep(selectedSchemaParentInfo);
+    // undefinedチェック
+    if (copyParentInfo) {
+      // サブスキーマの場合
+      if (type === CHECK_TYPE.SUBSCHEMA && copyParentInfo.fromSubSchema) {
+        // eslint-disable-next-line
+        for (let i = 0; i < copyParentInfo.fromSubSchema.length; i++) {
+          const obj = copyParentInfo.fromSubSchema[i];
+          if (obj.schema.schema_id === Number(v)) {
+            obj.valid = !obj.valid;
+          }
+        }
+      }
+      // 子スキーマの場合
+      else if (
+        type === CHECK_TYPE.CHILDSCHEMA &&
+        copyParentInfo.fromChildSchema
+      ) {
+        // eslint-disable-next-line
+        for (let i = 0; i < copyParentInfo.fromChildSchema.length; i++) {
+          const obj = copyParentInfo.fromChildSchema[i];
+          if (obj.schema.schema_id === Number(v)) {
+            obj.valid = !obj.valid;
+          }
+        }
+      }
+      setSelectedSchemaParentInfo(copyParentInfo);
+    }
+  };
+
+  // 上下移動分岐用定数
+  const ARROW_TYPE = {
+    UP: 0,
+    DOWN: 1,
+  };
+  // チェックボックス状態変更
+  const handleArrowClick = (arrow: number, type: number, v = ''): void => {};
 
   useEffect(() => {
     if (schemaUploadResponse.resCode !== undefined) {
@@ -260,23 +345,101 @@ const SchemaManager = () => {
               </p>
               <p>上位スキーマ</p>
               <div>
-                <p>sub</p>
-                {selectedSchemaParentInfo?.fromSubSchema.map((v) => (
-                  <div>{v.schema_id_string}</div>
-                ))}
-                <p>child</p>
-                {selectedSchemaParentInfo?.fromChildSchema.map((v) => (
-                  <div>{v.schema_id_string}</div>
-                ))}
+                <span>サブスキーマ ： </span>
+                <table className="relation-table">
+                  {selectedSchemaParentInfo?.fromSubSchema.map((v) => (
+                    <tr>
+                      <td>{v.schema.schema_id_string}</td>
+                      <td>
+                        <Checkbox
+                          checked={v.valid}
+                          onChange={(e) =>
+                            handleCheckClick(
+                              CHECK_TYPE.SUBSCHEMA,
+                              v.schema.schema_id.toString()
+                            )
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </table>
+                <span>子スキーマ ： </span>
+                <table className="relation-table">
+                  {selectedSchemaParentInfo?.fromChildSchema.map((v) => (
+                    <tr>
+                      <td>{v.schema.schema_id_string}</td>
+                      <td>
+                        <Checkbox
+                          checked={v.valid}
+                          onChange={(e) =>
+                            handleCheckClick(
+                              CHECK_TYPE.CHILDSCHEMA,
+                              v.schema.schema_id.toString()
+                            )
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </table>
               </div>
               <p>下位スキーマ</p>
               <p>
                 <span>サブスキーマ ： </span>
-                <span>{selectedSchemaInfo.subschema}</span>
+                <table className="relation-table">
+                  {subSchemaList.map((v) => (
+                    <tr>
+                      <td>
+                        <div>↑</div>
+                        <div>↓</div>
+                      </td>
+                      <td>
+                        {v.schema.title}
+                        {v.schema.subtitle && ` ${v.schema.subtitle}`}
+                      </td>
+                      <td>
+                        <Checkbox
+                          checked={v.valid}
+                          onChange={(e) =>
+                            handleCheckClick(
+                              CHECK_TYPE.CHILDSCHEMA,
+                              v.schema.schema_id.toString()
+                            )
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </table>
               </p>
               <p>
                 <span>子スキーマ ： </span>
-                <span>{selectedSchemaInfo.child_schema}</span>
+                <table className="relation-table">
+                  {childSchemaList.map((v) => (
+                    <tr>
+                      <td>
+                        <div>↑</div>
+                        <div>↓</div>
+                      </td>
+                      <td>
+                        {v.schema.title}
+                        {v.schema.subtitle && ` ${v.schema.subtitle}`}
+                      </td>
+                      <td>
+                        <Checkbox
+                          checked={v.valid}
+                          onChange={(e) =>
+                            handleCheckClick(
+                              CHECK_TYPE.CHILDSCHEMA,
+                              v.schema.schema_id.toString()
+                            )
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </table>
               </p>
               <p>
                 <span>初期サブスキーマ ： </span>

@@ -26,3 +26,11 @@
 .schema-tree {
   width: 15rem;
 }
+
+.schema-detail {
+  width: 70%;
+}
+
+.relation-table {
+  width:70%;
+}

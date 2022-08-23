@@ -59,24 +59,44 @@ export const GetRootSchema = () => {
   return roots;
 };
 
+export type schemaWithValid = {
+  valid: boolean;
+  schema: JesgoDocumentSchema;
+}
+
 export type parentSchemaList = {
-  fromSubSchema: JesgoDocumentSchema[];
-  fromChildSchema: JesgoDocumentSchema[];
+  fromSubSchema: schemaWithValid[];
+  fromChildSchema: schemaWithValid[];
 }
 
 // 指定したスキーマIDをサブスキーマ、子スキーマに持つスキーマ情報のリストを取得
 export const GetParentSchemas = (childId: number) => {
   const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
   const schemaList = schemaInfos.values();
-  const parentFromSubSchemaList:JesgoDocumentSchema[] = [];
-  const parentFromChildSchemaList:JesgoDocumentSchema[] = [];
+  const parentFromSubSchemaList:schemaWithValid[] = [];
+  const parentFromChildSchemaList:schemaWithValid[] = [];
   // eslint-disable-next-line no-restricted-syntax
   for(const v of schemaList){
-    if(v[0].child_schema.includes(childId)){
-      parentFromChildSchemaList.push(v[0]);
+    
+    // 子スキーマの初期設定に入っているかを確認
+    if(v[0].child_schema_default.includes(childId)){
+      // 現表示の子スキーマに含まれているかを確認
+      const isValid = v[0].child_schema.includes(childId);
+      const schemaObj = {
+        valid: isValid,
+        schema: v[0],
+      }
+      parentFromChildSchemaList.push(schemaObj);
     }
-    else if(v[0].subschema.includes(childId)){
-      parentFromSubSchemaList.push(v[0]);
+    // サブスキーマの初期設定に入っているかを確認
+    else if(v[0].subschema_default.includes(childId)){
+      // 現表示のサブスキーマに含まれているかを確認
+      const isValid = v[0].subschema.includes(childId);
+      const schemaObj = {
+        valid: isValid,
+        schema: v[0],
+      }
+      parentFromSubSchemaList.push(schemaObj);
     }
   }
   const parentList:parentSchemaList = {

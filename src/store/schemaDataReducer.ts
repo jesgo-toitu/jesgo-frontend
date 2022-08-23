@@ -53,9 +53,17 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
           // eslint-disable-next-line no-param-reassign
           schema.subschema = [];
         }
+        if (schema.subschema_default === null) {
+          // eslint-disable-next-line no-param-reassign
+          schema.subschema_default = [];
+        }
         if (schema.child_schema === null) {
           // eslint-disable-next-line no-param-reassign
           schema.child_schema = [];
+        }
+        if (schema.child_schema_default === null) {
+          // eslint-disable-next-line no-param-reassign
+          schema.child_schema_default = [];
         }
         const tempSchemas = copyState.schemaDatas.get(schema.schema_id);
         if(tempSchemas){

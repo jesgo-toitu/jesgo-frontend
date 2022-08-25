@@ -342,7 +342,7 @@ const SchemaManager = () => {
       </div>
       <div className="schema-main">
         {/* 文書構造ビュー */}
-        <fieldset className="schema-manager-legend">
+        <fieldset className="schema-manager-legend schema-tree">
           <legend>文書構造ビュー</legend>
           <div className="schema-tree">
             <TreeView>
@@ -363,7 +363,7 @@ const SchemaManager = () => {
         </fieldset>
         {/* スキーマ設定ビュー */}
         <div className="schema-detail">
-          <fieldset className="schema-manager-legend">
+          <fieldset className="schema-manager-legend schema-detail">
             <legend>スキーマ選択ビュー</legend>
             <div className="schema-detail">
               {errorMessages.length > 0 && (
@@ -375,91 +375,102 @@ const SchemaManager = () => {
               )}
               {selectedSchemaInfo && (
                 <>
-                  <p>
-                    <span>文書(スキーマタイトル) ： </span>
-                    <span>
-                      {selectedSchemaInfo.title +
-                        (selectedSchemaInfo.subtitle.length > 0
-                          ? ` ${selectedSchemaInfo.subtitle}`
-                          : '')}
-                    </span>
-                  </p>
-                  <p>
-                    <span>スキーマID ： </span>
-                    <span>{selectedSchemaInfo.schema_id_string}</span>
-                  </p>
-                  <p>
-                    <span>継承スキーマ ： </span>
-                    <Checkbox checked={false} disabled={false} />
-                  </p>
-                  <p>
-                    <span>スキーマID ： </span>
-                    <span>{selectedSchema}</span>
-                  </p>
-                  <p>上位スキーマ</p>
-                  <div>
-                    <span>サブスキーマ ： </span>
-                    <table className="relation-table">
-                      {selectedSchemaParentInfo?.fromSubSchema.map((v) => (
-                        <tr>
-                          <td>{v.schema.schema_id_string}</td>
-                          <td>
-                            <Checkbox
-                              checked={v.valid}
-                              onChange={(e) =>
-                                handleCheckClick(
-                                  CHECK_TYPE.SUBSCHEMA,
-                                  v.schema.schema_id.toString()
-                                )
-                              }
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </table>
-                    <span>子スキーマ ： </span>
-                    <table className="relation-table">
-                      {selectedSchemaParentInfo?.fromChildSchema.map((v) => (
-                        <tr>
-                          <td>{v.schema.schema_id_string}</td>
-                          <td>
-                            <Checkbox
-                              checked={v.valid}
-                              onChange={(e) =>
-                                handleCheckClick(
-                                  CHECK_TYPE.CHILDSCHEMA,
-                                  v.schema.schema_id.toString()
-                                )
-                              }
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </table>
-                  </div>
-                  <p>下位スキーマ</p>
-                  <p>
-                    <div className="caption-and-block">
+                  <fieldset className="schema-manager-legend">
+                    <legend>スキーマ情報</legend>
+                    <div className="caption-and-block2">
+                      <span>文書(スキーマ)タイトル ： </span>
+                      <span>
+                        {selectedSchemaInfo.title +
+                          (selectedSchemaInfo.subtitle.length > 0
+                            ? ` ${selectedSchemaInfo.subtitle}`
+                            : '')}
+                      </span>
+                    </div>
+                    <div className="caption-and-block2">
+                      <span>スキーマID ： </span>
+                      <span>{selectedSchemaInfo.schema_id_string}</span>
+                    </div>
+                    <div className="caption-and-block2">
+                      <span>継承スキーマ ： </span>
+                      <Checkbox
+                        className="show-flg-checkbox"
+                        checked={false}
+                        disabled={false}
+                      />
+                    </div>
+                    <div className="caption-and-block2">
+                      <span>スキーマID(内部番号) ： </span>
+                      <span>{selectedSchema}</span>
+                    </div>
+                  </fieldset>
+                  <fieldset className="schema-manager-legend">
+                    <legend>上位スキーマ</legend>
+                    <div>
                       <span>サブスキーマ ： </span>
-                      <DndSortableTable
-                        checkType={CHECK_TYPE.SUBSCHEMA}
-                        schemaList={subSchemaList}
-                        setSchemaList={setSubSchemaList}
-                        handleCheckClick={handleCheckClick}
-                      />
-                    </div>
-                  </p>
-                  <p>
-                    <div className="caption-and-block">
+                      <table className="relation-table">
+                        {selectedSchemaParentInfo?.fromSubSchema.map((v) => (
+                          <tr>
+                            <td>{v.schema.schema_id_string}</td>
+                            <td>
+                              <Checkbox
+                                checked={v.valid}
+                                onChange={(e) =>
+                                  handleCheckClick(
+                                    CHECK_TYPE.SUBSCHEMA,
+                                    v.schema.schema_id.toString()
+                                  )
+                                }
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </table>
                       <span>子スキーマ ： </span>
-                      <DndSortableTable
-                        checkType={CHECK_TYPE.CHILDSCHEMA}
-                        schemaList={childSchemaList}
-                        setSchemaList={setChildSchemaList}
-                        handleCheckClick={handleCheckClick}
-                      />
+                      <table className="relation-table">
+                        {selectedSchemaParentInfo?.fromChildSchema.map((v) => (
+                          <tr>
+                            <td>{v.schema.schema_id_string}</td>
+                            <td>
+                              <Checkbox
+                                checked={v.valid}
+                                onChange={(e) =>
+                                  handleCheckClick(
+                                    CHECK_TYPE.CHILDSCHEMA,
+                                    v.schema.schema_id.toString()
+                                  )
+                                }
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </table>
                     </div>
-                  </p>
+                  </fieldset>
+                  <fieldset className="schema-manager-legend">
+                    <legend>下位スキーマ</legend>
+                    <p>
+                      <div className="caption-and-block">
+                        <span>サブスキーマ ： </span>
+                        <DndSortableTable
+                          checkType={CHECK_TYPE.SUBSCHEMA}
+                          schemaList={subSchemaList}
+                          setSchemaList={setSubSchemaList}
+                          handleCheckClick={handleCheckClick}
+                        />
+                      </div>
+                    </p>
+                    <p>
+                      <div className="caption-and-block">
+                        <span>子スキーマ ： </span>
+                        <DndSortableTable
+                          checkType={CHECK_TYPE.CHILDSCHEMA}
+                          schemaList={childSchemaList}
+                          setSchemaList={setChildSchemaList}
+                          handleCheckClick={handleCheckClick}
+                        />
+                      </div>
+                    </p>
+                  </fieldset>
                   <p>
                     <span>初期サブスキーマ ： </span>
                     <span>{selectedSchemaInfo.subschema_default}</span>

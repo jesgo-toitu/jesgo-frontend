@@ -5,6 +5,7 @@ import { Navbar, Button, Nav, NavItem, Panel, Checkbox } from 'react-bootstrap';
 import { ExpandMore, ChevronRight, Fort } from '@mui/icons-material';
 import { TreeView, TreeItem } from '@mui/lab';
 import { Box } from '@mui/material';
+import lodash from 'lodash';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
@@ -25,7 +26,7 @@ import {
   GetParentSchemas,
   schemaWithValid,
 } from '../components/CaseRegistration/SchemaUtility';
-import lodash from 'lodash';
+import DndSortableTable from '../components/Schemamanager/DndSortableTable';
 
 type settings = {
   facility_name: string;
@@ -430,100 +431,26 @@ const SchemaManager = () => {
               </div>
               <p>下位スキーマ</p>
               <p>
-                <span>サブスキーマ ： </span>
-                <table className="relation-table">
-                  {subSchemaList.map((v) => (
-                    <tr>
-                      <td>
-                        <Button
-                          onClick={() =>
-                            handleArrowClick(
-                              ARROW_TYPE.UP,
-                              SCHEMA_TYPE.SUBSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        >
-                          ↑
-                        </Button>
-                        <Button
-                          onClick={() =>
-                            handleArrowClick(
-                              ARROW_TYPE.DOWN,
-                              SCHEMA_TYPE.SUBSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        >
-                          ↓
-                        </Button>
-                      </td>
-                      <td>
-                        {v.schema.title}
-                        {v.schema.subtitle && ` ${v.schema.subtitle}`}
-                      </td>
-                      <td>
-                        <Checkbox
-                          checked={v.valid}
-                          onChange={(e) =>
-                            handleCheckClick(
-                              CHECK_TYPE.CHILDSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </table>
+                <div className='caption-and-block'>
+                  <span>サブスキーマ ： </span>
+                  <DndSortableTable
+                    checkType={CHECK_TYPE.SUBSCHEMA}
+                    schemaList={subSchemaList}
+                    setSchemaList={setSubSchemaList}
+                    handleCheckClick={handleCheckClick}
+                  />
+                </div>
               </p>
               <p>
-                <span>子スキーマ ： </span>
-                <table className="relation-table">
-                  {childSchemaList.map((v) => (
-                    <tr>
-                      <td>
-                        <Button
-                          onClick={() =>
-                            handleArrowClick(
-                              ARROW_TYPE.UP,
-                              SCHEMA_TYPE.CHILDSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        >
-                          ↑
-                        </Button>
-                        <Button
-                          onClick={() =>
-                            handleArrowClick(
-                              ARROW_TYPE.DOWN,
-                              SCHEMA_TYPE.CHILDSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        >
-                          ↓
-                        </Button>
-                      </td>
-                      <td>
-                        {v.schema.title}
-                        {v.schema.subtitle && ` ${v.schema.subtitle}`}
-                      </td>
-                      <td>
-                        <Checkbox
-                          checked={v.valid}
-                          onChange={(e) =>
-                            handleCheckClick(
-                              CHECK_TYPE.CHILDSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </table>
+                <div className='caption-and-block'>
+                  <span>子スキーマ ： </span>
+                  <DndSortableTable
+                    checkType={CHECK_TYPE.CHILDSCHEMA}
+                    schemaList={childSchemaList}
+                    setSchemaList={setChildSchemaList}
+                    handleCheckClick={handleCheckClick}
+                  />
+                </div>
               </p>
               <p>
                 <span>初期サブスキーマ ： </span>

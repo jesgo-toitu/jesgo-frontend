@@ -11,7 +11,7 @@ import lodash from 'lodash';
 import { schemaWithValid } from '../CaseRegistration/SchemaUtility';
 
 type DndSortableTableProps = {
-  schemaList: schemaWithValid[];
+  schemaList: schemaWithValid[] | undefined;
   checkType: number;
   setSchemaList: React.Dispatch<React.SetStateAction<schemaWithValid[]>>;
   handleCheckClick: (type: number, v?: string) => void;
@@ -19,8 +19,8 @@ type DndSortableTableProps = {
 
 /**
  * Drag&Dropで並び替え可能なTable
- * @param props 
- * @returns 
+ * @param props
+ * @returns
  */
 const DndSortableTable = (props: DndSortableTableProps) => {
   const { schemaList, checkType, setSchemaList, handleCheckClick } = props;
@@ -38,6 +38,8 @@ const DndSortableTable = (props: DndSortableTableProps) => {
   };
 
   const onDragEnd = (result: DropResult) => {
+    if (!schemaList) return;
+
     const { source, destination } = result;
     if (!destination) {
       return;
@@ -63,44 +65,46 @@ const DndSortableTable = (props: DndSortableTableProps) => {
               ref={provided.innerRef}
               {...provided.droppableProps}
             >
-              {schemaList.map((row, index) => (
-                <Draggable
-                  draggableId={row.schema.schema_id.toString()}
-                  index={index}
-                  key={row.schema.schema_id}
-                >
-                  {(provided2) => (
-                    <tr
-                      className="sortable-table-row"
-                      ref={provided2.innerRef}
-                      {...provided2.draggableProps}
-                      {...provided2.dragHandleProps}
-                    >
-                      <td className="sortable-table-cell1">
-                        <div>
-                          <DragIndicatorIcon className="drag-icon-style" />
+              {schemaList &&
+                schemaList.map((row, index) => (
+                  <Draggable
+                    draggableId={row.schema.schema_id.toString()}
+                    index={index}
+                    // isDragDisabled={false} // Drag無効フラグ
+                    key={row.schema.schema_id}
+                  >
+                    {(provided2) => (
+                      <tr
+                        className="sortable-table-row"
+                        ref={provided2.innerRef}
+                        {...provided2.draggableProps}
+                        {...provided2.dragHandleProps}
+                      >
+                        <td className="sortable-table-cell1">
                           <div>
-                            {row.schema.title}
-                            {row.schema.subtitle && ` ${row.schema.subtitle}`}
+                            <DragIndicatorIcon className="drag-icon-style" />
+                            <div>
+                              {row.schema.title}
+                              {row.schema.subtitle && ` ${row.schema.subtitle}`}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="sortable-table-cell2">
-                        <Checkbox
-                          className="show-flg-checkbox"
-                          checked={row.valid}
-                          onChange={(e) =>
-                            handleCheckClick(
-                              checkType,
-                              row.schema.schema_id.toString()
-                            )
-                          }
-                        />
-                      </td>
-                    </tr>
-                  )}
-                </Draggable>
-              ))}
+                        </td>
+                        <td className="sortable-table-cell2">
+                          <Checkbox
+                            className="show-flg-checkbox"
+                            checked={row.valid}
+                            onChange={(e) =>
+                              handleCheckClick(
+                                checkType,
+                                row.schema.schema_id.toString()
+                              )
+                            }
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </Draggable>
+                ))}
               {provided.placeholder}
             </tbody>
           )}

@@ -377,7 +377,7 @@ const SchemaManager = () => {
                 <>
                   <fieldset className="schema-manager-legend">
                     <legend>スキーマ情報</legend>
-                    <div className="caption-and-block2">
+                    <div className="caption-and-block-long">
                       <span>文書(スキーマ)タイトル ： </span>
                       <span>
                         {selectedSchemaInfo.title +
@@ -386,11 +386,15 @@ const SchemaManager = () => {
                             : '')}
                       </span>
                     </div>
-                    <div className="caption-and-block2">
+                    <div className="caption-and-block-long">
                       <span>スキーマID ： </span>
                       <span>{selectedSchemaInfo.schema_id_string}</span>
                     </div>
-                    <div className="caption-and-block2">
+                    <div className="caption-and-block-long">
+                      <span>スキーマID(内部番号) ： </span>
+                      <span>{selectedSchema}</span>
+                    </div>
+                    <div className="caption-and-block-long">
                       <span>継承スキーマ ： </span>
                       <Checkbox
                         className="show-flg-checkbox"
@@ -398,52 +402,46 @@ const SchemaManager = () => {
                         disabled={false}
                       />
                     </div>
-                    <div className="caption-and-block2">
-                      <span>スキーマID(内部番号) ： </span>
-                      <span>{selectedSchema}</span>
-                    </div>
+                    {/* TODO: スキーマダウンロードボタンサンプル */}
+                    {/* <div>
+                      <Button
+                        bsStyle="success"
+                        className="normal-button nomargin glyphicon glyphicon-download-alt"
+                        title="スキーマファイルをダウンロードします"
+                        onClick={schemaUpload}
+                      >
+                        {' '}
+                        スキーマダウンロード
+                      </Button>
+                    </div> */}
                   </fieldset>
                   <fieldset className="schema-manager-legend">
                     <legend>上位スキーマ</legend>
                     <div>
-                      <span>サブスキーマ ： </span>
-                      <table className="relation-table">
-                        {selectedSchemaParentInfo?.fromSubSchema.map((v) => (
-                          <tr>
-                            <td>{v.schema.schema_id_string}</td>
-                            <td>
-                              <Checkbox
-                                checked={v.valid}
-                                onChange={(e) =>
-                                  handleCheckClick(
-                                    CHECK_TYPE.SUBSCHEMA,
-                                    v.schema.schema_id.toString()
-                                  )
-                                }
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </table>
-                      <span>子スキーマ ： </span>
-                      <table className="relation-table">
-                        {selectedSchemaParentInfo?.fromChildSchema.map((v) => (
-                          <tr>
-                            <td>{v.schema.schema_id_string}</td>
-                            <td>
-                              <Checkbox
-                                checked={v.valid}
-                                onChange={(e) =>
-                                  handleCheckClick(
-                                    CHECK_TYPE.CHILDSCHEMA,
-                                    v.schema.schema_id.toString()
-                                  )
-                                }
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </table>
+                      <p>
+                        <div className="caption-and-block">
+                          <span>サブスキーマ ： </span>
+                          <DndSortableTable
+                            checkType={CHECK_TYPE.SUBSCHEMA}
+                            schemaList={selectedSchemaParentInfo?.fromSubSchema}
+                            setSchemaList={setSubSchemaList}
+                            handleCheckClick={handleCheckClick}
+                          />
+                        </div>
+                      </p>
+                      <p>
+                        <div className="caption-and-block">
+                          <span>子スキーマ ： </span>
+                          <DndSortableTable
+                            checkType={CHECK_TYPE.CHILDSCHEMA}
+                            schemaList={
+                              selectedSchemaParentInfo?.fromChildSchema
+                            }
+                            setSchemaList={setSubSchemaList}
+                            handleCheckClick={handleCheckClick}
+                          />
+                        </div>
+                      </p>
                     </div>
                   </fieldset>
                   <fieldset className="schema-manager-legend">

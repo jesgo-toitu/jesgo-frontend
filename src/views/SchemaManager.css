@@ -31,11 +31,12 @@ div.schema-tree {
 
 fieldset.schema-tree {
   min-width: 300px;
+  max-height: 685px;
 }
 
 div.schema-detail {
-  margin-left: 20px;
-  /* width: 70%; */
+  margin: 0px 15px;
+  flex-grow: 1;
 }
 
 fieldset.schema-detail {
@@ -60,10 +61,14 @@ fieldset.schema-detail {
   border-bottom: none;
 }
 
-.sortable-table-row {
+.sortable-table-row, .sortable-table-row-disabled {
   height: 30px;
   width: auto;
   border-bottom: 1px solid #a0a0a0;
+}
+
+.sortable-table-row-disabled {
+  background: gray;
 }
 
 .sortable-table-head > th:nth-child(1) {
@@ -113,11 +118,11 @@ div.caption-and-block > span:nth-child(1) {
   width: 100px;
 }
 
-div.caption-and-block2 {
+div.caption-and-block-long {
   display: flex;
   height: 2rem;
 }
-div.caption-and-block2 > span:nth-child(1) {
+div.caption-and-block-long > span:nth-child(1) {
   width: 180px;
 }
 
@@ -133,4 +138,8 @@ fieldset.schema-manager-legend > legend {
   border-bottom: none;
   font-size: 1rem;
   font-weight: bold;
+}
+
+.nomargin {
+  margin: 0px;
 }

@@ -93,8 +93,6 @@ const SchemaManager = () => {
   // 選択中のスキーマが変更されたとき
   useEffect(() => {
     const schema = GetSchemaInfo(Number(selectedSchema));
-    console.log('selectchange');
-    console.log(schema);
     if (schema !== undefined) {
       setSelectedSchemaInfo(schema);
 
@@ -309,15 +307,12 @@ const SchemaManager = () => {
         copySchemaList[targetIndex + 1] = copySchemaList[targetIndex];
         copySchemaList[targetIndex] = temp;
       }
-      console.log('changed');
-      console.log(copySchemaList);
       // stateに設定
       setChildSchemaList(copySchemaList);
     }
   };
 
   const submitUpdateSchema = async (schemas: JesgoDocumentSchema[]) => {
-    console.log('submitscchema');
     const token = localStorage.getItem('token');
     if (token == null) {
       navigate('/login');
@@ -343,10 +338,7 @@ const SchemaManager = () => {
       }
 
       // スキーマ取得処理
-      console.log('schemacheck');
-      console.log(GetSchemaInfo(7));
       await storeSchemaInfo(dispatch);
-      console.log(GetSchemaInfo(7));
 
       // eslint-disable-next-line no-alert
       alert('スキーマを更新しました');
@@ -358,7 +350,6 @@ const SchemaManager = () => {
   };
 
   const updateSchema = async () => {
-    console.log('updateschema');
     // 更新用スキーマリスト
     const updateSchemaList: JesgoDocumentSchema[] = [];
 
@@ -399,8 +390,6 @@ const SchemaManager = () => {
     // 表示中のスキーマの子関係
     const baseSchemaInfo = lodash.cloneDeep(selectedSchemaInfo);
     if (baseSchemaInfo !== undefined) {
-      console.log('表示中の子スキーマリスト');
-      console.log(childSchemaList);
       let isChange = false;
       // サブスキーマは保留
 
@@ -408,7 +397,6 @@ const SchemaManager = () => {
       // 編集中の子スキーマのうち有効であるもののみのリストを作る
       const tempChildSchemaList: number[] = [];
       for (let i = 0; i < childSchemaList.length; i++) {
-        console.log(childSchemaList[i]);
         if (childSchemaList[i].valid) {
           tempChildSchemaList.push(childSchemaList[i].schema.schema_id);
         }

@@ -118,8 +118,6 @@ export const storeSchemaInfo = async (dispatch:Dispatch<any>) => {
       );
 
       if (returnSchemaApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        console.log("test")
-        console.log(returnSchemaApiObject.body)
         dispatch({
           type: 'SCHEMA',
           schemaDatas: returnSchemaApiObject.body,

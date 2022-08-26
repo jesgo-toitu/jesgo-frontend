@@ -22,6 +22,10 @@ body {
   z-index: 999;
 }
 
+.patient-area-panel {
+  display: flex;
+}
+
 .content-area {
   display: flex;
 }
@@ -53,29 +57,40 @@ body {
 .user-info-row {
   display: flex;
   flex-wrap: wrap;
+  margin-right: 20px;
   /* padding-top: 10px; */
+}
+
+.user-info-col {
+  min-width: 200px;
+  margin-left: 20px;
 }
 
 .user-info-age {
   /* 他コントロールと縦位置を揃えるためリセット */
   padding: 0px;
-  margin: 0px;
+  margin: 0px 0px 0px 20px;
+  min-width: 50px;
 }
 
 .user-info-checkbox {
   /* 他コントロールと縦位置を揃えるためリセット */
   padding: 0px;
   margin: 0px;
+  margin: 0px 0px 0px 20px;
+  min-width: 80px;
 }
 
 .user-info-button-col {
   display: table;
+  margin-left: auto;
 }
 
 .user-info-button-div {
   display: flex;
   vertical-align: middle;
   justify-content: right;
+  flex-wrap: wrap;
 }
 
 /* ---タブ--- */

@@ -129,7 +129,7 @@ const SubmitButton = (props: ButtonProps) => {
   };
 
   return (
-    <Col lg={3} md={3} className="user-info-button-col">
+    <Col className="user-info-button-col">
       <div className="user-info-button-div">
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
         <Button

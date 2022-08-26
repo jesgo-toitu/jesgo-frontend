@@ -7,6 +7,7 @@ import './Login.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { settingsFromApi } from './Settings';
 import Loading from '../components/CaseRegistration/Loading';
+import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
 
 export interface localStorageObject {
   user_id: number;
@@ -91,31 +92,8 @@ export const Login = () => {
       );
 
       // スキーマ取得処理
-      const returnSchemaApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        `getJsonSchema`
-      );
+      await storeSchemaInfo(dispatch);
 
-      if (returnSchemaApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        dispatch({
-          type: 'SCHEMA',
-          schemaDatas: returnSchemaApiObject.body,
-        });
-      }
-
-      // ルートスキーマID取得処理
-      const returnRootSchemaIdsApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        `getRootSchemaIds`
-      );
-      if (
-        returnRootSchemaIdsApiObject.statusNum === RESULT.NORMAL_TERMINATION
-      ) {
-        dispatch({
-          type: 'ROOT',
-          rootSchemas: returnRootSchemaIdsApiObject.body,
-        });
-      }
       navigate('/Patients');
     } else if (returnApiObject.statusNum === RESULT.NETWORK_ERROR) {
       // eslint-disable-next-line no-alert

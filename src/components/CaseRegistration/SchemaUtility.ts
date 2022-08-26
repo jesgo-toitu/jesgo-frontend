@@ -9,6 +9,8 @@ import {
 } from 'json-schema'; // eslint-disable-line import/no-unresolved
 import JSONPointer from 'jsonpointer';
 import lodash from 'lodash';
+import { Dispatch } from 'redux';
+import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import { Const } from '../../common/Const';
 import store from '../../store';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
@@ -105,6 +107,38 @@ export const GetParentSchemas = (childId: number) => {
   };
   
   return parentList;
+}
+
+export const storeSchemaInfo = async (dispatch:Dispatch<any>) => {
+  
+      // スキーマ取得処理
+      const returnSchemaApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `getJsonSchema`
+      );
+
+      if (returnSchemaApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        console.log("test")
+        console.log(returnSchemaApiObject.body)
+        dispatch({
+          type: 'SCHEMA',
+          schemaDatas: returnSchemaApiObject.body,
+        });
+      }
+
+      // ルートスキーマID取得処理
+      const returnRootSchemaIdsApiObject = await apiAccess(
+        METHOD_TYPE.GET,
+        `getRootSchemaIds`
+      );
+      if (
+        returnRootSchemaIdsApiObject.statusNum === RESULT.NORMAL_TERMINATION
+      ) {
+        dispatch({
+          type: 'ROOT',
+          rootSchemas: returnRootSchemaIdsApiObject.body,
+        });
+      }
 }
 
 /**

@@ -3,6 +3,8 @@ import { Reducer } from 'redux';
 import { JSONSchema7 } from 'json-schema';
 
 // 症例情報の定義
+// バックエンドのSchemas.tsと同じものを使用するため
+// どちらかに更新が入ったらもう片方も更新すること
 export type JesgoDocumentSchema = {
   schema_id: number;
   schema_id_string: string;
@@ -94,7 +96,7 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
 
         copyState.inheritSchemaIds.set(schema.schema_id, inheritIds);
       });
-
+      console.log("schemadispatchfinish")
       break;
     case 'ROOT':
       copyState.rootSchemas = action.rootSchemas;

@@ -5,6 +5,8 @@ import { Navbar, Button, Nav, NavItem, Panel, Checkbox } from 'react-bootstrap';
 import { ExpandMore, ChevronRight, Fort } from '@mui/icons-material';
 import { TreeView, TreeItem } from '@mui/lab';
 import { Box } from '@mui/material';
+import lodash from 'lodash';
+import { useDispatch } from 'react-redux';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
@@ -26,8 +28,7 @@ import {
   schemaWithValid,
   storeSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
-import lodash from 'lodash';
-import { useDispatch } from 'react-redux';
+import DndSortableTable from '../components/Schemamanager/DndSortableTable';
 
 type settings = {
   facility_name: string;
@@ -484,189 +485,148 @@ const SchemaManager = () => {
         </div>
       </div>
       <div className="schema-main">
-        <div className="schema-tree">
-          <TreeView>
-            <TreeItem
-              nodeId="root"
-              label={<Box>JESGOシステム</Box>}
-              collapseIcon={<ExpandMore />}
-              expandIcon={<ChevronRight />}
-            >
-              <SchemaTree
-                schemas={tree}
-                handleTreeItemClick={handleTreeItemClick}
-                schemaType={SCHEMA_TYPE.SUBSCHEMA}
-              />
-            </TreeItem>
-          </TreeView>
-        </div>
+        {/* 文書構造ビュー */}
+        <fieldset className="schema-manager-legend schema-tree">
+          <legend>文書構造ビュー</legend>
+          <div className="schema-tree">
+            <TreeView>
+              <TreeItem
+                nodeId="root"
+                label={<Box>JESGOシステム</Box>}
+                collapseIcon={<ExpandMore />}
+                expandIcon={<ChevronRight />}
+              >
+                <SchemaTree
+                  schemas={tree}
+                  handleTreeItemClick={handleTreeItemClick}
+                  schemaType={SCHEMA_TYPE.SUBSCHEMA}
+                />
+              </TreeItem>
+            </TreeView>
+          </div>
+        </fieldset>
+        {/* スキーマ設定ビュー */}
         <div className="schema-detail">
-          {errorMessages.length > 0 && (
-            <Panel className="error-msg-panel">
-              {errorMessages.map((error: string) => (
-                <p>{error}</p>
-              ))}
-            </Panel>
-          )}
-          {selectedSchemaInfo && (
-            <>
-              <p>
-                <span>文書(スキーマタイトル) ： </span>
-                <span>
-                  {selectedSchemaInfo.title +
-                    (selectedSchemaInfo.subtitle.length > 0
-                      ? ` ${selectedSchemaInfo.subtitle}`
-                      : '')}
-                </span>
-              </p>
-              <p>
-                <span>スキーマID ： </span>
-                <span>{selectedSchemaInfo.schema_id_string}</span>
-              </p>
-              <p>
-                <span>継承スキーマ ： </span>
-                <Checkbox checked={false} disabled={false} />
-              </p>
-              <p>
-                <span>スキーマID ： </span>
-                <span>{selectedSchema}</span>
-              </p>
-              <p>上位スキーマ</p>
-              <div>
-                <span>サブスキーマ ： </span>
-                <table className="relation-table">
-                  {selectedSchemaParentInfo?.fromSubSchema.map((v) => (
-                    <tr>
-                      <td>{v.schema.schema_id_string}</td>
-                      <td>
-                        <Checkbox checked={v.valid} disabled />
-                      </td>
-                    </tr>
+          <fieldset className="schema-manager-legend schema-detail">
+            <legend>スキーマ選択ビュー</legend>
+            <div className="schema-detail">
+              {errorMessages.length > 0 && (
+                <Panel className="error-msg-panel">
+                  {errorMessages.map((error: string) => (
+                    <p>{error}</p>
                   ))}
-                </table>
-                <span>子スキーマ ： </span>
-                <table className="relation-table">
-                  {selectedSchemaParentInfo?.fromChildSchema.map((v) => (
-                    <tr>
-                      <td>{v.schema.schema_id_string}</td>
-                      <td>
-                        <Checkbox
-                          checked={v.valid}
-                          onChange={(e) =>
-                            handleCheckClick(
-                              RELATION_TYPE.PARENT,
-                              CHECK_TYPE.CHILDSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
+                </Panel>
+              )}
+              {selectedSchemaInfo && (
+                <>
+                  <fieldset className="schema-manager-legend">
+                    <legend>スキーマ情報</legend>
+                    <div className="caption-and-block-long">
+                      <span>文書(スキーマ)タイトル ： </span>
+                      <span>
+                        {selectedSchemaInfo.title +
+                          (selectedSchemaInfo.subtitle.length > 0
+                            ? ` ${selectedSchemaInfo.subtitle}`
+                            : '')}
+                      </span>
+                    </div>
+                    <div className="caption-and-block-long">
+                      <span>スキーマID ： </span>
+                      <span>{selectedSchemaInfo.schema_id_string}</span>
+                    </div>
+                    <div className="caption-and-block-long">
+                      <span>スキーマID(内部番号) ： </span>
+                      <span>{selectedSchema}</span>
+                    </div>
+                    <div className="caption-and-block-long">
+                      <span>継承スキーマ ： </span>
+                      <Checkbox
+                        className="show-flg-checkbox"
+                        checked={false}
+                        disabled={false}
+                      />
+                    </div>
+                    {/* TODO: スキーマダウンロードボタンサンプル */}
+                    {/* <div>
+                      <Button
+                        bsStyle="success"
+                        className="normal-button nomargin glyphicon glyphicon-download-alt"
+                        title="スキーマファイルをダウンロードします"
+                        onClick={schemaUpload}
+                      >
+                        {' '}
+                        スキーマダウンロード
+                      </Button>
+                    </div> */}
+                  </fieldset>
+                  <fieldset className="schema-manager-legend">
+                    <legend>上位スキーマ</legend>
+                    <div>
+                      <p>
+                        <div className="caption-and-block">
+                          <span>サブスキーマ ： </span>
+                          <DndSortableTable
+                            checkType={CHECK_TYPE.SUBSCHEMA}
+                            schemaList={selectedSchemaParentInfo?.fromSubSchema}
+                            setSchemaList={setSubSchemaList}
+                            handleCheckClick={handleCheckClick}
+                          />
+                        </div>
+                      </p>
+                      <p>
+                        <div className="caption-and-block">
+                          <span>子スキーマ ： </span>
+                          <DndSortableTable
+                            checkType={CHECK_TYPE.CHILDSCHEMA}
+                            schemaList={
+                              selectedSchemaParentInfo?.fromChildSchema
+                            }
+                            setSchemaList={setSubSchemaList}
+                            handleCheckClick={handleCheckClick}
+                          />
+                        </div>
+                      </p>
+                    </div>
+                  </fieldset>
+                  <fieldset className="schema-manager-legend">
+                    <legend>下位スキーマ</legend>
+                    <p>
+                      <div className="caption-and-block">
+                        <span>サブスキーマ ： </span>
+                        <DndSortableTable
+                          checkType={CHECK_TYPE.SUBSCHEMA}
+                          schemaList={subSchemaList}
+                          setSchemaList={setSubSchemaList}
+                          handleCheckClick={handleCheckClick}
                         />
-                      </td>
-                    </tr>
-                  ))}
-                </table>
-              </div>
-              <p>下位スキーマ</p>
-              <p>
-                <span>サブスキーマ ： </span>
-                <table className="relation-table">
-                  {subSchemaList.map((v) => (
-                    <tr>
-                      <td>
-                        <Button
-                          onClick={() =>
-                            handleArrowClick(
-                              ARROW_TYPE.UP,
-                              SCHEMA_TYPE.SUBSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        >
-                          ↑
-                        </Button>
-                        <Button
-                          onClick={() =>
-                            handleArrowClick(
-                              ARROW_TYPE.DOWN,
-                              SCHEMA_TYPE.SUBSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        >
-                          ↓
-                        </Button>
-                      </td>
-                      <td>
-                        {v.schema.title}
-                        {v.schema.subtitle && ` ${v.schema.subtitle}`}
-                      </td>
-                      <td>
-                        <Checkbox checked={v.valid} disabled />
-                      </td>
-                    </tr>
-                  ))}
-                </table>
-              </p>
-              <p>
-                <span>子スキーマ ： </span>
-                <table className="relation-table">
-                  {childSchemaList.map((v) => (
-                    <tr>
-                      <td>
-                        <Button
-                          onClick={() =>
-                            handleArrowClick(
-                              ARROW_TYPE.UP,
-                              SCHEMA_TYPE.CHILDSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        >
-                          ↑
-                        </Button>
-                        <Button
-                          onClick={() =>
-                            handleArrowClick(
-                              ARROW_TYPE.DOWN,
-                              SCHEMA_TYPE.CHILDSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
-                        >
-                          ↓
-                        </Button>
-                      </td>
-                      <td>
-                        {v.schema.title}
-                        {v.schema.subtitle && ` ${v.schema.subtitle}`}
-                      </td>
-                      <td>
-                        <Checkbox
-                          checked={v.valid}
-                          onChange={(e) =>
-                            handleCheckClick(
-                              RELATION_TYPE.CHILD,
-                              CHECK_TYPE.CHILDSCHEMA,
-                              v.schema.schema_id.toString()
-                            )
-                          }
+                      </div>
+                    </p>
+                    <p>
+                      <div className="caption-and-block">
+                        <span>子スキーマ ： </span>
+                        <DndSortableTable
+                          checkType={CHECK_TYPE.CHILDSCHEMA}
+                          schemaList={childSchemaList}
+                          setSchemaList={setChildSchemaList}
+                          handleCheckClick={handleCheckClick}
                         />
-                      </td>
-                    </tr>
-                  ))}
-                </table>
-              </p>
-              <p>
-                <span>初期サブスキーマ ： </span>
-                <span>{selectedSchemaInfo.subschema_default}</span>
-              </p>
-              <p>
-                <span>初期子スキーマ ： </span>
-                <span>{selectedSchemaInfo.child_schema_default}</span>
-              </p>
-              <Button onClick={() => alert('test')}>初期設定を反映</Button>
-              <Button onClick={() => updateSchema()}>設定を保存</Button>
-            </>
-          )}
+                      </div>
+                    </p>
+                  </fieldset>
+                  <p>
+                    <span>初期サブスキーマ ： </span>
+                    <span>{selectedSchemaInfo.subschema_default}</span>
+                  </p>
+                  <p>
+                    <span>初期子スキーマ ： </span>
+                    <span>{selectedSchemaInfo.child_schema_default}</span>
+                  </p>
+                  <Button onClick={() => alert('test')}>初期設定を反映</Button>
+                  <Button onClick={() => updateSchema()}>設定を保存</Button>
+                </>
+              )}
+            </div>
+          </fieldset>
         </div>
       </div>
       {isLoading && <Loading />}

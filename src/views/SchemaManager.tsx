@@ -566,7 +566,10 @@ const SchemaManager = () => {
                         <div className="caption-and-block">
                           <span>サブスキーマ ： </span>
                           <DndSortableTable
-                            checkType={CHECK_TYPE.SUBSCHEMA}
+                            checkType={[
+                              RELATION_TYPE.PARENT,
+                              CHECK_TYPE.SUBSCHEMA,
+                            ]}
                             schemaList={selectedSchemaParentInfo?.fromSubSchema}
                             setSchemaList={setSubSchemaList}
                             handleCheckClick={handleCheckClick}
@@ -577,7 +580,10 @@ const SchemaManager = () => {
                         <div className="caption-and-block">
                           <span>子スキーマ ： </span>
                           <DndSortableTable
-                            checkType={CHECK_TYPE.CHILDSCHEMA}
+                            checkType={[
+                              RELATION_TYPE.PARENT,
+                              CHECK_TYPE.CHILDSCHEMA,
+                            ]}
                             schemaList={
                               selectedSchemaParentInfo?.fromChildSchema
                             }
@@ -594,7 +600,10 @@ const SchemaManager = () => {
                       <div className="caption-and-block">
                         <span>サブスキーマ ： </span>
                         <DndSortableTable
-                          checkType={CHECK_TYPE.SUBSCHEMA}
+                          checkType={[
+                            RELATION_TYPE.CHILD,
+                            CHECK_TYPE.SUBSCHEMA,
+                          ]}
                           schemaList={subSchemaList}
                           setSchemaList={setSubSchemaList}
                           handleCheckClick={handleCheckClick}
@@ -605,7 +614,10 @@ const SchemaManager = () => {
                       <div className="caption-and-block">
                         <span>子スキーマ ： </span>
                         <DndSortableTable
-                          checkType={CHECK_TYPE.CHILDSCHEMA}
+                          checkType={[
+                            RELATION_TYPE.CHILD,
+                            CHECK_TYPE.CHILDSCHEMA,
+                          ]}
                           schemaList={childSchemaList}
                           setSchemaList={setChildSchemaList}
                           handleCheckClick={handleCheckClick}

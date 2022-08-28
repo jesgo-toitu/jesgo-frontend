@@ -12,9 +12,9 @@ import { schemaWithValid } from '../CaseRegistration/SchemaUtility';
 
 type DndSortableTableProps = {
   schemaList: schemaWithValid[] | undefined;
-  checkType: number;
+  checkType: number[];
   setSchemaList: React.Dispatch<React.SetStateAction<schemaWithValid[]>>;
-  handleCheckClick: (type: number, v?: string) => void;
+  handleCheckClick: (relation: number, type: number, v?: string) => void;
 };
 
 /**
@@ -95,7 +95,8 @@ const DndSortableTable = (props: DndSortableTableProps) => {
                             checked={row.valid}
                             onChange={(e) =>
                               handleCheckClick(
-                                checkType,
+                                checkType[0],
+                                checkType[1],
                                 row.schema.schema_id.toString()
                               )
                             }

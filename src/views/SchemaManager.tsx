@@ -571,8 +571,9 @@ const SchemaManager = () => {
                               CHECK_TYPE.SUBSCHEMA,
                             ]}
                             schemaList={selectedSchemaParentInfo?.fromSubSchema}
-                            setSchemaList={setSubSchemaList}
                             handleCheckClick={handleCheckClick}
+                            isDragDisabled
+                            isShowCheckDisabled
                           />
                         </div>
                       </p>
@@ -587,8 +588,8 @@ const SchemaManager = () => {
                             schemaList={
                               selectedSchemaParentInfo?.fromChildSchema
                             }
-                            setSchemaList={setSubSchemaList}
                             handleCheckClick={handleCheckClick}
+                            isDragDisabled
                           />
                         </div>
                       </p>
@@ -607,6 +608,7 @@ const SchemaManager = () => {
                           schemaList={subSchemaList}
                           setSchemaList={setSubSchemaList}
                           handleCheckClick={handleCheckClick}
+                          isShowCheckDisabled
                         />
                       </div>
                     </p>

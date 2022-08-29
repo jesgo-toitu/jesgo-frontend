@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 import React from 'react';
 import { Checkbox } from 'react-bootstrap';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -13,10 +14,10 @@ import { schemaWithValid } from '../CaseRegistration/SchemaUtility';
 type DndSortableTableProps = {
   schemaList: schemaWithValid[] | undefined;
   checkType: number[];
-  setSchemaList: React.Dispatch<React.SetStateAction<schemaWithValid[]>>;
+  setSchemaList?: React.Dispatch<React.SetStateAction<schemaWithValid[]>>;
   handleCheckClick: (relation: number, type: number, v?: string) => void;
-  // eslint-disable-next-line react/require-default-props
-  isDragDisabled?: boolean; // drag無効フラグ
+  isDragDisabled?: boolean; // drag無効
+  isShowCheckDisabled?: boolean; // 表示チェック無効
 };
 
 /**
@@ -31,6 +32,7 @@ const DndSortableTable = (props: DndSortableTableProps) => {
     setSchemaList,
     handleCheckClick,
     isDragDisabled,
+    isShowCheckDisabled,
   } = props;
 
   const reorder = (
@@ -45,14 +47,16 @@ const DndSortableTable = (props: DndSortableTableProps) => {
     return result;
   };
 
+  /* ドラッグ終了後の処理 */
   const onDragEnd = (result: DropResult) => {
-    if (!schemaList) return;
+    if (!schemaList || !setSchemaList) return;
 
     const { source, destination } = result;
     if (!destination) {
       return;
     }
 
+    // 並び替え実施
     const update = reorder(schemaList, source.index, destination.index);
     setSchemaList(update);
   };
@@ -112,6 +116,7 @@ const DndSortableTable = (props: DndSortableTableProps) => {
                             <Checkbox
                               className="show-flg-checkbox"
                               checked={row.valid}
+                              disabled={isShowCheckDisabled}
                               onChange={(e) =>
                                 handleCheckClick(
                                   checkType[0],

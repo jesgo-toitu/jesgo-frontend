@@ -564,7 +564,7 @@ const SchemaManager = () => {
                     <div>
                       <p>
                         <div className="caption-and-block">
-                          <span>サブスキーマ ： </span>
+                          <span>必須スキーマ ： </span>
                           <DndSortableTable
                             checkType={[
                               RELATION_TYPE.PARENT,
@@ -578,7 +578,7 @@ const SchemaManager = () => {
                       </p>
                       <p>
                         <div className="caption-and-block">
-                          <span>子スキーマ ： </span>
+                          <span>任意スキーマ ： </span>
                           <DndSortableTable
                             checkType={[
                               RELATION_TYPE.PARENT,
@@ -598,7 +598,7 @@ const SchemaManager = () => {
                     <legend>下位スキーマ</legend>
                     <p>
                       <div className="caption-and-block">
-                        <span>サブスキーマ ： </span>
+                        <span>必須スキーマ ： </span>
                         <DndSortableTable
                           checkType={[
                             RELATION_TYPE.CHILD,
@@ -612,7 +612,7 @@ const SchemaManager = () => {
                     </p>
                     <p>
                       <div className="caption-and-block">
-                        <span>子スキーマ ： </span>
+                        <span>任意スキーマ ： </span>
                         <DndSortableTable
                           checkType={[
                             RELATION_TYPE.CHILD,
@@ -633,8 +633,22 @@ const SchemaManager = () => {
                     <span>初期子スキーマ ： </span>
                     <span>{selectedSchemaInfo.child_schema_default}</span>
                   </p>
-                  <Button onClick={() => alert('test')}>初期設定を反映</Button>
-                  <Button onClick={() => updateSchema()}>設定を保存</Button>
+                  <div className="SchemaManagerSaveButtonGroup">
+                    <Button
+                      bsStyle="default"
+                      className="normal-button"
+                      onClick={() => alert('test')}
+                    >
+                      初期設定を反映
+                    </Button>
+                    <Button
+                      bsStyle="success"
+                      className="normal-button"
+                      onClick={() => updateSchema()}
+                    >
+                      設定を保存
+                    </Button>
+                  </div>
                 </>
               )}
             </div>

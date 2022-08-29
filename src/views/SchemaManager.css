@@ -25,13 +25,13 @@
 
 div.schema-tree {
   width: 20rem;
-  max-height: 650px;
+  max-height: 100%;
   overflow-y: auto;
 }
 
 fieldset.schema-tree {
   min-width: 300px;
-  max-height: 685px;
+  max-height: calc(100vh - 140px);
 }
 
 div.schema-detail {
@@ -40,7 +40,7 @@ div.schema-detail {
 }
 
 fieldset.schema-detail {
-  min-width: 638px;
+  min-width: 46rem;
 }
 
 .relation-table {
@@ -48,27 +48,35 @@ fieldset.schema-detail {
 }
 
 .sortable-table {
-  width: 498px;
+  width: calc(30rem + 6rem + 19px);
   table-layout: fixed;
   margin-left: 20px;
 }
 
 .sortable-table-head {
-  height: 30px;
+  height: 2rem;
   width: auto;
   background: #dcdcdc;
   border: 1px solid #a0a0a0;
   border-bottom: none;
 }
 
-.sortable-table-row, .sortable-table-row-disabled {
-  height: 30px;
+.sortable-table-row,
+.sortable-table-row-disabled,
+.sortable-table-row-dragging {
+  height: 2rem;
   width: auto;
   border-bottom: 1px solid #a0a0a0;
+  border-right: 1px solid #a0a0a0;
+  background: white;
 }
 
 .sortable-table-row-disabled {
   background: gray;
+}
+
+.sortable-table-row-dragging {
+  border: 1px solid #a0a0a0;
 }
 
 .sortable-table-head > th:nth-child(1) {
@@ -79,25 +87,25 @@ fieldset.schema-detail {
 }
 
 .sortable-table-body {
-  max-height: 165px;
-  min-height: 30px;
+  max-height: 11rem; /* 5.5行分 */
+  min-height: 2rem;
   overflow-y: scroll;
   border: 1px solid #a0a0a0;
 }
 
 .sortable-table-cell1 {
-  width: 400px;
+  width: 30rem;
   min-width: 200px;
   padding-left: 5px;
 }
 
 .sortable-table-cell1 > div {
   display: flex;
+  align-items: center;
 }
 
 .sortable-table-cell2 {
-  width: 80px;
-  min-width: 80px;
+  width: 6rem;
   text-align: center;
 }
 
@@ -115,7 +123,7 @@ div.caption-and-block {
   display: flex;
 }
 div.caption-and-block > span:nth-child(1) {
-  width: 100px;
+  width: 9rem;
 }
 
 div.caption-and-block-long {
@@ -123,13 +131,13 @@ div.caption-and-block-long {
   height: 2rem;
 }
 div.caption-and-block-long > span:nth-child(1) {
-  width: 180px;
+  width: 13rem;
 }
 
 fieldset.schema-manager-legend {
   min-height: 4rem;
   padding: 0.35em 0.625em 0.75em;
-  margin: 0px 0px 10px 0px;
+  margin: 0px 10px 10px 0px;
   border: 1px solid #a0a0a0;
 }
 
@@ -142,4 +150,8 @@ fieldset.schema-manager-legend > legend {
 
 .nomargin {
   margin: 0px;
+}
+
+.SchemaManagerSaveButtonGroup {
+  text-align: right;
 }

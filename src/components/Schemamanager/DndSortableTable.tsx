@@ -15,15 +15,23 @@ type DndSortableTableProps = {
   checkType: number[];
   setSchemaList: React.Dispatch<React.SetStateAction<schemaWithValid[]>>;
   handleCheckClick: (relation: number, type: number, v?: string) => void;
+  // eslint-disable-next-line react/require-default-props
+  isDragDisabled?: boolean; // drag無効フラグ
 };
 
 /**
  * Drag&Dropで並び替え可能なTable
- * @param props
+ * @param props: DndSortableTableProps
  * @returns
  */
 const DndSortableTable = (props: DndSortableTableProps) => {
-  const { schemaList, checkType, setSchemaList, handleCheckClick } = props;
+  const {
+    schemaList,
+    checkType,
+    setSchemaList,
+    handleCheckClick,
+    isDragDisabled,
+  } = props;
 
   const reorder = (
     argSchemaList: schemaWithValid[],
@@ -65,24 +73,30 @@ const DndSortableTable = (props: DndSortableTableProps) => {
               ref={provided.innerRef}
               {...provided.droppableProps}
             >
-              {schemaList &&
+              {schemaList && schemaList.length > 0 ? (
                 schemaList.map((row, index) => (
                   <Draggable
+                    isDragDisabled={isDragDisabled}
                     draggableId={row.schema.schema_id.toString()}
                     index={index}
-                    // isDragDisabled={false} // Drag無効フラグ
                     key={row.schema.schema_id}
                   >
-                    {(provided2) => (
+                    {(provided2, snapshot) => (
                       <tr
-                        className="sortable-table-row"
+                        className={
+                          snapshot.isDragging
+                            ? 'sortable-table-row-dragging'
+                            : 'sortable-table-row'
+                        }
                         ref={provided2.innerRef}
                         {...provided2.draggableProps}
                         {...provided2.dragHandleProps}
                       >
                         <td className="sortable-table-cell1">
                           <div>
-                            <DragIndicatorIcon className="drag-icon-style" />
+                            {!isDragDisabled && (
+                              <DragIndicatorIcon className="drag-icon-style" />
+                            )}
                             <div>
                               {row.schema.title}
                               {row.schema.subtitle && ` ${row.schema.subtitle}`}
@@ -105,7 +119,14 @@ const DndSortableTable = (props: DndSortableTableProps) => {
                       </tr>
                     )}
                   </Draggable>
-                ))}
+                ))
+              ) : (
+                // スキーマがない場合の表示
+                <tr className="sortable-table-row">
+                  <td className="sortable-table-cell1">(なし)</td>
+                  <td className="sortable-table-cell2" />
+                </tr>
+              )}
               {provided.placeholder}
             </tbody>
           )}

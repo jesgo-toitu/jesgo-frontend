@@ -58,81 +58,81 @@ const DndSortableTable = (props: DndSortableTableProps) => {
   };
 
   return (
-    <table className="sortable-table">
-      <thead>
-        <tr className="sortable-table-head">
-          <th className="sortable-table-cell1">スキーマ名称</th>
-          <th className="sortable-table-cell2">表示</th>
-        </tr>
-      </thead>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="dndTableBody">
-          {(provided) => (
-            <tbody
-              className="sortable-table-body"
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-            >
-              {schemaList && schemaList.length > 0 ? (
-                schemaList.map((row, index) => (
-                  <Draggable
-                    isDragDisabled={isDragDisabled}
-                    draggableId={row.schema.schema_id.toString()}
-                    index={index}
-                    key={row.schema.schema_id}
-                  >
-                    {(provided2, snapshot) => (
-                      <tr
-                        className={
-                          snapshot.isDragging
-                            ? 'sortable-table-row-dragging'
-                            : 'sortable-table-row'
-                        }
-                        ref={provided2.innerRef}
-                        {...provided2.draggableProps}
-                        {...provided2.dragHandleProps}
-                      >
-                        <td className="sortable-table-cell1">
-                          <div>
-                            {!isDragDisabled && (
-                              <DragIndicatorIcon className="drag-icon-style" />
-                            )}
+    // eslint-disable-next-line react/jsx-no-useless-fragment
+    <>
+      {!schemaList || schemaList.length === 0 ? (
+        <span>(なし)</span>
+      ) : (
+        <table className="sortable-table">
+          <thead>
+            <tr className="sortable-table-head">
+              <th className="sortable-table-cell1">スキーマ名称</th>
+              <th className="sortable-table-cell2">表示</th>
+            </tr>
+          </thead>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="dndTableBody">
+              {(provided) => (
+                <tbody
+                  className="sortable-table-body"
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  {schemaList.map((row, index) => (
+                    <Draggable
+                      isDragDisabled={isDragDisabled}
+                      draggableId={row.schema.schema_id.toString()}
+                      index={index}
+                      key={row.schema.schema_id}
+                    >
+                      {(provided2, snapshot) => (
+                        <tr
+                          className={
+                            snapshot.isDragging
+                              ? 'sortable-table-row-dragging'
+                              : 'sortable-table-row'
+                          }
+                          ref={provided2.innerRef}
+                          {...provided2.draggableProps}
+                          {...provided2.dragHandleProps}
+                        >
+                          <td className="sortable-table-cell1">
                             <div>
-                              {row.schema.title}
-                              {row.schema.subtitle && ` ${row.schema.subtitle}`}
+                              {!isDragDisabled && (
+                                <DragIndicatorIcon className="drag-icon-style" />
+                              )}
+                              <div>
+                                {row.schema.title}
+                                {row.schema.subtitle &&
+                                  ` ${row.schema.subtitle}`}
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="sortable-table-cell2">
-                          <Checkbox
-                            className="show-flg-checkbox"
-                            checked={row.valid}
-                            onChange={(e) =>
-                              handleCheckClick(
-                                checkType[0],
-                                checkType[1],
-                                row.schema.schema_id.toString()
-                              )
-                            }
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </Draggable>
-                ))
-              ) : (
-                // スキーマがない場合の表示
-                <tr className="sortable-table-row">
-                  <td className="sortable-table-cell1">(なし)</td>
-                  <td className="sortable-table-cell2" />
-                </tr>
+                          </td>
+                          <td className="sortable-table-cell2">
+                            <Checkbox
+                              className="show-flg-checkbox"
+                              checked={row.valid}
+                              onChange={(e) =>
+                                handleCheckClick(
+                                  checkType[0],
+                                  checkType[1],
+                                  row.schema.schema_id.toString()
+                                )
+                              }
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </tbody>
               )}
-              {provided.placeholder}
-            </tbody>
-          )}
-        </Droppable>
-      </DragDropContext>
-    </table>
+            </Droppable>
+          </DragDropContext>
+        </table>
+      )}
+    </>
   );
 };
 

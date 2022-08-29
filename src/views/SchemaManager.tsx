@@ -6,6 +6,7 @@ import { ExpandMore, ChevronRight, Fort } from '@mui/icons-material';
 import { TreeView, TreeItem } from '@mui/lab';
 import { Box } from '@mui/material';
 import lodash from 'lodash';
+import { useDispatch } from 'react-redux';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
@@ -25,6 +26,7 @@ import {
   GetSchemaInfo,
   GetParentSchemas,
   schemaWithValid,
+  storeSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import DndSortableTable from '../components/Schemamanager/DndSortableTable';
 
@@ -53,6 +55,7 @@ const SchemaManager = () => {
   const [childSchemaList, setChildSchemaList] = useState<schemaWithValid[]>([]);
   const [subSchemaList, setSubSchemaList] = useState<schemaWithValid[]>([]);
   const [tree, setTree] = useState<treeSchema[]>([]);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const f = async () => {
@@ -79,6 +82,9 @@ const SchemaManager = () => {
       } else {
         navigate('/login');
       }
+
+      // スキーマ取得処理
+      await storeSchemaInfo(dispatch);
     };
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -120,7 +126,7 @@ const SchemaManager = () => {
       for (let i = 0; i < tempChildSchemaList.length; i++) {
         // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
         currentChildSchemaList.push({
-          valid: i <= schema.child_schema.length,
+          valid: i + 1 <= schema.child_schema.length,
           schema: GetSchemaInfo(tempChildSchemaList[i])!,
         });
       }
@@ -190,35 +196,68 @@ const SchemaManager = () => {
     SUBSCHEMA: 0,
     CHILDSCHEMA: 1,
   };
+
+  const RELATION_TYPE = {
+    PARENT: 0,
+    CHILD: 1,
+  };
   // チェックボックス状態変更
-  const handleCheckClick = (type: number, v = ''): void => {
-    const copyParentInfo = lodash.cloneDeep(selectedSchemaParentInfo);
-    // undefinedチェック
-    if (copyParentInfo) {
+  const handleCheckClick = (relation: number, type: number, v = ''): void => {
+    // 親スキーマか子スキーマのどっちかを分ける
+    if (relation === RELATION_TYPE.PARENT) {
+      const copyParentInfo = lodash.cloneDeep(selectedSchemaParentInfo);
+      // undefinedチェック
+      if (copyParentInfo) {
+        // サブスキーマの場合
+        if (type === CHECK_TYPE.SUBSCHEMA && copyParentInfo.fromSubSchema) {
+          // eslint-disable-next-line
+          for (let i = 0; i < copyParentInfo.fromSubSchema.length; i++) {
+            const obj = copyParentInfo.fromSubSchema[i];
+            if (obj.schema.schema_id === Number(v)) {
+              obj.valid = !obj.valid;
+            }
+          }
+        }
+        // 子スキーマの場合
+        else if (
+          type === CHECK_TYPE.CHILDSCHEMA &&
+          copyParentInfo.fromChildSchema
+        ) {
+          // eslint-disable-next-line
+          for (let i = 0; i < copyParentInfo.fromChildSchema.length; i++) {
+            const obj = copyParentInfo.fromChildSchema[i];
+            if (obj.schema.schema_id === Number(v)) {
+              obj.valid = !obj.valid;
+            }
+          }
+        }
+        setSelectedSchemaParentInfo(copyParentInfo);
+      }
+    } else if (relation === RELATION_TYPE.CHILD) {
       // サブスキーマの場合
-      if (type === CHECK_TYPE.SUBSCHEMA && copyParentInfo.fromSubSchema) {
+      if (type === CHECK_TYPE.SUBSCHEMA) {
+        const copySchemaList = lodash.cloneDeep(subSchemaList);
         // eslint-disable-next-line
-        for (let i = 0; i < copyParentInfo.fromSubSchema.length; i++) {
-          const obj = copyParentInfo.fromSubSchema[i];
+        for (let i = 0; i < copySchemaList.length; i++) {
+          const obj = copySchemaList[i];
           if (obj.schema.schema_id === Number(v)) {
             obj.valid = !obj.valid;
           }
         }
+        setSubSchemaList(copySchemaList);
       }
       // 子スキーマの場合
-      else if (
-        type === CHECK_TYPE.CHILDSCHEMA &&
-        copyParentInfo.fromChildSchema
-      ) {
+      else if (type === CHECK_TYPE.CHILDSCHEMA) {
+        const copySchemaList = lodash.cloneDeep(childSchemaList);
         // eslint-disable-next-line
-        for (let i = 0; i < copyParentInfo.fromChildSchema.length; i++) {
-          const obj = copyParentInfo.fromChildSchema[i];
+        for (let i = 0; i < copySchemaList.length; i++) {
+          const obj = copySchemaList[i];
           if (obj.schema.schema_id === Number(v)) {
             obj.valid = !obj.valid;
           }
         }
+        setChildSchemaList(copySchemaList);
       }
-      setSelectedSchemaParentInfo(copyParentInfo);
     }
   };
 
@@ -272,6 +311,111 @@ const SchemaManager = () => {
       // stateに設定
       setChildSchemaList(copySchemaList);
     }
+  };
+
+  const submitUpdateSchema = async (schemas: JesgoDocumentSchema[]) => {
+    const token = localStorage.getItem('token');
+    if (token == null) {
+      navigate('/login');
+      return;
+    }
+
+    setIsLoading(true);
+    // スキーマ更新APIを呼ぶ
+    const returnApiObject = await apiAccess(
+      METHOD_TYPE.POST,
+      `updateSchemas`,
+      schemas
+    );
+    if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      // スキーマツリーを取得する
+      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+
+      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = treeApiObject.body as treeSchema[];
+        setTree(returned);
+      } else {
+        navigate('/login');
+      }
+
+      // スキーマ取得処理
+      await storeSchemaInfo(dispatch);
+
+      // eslint-disable-next-line no-alert
+      alert('スキーマを更新しました');
+    } else {
+      // eslint-disable-next-line no-alert
+      alert('【エラー】\n設定に失敗しました');
+    }
+    setIsLoading(false);
+  };
+
+  const updateSchema = async () => {
+    // 更新用スキーマリスト
+    const updateSchemaList: JesgoDocumentSchema[] = [];
+
+    // 親スキーマ情報をチェック
+    if (selectedSchemaParentInfo !== undefined) {
+      // (親から見た)サブスキーマは保留
+
+      // (親から見た)子スキーマ整合性チェック
+      const parentFromChildSchema =
+        selectedSchemaParentInfo.fromChildSchema ?? [];
+      for (let i = 0; i < parentFromChildSchema.length; i++) {
+        const parentSchema = parentFromChildSchema[i].schema;
+        // 編集後のスキーマに親子関係があり、編集前スキーマに親子関係がない場合
+        if (
+          parentFromChildSchema[i].valid &&
+          !parentSchema.child_schema.includes(Number(selectedSchema))
+        ) {
+          parentSchema.child_schema.push(Number(selectedSchema));
+          updateSchemaList.push(parentSchema);
+        }
+
+        // 編集後のスキーマに親子関係がなく、編集前スキーマに親子関係がある場合
+        else if (
+          !parentFromChildSchema[i].valid &&
+          parentSchema.child_schema.includes(Number(selectedSchema))
+        ) {
+          const targetIndex = parentSchema.child_schema.indexOf(
+            Number(selectedSchema)
+          );
+          parentSchema.child_schema.splice(targetIndex, 1);
+          updateSchemaList.push(parentSchema);
+        }
+
+        // 編集後、編集前の親子関係が同じなら更新しない
+      }
+    }
+
+    // 表示中のスキーマの子関係
+    const baseSchemaInfo = lodash.cloneDeep(selectedSchemaInfo);
+    if (baseSchemaInfo !== undefined) {
+      let isChange = false;
+      // サブスキーマは保留
+
+      // 子スキーマ
+      // 編集中の子スキーマのうち有効であるもののみのリストを作る
+      const tempChildSchemaList: number[] = [];
+      for (let i = 0; i < childSchemaList.length; i++) {
+        if (childSchemaList[i].valid) {
+          tempChildSchemaList.push(childSchemaList[i].schema.schema_id);
+        }
+      }
+      // 有効子スキーマリストと編集前のスキーマリストが異なれば更新をかける
+      if (!lodash.isEqual(tempChildSchemaList, baseSchemaInfo.child_schema)) {
+        baseSchemaInfo.child_schema = tempChildSchemaList;
+        isChange = true;
+      }
+
+      // 更新があれば変更リストに追加する
+      if (isChange) {
+        updateSchemaList.push(baseSchemaInfo);
+      }
+    }
+
+    // POST処理
+    await submitUpdateSchema(updateSchemaList);
   };
 
   useEffect(() => {
@@ -422,7 +566,10 @@ const SchemaManager = () => {
                         <div className="caption-and-block">
                           <span>サブスキーマ ： </span>
                           <DndSortableTable
-                            checkType={CHECK_TYPE.SUBSCHEMA}
+                            checkType={[
+                              RELATION_TYPE.PARENT,
+                              CHECK_TYPE.SUBSCHEMA,
+                            ]}
                             schemaList={selectedSchemaParentInfo?.fromSubSchema}
                             setSchemaList={setSubSchemaList}
                             handleCheckClick={handleCheckClick}
@@ -433,7 +580,10 @@ const SchemaManager = () => {
                         <div className="caption-and-block">
                           <span>子スキーマ ： </span>
                           <DndSortableTable
-                            checkType={CHECK_TYPE.CHILDSCHEMA}
+                            checkType={[
+                              RELATION_TYPE.PARENT,
+                              CHECK_TYPE.CHILDSCHEMA,
+                            ]}
                             schemaList={
                               selectedSchemaParentInfo?.fromChildSchema
                             }
@@ -450,7 +600,10 @@ const SchemaManager = () => {
                       <div className="caption-and-block">
                         <span>サブスキーマ ： </span>
                         <DndSortableTable
-                          checkType={CHECK_TYPE.SUBSCHEMA}
+                          checkType={[
+                            RELATION_TYPE.CHILD,
+                            CHECK_TYPE.SUBSCHEMA,
+                          ]}
                           schemaList={subSchemaList}
                           setSchemaList={setSubSchemaList}
                           handleCheckClick={handleCheckClick}
@@ -461,7 +614,10 @@ const SchemaManager = () => {
                       <div className="caption-and-block">
                         <span>子スキーマ ： </span>
                         <DndSortableTable
-                          checkType={CHECK_TYPE.CHILDSCHEMA}
+                          checkType={[
+                            RELATION_TYPE.CHILD,
+                            CHECK_TYPE.CHILDSCHEMA,
+                          ]}
                           schemaList={childSchemaList}
                           setSchemaList={setChildSchemaList}
                           handleCheckClick={handleCheckClick}
@@ -477,7 +633,8 @@ const SchemaManager = () => {
                     <span>初期子スキーマ ： </span>
                     <span>{selectedSchemaInfo.child_schema_default}</span>
                   </p>
-                  <p>初期設定を反映 設定を保存</p>
+                  <Button onClick={() => alert('test')}>初期設定を反映</Button>
+                  <Button onClick={() => updateSchema()}>設定を保存</Button>
                 </>
               )}
             </div>

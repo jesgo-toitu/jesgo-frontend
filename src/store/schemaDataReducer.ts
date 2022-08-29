@@ -3,6 +3,8 @@ import { Reducer } from 'redux';
 import { JSONSchema7 } from 'json-schema';
 
 // 症例情報の定義
+// バックエンドのSchemas.tsと同じものを使用するため
+// どちらかに更新が入ったらもう片方も更新すること
 export type JesgoDocumentSchema = {
   schema_id: number;
   schema_id_string: string;
@@ -46,6 +48,9 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
   const copyState = lodash.cloneDeep(state); // 現在の状態をコピー
   switch (action.type) {
     case 'SCHEMA':
+      // 一旦配列をクリアする
+      copyState.schemaDatas.clear();
+      
       // eslint-disable-next-line array-callback-return
       action.schemaDatas.map((schema: JesgoDocumentSchema) => {
         // nullが入っている場合空配列に置換する。
@@ -94,7 +99,6 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
 
         copyState.inheritSchemaIds.set(schema.schema_id, inheritIds);
       });
-
       break;
     case 'ROOT':
       copyState.rootSchemas = action.rootSchemas;

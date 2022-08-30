@@ -2,11 +2,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar, Button, Nav, NavItem, Panel, Checkbox } from 'react-bootstrap';
-import { ExpandMore, ChevronRight, Fort } from '@mui/icons-material';
-import { TreeView, TreeItem } from '@mui/lab';
+import { ExpandMore, ChevronRight } from '@mui/icons-material';
+import { TreeView } from '@mui/lab';
 import { Box } from '@mui/material';
 import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
+import CustomTreeItem from '../components/Schemamanager/CustomTreeItem';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
@@ -175,18 +176,7 @@ const SchemaManager = () => {
         | React.MouseEvent<HTMLDivElement, MouseEvent>,
       v = ''
     ): void => {
-      event.stopPropagation();
-
-      if (event.target instanceof Element) {
-        const isIcon = !!event.target.closest('.MuiTreeItem-iconContainer');
-        // If the tree item has children the icon only collapse/expand
-        if (isIcon) {
-          return;
-        }
-      }
       setSelectedSchema(v as string);
-      event.preventDefault();
-      // More logic to run on item click
     },
     []
   );
@@ -484,13 +474,20 @@ const SchemaManager = () => {
           </Button>
         </div>
       </div>
+      {errorMessages.length > 0 && (
+        <Panel className="error-msg-panel-sm">
+          {errorMessages.map((error: string) => (
+            <p>{error}</p>
+          ))}
+        </Panel>
+      )}
       <div className="schema-main">
         {/* 文書構造ビュー */}
         <fieldset className="schema-manager-legend schema-tree">
           <legend>文書構造ビュー</legend>
           <div className="schema-tree">
             <TreeView>
-              <TreeItem
+              <CustomTreeItem
                 nodeId="root"
                 label={<Box>JESGOシステム</Box>}
                 collapseIcon={<ExpandMore />}
@@ -501,7 +498,7 @@ const SchemaManager = () => {
                   handleTreeItemClick={handleTreeItemClick}
                   schemaType={SCHEMA_TYPE.SUBSCHEMA}
                 />
-              </TreeItem>
+              </CustomTreeItem>
             </TreeView>
           </div>
         </fieldset>
@@ -510,13 +507,6 @@ const SchemaManager = () => {
           <fieldset className="schema-manager-legend schema-detail">
             <legend>スキーマ選択ビュー</legend>
             <div className="schema-detail">
-              {errorMessages.length > 0 && (
-                <Panel className="error-msg-panel">
-                  {errorMessages.map((error: string) => (
-                    <p>{error}</p>
-                  ))}
-                </Panel>
-              )}
               {selectedSchemaInfo && (
                 <>
                   <fieldset className="schema-manager-legend">

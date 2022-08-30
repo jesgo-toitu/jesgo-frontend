@@ -44,10 +44,14 @@ body {
 }
 
 /* エラーメッセージ表示パネル */
-.error-msg-panel {
+.error-msg-panel, .error-msg-panel-sm {
   border: solid thin red;
   color: #a94442;
   padding: 0.5rem;
+}
+
+.error-msg-panel-sm {
+  margin-top: 7.7rem;
 }
 
 .user-info-row {

@@ -261,58 +261,6 @@ const SchemaManager = () => {
     }
   };
 
-  // 上下移動分岐用定数
-  const ARROW_TYPE = {
-    UP: 0,
-    DOWN: 1,
-  };
-  // 上下移動用
-  const handleArrowClick = (arrow: number, type: number, v = ''): void => {
-    if (type === SCHEMA_TYPE.SUBSCHEMA) {
-      const copySchemaList = lodash.cloneDeep(subSchemaList);
-      const targetIndex = copySchemaList.findIndex(
-        (s) => s.schema.schema_id === Number(v)
-      );
-      if (arrow === ARROW_TYPE.UP && targetIndex !== 0) {
-        // バッファを使って配列の位置を入れ替える
-        const temp = copySchemaList[targetIndex - 1];
-        copySchemaList[targetIndex - 1] = copySchemaList[targetIndex];
-        copySchemaList[targetIndex] = temp;
-      } else if (
-        arrow === ARROW_TYPE.DOWN &&
-        targetIndex !== copySchemaList.length - 1
-      ) {
-        // バッファを使って配列の位置を入れ替える
-        const temp = copySchemaList[targetIndex + 1];
-        copySchemaList[targetIndex + 1] = copySchemaList[targetIndex];
-        copySchemaList[targetIndex] = temp;
-      }
-      // stateに設定
-      setSubSchemaList(copySchemaList);
-    } else if (type === SCHEMA_TYPE.CHILDSCHEMA) {
-      const copySchemaList = lodash.cloneDeep(childSchemaList);
-      const targetIndex = copySchemaList.findIndex(
-        (s) => s.schema.schema_id === Number(v)
-      );
-      if (arrow === ARROW_TYPE.UP && targetIndex !== 0) {
-        // バッファを使って配列の位置を入れ替える
-        const temp = copySchemaList[targetIndex - 1];
-        copySchemaList[targetIndex - 1] = copySchemaList[targetIndex];
-        copySchemaList[targetIndex] = temp;
-      } else if (
-        arrow === ARROW_TYPE.DOWN &&
-        targetIndex !== copySchemaList.length - 1
-      ) {
-        // バッファを使って配列の位置を入れ替える
-        const temp = copySchemaList[targetIndex + 1];
-        copySchemaList[targetIndex + 1] = copySchemaList[targetIndex];
-        copySchemaList[targetIndex] = temp;
-      }
-      // stateに設定
-      setChildSchemaList(copySchemaList);
-    }
-  };
-
   const submitUpdateSchema = async (schemas: JesgoDocumentSchema[]) => {
     const token = localStorage.getItem('token');
     if (token == null) {
@@ -392,7 +340,19 @@ const SchemaManager = () => {
     const baseSchemaInfo = lodash.cloneDeep(selectedSchemaInfo);
     if (baseSchemaInfo !== undefined) {
       let isChange = false;
-      // サブスキーマは保留
+      // サブスキーマ
+      // 編集中のサブスキーマのうち有効であるもののみのリストを作る
+      const tempSubSchemaList: number[] = [];
+      for (let i = 0; i < subSchemaList.length; i++) {
+        if (subSchemaList[i].valid) {
+          tempSubSchemaList.push(subSchemaList[i].schema.schema_id);
+        }
+      }
+      // 有効サブスキーマリストと編集前のスキーマリストが異なれば更新をかける
+      if (!lodash.isEqual(tempSubSchemaList, baseSchemaInfo.subschema)) {
+        baseSchemaInfo.subschema = tempSubSchemaList;
+        isChange = true;
+      }
 
       // 子スキーマ
       // 編集中の子スキーマのうち有効であるもののみのリストを作る
@@ -489,10 +449,14 @@ const SchemaManager = () => {
         <fieldset className="schema-manager-legend schema-tree">
           <legend>文書構造ビュー</legend>
           <div className="schema-tree">
-            <TreeView>
+            <TreeView defaultExpanded={['root']}>
               <TreeItem
                 nodeId="root"
-                label={<Box>JESGOシステム</Box>}
+                label={
+                  <Box onClick={(e) => handleTreeItemClick(e, '0')}>
+                    JESGOシステム
+                  </Box>
+                }
                 collapseIcon={<ExpandMore />}
                 expandIcon={<ChevronRight />}
               >

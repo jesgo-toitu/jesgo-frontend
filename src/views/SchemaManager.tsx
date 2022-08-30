@@ -499,10 +499,6 @@ const SchemaManager = () => {
                       <span>{selectedSchemaInfo.schema_id_string}</span>
                     </div>
                     <div className="caption-and-block-long">
-                      <span>スキーマID(内部番号) ： </span>
-                      <span>{selectedSchema}</span>
-                    </div>
-                    <div className="caption-and-block-long">
                       <span>継承スキーマ ： </span>
                       <Checkbox
                         className="show-flg-checkbox"
@@ -591,14 +587,6 @@ const SchemaManager = () => {
                       </div>
                     </p>
                   </fieldset>
-                  <p>
-                    <span>初期サブスキーマ ： </span>
-                    <span>{selectedSchemaInfo.subschema_default}</span>
-                  </p>
-                  <p>
-                    <span>初期子スキーマ ： </span>
-                    <span>{selectedSchemaInfo.child_schema_default}</span>
-                  </p>
                   <div className="SchemaManagerSaveButtonGroup">
                     <Button
                       bsStyle="default"

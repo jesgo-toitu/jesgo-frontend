@@ -2,9 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import React from 'react';
-import { TreeItem } from '@mui/lab';
-import { Box } from '@mui/material';
 import { ExpandMore, ChevronRight } from '@mui/icons-material';
+import CustomTreeItem from './CustomTreeItem';
 
 export type treeSchema = {
   schema_id: number;
@@ -23,22 +22,25 @@ const expandIcon = [<ChevronRight />, <ChevronRight />];
 
 export const makeTree = (props: {
   schemas: treeSchema[];
-  handleTreeItemClick: any;
+  handleTreeItemClick: (
+    event:
+      | React.MouseEvent<HTMLLIElement, MouseEvent>
+      | React.MouseEvent<HTMLDivElement, MouseEvent>,
+    v: string
+  ) => void;
   schemaType: number;
 }) => {
   const { schemas, handleTreeItemClick, schemaType } = props;
+
   return (
     <>
       {schemas.map((item: treeSchema) => (
-        <TreeItem
+        <CustomTreeItem
           nodeId={item.schema_id.toString()}
           label={
-            <Box
-              onClick={(e) => handleTreeItemClick(e, item.schema_id.toString())}
-            >
-              {schemaType === SCHEMA_TYPE.SUBSCHEMA && '*'}
-              {item.schema_title}
-            </Box>
+            schemaType === SCHEMA_TYPE.SUBSCHEMA
+              ? `*${item.schema_title}`
+              : item.schema_title
           }
           collapseIcon={
             item.subschema.length + item.childschema.length > 0 &&
@@ -48,7 +50,9 @@ export const makeTree = (props: {
             item.subschema.length + item.childschema.length > 0 &&
             expandIcon[schemaType]
           }
-          onClick={handleTreeItemClick}
+          onClick={(e) => {
+            handleTreeItemClick(e, item.schema_id.toString());
+          }}
         >
           {makeTree({
             schemas: item.subschema,
@@ -60,7 +64,7 @@ export const makeTree = (props: {
             handleTreeItemClick,
             schemaType: SCHEMA_TYPE.CHILDSCHEMA,
           })}
-        </TreeItem>
+        </CustomTreeItem>
       ))}
     </>
   );

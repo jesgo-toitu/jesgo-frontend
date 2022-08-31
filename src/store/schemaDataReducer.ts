@@ -16,6 +16,7 @@ export type JesgoDocumentSchema = {
   inherit_schema: number[];
   base_schema: number | null;
   version_major: number;
+  version_minor: number;
   schema_primary_id: number;
   subschema_default: number[];
   child_schema_default: number[];
@@ -50,7 +51,7 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
     case 'SCHEMA':
       // 一旦配列をクリアする
       copyState.schemaDatas.clear();
-      
+
       // eslint-disable-next-line array-callback-return
       action.schemaDatas.map((schema: JesgoDocumentSchema) => {
         // nullが入っている場合空配列に置換する。
@@ -71,10 +72,10 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
           schema.child_schema_default = [];
         }
         const tempSchemas = copyState.schemaDatas.get(schema.schema_id);
-        if(tempSchemas){
+        if (tempSchemas) {
           tempSchemas.push(schema);
           copyState.schemaDatas.set(schema.schema_id, tempSchemas);
-        }else{
+        } else {
           copyState.schemaDatas.set(schema.schema_id, [schema]);
         }
 

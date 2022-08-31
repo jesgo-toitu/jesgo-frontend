@@ -20,6 +20,9 @@
 
 .schema-main {
   margin-top: 7.7rem;
+}
+
+.flex {
   display: flex;
 }
 

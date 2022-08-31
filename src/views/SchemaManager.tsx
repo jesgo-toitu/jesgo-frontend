@@ -1,5 +1,6 @@
+/* eslint-disable no-plusplus */
 /* eslint-disable no-alert */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar, Button, Nav, NavItem, Panel, Checkbox } from 'react-bootstrap';
 import { ExpandMore, ChevronRight } from '@mui/icons-material';
@@ -30,6 +31,7 @@ import {
   storeSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import DndSortableTable from '../components/Schemamanager/DndSortableTable';
+import { AddBeforeUnloadEvent, RemoveBeforeUnloadEvent } from '../common/CommonUtility';
 
 type settings = {
   facility_name: string;
@@ -59,6 +61,9 @@ const SchemaManager = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    // ブラウザの戻る・更新の防止
+    AddBeforeUnloadEvent();
+
     const f = async () => {
       // 設定情報取得APIを呼ぶ
       const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
@@ -71,6 +76,7 @@ const SchemaManager = () => {
         setFacilityName(returned.facility_name);
         setSettingJson(setting);
       } else {
+        RemoveBeforeUnloadEvent();
         navigate('/login');
       }
 
@@ -81,6 +87,7 @@ const SchemaManager = () => {
         const returned = treeApiObject.body as treeSchema[];
         setTree(returned);
       } else {
+        RemoveBeforeUnloadEvent();
         navigate('/login');
       }
 
@@ -136,157 +143,6 @@ const SchemaManager = () => {
 
     setSelectedSchemaParentInfo(GetParentSchemas(Number(selectedSchema)));
   }, [selectedSchema]);
-
-  const clickCancel = () => {
-    navigate('/Patients');
-  };
-
-  // 実際のアップロードボタンへの参照
-  const refBtnUpload = useRef<HTMLInputElement>(null);
-
-  // スキーマアップロードボタン押下
-  const schemaUpload = () => {
-    const button = refBtnUpload.current;
-    button?.click();
-  };
-
-  // ファイル選択
-  const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = e.target.files;
-    if (fileList) {
-      const file = fileList[0];
-      const fileName: string = file.name.toLocaleLowerCase();
-      if (!fileName.endsWith('.zip') && !fileName.endsWith('.json')) {
-        alert('ZIPファイルもしくはJSONファイルを選択してください');
-        return;
-      }
-
-      setIsLoading(true);
-
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      UploadSchemaFile(file, setSchemaUploadResponse, setErrorMessages);
-    }
-  };
-
-  // ツリーアイテムクリック
-  const handleTreeItemClick = useCallback(
-    (
-      event:
-        | React.MouseEvent<HTMLLIElement, MouseEvent>
-        | React.MouseEvent<HTMLDivElement, MouseEvent>,
-      v = ''
-    ): void => {
-      setSelectedSchema(v as string);
-    },
-    []
-  );
-
-  // チェックボックス分岐用定数
-  const CHECK_TYPE = {
-    SUBSCHEMA: 0,
-    CHILDSCHEMA: 1,
-  };
-
-  const RELATION_TYPE = {
-    PARENT: 0,
-    CHILD: 1,
-  };
-  // チェックボックス状態変更
-  const handleCheckClick = (relation: number, type: number, v = ''): void => {
-    // 親スキーマか子スキーマのどっちかを分ける
-    if (relation === RELATION_TYPE.PARENT) {
-      const copyParentInfo = lodash.cloneDeep(selectedSchemaParentInfo);
-      // undefinedチェック
-      if (copyParentInfo) {
-        // サブスキーマの場合
-        if (type === CHECK_TYPE.SUBSCHEMA && copyParentInfo.fromSubSchema) {
-          // eslint-disable-next-line
-          for (let i = 0; i < copyParentInfo.fromSubSchema.length; i++) {
-            const obj = copyParentInfo.fromSubSchema[i];
-            if (obj.schema.schema_id === Number(v)) {
-              obj.valid = !obj.valid;
-            }
-          }
-        }
-        // 子スキーマの場合
-        else if (
-          type === CHECK_TYPE.CHILDSCHEMA &&
-          copyParentInfo.fromChildSchema
-        ) {
-          // eslint-disable-next-line
-          for (let i = 0; i < copyParentInfo.fromChildSchema.length; i++) {
-            const obj = copyParentInfo.fromChildSchema[i];
-            if (obj.schema.schema_id === Number(v)) {
-              obj.valid = !obj.valid;
-            }
-          }
-        }
-        setSelectedSchemaParentInfo(copyParentInfo);
-      }
-    } else if (relation === RELATION_TYPE.CHILD) {
-      // サブスキーマの場合
-      if (type === CHECK_TYPE.SUBSCHEMA) {
-        const copySchemaList = lodash.cloneDeep(subSchemaList);
-        // eslint-disable-next-line
-        for (let i = 0; i < copySchemaList.length; i++) {
-          const obj = copySchemaList[i];
-          if (obj.schema.schema_id === Number(v)) {
-            obj.valid = !obj.valid;
-          }
-        }
-        setSubSchemaList(copySchemaList);
-      }
-      // 子スキーマの場合
-      else if (type === CHECK_TYPE.CHILDSCHEMA) {
-        const copySchemaList = lodash.cloneDeep(childSchemaList);
-        // eslint-disable-next-line
-        for (let i = 0; i < copySchemaList.length; i++) {
-          const obj = copySchemaList[i];
-          if (obj.schema.schema_id === Number(v)) {
-            obj.valid = !obj.valid;
-          }
-        }
-        setChildSchemaList(copySchemaList);
-      }
-    }
-  };
-
-  const submitUpdateSchema = async (schemas: JesgoDocumentSchema[]) => {
-    const token = localStorage.getItem('token');
-    if (token == null) {
-      navigate('/login');
-      return;
-    }
-
-    setIsLoading(true);
-    // スキーマ更新APIを呼ぶ
-    const returnApiObject = await apiAccess(
-      METHOD_TYPE.POST,
-      `updateSchemas`,
-      schemas
-    );
-    if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-      // スキーマツリーを取得する
-      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
-
-      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        const returned = treeApiObject.body as treeSchema[];
-        setTree(returned);
-      } else {
-        navigate('/login');
-      }
-
-      // スキーマ取得処理
-      await storeSchemaInfo(dispatch);
-
-      // eslint-disable-next-line no-alert
-      alert('スキーマを更新しました');
-    } else {
-      // eslint-disable-next-line no-alert
-      alert('【エラー】\n設定に失敗しました');
-    }
-    setIsLoading(false);
-  };
 
   // 親スキーマからみた表示、非表示がDBに保存されている状態から変更されているかを見る
   // 変更された親スキーマのリストを返す
@@ -367,6 +223,93 @@ const SchemaManager = () => {
     return isChange;
   };
 
+  const leaveAlart = (): boolean => {
+    const tempSchemaList = getNeedUpdateParents();
+    const isChildEdited = isNeedUpdateSchema();
+    if (tempSchemaList.length > 0 || isChildEdited) {
+      // eslint-disable-next-line no-restricted-globals
+      return confirm(
+        'スキーマが編集中です。編集を破棄して移動してもよろしいですか？'
+      );
+    }
+    return true;
+  };
+
+  const clickCancel = () => {
+    if (leaveAlart()) {
+      RemoveBeforeUnloadEvent();
+      navigate('/Patients');
+    }
+  };
+
+  // 実際のアップロードボタンへの参照
+  const refBtnUpload = useRef<HTMLInputElement>(null);
+
+  // スキーマアップロードボタン押下
+  const schemaUpload = () => {
+    if (leaveAlart()) {
+      const button = refBtnUpload.current;
+      button?.click();
+    }
+  };
+
+  // ファイル選択
+  const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (fileList) {
+      const file = fileList[0];
+      const fileName: string = file.name.toLocaleLowerCase();
+      if (!fileName.endsWith('.zip') && !fileName.endsWith('.json')) {
+        alert('ZIPファイルもしくはJSONファイルを選択してください');
+        return;
+      }
+
+      setIsLoading(true);
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      UploadSchemaFile(file, setSchemaUploadResponse, setErrorMessages);
+    }
+  };
+
+  const submitUpdateSchema = async (schemas: JesgoDocumentSchema[]) => {
+    const token = localStorage.getItem('token');
+    if (token == null) {
+      RemoveBeforeUnloadEvent();
+      navigate('/login');
+      return;
+    }
+
+    setIsLoading(true);
+    // スキーマ更新APIを呼ぶ
+    const returnApiObject = await apiAccess(
+      METHOD_TYPE.POST,
+      `updateSchemas`,
+      schemas
+    );
+    if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      // スキーマツリーを取得する
+      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+
+      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = treeApiObject.body as treeSchema[];
+        setTree(returned);
+      } else {
+        RemoveBeforeUnloadEvent();
+        navigate('/login');
+      }
+
+      // スキーマ取得処理
+      await storeSchemaInfo(dispatch);
+
+      // eslint-disable-next-line no-alert
+      alert('スキーマを更新しました');
+    } else {
+      // eslint-disable-next-line no-alert
+      alert('【エラー】\n設定に失敗しました');
+    }
+    setIsLoading(false);
+  };
+
   const updateSchema = async () => {
     // 更新用スキーマリストの初期値として変更済親スキーマのリストを取得(変更がない場合は空配列)
     const updateSchemaList = getNeedUpdateParents();
@@ -415,6 +358,7 @@ const SchemaManager = () => {
         for (const schemaId of selectedSchemaInfo.subschema_default) {
           tempSubSchemaList.push({
             valid: true,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             schema: GetSchemaInfo(schemaId)!,
           });
         }
@@ -424,6 +368,7 @@ const SchemaManager = () => {
         for (const schemaId of selectedSchemaInfo.child_schema_default) {
           tempChildSchemaList.push({
             valid: true,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             schema: GetSchemaInfo(schemaId)!,
           });
         }
@@ -433,6 +378,88 @@ const SchemaManager = () => {
       }
     }
     // いいえであれば何もしない
+  };
+
+  // ツリーアイテムクリック
+  const handleTreeItemClick = (
+    event:
+      | React.MouseEvent<HTMLLIElement, MouseEvent>
+      | React.MouseEvent<HTMLDivElement, MouseEvent>,
+    v = ''
+  ): void => {
+    if (leaveAlart()) {
+      setSelectedSchema(v);
+    }
+  };
+
+  // チェックボックス分岐用定数
+  const CHECK_TYPE = {
+    SUBSCHEMA: 0,
+    CHILDSCHEMA: 1,
+  };
+
+  const RELATION_TYPE = {
+    PARENT: 0,
+    CHILD: 1,
+  };
+  // チェックボックス状態変更
+  const handleCheckClick = (relation: number, type: number, v = ''): void => {
+    // 親スキーマか子スキーマのどっちかを分ける
+    if (relation === RELATION_TYPE.PARENT) {
+      const copyParentInfo = lodash.cloneDeep(selectedSchemaParentInfo);
+      // undefinedチェック
+      if (copyParentInfo) {
+        // サブスキーマの場合
+        if (type === CHECK_TYPE.SUBSCHEMA && copyParentInfo.fromSubSchema) {
+          // eslint-disable-next-line
+          for (let i = 0; i < copyParentInfo.fromSubSchema.length; i++) {
+            const obj = copyParentInfo.fromSubSchema[i];
+            if (obj.schema.schema_id === Number(v)) {
+              obj.valid = !obj.valid;
+            }
+          }
+        }
+        // 子スキーマの場合
+        else if (
+          type === CHECK_TYPE.CHILDSCHEMA &&
+          copyParentInfo.fromChildSchema
+        ) {
+          // eslint-disable-next-line
+          for (let i = 0; i < copyParentInfo.fromChildSchema.length; i++) {
+            const obj = copyParentInfo.fromChildSchema[i];
+            if (obj.schema.schema_id === Number(v)) {
+              obj.valid = !obj.valid;
+            }
+          }
+        }
+        setSelectedSchemaParentInfo(copyParentInfo);
+      }
+    } else if (relation === RELATION_TYPE.CHILD) {
+      // サブスキーマの場合
+      if (type === CHECK_TYPE.SUBSCHEMA) {
+        const copySchemaList = lodash.cloneDeep(subSchemaList);
+        // eslint-disable-next-line
+        for (let i = 0; i < copySchemaList.length; i++) {
+          const obj = copySchemaList[i];
+          if (obj.schema.schema_id === Number(v)) {
+            obj.valid = !obj.valid;
+          }
+        }
+        setSubSchemaList(copySchemaList);
+      }
+      // 子スキーマの場合
+      else if (type === CHECK_TYPE.CHILDSCHEMA) {
+        const copySchemaList = lodash.cloneDeep(childSchemaList);
+        // eslint-disable-next-line
+        for (let i = 0; i < copySchemaList.length; i++) {
+          const obj = copySchemaList[i];
+          if (obj.schema.schema_id === Number(v)) {
+            obj.valid = !obj.valid;
+          }
+        }
+        setChildSchemaList(copySchemaList);
+      }
+    }
   };
 
   useEffect(() => {
@@ -464,10 +491,10 @@ const SchemaManager = () => {
           <Nav pullRight>
             <Navbar.Text>{facilityName}</Navbar.Text>
             <NavItem>
-              <UserMenu title={userName} i={0} />
+              <UserMenu title={userName} i={0} isConfirm={leaveAlart} />
             </NavItem>
             <NavItem>
-              <SystemMenu title="設定" i={0} />
+              <SystemMenu title="設定" i={0} isConfirm={leaveAlart} />
             </NavItem>
             <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
           </Nav>
@@ -518,7 +545,13 @@ const SchemaManager = () => {
                 <CustomTreeItem
                   nodeId="root"
                   label={
-                    <Box onClick={(e) => handleTreeItemClick(e, '0')}>
+                    <Box
+                      onClick={(
+                        e:
+                          | React.MouseEvent<HTMLLIElement, MouseEvent>
+                          | React.MouseEvent<HTMLDivElement, MouseEvent>
+                      ) => handleTreeItemClick(e, '0')}
+                    >
                       JESGOシステム
                     </Box>
                   }

@@ -31,7 +31,10 @@ import {
   storeSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import DndSortableTable from '../components/Schemamanager/DndSortableTable';
-import { AddBeforeUnloadEvent, RemoveBeforeUnloadEvent } from '../common/CommonUtility';
+import {
+  AddBeforeUnloadEvent,
+  RemoveBeforeUnloadEvent,
+} from '../common/CommonUtility';
 
 type settings = {
   facility_name: string;
@@ -387,7 +390,7 @@ const SchemaManager = () => {
       | React.MouseEvent<HTMLDivElement, MouseEvent>,
     v = ''
   ): void => {
-    if (leaveAlart()) {
+    if (selectedSchema === v || leaveAlart()) {
       setSelectedSchema(v);
     }
   };

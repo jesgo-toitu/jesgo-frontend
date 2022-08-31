@@ -401,12 +401,26 @@ const formDataReducer: Reducer<
                 i -= 1
               ) {
                 // 子のdocumentIdの中で同スキーマのものを検索
+                // 継承/回帰関係があればそちらも同スキーマとして扱う
                 const childDocId = parentDocData.value.child_documents[i];
+
+                // 追加対象のスキーマと継承/回帰関係にあるスキーマを取得
+                const relationalSchemaIds: Set<number> = new Set();
+                if (action.schemaInfo.base_schema) {
+                  relationalSchemaIds.add(action.schemaInfo.base_schema);
+                }
+                if (action.schemaInfo.inherit_schema) {
+                  action.schemaInfo.inherit_schema.forEach((inhId) =>
+                    relationalSchemaIds.add(inhId)
+                  );
+                }
+
                 const searchChildDoc = saveData.jesgo_document.find(
                   (p) =>
                     p.key === childDocId &&
-                    p.value.schema_id === action.schemaId &&
-                    p.value.deleted === false
+                    p.value.deleted === false &&
+                    (p.value.schema_id === action.schemaId ||
+                      relationalSchemaIds.has(p.value.schema_id))
                 );
                 if (searchChildDoc) {
                   // 同スキーマの右に追加(+1)

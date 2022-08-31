@@ -288,7 +288,9 @@ const SchemaManager = () => {
     setIsLoading(false);
   };
 
-  const updateSchema = async () => {
+  // 親スキーマからみた表示、非表示がDBに保存されている状態から変更されているかを見る
+  // 変更された親スキーマのリストを返す
+  const getNeedUpdateParents = (): JesgoDocumentSchema[] => {
     // 更新用スキーマリスト
     const updateSchemaList: JesgoDocumentSchema[] = [];
 
@@ -326,10 +328,14 @@ const SchemaManager = () => {
       }
     }
 
+    return updateSchemaList;
+  };
+
+  const isNeedUpdateSchema = (): boolean => {
+    let isChange = false;
     // 表示中のスキーマの子関係
     const baseSchemaInfo = lodash.cloneDeep(selectedSchemaInfo);
     if (baseSchemaInfo !== undefined) {
-      let isChange = false;
       // サブスキーマ
       // 編集中のサブスキーマのうち有効であるもののみのリストを作る
       const tempSubSchemaList: number[] = [];
@@ -357,15 +363,76 @@ const SchemaManager = () => {
         baseSchemaInfo.child_schema = tempChildSchemaList;
         isChange = true;
       }
+    }
+    return isChange;
+  };
 
-      // 更新があれば変更リストに追加する
-      if (isChange) {
+  const updateSchema = async () => {
+    // 更新用スキーマリストの初期値として変更済親スキーマのリストを取得(変更がない場合は空配列)
+    const updateSchemaList = getNeedUpdateParents();
+
+    // 自スキーマのサブスキーマ、子スキーマに更新があれば変更リストに追加する
+    if (isNeedUpdateSchema()) {
+      const baseSchemaInfo = lodash.cloneDeep(selectedSchemaInfo);
+      if (baseSchemaInfo !== undefined) {
+        // サブスキーマ
+        // 編集中のサブスキーマのうち有効であるもののみのリストを作る
+        const tempSubSchemaList: number[] = [];
+        for (let i = 0; i < subSchemaList.length; i++) {
+          if (subSchemaList[i].valid) {
+            tempSubSchemaList.push(subSchemaList[i].schema.schema_id);
+          }
+        }
+        baseSchemaInfo.subschema = tempSubSchemaList;
+
+        // 子スキーマ
+        // 編集中の子スキーマのうち有効であるもののみのリストを作る
+        const tempChildSchemaList: number[] = [];
+        for (let i = 0; i < childSchemaList.length; i++) {
+          if (childSchemaList[i].valid) {
+            tempChildSchemaList.push(childSchemaList[i].schema.schema_id);
+          }
+        }
+        baseSchemaInfo.child_schema = tempChildSchemaList;
+
         updateSchemaList.push(baseSchemaInfo);
       }
     }
 
     // POST処理
     await submitUpdateSchema(updateSchemaList);
+  };
+
+  // 初期設定の読込
+  const loadDefault = () => {
+    // eslint-disable-next-line no-restricted-globals
+    if (confirm('初期設定を読み込みますか？')) {
+      const tempSubSchemaList: schemaWithValid[] = [];
+      const tempChildSchemaList: schemaWithValid[] = [];
+      if (selectedSchemaInfo !== undefined) {
+        // サブスキーマを初期に戻す
+        // eslint-disable-next-line no-restricted-syntax
+        for (const schemaId of selectedSchemaInfo.subschema_default) {
+          tempSubSchemaList.push({
+            valid: true,
+            schema: GetSchemaInfo(schemaId)!,
+          });
+        }
+
+        // 子スキーマを初期に戻す
+        // eslint-disable-next-line no-restricted-syntax
+        for (const schemaId of selectedSchemaInfo.child_schema_default) {
+          tempChildSchemaList.push({
+            valid: true,
+            schema: GetSchemaInfo(schemaId)!,
+          });
+        }
+
+        setSubSchemaList(tempSubSchemaList);
+        setChildSchemaList(tempChildSchemaList);
+      }
+    }
+    // いいえであれば何もしない
   };
 
   useEffect(() => {
@@ -581,7 +648,7 @@ const SchemaManager = () => {
                     <Button
                       bsStyle="default"
                       className="normal-button"
-                      onClick={() => alert('test')}
+                      onClick={() => loadDefault()}
                     >
                       初期設定を反映
                     </Button>

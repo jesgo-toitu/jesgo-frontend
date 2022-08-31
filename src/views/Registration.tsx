@@ -610,9 +610,9 @@ const Registration = () => {
     <div className="page-area">
       {/* 患者情報入力 */}
       <div className="patient-area">
-        <Panel className="panel-style">
+        <Panel className="panel-style patient-area-panel">
           <Row className="patientInfo user-info-row">
-            <Col lg={2} md={2}>
+            <Col className="user-info-col">
               <FormGroup controlId="patientId">
                 <ControlLabel>患者ID：</ControlLabel>
                 <FormControl
@@ -624,7 +624,7 @@ const Registration = () => {
                 />
               </FormGroup>
             </Col>
-            <Col lg={2} md={2}>
+            <Col className="user-info-col">
               <FormGroup controlId="patientName">
                 <ControlLabel>患者氏名：</ControlLabel>
                 <FormControl
@@ -635,7 +635,7 @@ const Registration = () => {
                 />
               </FormGroup>
             </Col>
-            <Col lg={2} md={3}>
+            <Col className="user-info-col">
               <FormGroup controlId="birthday">
                 <ControlLabel>生年月日</ControlLabel>
                 <FormControl
@@ -647,7 +647,7 @@ const Registration = () => {
                 />
               </FormGroup>
             </Col>
-            <Col lg={1} md={1}>
+            <Col className="user-info-age">
               <FormGroup>
                 <ControlLabel>年齢</ControlLabel>
                 <div>
@@ -657,7 +657,7 @@ const Registration = () => {
                 </div>
               </FormGroup>
             </Col>
-            <Col lg={2} md={2}>
+            <Col>
               <FormGroup>
                 <ControlLabel />
                 <div>
@@ -672,14 +672,14 @@ const Registration = () => {
                 </div>
               </FormGroup>
             </Col>
-            <SubmitButton
-              setIsLoading={setIsLoading}
-              setLoadedJesgoCase={setLoadedJesgoCase}
-              setCaseId={setCaseId}
-              setIsReload={setIsReload}
-              setErrors={setErrors}
-            />
           </Row>
+          <SubmitButton
+            setIsLoading={setIsLoading}
+            setLoadedJesgoCase={setLoadedJesgoCase}
+            setCaseId={setCaseId}
+            setIsReload={setIsReload}
+            setErrors={setErrors}
+          />
         </Panel>
       </div>
       {!isLoading && hasSchema && (

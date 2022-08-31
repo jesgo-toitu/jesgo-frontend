@@ -304,7 +304,7 @@ const SchemaManager = () => {
 
       // スキーマ取得処理
       await storeSchemaInfo(dispatch);
-
+      setSelectedSchemaInfo(GetSchemaInfo(Number(selectedSchema)));
       // eslint-disable-next-line no-alert
       alert('スキーマを更新しました');
     } else {

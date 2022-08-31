@@ -16,6 +16,7 @@ import { settingsFromApi } from './Settings';
 import { responseResult, UploadSchemaFile } from '../common/DBUtility';
 import Loading from '../components/CaseRegistration/Loading';
 import { Const } from '../common/Const';
+import { searchColumnsFromApi } from './Patients';
 import './SchemaManager.css';
 import SchemaTree, {
   SCHEMA_TYPE,
@@ -467,6 +468,30 @@ const SchemaManager = () => {
 
   useEffect(() => {
     if (schemaUploadResponse.resCode !== undefined) {
+      // 検索カラム情報読み込みなおし
+      const f = async () => {
+        // 検索カラム取得APIを呼ぶ
+        const returnSearchColumnsApiObject = await apiAccess(
+          METHOD_TYPE.GET,
+          'getSearchColumns'
+        );
+
+        // 正常に取得できた場合検索カラムをlocalStorageに格納
+        if (
+          returnSearchColumnsApiObject.statusNum === RESULT.NORMAL_TERMINATION
+        ) {
+          const returned =
+            returnSearchColumnsApiObject.body as searchColumnsFromApi;
+          localStorage.setItem(
+            'cancer_type',
+            JSON.stringify(returned.cancerTypes)
+          );
+        }
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      f();
+
       alert(schemaUploadResponse.message);
       setSchemaUploadResponse({ message: '', resCode: undefined });
       setIsLoading(false);

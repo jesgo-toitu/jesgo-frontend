@@ -28,6 +28,15 @@ export namespace Const {
     UI_HIDDEN: 'jesgo:ui:hidden',
   } as const;
 
+  // jesgo:ui:listtypeに使用できる項目定義
+  export const JESGO_UI_LISTTYPE = {
+    LIST: 'list',
+    COMBO: 'combo',
+    SUGGEST_LIST: 'suggestlist',
+    SUGGEST_COMBO: 'suggestcombo',
+    BUTTONS: 'buttons',
+  } as const;
+
   /**
    * JSONSchema7のKey
    */

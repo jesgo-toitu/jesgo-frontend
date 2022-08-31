@@ -501,95 +501,137 @@ const SchemaManager = () => {
           </Button>
         </div>
       </div>
-      {errorMessages.length > 0 && (
-        <Panel className="error-msg-panel-sm">
-          {errorMessages.map((error: string) => (
-            <p>{error}</p>
-          ))}
-        </Panel>
-      )}
       <div className="schema-main">
-        {/* 文書構造ビュー */}
-        <fieldset className="schema-manager-legend schema-tree">
-          <legend>文書構造ビュー</legend>
-          <div className="schema-tree">
-            <TreeView defaultExpanded={['root']}>
-              <CustomTreeItem
-                nodeId="root"
-                label={
-                  <Box onClick={(e) => handleTreeItemClick(e, '0')}>
-                    JESGOシステム
-                  </Box>
-                }
-                collapseIcon={<ExpandMore />}
-                expandIcon={<ChevronRight />}
-              >
-                <SchemaTree
-                  schemas={tree}
-                  handleTreeItemClick={handleTreeItemClick}
-                  schemaType={SCHEMA_TYPE.SUBSCHEMA}
-                />
-              </CustomTreeItem>
-            </TreeView>
-          </div>
-        </fieldset>
-        {/* スキーマ設定ビュー */}
-        <div className="schema-detail">
-          <fieldset className="schema-manager-legend schema-detail">
-            <legend>スキーマ選択ビュー</legend>
-            <div className="schema-detail">
-              {selectedSchemaInfo && (
-                <>
-                  <fieldset className="schema-manager-legend">
-                    <legend>スキーマ情報</legend>
-                    <div className="caption-and-block-long">
-                      <span>文書(スキーマ)タイトル ： </span>
-                      <span>
-                        {selectedSchemaInfo.title +
-                          (selectedSchemaInfo.subtitle.length > 0
-                            ? ` ${selectedSchemaInfo.subtitle}`
-                            : '')}
-                      </span>
-                    </div>
-                    <div className="caption-and-block-long">
-                      <span>スキーマID ： </span>
-                      <span>{selectedSchemaInfo.schema_id_string}</span>
-                    </div>
-                    <div className="caption-and-block-long">
-                      <span>継承スキーマ ： </span>
-                      <Checkbox
-                        className="show-flg-checkbox"
-                        checked={false}
-                        disabled={false}
-                      />
-                    </div>
-                    {/* TODO: スキーマダウンロードボタンサンプル */}
-                    {/* <div>
-                      <Button
-                        bsStyle="success"
-                        className="normal-button nomargin glyphicon glyphicon-download-alt"
-                        title="スキーマファイルをダウンロードします"
-                        onClick={schemaUpload}
-                      >
-                        {' '}
-                        スキーマダウンロード
-                      </Button>
-                    </div> */}
-                  </fieldset>
-                  <fieldset className="schema-manager-legend">
-                    <legend>上位スキーマ</legend>
-                    <div>
+        {errorMessages.length > 0 && (
+          <Panel className="error-msg-panel-sm">
+            {errorMessages.map((error: string) => (
+              <p>{error}</p>
+            ))}
+          </Panel>
+        )}
+        <div className="flex">
+          {/* 文書構造ビュー */}
+          <fieldset className="schema-manager-legend schema-tree">
+            <legend>文書構造ビュー</legend>
+            <div className="schema-tree">
+              <TreeView defaultExpanded={['root']}>
+                <CustomTreeItem
+                  nodeId="root"
+                  label={
+                    <Box onClick={(e) => handleTreeItemClick(e, '0')}>
+                      JESGOシステム
+                    </Box>
+                  }
+                  collapseIcon={<ExpandMore />}
+                  expandIcon={<ChevronRight />}
+                >
+                  <SchemaTree
+                    schemas={tree}
+                    handleTreeItemClick={handleTreeItemClick}
+                    schemaType={SCHEMA_TYPE.SUBSCHEMA}
+                  />
+                </CustomTreeItem>
+              </TreeView>
+            </div>
+          </fieldset>
+          {/* スキーマ設定ビュー */}
+          <div className="schema-detail">
+            <fieldset className="schema-manager-legend schema-detail">
+              <legend>スキーマ選択ビュー</legend>
+              <div className="schema-detail">
+                {selectedSchemaInfo && (
+                  <>
+                    <fieldset className="schema-manager-legend">
+                      <legend>スキーマ情報</legend>
+                      <div className="caption-and-block-long">
+                        <span>文書(スキーマ)タイトル ： </span>
+                        <span>
+                          {selectedSchemaInfo.title +
+                            (selectedSchemaInfo.subtitle.length > 0
+                              ? ` ${selectedSchemaInfo.subtitle}`
+                              : '')}
+                        </span>
+                      </div>
+                      <div className="caption-and-block-long">
+                        <span>スキーマID ： </span>
+                        <span>{selectedSchemaInfo.schema_id_string}</span>
+                      </div>
+                      <div className="caption-and-block-long">
+                        <span>バージョン ： </span>
+                        <span>{`${selectedSchemaInfo.version_major}.${selectedSchemaInfo.version_minor}`}</span>
+                      </div>
+                      <div className="caption-and-block-long">
+                        <span>継承スキーマ ： </span>
+                        <Checkbox
+                          className="show-flg-checkbox"
+                          checked={false}
+                          disabled={false}
+                        />
+                      </div>
+                      {/* TODO: スキーマダウンロードボタンサンプル */}
+                      {/* <div>
+                        <Button
+                          bsStyle="success"
+                          className="normal-button nomargin glyphicon glyphicon-download-alt"
+                          title="スキーマファイルをダウンロードします"
+                          onClick={schemaUpload}
+                        >
+                          {' '}
+                          スキーマダウンロード
+                        </Button>
+                      </div> */}
+                    </fieldset>
+                    <fieldset className="schema-manager-legend">
+                      <legend>上位スキーマ</legend>
+                      <div>
+                        <p>
+                          <div className="caption-and-block">
+                            <span>必須スキーマ ： </span>
+                            <DndSortableTable
+                              checkType={[
+                                RELATION_TYPE.PARENT,
+                                CHECK_TYPE.SUBSCHEMA,
+                              ]}
+                              schemaList={
+                                selectedSchemaParentInfo?.fromSubSchema
+                              }
+                              handleCheckClick={handleCheckClick}
+                              isDragDisabled
+                              isShowCheckDisabled
+                            />
+                          </div>
+                        </p>
+                        <p>
+                          <div className="caption-and-block">
+                            <span>任意スキーマ ： </span>
+                            <DndSortableTable
+                              checkType={[
+                                RELATION_TYPE.PARENT,
+                                CHECK_TYPE.CHILDSCHEMA,
+                              ]}
+                              schemaList={
+                                selectedSchemaParentInfo?.fromChildSchema
+                              }
+                              handleCheckClick={handleCheckClick}
+                              isDragDisabled
+                            />
+                          </div>
+                        </p>
+                      </div>
+                    </fieldset>
+                    <fieldset className="schema-manager-legend">
+                      <legend>下位スキーマ</legend>
                       <p>
                         <div className="caption-and-block">
                           <span>必須スキーマ ： </span>
                           <DndSortableTable
                             checkType={[
-                              RELATION_TYPE.PARENT,
+                              RELATION_TYPE.CHILD,
                               CHECK_TYPE.SUBSCHEMA,
                             ]}
-                            schemaList={selectedSchemaParentInfo?.fromSubSchema}
+                            schemaList={subSchemaList}
+                            setSchemaList={setSubSchemaList}
                             handleCheckClick={handleCheckClick}
-                            isDragDisabled
                             isShowCheckDisabled
                           />
                         </div>
@@ -599,71 +641,37 @@ const SchemaManager = () => {
                           <span>任意スキーマ ： </span>
                           <DndSortableTable
                             checkType={[
-                              RELATION_TYPE.PARENT,
+                              RELATION_TYPE.CHILD,
                               CHECK_TYPE.CHILDSCHEMA,
                             ]}
-                            schemaList={
-                              selectedSchemaParentInfo?.fromChildSchema
-                            }
+                            schemaList={childSchemaList}
+                            setSchemaList={setChildSchemaList}
                             handleCheckClick={handleCheckClick}
-                            isDragDisabled
                           />
                         </div>
                       </p>
+                    </fieldset>
+                    <div className="SchemaManagerSaveButtonGroup">
+                      <Button
+                        bsStyle="default"
+                        className="normal-button"
+                        onClick={() => loadDefault()}
+                      >
+                        初期設定を反映
+                      </Button>
+                      <Button
+                        bsStyle="success"
+                        className="normal-button"
+                        onClick={() => updateSchema()}
+                      >
+                        設定を保存
+                      </Button>
                     </div>
-                  </fieldset>
-                  <fieldset className="schema-manager-legend">
-                    <legend>下位スキーマ</legend>
-                    <p>
-                      <div className="caption-and-block">
-                        <span>必須スキーマ ： </span>
-                        <DndSortableTable
-                          checkType={[
-                            RELATION_TYPE.CHILD,
-                            CHECK_TYPE.SUBSCHEMA,
-                          ]}
-                          schemaList={subSchemaList}
-                          setSchemaList={setSubSchemaList}
-                          handleCheckClick={handleCheckClick}
-                          isShowCheckDisabled
-                        />
-                      </div>
-                    </p>
-                    <p>
-                      <div className="caption-and-block">
-                        <span>任意スキーマ ： </span>
-                        <DndSortableTable
-                          checkType={[
-                            RELATION_TYPE.CHILD,
-                            CHECK_TYPE.CHILDSCHEMA,
-                          ]}
-                          schemaList={childSchemaList}
-                          setSchemaList={setChildSchemaList}
-                          handleCheckClick={handleCheckClick}
-                        />
-                      </div>
-                    </p>
-                  </fieldset>
-                  <div className="SchemaManagerSaveButtonGroup">
-                    <Button
-                      bsStyle="default"
-                      className="normal-button"
-                      onClick={() => loadDefault()}
-                    >
-                      初期設定を反映
-                    </Button>
-                    <Button
-                      bsStyle="success"
-                      className="normal-button"
-                      onClick={() => updateSchema()}
-                    >
-                      設定を保存
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </fieldset>
+                  </>
+                )}
+              </div>
+            </fieldset>
+          </div>
         </div>
       </div>
       {isLoading && <Loading />}

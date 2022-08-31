@@ -3,7 +3,7 @@ import { formatDateStr } from './DBUtility';
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {
   // JESGO Webアプリバージョン
-  export const VERSION = '1.0.0';
+  export const VERSION = '1.0.1';
 
   // UiSchemaプロパティ
   export const UI_WIDGET = {

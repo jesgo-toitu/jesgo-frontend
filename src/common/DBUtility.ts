@@ -7,12 +7,12 @@ import lodash from 'lodash';
 import {
   CustomSchema,
   getPropItemsAndNames,
+  GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import { SaveDataObjDefine } from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import {
-  GetSchemaInfo,
   RegistrationErrors,
   validateJesgoDocument,
 } from './CaseRegistrationUtility';

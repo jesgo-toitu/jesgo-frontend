@@ -28,8 +28,6 @@ import RootSchema from '../components/CaseRegistration/RootSchema';
 import SubmitButton from '../components/CaseRegistration/SubmitButton';
 import {
   convertTabKey,
-  GetRootSchema,
-  GetSchemaInfo,
   GetSchemaTitle,
   IsNotUpdate,
   SetSameSchemaTitleNumbering,
@@ -57,6 +55,7 @@ import {
 import store from '../store';
 import { Const } from '../common/Const';
 import SaveConfirmDialog from '../components/CaseRegistration/SaveConfirmDialog';
+import { GetRootSchema, GetSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
 
 export interface ShowSaveDialogState {
   showFlg: boolean;

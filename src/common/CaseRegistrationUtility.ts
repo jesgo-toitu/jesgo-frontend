@@ -16,26 +16,11 @@ import {
 import {
   CustomSchema,
   getPropItemsAndNames,
+  GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import {} from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import { Const } from './Const';
-
-// スキーマIDからスキーマ情報を取得
-export const GetSchemaInfo = (id: number) => {
-  const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
-  const schemaList = schemaInfos.get(id);
-  if (schemaList && schemaList[0]) {
-    return schemaList[0];
-  }
-  return undefined;
-};
-
-// ルートスキーマのschema_idを取得
-export const GetRootSchema = () => {
-  const roots = store.getState().schemaDataReducer.rootSchemas;
-  return roots;
-};
 
 export type validationResult = {
   schema: JSONSchema7;

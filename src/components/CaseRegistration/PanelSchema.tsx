@@ -8,7 +8,6 @@ import { useLocation } from 'react-router-dom';
 import CustomDivForm from './JESGOCustomForm';
 import {
   GetBeforeInheritDocumentData,
-  GetSchemaInfo,
   RegistrationErrors,
   GetSchemaTitle,
   SetSameSchemaTitleNumbering,
@@ -16,7 +15,7 @@ import {
   GetHiddenPropertyNames,
 } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
-import { CustomSchema } from './SchemaUtility';
+import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
 import {
   dispSchemaIdAndDocumentIdDefine,
   jesgoDocumentObjDefine,

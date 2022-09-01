@@ -3,9 +3,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar, Button, Nav, NavItem, Panel, Checkbox } from 'react-bootstrap';
-import { ExpandMore, ChevronRight } from '@mui/icons-material';
-import { TreeView } from '@mui/lab';
-import { Box } from '@mui/material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ChevronRight from '@mui/icons-material/ChevronRight';
+import TreeView from '@mui/lab/TreeView';
+import Box from '@mui/material/Box';
 import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import CustomTreeItem from '../components/Schemamanager/CustomTreeItem';

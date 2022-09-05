@@ -11,15 +11,24 @@ export type treeSchema = {
   schema_title: string;
   subschema: treeSchema[];
   childschema: treeSchema[];
+  inheritschema: treeSchema[];
 };
 
 export const SCHEMA_TYPE = {
   SUBSCHEMA: 0,
   CHILDSCHEMA: 1,
+  INHERITSCHEMA: 2,
 };
 
-const collapseIcon = [<ExpandMore />, <ExpandMore />];
-const expandIcon = [<ChevronRight />, <ChevronRight />];
+const collapseIcon = [<ExpandMore />, <ExpandMore />, <ExpandMore />];
+const expandIcon = [<ChevronRight />, <ChevronRight />, <ChevronRight />];
+
+const titleGenerator = (schemaType: number, title: string) => {
+  let prefix = '';
+  if (schemaType === SCHEMA_TYPE.SUBSCHEMA) prefix = '*';
+  else if (schemaType === SCHEMA_TYPE.INHERITSCHEMA) prefix = '[継承]';
+  return `${prefix}${title}`;
+};
 
 export const makeTree = (props: {
   schemas: treeSchema[];
@@ -38,18 +47,18 @@ export const makeTree = (props: {
       {schemas.map((item: treeSchema) => (
         <CustomTreeItem
           nodeId={item.schema_id.toString()}
-          label={
-            schemaType === SCHEMA_TYPE.SUBSCHEMA
-              ? `*${item.schema_title}`
-              : item.schema_title
-          }
+          label={titleGenerator(schemaType, item.schema_title)}
           collapseIcon={
-            item.subschema.length + item.childschema.length > 0 &&
-            collapseIcon[schemaType]
+            item.subschema.length +
+              item.childschema.length +
+              item.inheritschema.length >
+              0 && collapseIcon[schemaType]
           }
           expandIcon={
-            item.subschema.length + item.childschema.length > 0 &&
-            expandIcon[schemaType]
+            item.subschema.length +
+              item.childschema.length +
+              item.inheritschema.length >
+              0 && expandIcon[schemaType]
           }
           onClick={(e) => {
             handleTreeItemClick(e, item.schema_id.toString());
@@ -64,6 +73,11 @@ export const makeTree = (props: {
             schemas: item.childschema,
             handleTreeItemClick,
             schemaType: SCHEMA_TYPE.CHILDSCHEMA,
+          })}
+          {makeTree({
+            schemas: item.inheritschema,
+            handleTreeItemClick,
+            schemaType: SCHEMA_TYPE.INHERITSCHEMA,
           })}
         </CustomTreeItem>
       ))}

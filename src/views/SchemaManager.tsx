@@ -151,7 +151,9 @@ const SchemaManager = () => {
 
   // 親スキーマからみた表示、非表示がDBに保存されている状態から変更されているかを見る
   // 変更された親スキーマのリストを返す
-  const getNeedUpdateParents = (): JesgoDocumentSchema[] => {
+  const getNeedUpdateParents = (
+    isCheckOnly: boolean // trueの場合チェックのみ行う
+  ): JesgoDocumentSchema[] => {
     // 更新用スキーマリスト
     const updateSchemaList: JesgoDocumentSchema[] = [];
 
@@ -169,7 +171,9 @@ const SchemaManager = () => {
           parentFromChildSchema[i].valid &&
           !parentSchema.child_schema.includes(Number(selectedSchema))
         ) {
-          parentSchema.child_schema.push(Number(selectedSchema));
+          if (!isCheckOnly) {
+            parentSchema.child_schema.push(Number(selectedSchema));
+          }
           updateSchemaList.push(parentSchema);
         }
 
@@ -181,7 +185,9 @@ const SchemaManager = () => {
           const targetIndex = parentSchema.child_schema.indexOf(
             Number(selectedSchema)
           );
-          parentSchema.child_schema.splice(targetIndex, 1);
+          if (!isCheckOnly) {
+            parentSchema.child_schema.splice(targetIndex, 1);
+          }
           updateSchemaList.push(parentSchema);
         }
 
@@ -229,7 +235,7 @@ const SchemaManager = () => {
   };
 
   const leaveAlart = (): boolean => {
-    const tempSchemaList = getNeedUpdateParents();
+    const tempSchemaList = getNeedUpdateParents(true);
     const isChildEdited = isNeedUpdateSchema();
     if (tempSchemaList.length > 0 || isChildEdited) {
       // eslint-disable-next-line no-restricted-globals
@@ -317,7 +323,7 @@ const SchemaManager = () => {
 
   const updateSchema = async () => {
     // 更新用スキーマリストの初期値として変更済親スキーマのリストを取得(変更がない場合は空配列)
-    const updateSchemaList = getNeedUpdateParents();
+    const updateSchemaList = getNeedUpdateParents(false);
 
     // 自スキーマのサブスキーマ、子スキーマに更新があれば変更リストに追加する
     if (isNeedUpdateSchema()) {
@@ -570,7 +576,7 @@ const SchemaManager = () => {
           <fieldset className="schema-manager-legend schema-tree">
             <legend>文書構造ビュー</legend>
             <div className="schema-tree">
-              <TreeView defaultExpanded={['root']}>
+              <TreeView defaultExpanded={['root']} selected={selectedSchema}>
                 <CustomTreeItem
                   nodeId="root"
                   label={

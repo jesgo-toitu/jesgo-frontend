@@ -20,6 +20,7 @@ export type JesgoDocumentSchema = {
   schema_primary_id: number;
   subschema_default: number[];
   child_schema_default: number[];
+  inherit_schema_default: number[];
 };
 
 export interface schemaDataState {

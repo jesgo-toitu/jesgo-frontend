@@ -1,11 +1,10 @@
 import React from 'react';
-import {
-  TreeItem,
+import TreeItem, {
   TreeItemProps,
   TreeItemContentProps,
   useTreeItem,
-} from '@mui/lab';
-import { Typography } from '@mui/material';
+} from '@mui/lab/TreeItem';
+import Typography from '@mui/material/Typography';
 import clsx from 'clsx';
 
 const CustomContent = React.forwardRef((props: TreeItemContentProps, ref) => {

@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import React from 'react';
-import { ExpandMore, ChevronRight } from '@mui/icons-material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ChevronRight from '@mui/icons-material/ChevronRight';
 import CustomTreeItem from './CustomTreeItem';
 
 export type treeSchema = {

@@ -109,34 +109,56 @@ export const GetParentSchemas = (childId: number) => {
   return parentList;
 }
 
+export type searchColumnsFromApi = {
+  cancerTypes: string[];
+};
+
 export const storeSchemaInfo = async (dispatch:Dispatch<any>) => {
+
+  // スキーマ取得処理
+  const returnSchemaApiObject = await apiAccess(
+    METHOD_TYPE.GET,
+    `getJsonSchema`
+  );
+
+  if (returnSchemaApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+    dispatch({
+      type: 'SCHEMA',
+      schemaDatas: returnSchemaApiObject.body,
+    });
+  }
+
+  // ルートスキーマID取得処理
+  const returnRootSchemaIdsApiObject = await apiAccess(
+    METHOD_TYPE.GET,
+    `getRootSchemaIds`
+  );
+  if (
+    returnRootSchemaIdsApiObject.statusNum === RESULT.NORMAL_TERMINATION
+  ) {
+    dispatch({
+      type: 'ROOT',
+      rootSchemas: returnRootSchemaIdsApiObject.body,
+    });
+  }
   
-      // スキーマ取得処理
-      const returnSchemaApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        `getJsonSchema`
-      );
+  // 検索カラム取得APIを呼ぶ
+  const returnSearchColumnsApiObject = await apiAccess(
+    METHOD_TYPE.GET,
+    'getSearchColumns'
+  );
 
-      if (returnSchemaApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        dispatch({
-          type: 'SCHEMA',
-          schemaDatas: returnSchemaApiObject.body,
-        });
-      }
-
-      // ルートスキーマID取得処理
-      const returnRootSchemaIdsApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        `getRootSchemaIds`
-      );
-      if (
-        returnRootSchemaIdsApiObject.statusNum === RESULT.NORMAL_TERMINATION
-      ) {
-        dispatch({
-          type: 'ROOT',
-          rootSchemas: returnRootSchemaIdsApiObject.body,
-        });
-      }
+  // 正常に取得できた場合検索カラムをlocalStorageに格納
+  if (
+    returnSearchColumnsApiObject.statusNum === RESULT.NORMAL_TERMINATION
+  ) {
+    const returned =
+      returnSearchColumnsApiObject.body as searchColumnsFromApi;
+    localStorage.setItem(
+      'cancer_type',
+      JSON.stringify(returned.cancerTypes)
+    );
+  }
 }
 
 /**

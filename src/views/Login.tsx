@@ -6,7 +6,6 @@ import { useDispatch } from 'react-redux';
 import './Login.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { settingsFromApi } from './Settings';
-import { searchColumnsFromApi } from './Patients';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
 
@@ -35,24 +34,6 @@ export const Login = () => {
 
   useEffect(() => {
     const f = async () => {
-      // 検索カラム取得APIを呼ぶ
-      const returnSearchColumnsApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        'getSearchColumns'
-      );
-
-      // 正常に取得できた場合検索カラムをlocalStorageに格納
-      if (
-        returnSearchColumnsApiObject.statusNum === RESULT.NORMAL_TERMINATION
-      ) {
-        const returned =
-          returnSearchColumnsApiObject.body as searchColumnsFromApi;
-        localStorage.setItem(
-          'cancer_type',
-          JSON.stringify(returned.cancerTypes)
-        );
-      }
-
       // 設定情報取得APIを呼ぶ
       const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
 

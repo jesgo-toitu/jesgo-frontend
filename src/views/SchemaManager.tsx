@@ -3,9 +3,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar, Button, Nav, NavItem, Panel, Checkbox } from 'react-bootstrap';
-import { ExpandMore, ChevronRight } from '@mui/icons-material';
-import { TreeView } from '@mui/lab';
-import { Box } from '@mui/material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ChevronRight from '@mui/icons-material/ChevronRight';
+import TreeView from '@mui/lab/TreeView';
+import Box from '@mui/material/Box';
 import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import CustomTreeItem from '../components/Schemamanager/CustomTreeItem';
@@ -60,6 +61,14 @@ const SchemaManager = () => {
     useState<parentSchemaList>();
   const [childSchemaList, setChildSchemaList] = useState<schemaWithValid[]>([]);
   const [subSchemaList, setSubSchemaList] = useState<schemaWithValid[]>([]);
+
+  const [inheritSchemaList, setInheritSchemaList] = useState<schemaWithValid[]>(
+    []
+  );
+
+  const [selectedBaseSchemaInfo, setSelectedBaseSchemaInfo] =
+    useState<JesgoDocumentSchema>();
+
   const [tree, setTree] = useState<treeSchema[]>([]);
   const dispatch = useDispatch();
 
@@ -142,6 +151,20 @@ const SchemaManager = () => {
         });
       }
       setChildSchemaList(currentChildSchemaList);
+
+      // 継承スキーマ
+      // TODO: 本来は継承/回帰関係にあるスキーマをすべて表示する
+      const unionInheritSchemaList = lodash.union(
+        schema.inherit_schema,
+        schema.inherit_schema_default
+      );
+
+      const tmpInheritSchemaList = unionInheritSchemaList.map((inhId, i) => ({
+        valid: i + 1 <= schema.inherit_schema.length,
+        schema: GetSchemaInfo(inhId)!,
+      }));
+
+      setInheritSchemaList(tmpInheritSchemaList);
     }
 
     setSelectedSchemaParentInfo(GetParentSchemas(Number(selectedSchema)));
@@ -149,7 +172,9 @@ const SchemaManager = () => {
 
   // 親スキーマからみた表示、非表示がDBに保存されている状態から変更されているかを見る
   // 変更された親スキーマのリストを返す
-  const getNeedUpdateParents = (): JesgoDocumentSchema[] => {
+  const getNeedUpdateParents = (
+    isCheckOnly: boolean // trueの場合チェックのみ行う
+  ): JesgoDocumentSchema[] => {
     // 更新用スキーマリスト
     const updateSchemaList: JesgoDocumentSchema[] = [];
 
@@ -167,7 +192,9 @@ const SchemaManager = () => {
           parentFromChildSchema[i].valid &&
           !parentSchema.child_schema.includes(Number(selectedSchema))
         ) {
-          parentSchema.child_schema.push(Number(selectedSchema));
+          if (!isCheckOnly) {
+            parentSchema.child_schema.push(Number(selectedSchema));
+          }
           updateSchemaList.push(parentSchema);
         }
 
@@ -179,7 +206,9 @@ const SchemaManager = () => {
           const targetIndex = parentSchema.child_schema.indexOf(
             Number(selectedSchema)
           );
-          parentSchema.child_schema.splice(targetIndex, 1);
+          if (!isCheckOnly) {
+            parentSchema.child_schema.splice(targetIndex, 1);
+          }
           updateSchemaList.push(parentSchema);
         }
 
@@ -222,12 +251,26 @@ const SchemaManager = () => {
         baseSchemaInfo.child_schema = tempChildSchemaList;
         isChange = true;
       }
+
+      // 継承スキーマ
+      const tempInheritSchemaList: number[] = [];
+      for (let i = 0; i < inheritSchemaList.length; i++) {
+        if (inheritSchemaList[i].valid) {
+          tempInheritSchemaList.push(inheritSchemaList[i].schema.schema_id);
+        }
+      }
+      if (
+        !lodash.isEqual(tempInheritSchemaList, baseSchemaInfo.inherit_schema)
+      ) {
+        baseSchemaInfo.inherit_schema = tempInheritSchemaList;
+        isChange = true;
+      }
     }
     return isChange;
   };
 
   const leaveAlart = (): boolean => {
-    const tempSchemaList = getNeedUpdateParents();
+    const tempSchemaList = getNeedUpdateParents(true);
     const isChildEdited = isNeedUpdateSchema();
     if (tempSchemaList.length > 0 || isChildEdited) {
       // eslint-disable-next-line no-restricted-globals
@@ -313,9 +356,19 @@ const SchemaManager = () => {
     setIsLoading(false);
   };
 
+  // 基底スキーマ情報更新
+  useEffect(() => {
+    if (selectedSchemaInfo && selectedSchemaInfo.base_schema) {
+      const baseInfo = GetSchemaInfo(selectedSchemaInfo.base_schema);
+      setSelectedBaseSchemaInfo(baseInfo);
+    } else {
+      setSelectedBaseSchemaInfo(undefined);
+    }
+  }, [selectedSchemaInfo]);
+
   const updateSchema = async () => {
     // 更新用スキーマリストの初期値として変更済親スキーマのリストを取得(変更がない場合は空配列)
-    const updateSchemaList = getNeedUpdateParents();
+    const updateSchemaList = getNeedUpdateParents(false);
 
     // 自スキーマのサブスキーマ、子スキーマに更新があれば変更リストに追加する
     if (isNeedUpdateSchema()) {
@@ -341,6 +394,15 @@ const SchemaManager = () => {
         }
         baseSchemaInfo.child_schema = tempChildSchemaList;
 
+        // 継承スキーマ
+        const tempInheritSchemaList: number[] = [];
+        for (let i = 0; i < inheritSchemaList.length; i++) {
+          if (inheritSchemaList[i].valid) {
+            tempInheritSchemaList.push(inheritSchemaList[i].schema.schema_id);
+          }
+        }
+        baseSchemaInfo.inherit_schema = tempInheritSchemaList;
+
         updateSchemaList.push(baseSchemaInfo);
       }
     }
@@ -355,6 +417,7 @@ const SchemaManager = () => {
     if (confirm('初期設定を読み込みますか？')) {
       const tempSubSchemaList: schemaWithValid[] = [];
       const tempChildSchemaList: schemaWithValid[] = [];
+      const tempInheritSchemaList: schemaWithValid[] = [];
       if (selectedSchemaInfo !== undefined) {
         // サブスキーマを初期に戻す
         // eslint-disable-next-line no-restricted-syntax
@@ -376,8 +439,19 @@ const SchemaManager = () => {
           });
         }
 
+        // 継承スキーマを初期に戻す
+        // eslint-disable-next-line no-restricted-syntax
+        for (const schemaId of selectedSchemaInfo.inherit_schema_default) {
+          tempInheritSchemaList.push({
+            valid: true,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            schema: GetSchemaInfo(schemaId)!,
+          });
+        }
+
         setSubSchemaList(tempSubSchemaList);
         setChildSchemaList(tempChildSchemaList);
+        setInheritSchemaList(tempInheritSchemaList);
       }
     }
     // いいえであれば何もしない
@@ -399,11 +473,13 @@ const SchemaManager = () => {
   const CHECK_TYPE = {
     SUBSCHEMA: 0,
     CHILDSCHEMA: 1,
+    INHERITSCHEMA: 2,
   };
 
   const RELATION_TYPE = {
     PARENT: 0,
     CHILD: 1,
+    INHERIT: 2,
   };
   // チェックボックス状態変更
   const handleCheckClick = (relation: number, type: number, v = ''): void => {
@@ -462,6 +538,17 @@ const SchemaManager = () => {
         }
         setChildSchemaList(copySchemaList);
       }
+    } else if (relation === RELATION_TYPE.INHERIT) {
+      // 継承スキーマの場合
+      const copySchemaList = lodash.cloneDeep(inheritSchemaList);
+      // eslint-disable-next-line
+      for (let i = 0; i < copySchemaList.length; i++) {
+        const obj = copySchemaList[i];
+        if (obj.schema.schema_id === Number(v)) {
+          obj.valid = !obj.valid;
+        }
+      }
+      setInheritSchemaList(copySchemaList);
     }
   };
 
@@ -546,7 +633,7 @@ const SchemaManager = () => {
           <fieldset className="schema-manager-legend schema-tree">
             <legend>文書構造ビュー</legend>
             <div className="schema-tree">
-              <TreeView defaultExpanded={['root']}>
+              <TreeView defaultExpanded={['root']} selected={selectedSchema}>
                 <CustomTreeItem
                   nodeId="root"
                   label={
@@ -602,9 +689,20 @@ const SchemaManager = () => {
                         <span>継承スキーマ ： </span>
                         <Checkbox
                           className="show-flg-checkbox"
-                          checked={false}
-                          disabled={false}
+                          checked={!!selectedSchemaInfo.base_schema}
+                          readOnly
                         />
+                      </div>
+                      <div className="caption-and-block-long">
+                        <span>基底スキーマ ： </span>
+                        <span>
+                          {selectedBaseSchemaInfo &&
+                            selectedBaseSchemaInfo.title +
+                              (selectedBaseSchemaInfo.subtitle.length > 0
+                                ? ` ${selectedBaseSchemaInfo.subtitle}`
+                                : '')}
+                          {!selectedBaseSchemaInfo && '(なし)'}
+                        </span>
                       </div>
                       {/* TODO: スキーマダウンロードボタンサンプル */}
                       {/* <div>
@@ -688,6 +786,25 @@ const SchemaManager = () => {
                           />
                         </div>
                       </p>
+                    </fieldset>
+                    <fieldset className="schema-manager-legend">
+                      <legend>継承スキーマ</legend>
+                      <div>
+                        <p>
+                          <div className="caption-and-block">
+                            <span />
+                            <DndSortableTable
+                              checkType={[
+                                RELATION_TYPE.INHERIT,
+                                CHECK_TYPE.INHERITSCHEMA,
+                              ]}
+                              schemaList={inheritSchemaList}
+                              handleCheckClick={handleCheckClick}
+                              isDragDisabled
+                            />
+                          </div>
+                        </p>
+                      </div>
                     </fieldset>
                     <div className="SchemaManagerSaveButtonGroup">
                       <Button

@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import React, { useCallback } from 'react';
-import { ExpandMore, ChevronRight } from '@mui/icons-material';
+import React from 'react';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ChevronRight from '@mui/icons-material/ChevronRight';
 import CustomTreeItem from './CustomTreeItem';
 
 export type treeSchema = {

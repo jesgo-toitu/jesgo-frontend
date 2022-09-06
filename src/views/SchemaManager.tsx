@@ -72,6 +72,24 @@ const SchemaManager = () => {
   const [tree, setTree] = useState<treeSchema[]>([]);
   const dispatch = useDispatch();
 
+  // 表示に関係するスキーマの再取得を行う
+  const schemaReload = async () => {
+    // スキーマツリーを取得する
+    const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+
+    if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      const returned = treeApiObject.body as treeSchema[];
+      setTree(returned);
+    } else {
+      RemoveBeforeUnloadEvent();
+      navigate('/login');
+    }
+
+    // スキーマ取得処理
+    await storeSchemaInfo(dispatch);
+    setSelectedSchemaInfo(GetSchemaInfo(Number(selectedSchema)));
+  };
+
   useEffect(() => {
     // ブラウザの戻る・更新の防止
     AddBeforeUnloadEvent();
@@ -104,7 +122,7 @@ const SchemaManager = () => {
       }
 
       // スキーマ取得処理
-      await storeSchemaInfo(dispatch);
+      await schemaReload();
     };
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -333,20 +351,9 @@ const SchemaManager = () => {
       schemas
     );
     if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-      // スキーマツリーを取得する
-      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+      // スキーマ再取得処理
+      await schemaReload();
 
-      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        const returned = treeApiObject.body as treeSchema[];
-        setTree(returned);
-      } else {
-        RemoveBeforeUnloadEvent();
-        navigate('/login');
-      }
-
-      // スキーマ取得処理
-      await storeSchemaInfo(dispatch);
-      setSelectedSchemaInfo(GetSchemaInfo(Number(selectedSchema)));
       // eslint-disable-next-line no-alert
       alert('スキーマを更新しました');
     } else {
@@ -557,7 +564,7 @@ const SchemaManager = () => {
       alert(schemaUploadResponse.message);
       setSchemaUploadResponse({ message: '', resCode: undefined });
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      storeSchemaInfo(dispatch);
+      schemaReload();
       setIsLoading(false);
 
       // アップロード対象ファイルクリア

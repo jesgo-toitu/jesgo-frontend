@@ -27,10 +27,8 @@ import { csvHeader, patientListCsv } from '../common/MakeCsv';
 import { formatDate } from '../common/DBUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
-
-export type searchColumnsFromApi = {
-  cancerTypes: string[];
-};
+import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
+import { useDispatch } from 'react-redux';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -106,11 +104,12 @@ const Patients = () => {
   const [csvData, setCsvData] = useState<object[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const f = async () => {
       setIsLoading(true);
-
+      await storeSchemaInfo(dispatch);
       // 設定情報取得APIを呼ぶ
       const returnSettingApiObject = await apiAccess(
         METHOD_TYPE.GET,
@@ -463,7 +462,7 @@ const Patients = () => {
             <Nav pullRight>
               <Navbar.Text>{facilityName}</Navbar.Text>
               <NavItem>
-                <UserMenu title={userName} i={0} isConfirm={null}/>
+                <UserMenu title={userName} i={0} isConfirm={null} />
               </NavItem>
               <NavItem>
                 <SystemMenu title="設定" i={0} isConfirm={null} />

@@ -72,47 +72,8 @@ const SchemaManager = () => {
   const [tree, setTree] = useState<treeSchema[]>([]);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    // ブラウザの戻る・更新の防止
-    AddBeforeUnloadEvent();
-
-    const f = async () => {
-      // 設定情報取得APIを呼ぶ
-      const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
-
-      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        const returned = returnApiObject.body as settingsFromApi;
-        const setting: settings = {
-          facility_name: returned.facility_name,
-        };
-        setFacilityName(returned.facility_name);
-        setSettingJson(setting);
-      } else {
-        RemoveBeforeUnloadEvent();
-        navigate('/login');
-      }
-
-      // スキーマツリーを取得する
-      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
-
-      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        const returned = treeApiObject.body as treeSchema[];
-        setTree(returned);
-      } else {
-        RemoveBeforeUnloadEvent();
-        navigate('/login');
-      }
-
-      // スキーマ取得処理
-      await storeSchemaInfo(dispatch);
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    f();
-  }, []);
-
-  // 選択中のスキーマが変更されたとき
-  useEffect(() => {
+  // 選択中のスキーマと関係性のあるスキーマを更新する
+  const upDateSchemaRelation = () => {
     const schema = GetSchemaInfo(Number(selectedSchema));
     if (schema !== undefined) {
       setSelectedSchemaInfo(schema);
@@ -163,11 +124,73 @@ const SchemaManager = () => {
         valid: i + 1 <= schema.inherit_schema.length,
         schema: GetSchemaInfo(inhId)!,
       }));
-
       setInheritSchemaList(tmpInheritSchemaList);
     }
 
     setSelectedSchemaParentInfo(GetParentSchemas(Number(selectedSchema)));
+  };
+
+  // 表示に関係するスキーマの再取得を行う
+  const schemaReload = async () => {
+    // スキーマツリーを取得する
+    const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+
+    if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      const returned = treeApiObject.body as treeSchema[];
+      setTree(returned);
+    } else {
+      RemoveBeforeUnloadEvent();
+      navigate('/login');
+    }
+
+    // スキーマ取得処理
+    await storeSchemaInfo(dispatch);
+    setSelectedSchemaInfo(GetSchemaInfo(Number(selectedSchema)));
+    upDateSchemaRelation();
+  };
+
+  useEffect(() => {
+    // ブラウザの戻る・更新の防止
+    AddBeforeUnloadEvent();
+
+    const f = async () => {
+      // 設定情報取得APIを呼ぶ
+      const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
+
+      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = returnApiObject.body as settingsFromApi;
+        const setting: settings = {
+          facility_name: returned.facility_name,
+        };
+        setFacilityName(returned.facility_name);
+        setSettingJson(setting);
+      } else {
+        RemoveBeforeUnloadEvent();
+        navigate('/login');
+      }
+
+      // スキーマツリーを取得する
+      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+
+      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = treeApiObject.body as treeSchema[];
+        setTree(returned);
+      } else {
+        RemoveBeforeUnloadEvent();
+        navigate('/login');
+      }
+
+      // スキーマ取得処理
+      await schemaReload();
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
+  }, []);
+
+  // 選択中のスキーマが変更されたとき
+  useEffect(() => {
+    upDateSchemaRelation();
   }, [selectedSchema]);
 
   // 親スキーマからみた表示、非表示がDBに保存されている状態から変更されているかを見る
@@ -333,20 +356,9 @@ const SchemaManager = () => {
       schemas
     );
     if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-      // スキーマツリーを取得する
-      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+      // スキーマ再取得処理
+      await schemaReload();
 
-      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        const returned = treeApiObject.body as treeSchema[];
-        setTree(returned);
-      } else {
-        RemoveBeforeUnloadEvent();
-        navigate('/login');
-      }
-
-      // スキーマ取得処理
-      await storeSchemaInfo(dispatch);
-      setSelectedSchemaInfo(GetSchemaInfo(Number(selectedSchema)));
       // eslint-disable-next-line no-alert
       alert('スキーマを更新しました');
     } else {
@@ -557,7 +569,7 @@ const SchemaManager = () => {
       alert(schemaUploadResponse.message);
       setSchemaUploadResponse({ message: '', resCode: undefined });
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      storeSchemaInfo(dispatch);
+      schemaReload();
       setIsLoading(false);
 
       // アップロード対象ファイルクリア

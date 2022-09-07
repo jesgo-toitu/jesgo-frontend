@@ -9,6 +9,7 @@ import TreeView from '@mui/lab/TreeView';
 import Box from '@mui/material/Box';
 import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
+import { saveAs } from 'file-saver';
 import CustomTreeItem from '../components/Schemamanager/CustomTreeItem';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
@@ -717,17 +718,38 @@ const SchemaManager = () => {
                         </span>
                       </div>
                       {/* TODO: スキーマダウンロードボタンサンプル */}
-                      {/* <div>
+                      <div>
                         <Button
                           bsStyle="success"
-                          className="normal-button nomargin glyphicon glyphicon-download-alt"
+                          className="normal-button nomargin"
                           title="スキーマファイルをダウンロードします"
-                          onClick={schemaUpload}
+                          onClick={() => {
+                            const jsonStr = JSON.stringify(
+                              selectedSchemaInfo.document_schema,
+                              null,
+                              2
+                            );
+                            const blob = new Blob([jsonStr], {
+                              type: 'application/json',
+                            });
+                            let fileName = '';
+                            if (selectedSchemaInfo.schema_id_string) {
+                              // ファイル名はスキーマIDの先頭と末尾から"/"を除き、残りの"/"は"_"へ変換する
+                              fileName = selectedSchemaInfo.schema_id_string
+                                .replace(/^\/+|\/+$/g, '')
+                                .replace(/\//g, '_');
+                            }
+                            if (fileName) {
+                              saveAs(blob, `${fileName}.json`);
+                            } else {
+                              alert('ダウンロード不可なスキーマです。');
+                            }
+                          }}
                         >
                           {' '}
                           スキーマダウンロード
                         </Button>
-                      </div> */}
+                      </div>
                     </fieldset>
                     <fieldset className="schema-manager-legend">
                       <legend>上位スキーマ</legend>

@@ -77,33 +77,6 @@ const TabSchema = React.memo((props: Props) => {
     setUpdateFormData,
   } = props;
 
-  // schemaIdをもとに情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
-  const {
-    document_schema: documentSchema,
-    subschema,
-    child_schema: childSchema,
-  } = schemaInfo;
-
-  // unique=falseの追加可能なサブスキーマ
-  const addableSubSchemaIds = useMemo(() => {
-    const retIds: number[] = [];
-    if (subschema.length > 0) {
-      subschema.forEach((id) => {
-        const info = GetSchemaInfo(id);
-        if (info) {
-          if (
-            (info.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false) ===
-            false
-          ) {
-            retIds.push(id);
-          }
-        }
-      });
-    }
-    return retIds;
-  }, [subschema]);
-
   // 表示中のchild_schema
   const [dispChildSchemaIds, setDispChildSchemaIds] = useState<
     dispSchemaIdAndDocumentIdDefine[]
@@ -127,6 +100,36 @@ const TabSchema = React.memo((props: Props) => {
   // 子ドキュメントの更新有無
   const [updateChildFormData, setUpdateChildFormData] =
     useState<boolean>(false);
+
+  // schemaIdをもとに情報を取得
+  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
+  const {
+    document_schema: documentSchema,
+    subschema,
+    child_schema: childSchema,
+  } = schemaInfo;
+
+  // unique=falseの追加可能なサブスキーマまたは未作成サブスキーマ
+  const addableSubSchemaIds = useMemo(() => {
+    const retIds: number[] = [];
+    if (subschema.length > 0) {
+      subschema.forEach((id) => {
+        const info = GetSchemaInfo(id);
+        if (info) {
+          if (
+            (info.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false) ===
+              false ||
+            !dispSubSchemaIds.find(
+              (p) => p.deleted === false && p.schemaId === info.schema_id
+            )
+          ) {
+            retIds.push(id);
+          }
+        }
+      });
+    }
+    return retIds;
+  }, [subschema, dispSubSchemaIds]);
 
   const dispatch = useDispatch();
 

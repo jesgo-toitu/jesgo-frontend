@@ -7,7 +7,7 @@
     //   "removeComments": true,
       "strict": true,
       "esModuleInterop": true,
-      //"allowJs": true,
+      "allowJs": true,
       "moduleResolution": "node",
     //   "noImplicitAny": false,
       // TODO スキーマの仮宣言のため使用。リリース時要削除。

@@ -104,7 +104,7 @@ const RootSchema = React.memo((props: Props) => {
   } = schemaInfo;
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
 
-  // unique=falseの追加可能なサブスキーマ
+  // unique=falseの追加可能なサブスキーマまたは未作成サブスキーマ
   const addableSubSchemaIds = useMemo(() => {
     const retIds: number[] = [];
     if (subschema.length > 0) {
@@ -113,7 +113,10 @@ const RootSchema = React.memo((props: Props) => {
         if (info) {
           if (
             (info.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false) ===
-            false
+              false ||
+            !dispSubSchemaIds.find(
+              (p) => p.deleted === false && p.schemaId === info.schema_id
+            )
           ) {
             retIds.push(id);
           }
@@ -121,7 +124,7 @@ const RootSchema = React.memo((props: Props) => {
       });
     }
     return retIds;
-  }, [subschema]);
+  }, [subschema, dispSubSchemaIds]);
 
   // サブスキーマとサブスキーマから派生できる継承スキーマ一覧取得
   const subSchemaAndInherit = useMemo(() => {

@@ -129,8 +129,11 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         ))
     );
   };
+
+  const schemaInfo = GetSchemaInfo(schemaId);
+
   // 基底スキーマを取得
-  const baseSchemaId = GetSchemaInfo(schemaId)?.base_schema;
+  const baseSchemaId = schemaInfo?.base_schema;
   const baseSchema = baseSchemaId ? GetSchemaInfo(baseSchemaId) : undefined;
   const baseSchemaName = baseSchema
     ? `${baseSchema.title} ${baseSchema.subtitle}`
@@ -138,9 +141,9 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
   // 継承スキーマを取得
   const inheritIds = baseSchemaId
     ? GetSchemaInfo(baseSchemaId)?.inherit_schema
-    : GetSchemaInfo(schemaId)?.inherit_schema;
+    : schemaInfo?.inherit_schema;
 
-  const schemaDocument = GetSchemaInfo(schemaId)?.document_schema;
+  const schemaDocument = schemaInfo?.document_schema;
   let isTab = true;
   // ルートは必ずタブ。それ以外はsubschemastyleで判断
   if (Type !== COMP_TYPE.ROOT && Type !== COMP_TYPE.ROOT_TAB) {
@@ -354,6 +357,10 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         relatedSchemaIds.add(inhId)
       );
 
+      const isUnique =
+        !!targetSchemaInfo &&
+        (targetSchemaInfo.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false);
+
       // 子ドキュメントの追加
       // unique=falseのサブスキーマ
       if (addableSubSchemaIds && addableSubSchemaIds.length > 0) {
@@ -379,15 +386,40 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           copyIds.push(...dispSubSchemaIds);
 
           // 追加済みのサブスキーマ探索
-          for (let index = copyIds.length - 1; index >= 0; index -= 1) {
-            const item = copyIds[index];
-            if (
-              item.deleted === false &&
-              (item.schemaId === eventKey ||
-                relatedSchemaIds.has(item.schemaId))
-            ) {
-              subschemaLastIdx = index;
-              break;
+          if (!isUnique) {
+            for (let index = copyIds.length - 1; index >= 0; index -= 1) {
+              const item = copyIds[index];
+              if (
+                // unique=falseのサブスキーマの場合
+                item.deleted === false &&
+                (item.schemaId === eventKey ||
+                  relatedSchemaIds.has(item.schemaId))
+              ) {
+                subschemaLastIdx = index;
+                break;
+              }
+            }
+          } else if (schemaInfo && schemaInfo.subschema.length > 0) {
+
+            // 未作成サブスキーマの場合、本来のサブスキーマの並び順を参考に追加する
+
+            // 追加サブスキーマの並び順
+            const addSubSchemaIndex = schemaInfo.subschema.findIndex(
+              (id) => id === eventKey
+            );
+            for (let index = copyIds.length - 1; index >= 0; index -= 1) {
+              const item = copyIds[index];
+              const currentSubSchemaIndex = schemaInfo.subschema.findIndex(
+                (id) => id === item.schemaId
+              );
+
+              if (
+                item.deleted === false &&
+                addSubSchemaIndex >= currentSubSchemaIndex
+              ) {
+                subschemaLastIdx = index;
+                break;
+              }
             }
           }
         }
@@ -439,9 +471,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         };
         // unique=falseのサブスキーマを追加する場合、展開済みサブスキーマの末尾に追加する
         if (isSubSchema) {
-          if (subschemaLastIdx > -1) {
-            copyIds.splice(subschemaLastIdx + 1, 0, addItem);
-          }
+          copyIds.splice(subschemaLastIdx + 1, 0, addItem);
 
           if (setDispSubSchemaIds) {
             setDispSubSchemaIds([...copyIds]);

@@ -105,7 +105,6 @@ const PanelSchema = React.memo((props: Props) => {
     useState<boolean>(false);
 
   const dispatch = useDispatch();
-  const { state } = useLocation();
 
   const {
     document_schema: documentSchema,
@@ -115,7 +114,7 @@ const PanelSchema = React.memo((props: Props) => {
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
   const isTab = customSchema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'tab';
 
-  // unique=falseの追加可能なサブスキーマ
+  // unique=falseの追加可能なサブスキーマまたは未作成サブスキーマ
   const addableSubSchemaIds = useMemo(() => {
     const retIds: number[] = [];
     if (subschema.length > 0) {
@@ -124,7 +123,10 @@ const PanelSchema = React.memo((props: Props) => {
         if (info) {
           if (
             (info.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false) ===
-            false
+              false ||
+            !dispSubSchemaIds.find(
+              (p) => p.deleted === false && p.schemaId === info.schema_id
+            )
           ) {
             retIds.push(id);
           }
@@ -132,7 +134,7 @@ const PanelSchema = React.memo((props: Props) => {
       });
     }
     return retIds;
-  }, [subschema]);
+  }, [subschema, dispSubSchemaIds]);
 
   // console.log('---[PanelSchema]schemaInfo---');
   // console.log(schemaInfo);

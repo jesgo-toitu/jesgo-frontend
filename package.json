@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node start.js",
     "build": "webpack --progress --mode development",
-    "release-build": "webpack --progress --mode production",
+    "release-build": "powershell -File ./export/export.ps1",
     "postinstall": "patch-package",
     "lint": "eslint --ext .jsx,.js,.tsx,.ts src/",
     "fmt": "prettier --write src/**/*"

@@ -30,11 +30,6 @@
     "redux": "^4.1.2"
   },
   "devDependencies": {
-    "@types/file-saver": "^2.0.5",
-    "@types/lodash": "^4.14.178",
-    "@types/react-csv": "^1.1.2",
-    "@typescript-eslint/eslint-plugin": "^5.12.1",
-    "@typescript-eslint/parser": "^5.12.1",
     "@babel/core": "^7.16.0",
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-react": "^7.16.0",
@@ -44,14 +39,18 @@
     "@mui/lab": "^5.0.0-alpha.92",
     "@mui/material": "^5.9.2",
     "@rjsf/core": "^3.2.1",
+    "@types/file-saver": "^2.0.5",
+    "@types/lodash": "^4.14.178",
     "@types/react": "^17.0.37",
     "@types/react-beautiful-dnd": "^13.1.2",
     "@types/react-bootstrap": "^0.32.28",
+    "@types/react-csv": "^1.1.2",
     "@types/react-dom": "^17.0.11",
     "@types/react-router-dom": "^5.3.2",
+    "@typescript-eslint/eslint-plugin": "^5.12.1",
+    "@typescript-eslint/parser": "^5.12.1",
     "babel-loader": "^8.2.3",
     "css-loader": "^6.5.1",
-    "express": "^4.17.1",
     "eslint": "^8.9.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.4.0",
@@ -60,6 +59,7 @@
     "eslint-plugin-jsx-a11y": "^6.5.1",
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0",
+    "express": "^4.17.1",
     "json-schema": "^0.4.0",
     "patch-package": "^6.4.7",
     "prettier": "2.5.1",
@@ -68,6 +68,7 @@
     "ts-loader": "^9.2.6",
     "typescript": "^4.5.3",
     "webpack": "^5.64.4",
-    "webpack-cli": "^4.10.0"
+    "webpack-cli": "^4.10.0",
+    "winser": "^1.0.3"
   }
 }

@@ -15,6 +15,7 @@ Copy-Item -Path ..\image\ -Destination .\release\ -Recurse
 
 # その他単体ファイルをコピーする
 Copy-Item -Path ..\start.js -Destination .\release\
+Copy-Item -Path ..\package.json -Destination .\release\
 
 # node_modules格納のためのディレクトリを作成
 New-Item .\release\node_modules -ItemType Directory

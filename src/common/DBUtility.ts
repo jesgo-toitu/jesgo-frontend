@@ -15,6 +15,7 @@ import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import {
   RegistrationErrors,
   validateJesgoDocument,
+  VALIDATE_TYPE,
 } from './CaseRegistrationUtility';
 import { Const } from './Const';
 
@@ -310,9 +311,20 @@ export const hasJesgoCaseError = (
   setErrors(errors);
   dispatch({ type: 'SET_ERROR', extraErrors: errors });
 
-  if (errors.length > 0) {
-    messages.push('症例ドキュメントに入力エラーがあるため保存できません。');
-    messages.push('エラー一覧を確認し、再度保存してください。');
+  // 必須チェックのエラーのみの場合は保存できるようにする
+  for (let i = 0; i < errors.length; i += 1) {
+    const schemaError = errors[i];
+    if (
+      schemaError.validationResult.messages.filter(
+        (p) =>
+          p.validateType !== VALIDATE_TYPE.Message &&
+          p.validateType !== VALIDATE_TYPE.Required
+      ).length > 0
+    ) {
+      messages.push('症例ドキュメントに入力エラーがあるため保存できません。');
+      messages.push('エラー一覧を確認し、再度保存してください。');
+      break;
+    }
   }
 
   if (messages.length > 0) {

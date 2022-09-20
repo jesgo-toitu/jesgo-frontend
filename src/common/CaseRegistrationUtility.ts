@@ -22,9 +22,31 @@ import {} from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import { Const } from './Const';
 
+// validation種別
+export enum VALIDATE_TYPE {
+  Message, // メッセージ(エラーではない)
+  Required, // 必須入力エラー
+  MinimumItem, // array最小個数エラー
+  MaximumItem, // array最大個数エラー
+  MinimumNumber, // 数値最小値エラー
+  MaximumNumber, // 数値最大値エラー
+  Regex, // 正規表現エラー
+  Range, // 数値範囲外エラー
+  Constant, // 固定値エラー
+  Enum, // リスト外エラー
+  Number, // 非数値エラー
+  Integer, // 非整数エラー
+  Other, // その他エラー
+}
+
+export type ValidationItem = {
+  message: string;
+  validateType: VALIDATE_TYPE;
+};
+
 export type validationResult = {
   schema: JSONSchema7;
-  messages: string[];
+  messages: ValidationItem[];
 };
 
 /**
@@ -49,7 +71,7 @@ const validateFormData = (
   formData: any,
   argType: JSONSchema7TypeName | JSONSchema7TypeName[] | undefined = undefined
 ) => {
-  const messages: string[] = [];
+  const messages: ValidationItem[] = [];
   const type = argType || resultSchema.type;
 
   // validation用独自メッセージ
@@ -78,8 +100,8 @@ const validateFormData = (
           max.getTime() < value.getTime()
         ) {
           // messages.push(`未来日は入力できません。`);
-          messages.push(
-            getErrMsg(
+          messages.push({
+            message: getErrMsg(
               `${Const.INPUT_DATE_MIN.replace(
                 /-/g,
                 '/'
@@ -87,8 +109,9 @@ const validateFormData = (
                 /-/g,
                 '/'
               )}の範囲で入力してください。`
-            )
-          );
+            ),
+            validateType: VALIDATE_TYPE.Range,
+          });
         }
       }
 
@@ -98,15 +121,21 @@ const validateFormData = (
         const reg = new RegExp(pattern);
         const value: string = (formData as string) ?? '';
         if (value && !value.match(reg)) {
-          messages.push(getErrMsg(`${pattern}の形式で入力してください。`));
+          messages.push({
+            message: getErrMsg(`${pattern}の形式で入力してください。`),
+            validateType: VALIDATE_TYPE.Regex,
+          });
         }
       }
       if (resultSchema.const) {
         // const
         if (resultSchema.const !== formData) {
-          messages.push(
-            getErrMsg(`「${resultSchema.const as string}」のみ入力できます。`)
-          );
+          messages.push({
+            message: getErrMsg(
+              `「${resultSchema.const as string}」のみ入力できます。`
+            ),
+            validateType: VALIDATE_TYPE.Constant,
+          });
         }
       }
       if (resultSchema.enum) {
@@ -117,7 +146,10 @@ const validateFormData = (
           enumValues.forEach((enumValue: string) => {
             subMsgs.push(`「${enumValue}」`);
           });
-          messages.push(getErrMsg(`${subMsgs.join('、')}のみ入力できます。`));
+          messages.push({
+            message: getErrMsg(`${subMsgs.join('、')}のみ入力できます。`),
+            validateType: VALIDATE_TYPE.Enum,
+          });
         }
       }
     } else if (
@@ -128,13 +160,19 @@ const validateFormData = (
       let isNotNumber = false;
 
       if (Number.isNaN(value)) {
-        messages.push(getErrMsg(`数値で入力してください。`));
+        messages.push({
+          message: getErrMsg(`数値で入力してください。`),
+          validateType: VALIDATE_TYPE.Number,
+        });
         isNotNumber = true;
       } else if (
         type === Const.JSONSchema7Types.INTEGER &&
         !Number.isInteger(value)
       ) {
-        messages.push(getErrMsg(`整数で入力してください。`));
+        messages.push({
+          message: getErrMsg(`整数で入力してください。`),
+          validateType: VALIDATE_TYPE.Integer,
+        });
         isNotNumber = true;
       }
       // 数値の場合のみ以降のチェックを行う
@@ -142,25 +180,34 @@ const validateFormData = (
         if (resultSchema.const !== undefined) {
           // const
           if (resultSchema.const !== value) {
-            messages.push(
-              getErrMsg(`「${resultSchema.const as string}」のみ入力できます。`)
-            );
+            messages.push({
+              message: getErrMsg(
+                `「${resultSchema.const as string}」のみ入力できます。`
+              ),
+              validateType: VALIDATE_TYPE.Constant,
+            });
           }
         }
         if (resultSchema.minimum !== undefined) {
           // minimum
           if (value < resultSchema.minimum) {
-            messages.push(
-              getErrMsg(`${resultSchema.minimum}以上の値を入力してください。`)
-            );
+            messages.push({
+              message: getErrMsg(
+                `${resultSchema.minimum}以上の値を入力してください。`
+              ),
+              validateType: VALIDATE_TYPE.MinimumNumber,
+            });
           }
         }
         if (resultSchema.maximum !== undefined) {
           // maximum
           if (value > resultSchema.maximum) {
-            messages.push(
-              getErrMsg(`${resultSchema.maximum}以下の値を入力してください。`)
-            );
+            messages.push({
+              message: getErrMsg(
+                `${resultSchema.maximum}以下の値を入力してください。`
+              ),
+              validateType: VALIDATE_TYPE.MaximumNumber,
+            });
           }
         }
       }
@@ -203,7 +250,7 @@ const customSchemaValidation = (
   propName: string,
   required: string[]
 ) => {
-  const messages: string[] = [];
+  const messages: ValidationItem[] = [];
   const resultSchema = lodash.cloneDeep(schema);
   let errFlg = false;
 
@@ -238,18 +285,20 @@ const customSchemaValidation = (
         const minItems = resultSchema.minItems;
         if (formData.length < minItems) {
           errFlg = true;
-          messages.push(
-            `　　[ ${displayName} ] ${minItems}件以上入力してください。`
-          );
+          messages.push({
+            message: `　　[ ${displayName} ] ${minItems}件以上入力してください。`,
+            validateType: VALIDATE_TYPE.MinimumItem,
+          });
         }
       } else if (resultSchema.maxItems) {
         const maxItems = resultSchema.maxItems;
         // maxItemsと件数がイコールになると＋ボタンが表示されなくなるが、念のためエラーチェックも追加。
         if (formData.length > maxItems) {
           errFlg = true;
-          messages.push(
-            `　　[ ${displayName} ] ${maxItems}件以下で入力してください。`
-          );
+          messages.push({
+            message: `　　[ ${displayName} ] ${maxItems}件以下で入力してください。`,
+            validateType: VALIDATE_TYPE.MaximumItem,
+          });
         }
       }
 
@@ -265,9 +314,15 @@ const customSchemaValidation = (
         );
         if (res.messages.length > 0) {
           errFlg = true;
-          messages.push(`　[ ${displayName}:${index + 1}行目 ]`);
-          res.messages.forEach((message: string) => {
-            messages.push(`　　${message}`);
+          messages.push({
+            message: `　[ ${displayName}:${index + 1}行目 ]`,
+            validateType: VALIDATE_TYPE.Message,
+          });
+          res.messages.forEach((item: ValidationItem) => {
+            messages.push({
+              message: `　　${item.message}`,
+              validateType: item.validateType,
+            });
           });
         }
       });
@@ -284,7 +339,10 @@ const customSchemaValidation = (
     const requiredMsg = validateRequired(formData, propName, required);
     if (requiredMsg !== '') {
       errFlg = true;
-      messages.push(`　[ ${displayName} ] ${requiredMsg}`);
+      messages.push({
+        message: `　[ ${displayName} ] ${requiredMsg}`,
+        validateType: VALIDATE_TYPE.Required,
+      });
     } else {
       const oneOfMatchCondition: boolean[] = [];
       const subMessages: string[] = [];
@@ -305,27 +363,41 @@ const customSchemaValidation = (
         if (errMsgs.length === 0) {
           oneOfMatchCondition.push(true);
         } else {
-          subMessages.push(...errMsgs);
+          subMessages.push(...errMsgs.map((p) => p.message));
         }
       });
       if (oneOfMatchCondition.length === 0) {
         errFlg = true;
-        messages.push(`　[ ${displayName} ] ${subMessages.join('または、')}`);
+        messages.push({
+          message: `　[ ${displayName} ] ${subMessages.join('または、')}`,
+          validateType: VALIDATE_TYPE.Other,
+        });
       }
     }
   } else {
     // 通常のフィールド
-    const errMsgs: string[] = [];
+    const errMsgs: ValidationItem[] = [];
     const requiredMsg = validateRequired(formData, propName, required);
     if (requiredMsg !== '') {
-      errMsgs.push(requiredMsg);
+      errMsgs.push({
+        message: requiredMsg,
+        validateType: VALIDATE_TYPE.Required,
+      });
     } else {
       errMsgs.push(...validateFormData(resultSchema, formData));
     }
 
     if (errMsgs.length > 0) {
       errFlg = true;
-      messages.push(`　[ ${displayName} ] ${errMsgs.join('')}`);
+      messages.push({
+        message: `　[ ${displayName} ] ${errMsgs
+          .map((item) => item.message)
+          .join('')}`,
+        validateType:
+          errMsgs[0].validateType === VALIDATE_TYPE.Required
+            ? VALIDATE_TYPE.Required
+            : VALIDATE_TYPE.Other,
+      });
     }
   }
 
@@ -475,8 +547,8 @@ export const getErrMsg = (errorList: RegistrationErrors[]) => {
   if (errorList) {
     errorList.forEach((error) => {
       const documentMsg: string[] = [];
-      error.validationResult.messages.forEach((msg: string) => {
-        documentMsg.push(msg);
+      error.validationResult.messages.forEach((item: ValidationItem) => {
+        documentMsg.push(item.message);
       });
 
       if (documentMsg.length > 0) {

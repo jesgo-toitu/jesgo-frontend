@@ -80,10 +80,20 @@ const CustomDivForm = (props: CustomDivFormProp) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (classNames && isNotEmptyObject(formData[propName])) {
           // classNamesからrequired-itemを除外して赤枠を解除
+          const schemaItem = uiSchema[propName];
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          uiSchema[propName].classNames = classNames
+          schemaItem.classNames = classNames
             .replace(/required-item/g, '')
             .trim();
+
+          // itemsもあればそちらも解除する
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          if (schemaItem.items) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            schemaItem.items.classNames = schemaItem.items.classNames
+              .replace(/required-item/g, '')
+              .trim();
+          }
         }
       });
   }

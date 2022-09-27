@@ -38,6 +38,18 @@ export const formatDate = (dateObj: Date, separator = ''): string => {
   }
 };
 
+// 日付(Date形式)から時刻を取り出しhh:mm:ssなどの形式に変換
+export const formatTime = (dateObj: Date, separator = ''): string => {
+  try {
+    const h = `00${dateObj.getHours()}`.slice(-2);
+    const m = `00${dateObj.getMinutes()}`.slice(-2);
+    const s = `00${dateObj.getSeconds()}`.slice(-2);
+    return `${h}${separator}${m}${separator}${s}`;
+  } catch {
+    return '';
+  }
+};
+
 // 日付文字列をyyyy/MM/ddなどの形式に変換
 export const formatDateStr = (dtStr: string, separator: string): string => {
   if (!dtStr) return '';

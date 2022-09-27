@@ -24,7 +24,7 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
-import { formatDate } from '../common/DBUtility';
+import { formatDate, formatTime } from '../common/DBUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
@@ -102,6 +102,7 @@ const Patients = () => {
   const [tableMode, setTableMode] = useState('normal');
   const [facilityName, setFacilityName] = useState('');
   const [csvData, setCsvData] = useState<object[]>([]);
+  const [csvFileName, setCsvFileName] = useState<string>('');
 
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
@@ -496,8 +497,19 @@ const Patients = () => {
             <CSVLink
               data={csvData}
               headers={csvHeader}
+              filename={csvFileName}
               // eslint-disable-next-line
-              onClick={() => confirm('CSVファイルをダウンロードしますか？')}
+              onClick={() => {
+                if (confirm('CSVファイルをダウンロードしますか？')) {
+                  setCsvFileName(
+                    `jesgo_patients_list_${formatDate(new Date())}_${formatTime(
+                      new Date()
+                    )}`
+                  );
+                  return true;
+                }
+                return false;
+              }}
             >
               <Button bsStyle="success" className="normal-button">
                 CSV作成

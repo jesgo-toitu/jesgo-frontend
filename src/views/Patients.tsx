@@ -24,7 +24,7 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
-import { formatDate } from '../common/DBUtility';
+import { formatDate, formatTime } from '../common/DBUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
@@ -496,6 +496,9 @@ const Patients = () => {
             <CSVLink
               data={csvData}
               headers={csvHeader}
+              filename={`jesgo_patients_list_${formatDate(
+                new Date()
+              )}_${formatTime(new Date())}`}
               // eslint-disable-next-line
               onClick={() => confirm('CSVファイルをダウンロードしますか？')}
             >

@@ -102,6 +102,7 @@ const Patients = () => {
   const [tableMode, setTableMode] = useState('normal');
   const [facilityName, setFacilityName] = useState('');
   const [csvData, setCsvData] = useState<object[]>([]);
+  const [csvFileName, setCsvFileName] = useState<string>('');
 
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
@@ -496,11 +497,19 @@ const Patients = () => {
             <CSVLink
               data={csvData}
               headers={csvHeader}
-              filename={`jesgo_patients_list_${formatDate(
-                new Date()
-              )}_${formatTime(new Date())}`}
+              filename={csvFileName}
               // eslint-disable-next-line
-              onClick={() => confirm('CSVファイルをダウンロードしますか？')}
+              onClick={() => {
+                if (confirm('CSVファイルをダウンロードしますか？')) {
+                  setCsvFileName(
+                    `jesgo_patients_list_${formatDate(new Date())}_${formatTime(
+                      new Date()
+                    )}`
+                  );
+                  return true;
+                }
+                return false;
+              }}
             >
               <Button bsStyle="success" className="normal-button">
                 CSV作成

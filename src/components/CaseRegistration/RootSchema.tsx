@@ -7,14 +7,14 @@ import CustomDivForm from './JESGOCustomForm';
 import {
   GetBeforeInheritDocumentData,
   GetHiddenPropertyNames,
-  GetSchemaInfo,
   GetSchemaTitle,
+  hasFormDataInput,
   RegistrationErrors,
   SetSameSchemaTitleNumbering,
   SetTabStyle,
 } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
-import { CustomSchema } from './SchemaUtility';
+import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
 import {
   dispSchemaIdAndDocumentIdDefine,
   jesgoDocumentObjDefine,
@@ -86,6 +86,10 @@ const RootSchema = React.memo((props: Props) => {
   // ドキュメント追加検知用
   const [addedDocumentCount, setAddedDocumentCount] = useState<number>(-1);
 
+  // 子ドキュメントの更新有無
+  const [updateChildFormData, setUpdateChildFormData] =
+    useState<boolean>(false);
+
   const dispatch = useDispatch();
 
   // ルートのschema情報を取得
@@ -100,7 +104,7 @@ const RootSchema = React.memo((props: Props) => {
   } = schemaInfo;
   const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
 
-  // unique=falseの追加可能なサブスキーマ
+  // unique=falseの追加可能なサブスキーマまたは未作成サブスキーマ
   const addableSubSchemaIds = useMemo(() => {
     const retIds: number[] = [];
     if (subschema.length > 0) {
@@ -109,7 +113,10 @@ const RootSchema = React.memo((props: Props) => {
         if (info) {
           if (
             (info.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false) ===
-            false
+              false ||
+            !dispSubSchemaIds.find(
+              (p) => p.deleted === false && p.schemaId === info.schema_id
+            )
           ) {
             retIds.push(id);
           }
@@ -117,7 +124,7 @@ const RootSchema = React.memo((props: Props) => {
       });
     }
     return retIds;
-  }, [subschema]);
+  }, [subschema, dispSubSchemaIds]);
 
   // サブスキーマとサブスキーマから派生できる継承スキーマ一覧取得
   const subSchemaAndInherit = useMemo(() => {
@@ -313,7 +320,7 @@ const RootSchema = React.memo((props: Props) => {
           (p) => p.key === documentId
         );
       // 継承した場合は編集中のデータをセットする
-      if (saveParentDoc && isSchemaChange) {
+      if (saveParentDoc) {
         parentDoc = saveParentDoc;
       }
 
@@ -344,6 +351,8 @@ const RootSchema = React.memo((props: Props) => {
                 title: GetSchemaTitle(childDoc.value.schema_id),
               };
 
+              const cDocSchemaInfo = GetSchemaInfo(childDoc.value.schema_id);
+
               // サブスキーマに追加
               // unique=falseのサブスキーマの場合もサブスキーマに追加する
               if (
@@ -354,6 +363,12 @@ const RootSchema = React.memo((props: Props) => {
                   addableSubSchemaIds.includes(childDoc.value.schema_id)) &&
                 subSchemaAndInherit.includes(childDoc.value.schema_id)
               ) {
+                dispSubSchemaIds.push(item);
+              } else if (
+                cDocSchemaInfo?.base_schema &&
+                addableSubSchemaIds.includes(cDocSchemaInfo.base_schema)
+              ) {
+                // 継承元のスキーマがサブスキーマの場合もサブスキーマに追加
                 dispSubSchemaIds.push(item);
               } else {
                 // childスキーマに追加
@@ -472,13 +487,46 @@ const RootSchema = React.memo((props: Props) => {
 
   useEffect(() => {
     // 入力内容に応じてタブのフォントを設定
-    const hiddenItems = GetHiddenPropertyNames(customSchema);
 
-    // 非表示項目は除外
-    const copyFormData = lodash.omit(formData, hiddenItems);
+    // 変更前の現在のドキュメントの入力状態
+    const beforeInputState =
+      store.getState().formDataReducer.formDataInputStates.get(documentId) ??
+      false;
 
-    SetTabStyle(`root-tabs-tab-${tabId}`, copyFormData, schemaId);
-  }, [formData]);
+    let hasInput = false;
+    // 子のドキュメントはsaveDataから検索
+    const docIdList = dispSubSchemaIdsNotDeleted.map((p) => p.documentId);
+    docIdList.push(...dispChildSchemaIdsNotDeleted.map((p) => p.documentId));
+
+    const formDataInputStates =
+      store.getState().formDataReducer.formDataInputStates;
+    // eslint-disable-next-line no-restricted-syntax
+    for (const docId of docIdList) {
+      if (formDataInputStates.get(docId)) {
+        hasInput = true;
+        break;
+      }
+    }
+    setUpdateChildFormData(false);
+
+    // 子ドキュメントに入力がなければ自身のドキュメントチェック
+    if (!hasInput) {
+      const hiddenItems = GetHiddenPropertyNames(customSchema);
+      // 非表示項目は除外
+      const copyFormData = lodash.omit(formData, hiddenItems);
+      hasInput = hasFormDataInput(copyFormData, schemaId);
+    }
+
+    if (beforeInputState !== hasInput) {
+      SetTabStyle(`root-tabs-tab-${tabId}`, hasInput);
+
+      dispatch({
+        type: 'SET_FORMDATA_INPUT_STATE',
+        documentId,
+        hasFormDataInput: hasInput,
+      });
+    }
+  }, [formData, updateChildFormData]);
 
   return (
     <>
@@ -529,7 +577,8 @@ const RootSchema = React.memo((props: Props) => {
         setSaveResponse,
         setErrors,
         childTabSelectedFunc,
-        setChildTabSelectedFunc
+        setChildTabSelectedFunc,
+        setUpdateChildFormData
       )}
     </>
   );

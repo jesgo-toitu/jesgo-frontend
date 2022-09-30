@@ -6,6 +6,7 @@ import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { Const } from '../common/Const';
+import Loading from '../components/CaseRegistration/Loading';
 
 export type settingsFromApi = {
   hisid_alignment: string;
@@ -43,8 +44,12 @@ const Settings = () => {
     joed_registration_number: '',
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     const f = async () => {
+      setIsLoading(true);
+
       // 設定情報取得APIを呼ぶ
       const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
 
@@ -65,6 +70,8 @@ const Settings = () => {
       } else {
         navigate('/login');
       }
+
+      setIsLoading(false);
     };
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -211,6 +218,8 @@ const Settings = () => {
       return;
     }
 
+    setIsLoading(true);
+
     // 設定情報更新APIを呼ぶ
     const returnApiObject = await apiAccess(
       METHOD_TYPE.POST,
@@ -234,198 +243,207 @@ const Settings = () => {
       navigate('/patients');
     } else {
       // eslint-disable-next-line no-alert
-      alert('設定に失敗しました');
-      navigate('/patients');
+      alert('【エラー】\n設定に失敗しました');
+      // navigate('/patients');
     }
+
+    setIsLoading(false);
   };
 
   return (
-    <div className="relative">
-      <Navbar collapseOnSelect fixedTop>
-        <Navbar.Header>
-          <Navbar.Brand>
-            <img src="./image/logo.png" alt="JESGO" className="img" />
-          </Navbar.Brand>
-          <Navbar.Toggle />
-        </Navbar.Header>
-        <Navbar.Collapse>
-          <Nav>
-            <NavItem className="header-text">設定</NavItem>
-          </Nav>
-          <Nav pullRight>
-            <Navbar.Text>{facilityName}</Navbar.Text>
-            <NavItem>
-              <UserMenu title={userName} i={0} />
-            </NavItem>
-            <NavItem>
-              <SystemMenu title="設定" i={0} />
-            </NavItem>
-            <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
+    <>
+      <div className="relative">
+        <Navbar collapseOnSelect fixedTop>
+          <Navbar.Header>
+            <Navbar.Brand>
+              <img src="./image/logo.png" alt="JESGO" className="img" />
+            </Navbar.Brand>
+            <Navbar.Toggle />
+          </Navbar.Header>
+          <Navbar.Collapse>
+            <Nav>
+              <NavItem className="header-text">設定</NavItem>
+            </Nav>
+            <Nav pullRight>
+              <Navbar.Text>{facilityName}</Navbar.Text>
+              <NavItem>
+                <UserMenu title={userName} i={0} isConfirm={null}/>
+              </NavItem>
+              <NavItem>
+                <SystemMenu title="設定" i={0} isConfirm={null}/>
+              </NavItem>
+              <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
+            </Nav>
+          </Navbar.Collapse>
+        </Navbar>
 
-      <div className="page-menu">
-        <div className="search-form-closed flex">
-          <Button bsStyle="primary" onClick={submit} className="normal-button">
-            保存
-          </Button>
-          <div className="spacer10" />
-          <Button
-            onClick={clickCancel}
-            bsStyle="primary"
-            className="normal-button"
-          >
-            リストに戻る
-          </Button>
+        <div className="page-menu">
+          <div className="search-form-closed flex">
+            <Button
+              bsStyle="primary"
+              onClick={submit}
+              className="normal-button"
+            >
+              保存
+            </Button>
+            <div className="spacer10" />
+            <Button
+              onClick={clickCancel}
+              bsStyle="primary"
+              className="normal-button"
+            >
+              リストに戻る
+            </Button>
+          </div>
+        </div>
+
+        <div className="setting-list">
+          <Table striped className="setting-table">
+            <thead>
+              <tr>
+                <th>項目名</th>
+                <th>設定値</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  患者ID 桁揃え
+                  ※ハイフン/アルファベットを許容すると桁揃え設定は無効になります
+                </td>
+                <td>
+                  <Radio
+                    name="alignment"
+                    onChange={handleSettingInputs}
+                    value="true"
+                    inline
+                    checked={settingJson.hisid_alignment}
+                    disabled={
+                      settingJson.hisid_hyphen_enable ||
+                      settingJson.hisid_alphabet_enable
+                    }
+                  >
+                    あり
+                  </Radio>
+                  <Radio
+                    name="alignment"
+                    onChange={handleSettingInputs}
+                    value="false"
+                    inline
+                    checked={!settingJson.hisid_alignment}
+                    disabled={
+                      settingJson.hisid_hyphen_enable ||
+                      settingJson.hisid_alphabet_enable
+                    }
+                  >
+                    なし
+                  </Radio>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  患者ID 桁数
+                  ※ハイフン/アルファベットを許容すると桁数指定は無効になります
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    name="digit"
+                    value={settingJson.hisid_digit_string}
+                    onChange={handleSettingInputs}
+                    disabled={
+                      settingJson.hisid_hyphen_enable ||
+                      settingJson.hisid_alphabet_enable
+                    }
+                  />
+                  桁
+                </td>
+              </tr>
+              <tr>
+                <td>患者ID ハイフン許容</td>
+                <td>
+                  <Radio
+                    name="hyphen_enable"
+                    onChange={handleSettingInputs}
+                    value="true"
+                    inline
+                    checked={settingJson.hisid_hyphen_enable}
+                  >
+                    あり
+                  </Radio>
+                  <Radio
+                    name="hyphen_enable"
+                    onChange={handleSettingInputs}
+                    value="false"
+                    inline
+                    checked={!settingJson.hisid_hyphen_enable}
+                  >
+                    なし
+                  </Radio>
+                </td>
+              </tr>
+              <tr>
+                <td>患者ID アルファベット許容</td>
+                <td>
+                  <Radio
+                    name="alphabet_enable"
+                    onChange={handleSettingInputs}
+                    value="true"
+                    inline
+                    checked={settingJson.hisid_alphabet_enable}
+                  >
+                    あり
+                  </Radio>
+                  <Radio
+                    name="alphabet_enable"
+                    onChange={handleSettingInputs}
+                    value="false"
+                    inline
+                    checked={!settingJson.hisid_alphabet_enable}
+                  >
+                    なし
+                  </Radio>
+                </td>
+              </tr>
+              <tr>
+                <td>施設名称</td>
+                <td>
+                  <input
+                    type="text"
+                    name="facility_name"
+                    onChange={handleSettingInputs}
+                    value={settingJson.facility_name}
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td>日産婦腫瘍登録施設番号</td>
+                <td>
+                  <input
+                    type="text"
+                    name="jsog_registration_number"
+                    onChange={handleSettingInputs}
+                    value={settingJson.jsog_registration_number}
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td>日本産科婦人科内視鏡学会施設番号</td>
+                <td>
+                  <input
+                    type="text"
+                    name="joed_registration_number"
+                    onChange={handleSettingInputs}
+                    value={settingJson.joed_registration_number}
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </Table>
         </div>
       </div>
-
-      <div className="setting-list">
-        <Table striped className="setting-table">
-          <thead>
-            <tr>
-              <th>項目名</th>
-              <th>設定値</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                患者ID 桁揃え
-                ※ハイフン/アルファベットを許容すると桁揃え設定は無効になります
-              </td>
-              <td>
-                <Radio
-                  name="alignment"
-                  onChange={handleSettingInputs}
-                  value="true"
-                  inline
-                  checked={settingJson.hisid_alignment}
-                  disabled={
-                    settingJson.hisid_hyphen_enable ||
-                    settingJson.hisid_alphabet_enable
-                  }
-                >
-                  あり
-                </Radio>
-                <Radio
-                  name="alignment"
-                  onChange={handleSettingInputs}
-                  value="false"
-                  inline
-                  checked={!settingJson.hisid_alignment}
-                  disabled={
-                    settingJson.hisid_hyphen_enable ||
-                    settingJson.hisid_alphabet_enable
-                  }
-                >
-                  なし
-                </Radio>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                患者ID 桁数
-                ※ハイフン/アルファベットを許容すると桁数指定は無効になります
-              </td>
-              <td>
-                <input
-                  type="text"
-                  name="digit"
-                  value={settingJson.hisid_digit_string}
-                  onChange={handleSettingInputs}
-                  disabled={
-                    settingJson.hisid_hyphen_enable ||
-                    settingJson.hisid_alphabet_enable
-                  }
-                />
-                桁
-              </td>
-            </tr>
-            <tr>
-              <td>患者ID ハイフン許容</td>
-              <td>
-                <Radio
-                  name="hyphen_enable"
-                  onChange={handleSettingInputs}
-                  value="true"
-                  inline
-                  checked={settingJson.hisid_hyphen_enable}
-                >
-                  あり
-                </Radio>
-                <Radio
-                  name="hyphen_enable"
-                  onChange={handleSettingInputs}
-                  value="false"
-                  inline
-                  checked={!settingJson.hisid_hyphen_enable}
-                >
-                  なし
-                </Radio>
-              </td>
-            </tr>
-            <tr>
-              <td>患者ID アルファベット許容</td>
-              <td>
-                <Radio
-                  name="alphabet_enable"
-                  onChange={handleSettingInputs}
-                  value="true"
-                  inline
-                  checked={settingJson.hisid_alphabet_enable}
-                >
-                  あり
-                </Radio>
-                <Radio
-                  name="alphabet_enable"
-                  onChange={handleSettingInputs}
-                  value="false"
-                  inline
-                  checked={!settingJson.hisid_alphabet_enable}
-                >
-                  なし
-                </Radio>
-              </td>
-            </tr>
-            <tr>
-              <td>施設名称</td>
-              <td>
-                <input
-                  type="text"
-                  name="facility_name"
-                  onChange={handleSettingInputs}
-                  value={settingJson.facility_name}
-                />
-              </td>
-            </tr>
-            <tr>
-              <td>日産婦腫瘍登録施設番号</td>
-              <td>
-                <input
-                  type="text"
-                  name="jsog_registration_number"
-                  onChange={handleSettingInputs}
-                  value={settingJson.jsog_registration_number}
-                />
-              </td>
-            </tr>
-            <tr>
-              <td>日本産科婦人科内視鏡学会施設番号</td>
-              <td>
-                <input
-                  type="text"
-                  name="joed_registration_number"
-                  onChange={handleSettingInputs}
-                  value={settingJson.joed_registration_number}
-                />
-              </td>
-            </tr>
-          </tbody>
-        </Table>
-      </div>
-    </div>
+      {isLoading && <Loading />}
+    </>
   );
 };
 export default Settings;

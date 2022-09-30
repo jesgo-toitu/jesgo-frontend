@@ -3,31 +3,50 @@ import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 import DropdownButton from 'react-bootstrap/lib/DropdownButton';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
 import { useNavigate } from 'react-router-dom';
-import { isStaffEditEnable } from '../../common/StaffMaster';
+import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
 
-export const SystemMenu = (props: { title: string; i: number }) => {
-  const { title, i } = props;
+export const SystemMenu = (props: {
+  title: string;
+  i: number;
+  isConfirm: (() => boolean) | null;
+}) => {
+  const { title, i, isConfirm = null } = props;
   const navigate = useNavigate();
 
-  const handlUserMaintenance = useCallback(() => {
-    const auth = localStorage.getItem('is_system_manage_roll');
-    if (auth === 'true') navigate('/Stafflist');
-    // eslint-disable-next-line no-alert
-    else alert('権限がありません');
-  }, []);
+  const handlUserMaintenance = () => {
+    if (isConfirm === null || isConfirm()) {
+      const auth = localStorage.getItem('is_system_manage_roll');
+      if (auth === 'true') {
+        RemoveBeforeUnloadEvent();
+        navigate('/Stafflist');
+      }
+      // eslint-disable-next-line no-alert
+      else alert('権限がありません');
+    }
+  };
 
-  const handlSystemSettings = useCallback(() => {
-    const auth = localStorage.getItem('is_system_manage_roll');
-    if (auth === 'true') navigate('/Settings');
-    // eslint-disable-next-line no-alert
-    else alert('権限がありません');
-  }, []);
+  const handlSystemSettings = () => {
+    if (isConfirm === null || isConfirm()) {
+      const auth = localStorage.getItem('is_system_manage_roll');
+      if (auth === 'true') {
+        RemoveBeforeUnloadEvent();
+        navigate('/Settings');
+      }
+      // eslint-disable-next-line no-alert
+      else alert('権限がありません');
+    }
+  };
 
   const handlSchemaManager = useCallback(() => {
-    const auth = localStorage.getItem('is_system_manage_roll');
-    if (auth === 'true') navigate('/SchemaManager');
-    // eslint-disable-next-line no-alert
-    else alert('権限がありません');
+    if (isConfirm === null || isConfirm()) {
+      const auth = localStorage.getItem('is_system_manage_roll');
+      if (auth === 'true') {
+        RemoveBeforeUnloadEvent();
+        navigate('/SchemaManager');
+      }
+      // eslint-disable-next-line no-alert
+      else alert('権限がありません');
+    }
   }, []);
 
   return (

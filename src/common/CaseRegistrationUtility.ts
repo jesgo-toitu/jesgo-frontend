@@ -2,7 +2,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import lodash from 'lodash';
-import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
+import {
+  JSONSchema7,
+  JSONSchema7Definition,
+  JSONSchema7TypeName,
+} from 'json-schema';
 import store from '../store';
 import {
   dispSchemaIdAndDocumentIdDefine,
@@ -12,30 +16,37 @@ import {
 import {
   CustomSchema,
   getPropItemsAndNames,
+  GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import {} from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import { Const } from './Const';
 
-// スキーマIDからスキーマ情報を取得
-export const GetSchemaInfo = (id: number) => {
-  const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
-  const schemaList = schemaInfos.get(id);
-  if (schemaList && schemaList[0]) {
-    return schemaList[0];
-  }
-  return undefined;
-};
+// validation種別
+export enum VALIDATE_TYPE {
+  Message, // メッセージ(エラーではない)
+  Required, // 必須入力エラー
+  MinimumItem, // array最小個数エラー
+  MaximumItem, // array最大個数エラー
+  MinimumNumber, // 数値最小値エラー
+  MaximumNumber, // 数値最大値エラー
+  Regex, // 正規表現エラー
+  Range, // 数値範囲外エラー
+  Constant, // 固定値エラー
+  Enum, // リスト外エラー
+  Number, // 非数値エラー
+  Integer, // 非整数エラー
+  Other, // その他エラー
+}
 
-// ルートスキーマのschema_idを取得
-export const GetRootSchema = () => {
-  const roots = store.getState().schemaDataReducer.rootSchemas;
-  return roots;
+export type ValidationItem = {
+  message: string;
+  validateType: VALIDATE_TYPE;
 };
 
 export type validationResult = {
   schema: JSONSchema7;
-  messages: string[];
+  messages: ValidationItem[];
 };
 
 /**
@@ -52,14 +63,28 @@ export type RegistrationErrors = {
  * 入力値のvalidation
  * @param resultSchema
  * @param formData
+ * @param argType
  * @returns
  */
-const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
-  const messages: string[] = [];
-  const type = resultSchema.type;
+const validateFormData = (
+  resultSchema: JSONSchema7,
+  formData: any,
+  argType: JSONSchema7TypeName | JSONSchema7TypeName[] | undefined = undefined
+) => {
+  const messages: ValidationItem[] = [];
+  const type = argType || resultSchema.type;
+
+  // validation用独自メッセージ
+  const validationAlertMessage =
+    resultSchema[Const.EX_VOCABULARY.VALIDATION_ALERT] ?? '';
+
+  // エラーメッセージ取得Func
+  const getErrMsg = (defaultMessage: string) =>
+    // スキーマでエラーメッセージの内容が定義されていればそちらを優先する
+    validationAlertMessage === '' ? defaultMessage : validationAlertMessage;
 
   // 入力がある場合のみチェック
-  if (formData != null && typeof formData !== 'object') {
+  if (formData && typeof formData !== 'object') {
     if (type === Const.JSONSchema7Types.STRING) {
       if (resultSchema.format === 'date') {
         const value: Date = new Date(formData as string);
@@ -75,43 +100,56 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
           max.getTime() < value.getTime()
         ) {
           // messages.push(`未来日は入力できません。`);
-          messages.push(
-            `${Const.INPUT_DATE_MIN.replace(
-              /-/g,
-              '/'
-            )} ～ ${Const.INPUT_DATE_MAX().replace(
-              /-/g,
-              '/'
-            )}の範囲で入力してください。`
-          );
+          messages.push({
+            message: getErrMsg(
+              `${Const.INPUT_DATE_MIN.replace(
+                /-/g,
+                '/'
+              )} ～ ${Const.INPUT_DATE_MAX().replace(
+                /-/g,
+                '/'
+              )}の範囲で入力してください。`
+            ),
+            validateType: VALIDATE_TYPE.Range,
+          });
         }
       }
-      if (resultSchema.pattern != null) {
+
+      const pattern = resultSchema.pattern;
+      if (pattern) {
         // pattern
-        const reg = new RegExp(resultSchema.pattern);
+        const reg = new RegExp(pattern);
         const value: string = (formData as string) ?? '';
-        if (!value.match(reg)) {
-          // TODO 正規表現の部分をどうわかりやすく表現するか？
-          messages.push(`${resultSchema.pattern}の形式で入力してください。`);
+        if (value && !value.match(reg)) {
+          messages.push({
+            message: getErrMsg(`${pattern}の形式で入力してください。`),
+            validateType: VALIDATE_TYPE.Regex,
+          });
         }
       }
-      if (resultSchema.const != null) {
+      if (resultSchema.const) {
         // const
         if (resultSchema.const !== formData) {
-          messages.push(
-            `「${resultSchema.const as string}」のみ入力できます。`
-          );
+          messages.push({
+            message: getErrMsg(
+              `「${resultSchema.const as string}」のみ入力できます。`
+            ),
+            validateType: VALIDATE_TYPE.Constant,
+          });
         }
       }
-      if (resultSchema.enum != null) {
+      if (resultSchema.enum) {
         // enum
         const enumValues = resultSchema.enum as string[];
-        if (!enumValues.includes(formData as string)) {
+        if (formData !== '' && !enumValues.includes(formData as string)) {
           const subMsgs: string[] = [];
           enumValues.forEach((enumValue: string) => {
             subMsgs.push(`「${enumValue}」`);
           });
-          messages.push(`${subMsgs.join('、')}のみ入力できます。`);
+          messages.push({
+            message: getErrMsg(`${subMsgs.join('、')}のみ入力できます。`),
+            validateType: VALIDATE_TYPE.Enum,
+          });
         }
       }
     } else if (
@@ -122,39 +160,54 @@ const validateFormData = (resultSchema: JSONSchema7, formData: any) => {
       let isNotNumber = false;
 
       if (Number.isNaN(value)) {
-        messages.push(`数値で入力してください。`);
+        messages.push({
+          message: getErrMsg(`数値で入力してください。`),
+          validateType: VALIDATE_TYPE.Number,
+        });
         isNotNumber = true;
       } else if (
         type === Const.JSONSchema7Types.INTEGER &&
         !Number.isInteger(value)
       ) {
-        messages.push(`整数で入力してください。`);
+        messages.push({
+          message: getErrMsg(`整数で入力してください。`),
+          validateType: VALIDATE_TYPE.Integer,
+        });
         isNotNumber = true;
       }
       // 数値の場合のみ以降のチェックを行う
       if (!isNotNumber) {
-        if (resultSchema.const != null) {
+        if (resultSchema.const !== undefined) {
           // const
           if (resultSchema.const !== value) {
-            messages.push(
-              `「${resultSchema.const as string}」のみ入力できます。`
-            );
+            messages.push({
+              message: getErrMsg(
+                `「${resultSchema.const as string}」のみ入力できます。`
+              ),
+              validateType: VALIDATE_TYPE.Constant,
+            });
           }
         }
-        if (resultSchema.minimum != null) {
+        if (resultSchema.minimum !== undefined) {
           // minimum
           if (value < resultSchema.minimum) {
-            messages.push(
-              `${resultSchema.minimum}以上の値を入力してください。`
-            );
+            messages.push({
+              message: getErrMsg(
+                `${resultSchema.minimum}以上の値を入力してください。`
+              ),
+              validateType: VALIDATE_TYPE.MinimumNumber,
+            });
           }
         }
-        if (resultSchema.maximum != null) {
+        if (resultSchema.maximum !== undefined) {
           // maximum
           if (value > resultSchema.maximum) {
-            messages.push(
-              `${resultSchema.maximum}以下の値を入力してください。`
-            );
+            messages.push({
+              message: getErrMsg(
+                `${resultSchema.maximum}以下の値を入力してください。`
+              ),
+              validateType: VALIDATE_TYPE.MaximumNumber,
+            });
           }
         }
       }
@@ -197,21 +250,23 @@ const customSchemaValidation = (
   propName: string,
   required: string[]
 ) => {
-  const messages: string[] = [];
+  const messages: ValidationItem[] = [];
   const resultSchema = lodash.cloneDeep(schema);
   let errFlg = false;
 
-  if (resultSchema.properties != null) {
+  // 表示用項目名
+  const displayName = schema.title || propName;
+
+  if (resultSchema.properties) {
     // propertiesの場合はさらに下の階層を解析
     const targetSchema = getPropItemsAndNames(resultSchema);
     targetSchema.pNames.forEach((iname: string) => {
       const targetItem = targetSchema.pItems[iname] as JSONSchema7;
-      const itemName = targetItem.title ?? iname;
       const res = customSchemaValidation(
         targetItem,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         formData[iname] ?? {},
-        itemName,
+        iname,
         resultSchema.required ?? []
       );
       targetSchema.pItems[iname] = res.schema;
@@ -219,29 +274,31 @@ const customSchemaValidation = (
     });
   } else if (
     resultSchema.type === Const.JSONSchema7Types.ARRAY &&
-    resultSchema.items != null
+    resultSchema.items
   ) {
     // arrayの場合
     const targetSchema = resultSchema.items as JSONSchema7;
 
     if (Array.isArray(formData)) {
       // minItems,maxItemsの確認
-      if (resultSchema.minItems != null) {
+      if (resultSchema.minItems) {
         const minItems = resultSchema.minItems;
         if (formData.length < minItems) {
           errFlg = true;
-          messages.push(
-            `　　[ ${propName} ] ${minItems}件以上入力してください。`
-          );
+          messages.push({
+            message: `　　[ ${displayName} ] ${minItems}件以上入力してください。`,
+            validateType: VALIDATE_TYPE.MinimumItem,
+          });
         }
-      } else if (resultSchema.maxItems != null) {
+      } else if (resultSchema.maxItems) {
         const maxItems = resultSchema.maxItems;
         // maxItemsと件数がイコールになると＋ボタンが表示されなくなるが、念のためエラーチェックも追加。
         if (formData.length > maxItems) {
           errFlg = true;
-          messages.push(
-            `　　[ ${propName} ] ${maxItems}件以下で入力してください。`
-          );
+          messages.push({
+            message: `　　[ ${displayName} ] ${maxItems}件以下で入力してください。`,
+            validateType: VALIDATE_TYPE.MaximumItem,
+          });
         }
       }
 
@@ -257,49 +314,90 @@ const customSchemaValidation = (
         );
         if (res.messages.length > 0) {
           errFlg = true;
-          messages.push(`　[ ${propName}:${index + 1}行目 ]`);
-          res.messages.forEach((message: string) => {
-            messages.push(`　　${message}`);
+          messages.push({
+            message: `　[ ${displayName}:${index + 1}行目 ]`,
+            validateType: VALIDATE_TYPE.Message,
+          });
+          res.messages.forEach((item: ValidationItem) => {
+            messages.push({
+              message: `　　${item.message}`,
+              validateType: item.validateType,
+            });
           });
         }
       });
     }
-  } else if (resultSchema.oneOf != null && typeof formData !== 'object') {
+  } else if (
+    (resultSchema.oneOf || resultSchema.anyOf) &&
+    typeof formData !== 'object'
+  ) {
     // oneOfかつ中のアイテムにtypeがある＝複数type入力可能テキストボックス
-    const oneOfItems = resultSchema.oneOf as JSONSchema7[];
+    // anyOfの場合も同じ
+    const oneOfItems =
+      (resultSchema.oneOf as JSONSchema7[]) ||
+      (resultSchema.anyOf as JSONSchema7[]);
     const requiredMsg = validateRequired(formData, propName, required);
     if (requiredMsg !== '') {
       errFlg = true;
-      messages.push(`　[ ${propName} ] ${requiredMsg}`);
+      messages.push({
+        message: `　[ ${displayName} ] ${requiredMsg}`,
+        validateType: VALIDATE_TYPE.Required,
+      });
     } else {
       const oneOfMatchCondition: boolean[] = [];
       const subMessages: string[] = [];
+
+      // 正規表現パターン取得
+      let patternStr = '';
+      const patternObj = oneOfItems.find((p) => p.pattern);
+      if (patternObj) {
+        patternStr = patternObj.pattern ?? '';
+      }
+
       oneOfItems.forEach((oneOfItem: JSONSchema7) => {
-        const errMsgs = validateFormData(oneOfItem, formData);
+        const errMsgs = validateFormData(
+          oneOfItem,
+          formData,
+          patternStr ? resultSchema.type : undefined
+        );
         if (errMsgs.length === 0) {
           oneOfMatchCondition.push(true);
         } else {
-          subMessages.push(...errMsgs);
+          subMessages.push(...errMsgs.map((p) => p.message));
         }
       });
       if (oneOfMatchCondition.length === 0) {
         errFlg = true;
-        messages.push(`　[ ${propName} ] ${subMessages.join('または、')}`);
+        messages.push({
+          message: `　[ ${displayName} ] ${subMessages.join('または、')}`,
+          validateType: VALIDATE_TYPE.Other,
+        });
       }
     }
   } else {
     // 通常のフィールド
-    const errMsgs: string[] = [];
+    const errMsgs: ValidationItem[] = [];
     const requiredMsg = validateRequired(formData, propName, required);
     if (requiredMsg !== '') {
-      errMsgs.push(requiredMsg);
+      errMsgs.push({
+        message: requiredMsg,
+        validateType: VALIDATE_TYPE.Required,
+      });
     } else {
       errMsgs.push(...validateFormData(resultSchema, formData));
     }
 
     if (errMsgs.length > 0) {
       errFlg = true;
-      messages.push(`　[ ${propName} ] ${errMsgs.join('')}`);
+      messages.push({
+        message: `　[ ${displayName} ] ${errMsgs
+          .map((item) => item.message)
+          .join('')}`,
+        validateType:
+          errMsgs[0].validateType === VALIDATE_TYPE.Required
+            ? VALIDATE_TYPE.Required
+            : VALIDATE_TYPE.Other,
+      });
     }
   }
 
@@ -446,11 +544,11 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
 
 export const getErrMsg = (errorList: RegistrationErrors[]) => {
   const message: string[] = [];
-  if (errorList != null) {
+  if (errorList) {
     errorList.forEach((error) => {
       const documentMsg: string[] = [];
-      error.validationResult.messages.forEach((msg: string) => {
-        documentMsg.push(msg);
+      error.validationResult.messages.forEach((item: ValidationItem) => {
+        documentMsg.push(item.message);
       });
 
       if (documentMsg.length > 0) {
@@ -672,7 +770,7 @@ export const IsNotUpdate = () => {
 };
 
 // オブジェクトの空チェック
-const isNotEmptyObject = (obj: any) => {
+export const isNotEmptyObject = (obj: any) => {
   let hasInput = false;
 
   if (obj === undefined || obj === null) {
@@ -696,8 +794,13 @@ const isNotEmptyObject = (obj: any) => {
   return hasInput;
 };
 
-// フォームの入力内容に応じてタブのスタイルを設定
-export const SetTabStyle = (tabId: string, formData: any, schemaId: number) => {
+/**
+ * formData入力値判定
+ * @param formData
+ * @param schemaId
+ * @returns
+ */
+export const hasFormDataInput = (formData: any, schemaId: number) => {
   let hasInput = false;
 
   // フォームデータの定義がないスキーマ(タブしかないもの)は入力あり扱いとする
@@ -730,6 +833,11 @@ export const SetTabStyle = (tabId: string, formData: any, schemaId: number) => {
     }
   }
 
+  return hasInput;
+};
+
+// フォームの入力内容に応じてタブのスタイルを設定
+export const SetTabStyle = (tabId: string, hasInput: boolean) => {
   // タブ文字色を変えるのでAタグ取得
   const aTag = document.getElementById(tabId) as HTMLAnchorElement;
 

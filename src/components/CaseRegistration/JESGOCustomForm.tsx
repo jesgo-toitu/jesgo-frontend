@@ -7,7 +7,10 @@ import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
 import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/ValidationError';
-import { RegistrationErrors } from '../../common/CaseRegistrationUtility';
+import {
+  isNotEmptyObject,
+  RegistrationErrors,
+} from '../../common/CaseRegistrationUtility';
 import { CreateUISchema } from './UISchemaUtility';
 
 interface CustomDivFormProp extends FormProps<any> {
@@ -64,6 +67,35 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   if (isTabItem) {
     uiSchema['ui:ObjectFieldTemplate'] =
       JESGOFiledTemplete.TabItemFieldTemplate;
+  }
+
+  // 必須項目に入力があれば赤枠のスタイル解除
+  if (schema.required && schema.required.length > 0) {
+    Object.entries(uiSchema)
+      .filter((p) => schema.required?.includes(p[0]))
+      .forEach((item) => {
+        const propName = item[0];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const classNames = item[1].classNames as string;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (classNames && isNotEmptyObject(formData[propName])) {
+          // classNamesからrequired-itemを除外して赤枠を解除
+          const schemaItem = uiSchema[propName];
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          schemaItem.classNames = classNames
+            .replace(/required-item/g, '')
+            .trim();
+
+          // itemsもあればそちらも解除する
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          if (schemaItem.items) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            schemaItem.items.classNames = schemaItem.items.classNames
+              .replace(/required-item/g, '')
+              .trim();
+          }
+        }
+      });
   }
 
   // 描画の段階でstore側にフォームデータを保存しておく
@@ -158,6 +190,9 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     multiTypeTextBox: JESGOComp.MultiTypeTextBox,
     datalistTextBox: JESGOComp.DatalistTextBox,
     withUnits: JESGOComp.WithUnits,
+    layerRadioButton: JESGOComp.LayerRadioButton,
+    layerComboBox: JESGOComp.LayerComboBox,
+    customCheckboxesWidget: JESGOComp.CustomCheckboxesWidget,
   };
 
   return (

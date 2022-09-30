@@ -4,7 +4,7 @@ import ReactLoading from 'react-loading';
 // ローディング表示
 const Loading = () => {
   const style: { [key: string]: string } = {
-    position: 'absolute',
+    position: 'fixed',
     left: '0',
     top: '0',
     width: '100%',

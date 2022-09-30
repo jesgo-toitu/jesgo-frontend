@@ -66,6 +66,7 @@ export interface formDataState {
     deletedChildDocuments: jesgoDocumentObjDefine[];
   }[];
   processedDocumentIds: Set<string>;
+  formDataInputStates: Map<string, boolean>;
 }
 
 export interface dispSchemaIdAndDocumentIdDefine {
@@ -118,6 +119,8 @@ export interface formDataAction {
   isUpdateInput: boolean;
   isNotUniqueSubSchemaAdded: boolean;
   processedDocId: string;
+
+  hasFormDataInput: boolean;
 }
 
 // ユーザID取得
@@ -181,6 +184,7 @@ const initialState: formDataState = {
   selectedTabKeyName: '',
   deletedDocuments: [],
   processedDocumentIds: new Set(),
+  formDataInputStates: new Map(),
 };
 
 // 保存用オブジェクト作成(1スキーマ1オブジェクト)
@@ -397,12 +401,26 @@ const formDataReducer: Reducer<
                 i -= 1
               ) {
                 // 子のdocumentIdの中で同スキーマのものを検索
+                // 継承/回帰関係があればそちらも同スキーマとして扱う
                 const childDocId = parentDocData.value.child_documents[i];
+
+                // 追加対象のスキーマと継承/回帰関係にあるスキーマを取得
+                const relationalSchemaIds: Set<number> = new Set();
+                if (action.schemaInfo.base_schema) {
+                  relationalSchemaIds.add(action.schemaInfo.base_schema);
+                }
+                if (action.schemaInfo.inherit_schema) {
+                  action.schemaInfo.inherit_schema.forEach((inhId) =>
+                    relationalSchemaIds.add(inhId)
+                  );
+                }
+
                 const searchChildDoc = saveData.jesgo_document.find(
                   (p) =>
                     p.key === childDocId &&
-                    p.value.schema_id === action.schemaId &&
-                    p.value.deleted === false
+                    p.value.deleted === false &&
+                    (p.value.schema_id === action.schemaId ||
+                      relationalSchemaIds.has(p.value.schema_id))
                 );
                 if (searchChildDoc) {
                   // 同スキーマの右に追加(+1)
@@ -676,6 +694,15 @@ const formDataReducer: Reducer<
         copyState.addedDocumentCount = 0; // 追加済み件数はリセット
         copyState.tabSelectEvent = action.tabSelectEvent; // 追加後の実行されるTabSelectEvent
         copyState.selectedTabKeyName = action.selectedTabKeyName; // 選択するタブ名
+        break;
+      }
+
+      // ドキュメント毎の入力有無を更新
+      case 'SET_FORMDATA_INPUT_STATE': {
+        copyState.formDataInputStates.set(
+          action.documentId,
+          action.hasFormDataInput
+        );
         break;
       }
 

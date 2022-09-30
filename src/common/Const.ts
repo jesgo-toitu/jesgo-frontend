@@ -3,13 +3,14 @@ import { formatDateStr } from './DBUtility';
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {
   // JESGO Webアプリバージョン
-  export const VERSION = '1.0.0';
+  export const VERSION = '1.0.1';
 
   // UiSchemaプロパティ
   export const UI_WIDGET = {
     ORDER: 'ui:order',
     WIDGET: 'ui:widget',
     OPTIONS: 'ui:options',
+    AUTOCOMPLETE: 'ui:autocomplete',
     FIELD_TEMPLATE: 'ui:FieldTemplate',
     OBJECT_FIELD_TEMPLATE: 'ui:ObjectFieldTemplate',
     CLASS: 'classNames',
@@ -19,11 +20,21 @@ export namespace Const {
   export const EX_VOCABULARY = {
     REQUIRED: 'jesgo:required',
     UNIQUE: 'jesgo:unique',
+    VALIDATION_ALERT: 'jesgo:validationalert',
     UI_TEXTAREA: 'jesgo:ui:textarea',
     UI_LISTTYPE: 'jesgo:ui:listtype',
     UI_SUBSCHEMA_STYLE: 'jesgo:ui:subschemastyle',
     UI_VISIBLE_WHWN: 'jesgo:ui:visibleWhen',
     UI_HIDDEN: 'jesgo:ui:hidden',
+  } as const;
+
+  // jesgo:ui:listtypeに使用できる項目定義
+  export const JESGO_UI_LISTTYPE = {
+    LIST: 'list',
+    COMBO: 'combo',
+    SUGGEST_LIST: 'suggestlist',
+    SUGGEST_COMBO: 'suggestcombo',
+    BUTTONS: 'buttons',
   } as const;
 
   /**

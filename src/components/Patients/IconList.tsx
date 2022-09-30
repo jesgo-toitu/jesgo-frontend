@@ -12,12 +12,14 @@ const makeIconList = (props: { iconList: string[] }) => {
     chemo: '化',
     radio: '放',
     surgery: '手',
+    supportivecare: '緩和',
   };
   const { iconList } = props;
   const orderRule = [
     'surgery',
     'chemo',
     'radio',
+    'supportivecare',
     'complications',
     'recurrence',
     'surveillance',

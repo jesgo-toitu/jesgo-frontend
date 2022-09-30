@@ -22,6 +22,7 @@ import './SchemaManager.css';
 import SchemaTree, {
   SCHEMA_TYPE,
   treeSchema,
+  treeApiObject,
 } from '../components/Schemamanager/SchemaTree';
 
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
@@ -134,11 +135,16 @@ const SchemaManager = () => {
   // 表示に関係するスキーマの再取得を行う
   const schemaReload = async () => {
     // スキーマツリーを取得する
-    const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+    const treeApiReturnObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
 
-    if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-      const returned = treeApiObject.body as treeSchema[];
-      setTree(returned);
+    if (treeApiReturnObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      const returned = treeApiReturnObject.body as treeApiObject;
+      setTree(returned.treeSchema);
+      const newErrorMessages = lodash.cloneDeep(errorMessages);
+      for (let i = 0; i < returned.errorMessages.length; i++) {
+        newErrorMessages.push(returned.errorMessages[i]);
+      }
+      setErrorMessages(newErrorMessages);
     } else {
       RemoveBeforeUnloadEvent();
       navigate('/login');
@@ -171,11 +177,16 @@ const SchemaManager = () => {
       }
 
       // スキーマツリーを取得する
-      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+      const treeApiReturnObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
 
-      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        const returned = treeApiObject.body as treeSchema[];
-        setTree(returned);
+      if (treeApiReturnObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = treeApiReturnObject.body as treeApiObject;
+        setTree(returned.treeSchema);
+        const newErrorMessages = lodash.cloneDeep(errorMessages);
+        for (let i = 0; i < returned.errorMessages.length; i++) {
+          newErrorMessages.push(returned.errorMessages[i]);
+        }
+        setErrorMessages(newErrorMessages);
       } else {
         RemoveBeforeUnloadEvent();
         navigate('/login');

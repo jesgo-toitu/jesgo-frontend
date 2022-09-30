@@ -14,6 +14,11 @@ export type treeSchema = {
   inheritschema: treeSchema[];
 };
 
+export type treeApiObject = {
+  treeSchema: treeSchema[];
+  errorMessages: string[];
+};
+
 export const SCHEMA_TYPE = {
   SUBSCHEMA: 0,
   CHILDSCHEMA: 1,

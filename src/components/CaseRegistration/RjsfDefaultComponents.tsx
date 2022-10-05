@@ -17,4 +17,4 @@ export var IconButton = (props: any) => {
       <i className={`glyphicon glyphicon-${icon}`} />
     </button>
   );
-}
+};

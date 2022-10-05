@@ -267,10 +267,10 @@ const Settings = () => {
             <Nav pullRight>
               <Navbar.Text>{facilityName}</Navbar.Text>
               <NavItem>
-                <UserMenu title={userName} i={0} isConfirm={null}/>
+                <UserMenu title={userName} i={0} isConfirm={null} />
               </NavItem>
               <NavItem>
-                <SystemMenu title="設定" i={0} isConfirm={null}/>
+                <SystemMenu title="設定" i={0} isConfirm={null} />
               </NavItem>
               <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
             </Nav>

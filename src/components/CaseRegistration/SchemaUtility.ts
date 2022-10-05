@@ -44,7 +44,6 @@ export const getPropItemsAndNames = (item: JSONSchema7) => {
   return result;
 };
 
-
 // スキーマIDからスキーマ情報を取得
 export const GetSchemaInfo = (id: number) => {
   const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
@@ -64,57 +63,55 @@ export const GetRootSchema = () => {
 export type schemaWithValid = {
   valid: boolean;
   schema: JesgoDocumentSchema;
-}
+};
 
 export type parentSchemaList = {
   fromSubSchema: schemaWithValid[];
   fromChildSchema: schemaWithValid[];
-}
+};
 
 // 指定したスキーマIDをサブスキーマ、子スキーマに持つスキーマ情報のリストを取得
 export const GetParentSchemas = (childId: number) => {
   const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
   const schemaList = schemaInfos.values();
-  const parentFromSubSchemaList:schemaWithValid[] = [];
-  const parentFromChildSchemaList:schemaWithValid[] = [];
+  const parentFromSubSchemaList: schemaWithValid[] = [];
+  const parentFromChildSchemaList: schemaWithValid[] = [];
   // eslint-disable-next-line no-restricted-syntax
-  for(const v of schemaList){
-    
+  for (const v of schemaList) {
     // 子スキーマの初期設定に入っているかを確認
-    if(v[0].child_schema_default.includes(childId)){
+    if (v[0].child_schema_default.includes(childId)) {
       // 現表示の子スキーマに含まれているかを確認
       const isValid = v[0].child_schema.includes(childId);
       const schemaObj = {
         valid: isValid,
         schema: v[0],
-      }
+      };
       parentFromChildSchemaList.push(schemaObj);
     }
     // サブスキーマの初期設定に入っているかを確認
-    else if(v[0].subschema_default.includes(childId)){
+    else if (v[0].subschema_default.includes(childId)) {
       // 現表示のサブスキーマに含まれているかを確認
       const isValid = v[0].subschema.includes(childId);
       const schemaObj = {
         valid: isValid,
         schema: v[0],
-      }
+      };
       parentFromSubSchemaList.push(schemaObj);
     }
   }
-  const parentList:parentSchemaList = {
-    fromSubSchema:parentFromSubSchemaList,
-    fromChildSchema:parentFromChildSchemaList
+  const parentList: parentSchemaList = {
+    fromSubSchema: parentFromSubSchemaList,
+    fromChildSchema: parentFromChildSchemaList,
   };
-  
+
   return parentList;
-}
+};
 
 export type searchColumnsFromApi = {
   cancerTypes: string[];
 };
 
-export const storeSchemaInfo = async (dispatch:Dispatch<any>) => {
-
+export const storeSchemaInfo = async (dispatch: Dispatch<any>) => {
   // スキーマ取得処理
   const returnSchemaApiObject = await apiAccess(
     METHOD_TYPE.GET,
@@ -133,15 +130,13 @@ export const storeSchemaInfo = async (dispatch:Dispatch<any>) => {
     METHOD_TYPE.GET,
     `getRootSchemaIds`
   );
-  if (
-    returnRootSchemaIdsApiObject.statusNum === RESULT.NORMAL_TERMINATION
-  ) {
+  if (returnRootSchemaIdsApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
     dispatch({
       type: 'ROOT',
       rootSchemas: returnRootSchemaIdsApiObject.body,
     });
   }
-  
+
   // 検索カラム取得APIを呼ぶ
   const returnSearchColumnsApiObject = await apiAccess(
     METHOD_TYPE.GET,
@@ -149,17 +144,11 @@ export const storeSchemaInfo = async (dispatch:Dispatch<any>) => {
   );
 
   // 正常に取得できた場合検索カラムをlocalStorageに格納
-  if (
-    returnSearchColumnsApiObject.statusNum === RESULT.NORMAL_TERMINATION
-  ) {
-    const returned =
-      returnSearchColumnsApiObject.body as searchColumnsFromApi;
-    localStorage.setItem(
-      'cancer_type',
-      JSON.stringify(returned.cancerTypes)
-    );
+  if (returnSearchColumnsApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+    const returned = returnSearchColumnsApiObject.body as searchColumnsFromApi;
+    localStorage.setItem('cancer_type', JSON.stringify(returned.cancerTypes));
   }
-}
+};
 
 /**
  * schemaのマージ

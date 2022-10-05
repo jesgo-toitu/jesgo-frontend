@@ -47,7 +47,7 @@ const SchemaManager = () => {
   const navigate = useNavigate();
   const userName = localStorage.getItem('display_name');
   const [facilityName, setFacilityName] = useState('');
-  const [settingJson, setSettingJson] = useState<settings>({
+  const [, setSettingJson] = useState<settings>({
     facility_name: '',
   });
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
@@ -91,10 +91,13 @@ const SchemaManager = () => {
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < tempSubSchemaList.length; i++) {
         // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
-        currentSubSchemaList.push({
-          valid: i <= schema.subschema.length,
-          schema: GetSchemaInfo(tempSubSchemaList[i])!,
-        });
+        const tempSchema = GetSchemaInfo(tempSubSchemaList[i]);
+        if (tempSchema) {
+          currentSubSchemaList.push({
+            valid: i <= schema.subschema.length,
+            schema: tempSchema,
+          });
+        }
       }
       setSubSchemaList(currentSubSchemaList);
 
@@ -108,10 +111,13 @@ const SchemaManager = () => {
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < tempChildSchemaList.length; i++) {
         // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
-        currentChildSchemaList.push({
-          valid: i + 1 <= schema.child_schema.length,
-          schema: GetSchemaInfo(tempChildSchemaList[i])!,
-        });
+        const tempSchema = GetSchemaInfo(tempChildSchemaList[i]);
+        if (tempSchema) {
+          currentChildSchemaList.push({
+            valid: i + 1 <= schema.child_schema.length,
+            schema: tempSchema,
+          });
+        }
       }
       setChildSchemaList(currentChildSchemaList);
 
@@ -124,6 +130,7 @@ const SchemaManager = () => {
 
       const tmpInheritSchemaList = unionInheritSchemaList.map((inhId, i) => ({
         valid: i + 1 <= schema.inherit_schema.length,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         schema: GetSchemaInfo(inhId)!,
       }));
       setInheritSchemaList(tmpInheritSchemaList);

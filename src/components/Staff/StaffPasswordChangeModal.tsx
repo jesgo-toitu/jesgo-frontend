@@ -1,8 +1,6 @@
-import { update } from 'lodash';
+/* eslint-disable no-alert */
 import React, {
   MouseEventHandler,
-  ReactEventHandler,
-  SFC,
   useCallback,
   useEffect,
   useState,
@@ -13,29 +11,21 @@ import {
   ControlLabel,
   FormControl,
   FormGroup,
-  ModalProps,
 } from 'react-bootstrap';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
-import {
-  DISPLAYNAME_MAX_LENGTH,
-  loginIdCheck,
-  passwordCheck,
-  rollList,
-  StaffErrorMessage,
-} from '../../common/StaffMaster';
-import { staffData } from '../../views/Stafflist';
+import { passwordCheck, StaffErrorMessage } from '../../common/StaffMaster';
 import Loading from '../CaseRegistration/Loading';
 import ModalDialog from '../common/ModalDialog';
 import './StaffEditModal.css';
 
 export const StaffPasswordChangeModalDialog = (props: {
-  onHide: Function;
-  onOk: Function;
+  onHide: () => void;
+  onOk: () => void;
   onCancel: MouseEventHandler<Button>;
   show: boolean;
   title: string;
 }) => {
-  const { title } = props;
+  const { onHide, onOk, onCancel, show, title } = props;
   const [password, setPassword] = useState<string>('');
   const [passwordConfilm, setPasswordConfilm] = useState<string>('');
 
@@ -49,10 +39,9 @@ export const StaffPasswordChangeModalDialog = (props: {
   useEffect(() => {
     setPassword('');
     setPasswordConfilm('');
-  }, [props.show]);
+  }, [show]);
 
-  const onChangeItem = (event: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const onChangeItem = (event: React.FormEvent<FormControl>) => {
     const eventTarget: EventTarget & HTMLInputElement =
       event.target as EventTarget & HTMLInputElement;
 
@@ -72,8 +61,6 @@ export const StaffPasswordChangeModalDialog = (props: {
   };
 
   const updatePassword = async () => {
-    console.log('addUser');
-
     // password policy
     const errorMessage: string[] = [];
 
@@ -95,7 +82,6 @@ export const StaffPasswordChangeModalDialog = (props: {
     }
 
     if (errorMessage.length > 0) {
-      console.log(errorMessage);
       setMessage(errorMessage.join('\n'));
       setErrShow(true);
       return;
@@ -107,10 +93,9 @@ export const StaffPasswordChangeModalDialog = (props: {
       `changeUserPassword/`,
       { user_id: userId, password }
     );
-    console.log(returnApiObject);
     if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
       alert('変更しました');
-      props.onOk();
+      onOk();
     } else {
       alert('【エラー】\nパスワード変更に失敗しました');
     }
@@ -122,6 +107,7 @@ export const StaffPasswordChangeModalDialog = (props: {
     setIsLoading(false);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const errModalHide = useCallback(() => {}, []);
 
   const errModalOk = useCallback(() => {
@@ -134,7 +120,7 @@ export const StaffPasswordChangeModalDialog = (props: {
 
   return (
     <>
-      <Modal show={props.show} onHide={props.onHide}>
+      <Modal show={show} onHide={onHide}>
         <Modal.Header closeButton>
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
@@ -151,7 +137,7 @@ export const StaffPasswordChangeModalDialog = (props: {
               autoCorrect="off"
               type="password"
               placeholder="パスワードを入力"
-              onChange={onChangeItem}
+              onChange={(e) => onChangeItem(e)}
               value={password}
             />
           </FormGroup>
@@ -163,13 +149,13 @@ export const StaffPasswordChangeModalDialog = (props: {
               autoCorrect="off"
               type="password"
               placeholder="上記と同じパスワードを入力"
-              onChange={onChangeItem}
+              onChange={(e) => onChangeItem(e)}
               value={passwordConfilm}
             />
           </FormGroup>
         </Modal.Body>
         <Modal.Footer>
-          <Button bsStyle="secondary" onClick={props.onCancel}>
+          <Button bsStyle="secondary" onClick={onCancel}>
             キャンセル
           </Button>
           <Button bsStyle="primary" onClick={onSave}>

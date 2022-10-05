@@ -3,14 +3,12 @@ import lodash from 'lodash';
 import React, { useEffect, useState } from 'react';
 import Form, { FormProps, IChangeEvent } from '@rjsf/core';
 import { Dispatch } from 'redux';
+import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/ValidationError';
 import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
-import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/ValidationError';
-import {
-  isNotEmptyObject,
-  RegistrationErrors,
-} from '../../common/CaseRegistrationUtility';
+import { isNotEmptyObject } from '../../common/CaseRegistrationUtility';
+import { RegistrationErrors } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
 
 interface CustomDivFormProp extends FormProps<any> {

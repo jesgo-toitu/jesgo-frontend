@@ -15,7 +15,6 @@ import { getPropItemsAndNames } from './SchemaUtility';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace JESGOFiledTemplete {
-
   // https://github.com/rjsf-team/react-jsonschema-form/blob/4542cd254ffdc6dfaf55e8c9f6f17dc900d0d041/packages/core/src/components/fields/TitleField.js
   // Latest commit ef8b7fc
   // カスタムタイトル
@@ -56,7 +55,7 @@ export namespace JESGOFiledTemplete {
     return (
       <div className={classNames}>
         {label && (
-          <div className='control-label'>
+          <div className="control-label">
             <label className="label-type" htmlFor={id}>
               {label}
               {required ? '*' : null}

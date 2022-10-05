@@ -1,4 +1,4 @@
-import { formatDateStr } from './DBUtility';
+import { formatDateStr } from './CommonUtility';
 
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {

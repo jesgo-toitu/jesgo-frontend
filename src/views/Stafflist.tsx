@@ -10,16 +10,9 @@ import StaffTables from '../components/Staff/StaffTables';
 import { settingsFromApi } from './Settings';
 import './Stafflist.css';
 
-export type staffData = {
-  user_id: number;
-  name: string;
-  display_name: string;
-  roll_id: number;
-};
-
 export const Stafflist = () => {
   const navigate = useNavigate();
-  const userName = localStorage.getItem('display_name')!;
+  const userName = localStorage.getItem('display_name') ?? '';
   const [facilityName, setFacilityName] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);

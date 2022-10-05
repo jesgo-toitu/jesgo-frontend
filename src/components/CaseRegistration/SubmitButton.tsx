@@ -9,10 +9,8 @@ import store from '../../store/index';
 import SaveCommand, { responseResult } from '../../common/DBUtility';
 import { RESULT } from '../../common/ApiAccess';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
-import {
-  RegistrationErrors,
-  IsNotUpdate,
-} from '../../common/CaseRegistrationUtility';
+import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
+import { RegistrationErrors } from './Definition';
 
 interface ButtonProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;

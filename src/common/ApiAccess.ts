@@ -55,11 +55,9 @@ const apiAccess = async (
       ) as Config;
       config = configJson;
     })
-    .catch((err) => {
+    .catch(() => {
       config.config.endPointUrl = 'http://localhost:3000';
-      console.log(err);
     });
-  console.log(config.config.endPointUrl);
 
   let token = localStorage.getItem('token');
   if (token == null) {
@@ -69,16 +67,16 @@ const apiAccess = async (
   let payloadObj: AxiosRequestConfig<Record<string, any>> | undefined;
   if (body !== null) {
     // ZIPファイル送信時はファイル形式を替える
-    if(methodType === METHOD_TYPE.POST_ZIP){
+    if (methodType === METHOD_TYPE.POST_ZIP) {
       const data = new FormData();
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      data.append("schemas", body);
+      data.append('schemas', body);
       payloadObj = {
         headers: { token, 'content-type': 'multipart/form-data' },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data,
       };
-    }else{
+    } else {
       payloadObj = {
         headers: { token },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -99,8 +97,6 @@ const apiAccess = async (
           returnObj = response.data as ApiReturnObject;
         })
         .catch((err) => {
-          // ★TODO: ログ出す
-          console.log(err);
           errMsg = err;
         });
       break;
@@ -112,8 +108,6 @@ const apiAccess = async (
           returnObj = response.data as ApiReturnObject;
         })
         .catch((err) => {
-          // ★TODO: ログ出す
-          console.log(err);
           errMsg = err;
         });
       break;
@@ -125,25 +119,20 @@ const apiAccess = async (
           returnObj = response.data as ApiReturnObject;
         })
         .catch((err) => {
-          // ★TODO: ログ出す
-          console.log(err);
           errMsg = err;
         });
       break;
 
-      case METHOD_TYPE.POST_ZIP:
-        console.log(payloadObj.headers)
-        await axios
+    case METHOD_TYPE.POST_ZIP:
+      await axios
         .post(`${config.config.endPointUrl}${url}`, payloadObj.data, payloadObj)
         .then((response) => {
           returnObj = response.data as ApiReturnObject;
         })
         .catch((err) => {
-          // ★TODO: ログ出す
-          console.log(err);
           errMsg = err;
         });
-        break;
+      break;
 
     default:
   }
@@ -189,14 +178,12 @@ const apiAccess = async (
             returnObj = { statusNum: RESULT.ABNORMAL_TERMINATION, body: null };
           }
         })
-        .catch((err) => {
-          // ★TODO: ログ出す
+        .catch(() => {
           localStorage.removeItem('token');
           localStorage.removeItem('reflesh_token');
           localStorage.removeItem('user_id');
           localStorage.removeItem('display_name');
           localStorage.removeItem('roll_id');
-          console.log(err);
           returnObj = { statusNum: RESULT.ABNORMAL_TERMINATION, body: null };
         });
     } else {

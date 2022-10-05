@@ -17,6 +17,7 @@ import {
   Jumbotron,
 } from 'react-bootstrap';
 import { CSVLink } from 'react-csv';
+import { useDispatch } from 'react-redux';
 import UserTables, { userDataList } from '../components/Patients/UserTables';
 import './Patients.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
@@ -24,11 +25,10 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
-import { formatDate, formatTime } from '../common/DBUtility';
+import { formatDate, formatTime } from '../common/CommonUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
-import { useDispatch } from 'react-redux';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -95,8 +95,7 @@ const Patients = () => {
   const [detailSearchOpen, setDetailSearchOpen] = useState('hidden');
   const [noSearch, setNoSearch] = useState('table-cell');
   const [search, setSearch] = useState('hidden');
-  const [progressAndRecurrenceColumn, setProgressAndRecurrenceColumn] =
-    useState('hidden');
+  const [, setProgressAndRecurrenceColumn] = useState('hidden');
   const [listMode, setListMode] = useState(['blue', '']);
   const [userListJson, setUserListJson] = useState('');
   const [tableMode, setTableMode] = useState('normal');
@@ -150,34 +149,36 @@ const Patients = () => {
       // eslint-disable-next-line no-plusplus
       for (let index = 0; index < decordedJson.data.length; index++) {
         const userData = decordedJson.data[index];
-        const patientCsv: patientListCsv = {
-          patientId: userData.patientId,
-          patinetName: userData.patientName,
-          age: userData.age.toString(),
-          startDate: userData.startDate!,
-          lastUpdate: userData.lastUpdate,
-          diagnosisMajor: userData.diagnosisMajor,
-          diagnosisMinor: userData.diagnosisMinor,
-          advancedStage: userData.advancedStage,
-          recurrence: userData.status.includes('recurrence') ? '有' : '無',
-          chemotherapy: userData.status.includes('chemo') ? '有' : '無',
-          operation: userData.status.includes('surgery') ? '有' : '無',
-          radiotherapy: userData.status.includes('radio') ? '有' : '無',
-          supportiveCare: userData.status.includes('surveillance')
-            ? '有'
-            : '無',
-          registration:
-            // eslint-disable-next-line no-nested-ternary
-            userData.registration.includes('decline')
-              ? '拒否'
-              : userData.registration.includes('not_completed')
-              ? '無'
-              : '有',
-          death: userData.status.includes('death') ? '有' : '無',
-          threeYearPrognosis: `無`,
-          fiveYearPrognosis: `無`,
-        };
-        newData.push(patientCsv);
+        if (userData.startDate) {
+          const patientCsv: patientListCsv = {
+            patientId: userData.patientId,
+            patinetName: userData.patientName,
+            age: userData.age.toString(),
+            startDate: userData.startDate,
+            lastUpdate: userData.lastUpdate,
+            diagnosisMajor: userData.diagnosisMajor,
+            diagnosisMinor: userData.diagnosisMinor,
+            advancedStage: userData.advancedStage,
+            recurrence: userData.status.includes('recurrence') ? '有' : '無',
+            chemotherapy: userData.status.includes('chemo') ? '有' : '無',
+            operation: userData.status.includes('surgery') ? '有' : '無',
+            radiotherapy: userData.status.includes('radio') ? '有' : '無',
+            supportiveCare: userData.status.includes('surveillance')
+              ? '有'
+              : '無',
+            registration:
+              // eslint-disable-next-line no-nested-ternary
+              userData.registration.includes('decline')
+                ? '拒否'
+                : userData.registration.includes('not_completed')
+                ? '無'
+                : '有',
+            death: userData.status.includes('death') ? '有' : '無',
+            threeYearPrognosis: `無`,
+            fiveYearPrognosis: `無`,
+          };
+          newData.push(patientCsv);
+        }
       }
 
       setCsvData(newData);
@@ -498,8 +499,8 @@ const Patients = () => {
               data={csvData}
               headers={csvHeader}
               filename={csvFileName}
-              // eslint-disable-next-line
               onClick={() => {
+                // eslint-disable-next-line
                 if (confirm('CSVファイルをダウンロードしますか？')) {
                   setCsvFileName(
                     `jesgo_patients_list_${formatDate(new Date())}_${formatTime(

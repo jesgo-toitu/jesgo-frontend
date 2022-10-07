@@ -461,16 +461,21 @@ const Patients = () => {
                 腫瘍登録管理表示
               </NavItem>
             </Nav>
+            <Navbar.Text pullRight>Ver.{Const.VERSION}</Navbar.Text>
+
             <Nav pullRight>
-              <Navbar.Text>{facilityName}</Navbar.Text>
-              <NavItem>
-                <UserMenu title={userName} i={0} isConfirm={null} />
-              </NavItem>
-              <NavItem>
-                <SystemMenu title="設定" i={0} isConfirm={null} />
-              </NavItem>
-              <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
+              <Navbar.Brand>
+                <div>
+                  <UserMenu title={userName} i={0} isConfirm={null} />
+                </div>
+              </Navbar.Brand>
+              <Navbar.Brand>
+                <div>
+                  <SystemMenu title="設定" i={0} isConfirm={null} />
+                </div>
+              </Navbar.Brand>
             </Nav>
+            <Navbar.Text pullRight>{facilityName}&nbsp;&nbsp;</Navbar.Text>
           </Navbar.Collapse>
         </Navbar>
         <div className="page-menu">

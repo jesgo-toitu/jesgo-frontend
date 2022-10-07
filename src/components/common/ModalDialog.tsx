@@ -17,7 +17,7 @@ export const openModalDialog = (props: {
     if (type === 'Confirm') {
       return (
         <>
-          <Button bsStyle="secondary" onClick={onCancel}>
+          <Button bsStyle="default" onClick={onCancel}>
             いいえ
           </Button>
           <Button bsStyle="primary" onClick={onOk}>

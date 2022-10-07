@@ -155,7 +155,7 @@ export const StaffPasswordChangeModalDialog = (props: {
           </FormGroup>
         </Modal.Body>
         <Modal.Footer>
-          <Button bsStyle="secondary" onClick={onCancel}>
+          <Button bsStyle="default" onClick={onCancel}>
             キャンセル
           </Button>
           <Button bsStyle="primary" onClick={onSave}>

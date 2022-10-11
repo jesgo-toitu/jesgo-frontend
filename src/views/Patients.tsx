@@ -535,7 +535,10 @@ const Patients = () => {
                 <option value="all">すべて</option>
                 {makeSelectDate(UNIT_TYPE.YEAR, new Date(), 3).map(
                   (date: string) => (
-                    <option value={date}>{`${date}年`}</option>
+                    <option
+                      value={date}
+                      key={`treatmentStartYear_${date}`}
+                    >{`${date}年`}</option>
                   )
                 )}
               </FormControl>
@@ -549,7 +552,9 @@ const Patients = () => {
                 <option value="all">すべて</option>
                 {makeSelectDataFromStorage('cancer_type').map(
                   (value: string, index: number) => (
-                    <option value={index + 1}>{value}</option>
+                    <option value={index + 1} key={`cancer_type_${value}`}>
+                      {value}
+                    </option>
                   )
                 )}
               </FormControl>
@@ -611,7 +616,12 @@ const Patients = () => {
                 >
                   {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
                     (date: string) => (
-                      <option value={`${date}`}>{date}</option>
+                      <option
+                        value={`${date}`}
+                        key={`startOfDiagnosisDate_${date}`}
+                      >
+                        {date}
+                      </option>
                     )
                   )}
                 </FormControl>
@@ -623,7 +633,12 @@ const Patients = () => {
                 >
                   {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
                     (date: string) => (
-                      <option value={`${date}`}>{date}</option>
+                      <option
+                        value={`${date}`}
+                        key={`endOfDiagnosisDate_${date}`}
+                      >
+                        {date}
+                      </option>
                     )
                   )}
                 </FormControl>

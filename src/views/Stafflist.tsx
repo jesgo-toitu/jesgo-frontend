@@ -49,32 +49,32 @@ export const Stafflist = () => {
         <Navbar collapseOnSelect fixedTop>
           <Navbar.Header>
             <Navbar.Brand>
-              <img
-                src="./image/logo.png"
-                alt="JESGO"
-                className="navbar-brand img"
-              />
+              <img src="./image/logo.png" alt="JESGO" className="img" />
             </Navbar.Brand>
           </Navbar.Header>
           <Navbar.Collapse>
             <Nav>
               <NavItem className="header-text">利用者管理</NavItem>
             </Nav>
+            <Navbar.Text pullRight>Ver.{Const.VERSION}</Navbar.Text>
             <Nav pullRight>
-              <Navbar.Text>{facilityName}</Navbar.Text>
-              <NavItem>
-                <UserMenu title={userName} i={0} isConfirm={null} />
-              </NavItem>
-              <NavItem>
-                <SystemMenu title="設定" i={0} isConfirm={null} />
-              </NavItem>
+              <Navbar.Brand>
+                <div>
+                  <UserMenu title={userName} i={0} isConfirm={null} />
+                </div>
+              </Navbar.Brand>
+              <Navbar.Brand>
+                <div>
+                  <SystemMenu title="設定" i={0} isConfirm={null} />
+                </div>
+              </Navbar.Brand>
               <NavItem>
                 <Button onClick={clickCancel} bsStyle="primary" className="">
                   リストに戻る
                 </Button>
               </NavItem>
-              <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
             </Nav>
+            <Navbar.Text pullRight>{facilityName}&nbsp;&nbsp;</Navbar.Text>
           </Navbar.Collapse>
         </Navbar>
         <div className="search-result-staff">

@@ -52,6 +52,7 @@ export const makeTree = (props: {
       {schemas.map((item: treeSchema) => (
         <CustomTreeItem
           nodeId={item.schema_id.toString()}
+          key={item.schema_id.toString()}
           label={titleGenerator(schemaType, item.schema_title)}
           collapseIcon={
             item.subschema.length +

@@ -258,22 +258,25 @@ const Settings = () => {
             <Navbar.Brand>
               <img src="./image/logo.png" alt="JESGO" className="img" />
             </Navbar.Brand>
-            <Navbar.Toggle />
           </Navbar.Header>
           <Navbar.Collapse>
             <Nav>
               <NavItem className="header-text">設定</NavItem>
             </Nav>
+            <Navbar.Text pullRight>Ver.{Const.VERSION}</Navbar.Text>
             <Nav pullRight>
-              <Navbar.Text>{facilityName}</Navbar.Text>
-              <NavItem>
-                <UserMenu title={userName} i={0} isConfirm={null} />
-              </NavItem>
-              <NavItem>
-                <SystemMenu title="設定" i={0} isConfirm={null} />
-              </NavItem>
-              <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
+              <Navbar.Brand>
+                <div>
+                  <UserMenu title={userName} i={0} isConfirm={null} />
+                </div>
+              </Navbar.Brand>
+              <Navbar.Brand>
+                <div>
+                  <SystemMenu title="設定" i={0} isConfirm={null} />
+                </div>
+              </Navbar.Brand>
             </Nav>
+            <Navbar.Text pullRight>{facilityName}&nbsp;&nbsp;</Navbar.Text>
           </Navbar.Collapse>
         </Navbar>
 

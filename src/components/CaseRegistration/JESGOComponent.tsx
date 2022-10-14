@@ -1139,5 +1139,9 @@ export namespace JESGOComp {
     );
   }
   //#endregion 複数チェックボックス用
+
+  export function DeleteButton() {
+    return (<button>削除</button>)
+  }
 }
 /* eslint-enable */

@@ -457,6 +457,7 @@ const GetSchemaFromPropItem = (val: any) => {
 
   // フォームデータから生成したスキーマは編集不可とする
   schemaObj.readOnly = true;
+  schemaObj['jesgo:isNotExistProperty'] = true;
 
   return schemaObj;
 };

@@ -8,6 +8,13 @@ import {
   ArrayFieldTemplateProps,
   utils,
 } from '@rjsf/core';
+import {
+  Form,
+  ListGroup,
+  FormGroup,
+  ListGroupItem,
+  FormControl,
+} from 'react-bootstrap';
 import { JESGOComp } from './JESGOComponent';
 import { Const } from '../../common/Const';
 import './JESGOFieldTemplete.css';
@@ -15,7 +22,6 @@ import { getPropItemsAndNames } from './SchemaUtility';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace JESGOFiledTemplete {
-
   // https://github.com/rjsf-team/react-jsonschema-form/blob/4542cd254ffdc6dfaf55e8c9f6f17dc900d0d041/packages/core/src/components/fields/TitleField.js
   // Latest commit ef8b7fc
   // カスタムタイトル
@@ -56,9 +62,10 @@ export namespace JESGOFiledTemplete {
     return (
       <div className={classNames}>
         {label && (
-          <div className='control-label'>
+          <div className="control-label">
             <label className="label-type" htmlFor={id}>
               {label}
+              {`CustomLabelField`}
               {required ? '*' : null}
             </label>
             <JESGOComp.TypeLabel
@@ -98,6 +105,7 @@ export namespace JESGOFiledTemplete {
             // formContext={formContext}
           />
         )}
+        {'TabItemFieldTemplate'}
         {properties.map((prop) => prop.content)}
         {/* TODO：AdditionalPropertiesを制限事項にするので不要かも */}
         {utils.canExpand(schema, uiSchema, formData) && (
@@ -164,6 +172,7 @@ export namespace JESGOFiledTemplete {
           <legend id={id}>
             {/* eslint-disable-next-line react/destructuring-assignment */}
             {uiSchema['ui:title'] || props.title}
+            {`CustomArrayField`}
             {required && (
               <span className="required">{Const.REQUIRED_FIELD_SYMBOL}</span>
             )}
@@ -174,6 +183,7 @@ export namespace JESGOFiledTemplete {
             />
             {/* eslint-enable */}
             <JESGOComp.DescriptionToolTip descriptionText={description ?? ''} />
+            {schema['jesgo:isNotExistProperty'] && <JESGOComp.DeleteButton />}
           </legend>
           {/* eslint-disable react/destructuring-assignment */}
           <div
@@ -246,6 +256,7 @@ export namespace JESGOFiledTemplete {
         {(props.uiSchema['ui:title'] || props.title) && (
           <legend id={`${props.idSchema.$id}__title`}>
             {props.title || props.uiSchema['ui:title']}
+            {'CustomObjectField'}
             {required && (
               <span className="required">{Const.REQUIRED_FIELD_SYMBOL}</span>
             )}
@@ -254,6 +265,7 @@ export namespace JESGOFiledTemplete {
               pId={props.idSchema.$id ?? ''}
             />
             <JESGOComp.DescriptionToolTip descriptionText={description} />
+            {schema['jesgo:isNotExistProperty'] && <JESGOComp.DeleteButton />}
           </legend>
         )}
         {props.properties.map((prop) => prop.content)}
@@ -265,6 +277,49 @@ export namespace JESGOFiledTemplete {
           />
         )}
       </fieldset>
+    );
+  };
+
+  export const CustomFieldTemplate = (props: FieldTemplateProps) => {
+    const {
+      id,
+      classNames,
+      label,
+      help,
+      required,
+      rawDescription,
+      errors,
+      children,
+      schema,
+    } = props;
+
+    const isDispLabel =
+      id !== 'root' &&
+      // schema.type !== 'array' &&
+      schema.type !== 'object' &&
+      Boolean(label);
+
+    return (
+      <div className={classNames}>
+        {isDispLabel && (
+          <div className="control-label">
+            <label className="label-type" htmlFor={id}>
+              {label}
+              {required ? '*' : null}
+              {`CustomField`}
+            </label>
+            <JESGOComp.TypeLabel
+              requireType={schema['jesgo:required'] ?? []}
+              pId={id}
+            />
+            <JESGOComp.DescriptionToolTip descriptionText={rawDescription} />
+            {schema['jesgo:isNotExistProperty'] && <JESGOComp.DeleteButton />}
+          </div>
+        )}
+        {children}
+        {errors}
+        {help}
+      </div>
     );
   };
 }

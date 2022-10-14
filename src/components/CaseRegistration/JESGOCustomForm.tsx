@@ -200,6 +200,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
       className="input-form"
       tagName="div"
       ArrayFieldTemplate={JESGOFiledTemplete.ArrayFieldTemplate}
+      FieldTemplate={JESGOFiledTemplete.CustomFieldTemplate}
       onChange={onChange}
       fields={customFields}
       widgets={customWidgets}

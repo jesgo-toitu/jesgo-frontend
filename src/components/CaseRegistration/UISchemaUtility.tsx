@@ -235,6 +235,10 @@ const AddUiSchema = (
   // autocompleteはoffにしておく
   resultUiSchema[Const.UI_WIDGET.AUTOCOMPLETE] = 'off';
 
+  // if(!resultUiSchema[Const.UI_WIDGET.FIELD_TEMPLATE]) {
+  //   resultUiSchema[Const.UI_WIDGET.FIELD_TEMPLATE] = JESGOFiledTemplete.CustomFieldTemplate;
+  // }
+
   // eslint-disable-next-line no-param-reassign
   return resultUiSchema;
 };

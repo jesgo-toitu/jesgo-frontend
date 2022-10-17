@@ -29,6 +29,8 @@ import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
 import { useDispatch } from 'react-redux';
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -430,6 +432,41 @@ const Patients = () => {
     }
     setIsLoading(false);
   };
+
+  // #region プラグイン実行サンプルコード
+
+  // モジュールのFunc定義インターフェース
+  interface IPluginModule {
+    init: () => Promise<string>;
+  }
+
+  const GetModule: () => Promise<IPluginModule> = async () => {
+    // バックエンドから読み込み予定のスクリプト文字列
+    const readScriptText = Buffer.from('export async function init() { return "成功"; }').toString('base64');
+    const script = `data:text/javascript;base64,${readScriptText}`;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const pluginmodule: Promise<IPluginModule> = await import(
+      /* webpackIgnore: true */ script
+    ); // webpackIgnoreコメント必要
+    return pluginmodule;
+  };
+
+  useEffect(() => {
+
+    // モジュール読み込みからのinit実行
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    GetModule().then((module) => {
+      // eslint-disable-next-line no-void
+      void module.init().then((res) => {
+        if (res === '成功') {
+          alert('dynamic import success');
+        }
+      });
+    });
+  }, []);
+  // #endregion
 
   return (
     <>

@@ -48,6 +48,9 @@ module.exports = {
           }
         ]
       }
-    ]
+    ],
+    parser: {
+      javascript: { commonjsMagicComments: true },
+    },
   },
 };

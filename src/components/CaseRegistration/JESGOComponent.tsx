@@ -46,20 +46,17 @@ export namespace JESGOComp {
   };
 
   // "description"用ラベル
-  export const DescriptionToolTip = (props: { descriptionText: string }) => {
-    const { descriptionText } = props;
+  export const DescriptionToolTip = (props: {
+    descriptionText: string;
+    documentId: string;
+  }) => {
+    const { descriptionText, documentId } = props;
     if (!descriptionText) return null;
 
     const tooltip = (
-      <Tooltip>
+      <Tooltip id={`${documentId}_${descriptionText}`}>
         <div className="description-tooptip">
-          {/* <br>,<br/>タグを改行に置き換え */}
-          {descriptionText.split(/<br>|<br\/>/).map((item: string) => (
-            <>
-              {item}
-              <br />
-            </>
-          ))}
+          {descriptionText.replace(/<br>/g, '\n')}
         </div>
       </Tooltip>
     );

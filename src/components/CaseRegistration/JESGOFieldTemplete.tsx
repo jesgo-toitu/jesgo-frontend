@@ -32,6 +32,7 @@ export namespace JESGOFiledTemplete {
         /> */}
         <JESGOComp.DescriptionToolTip
           descriptionText={schema?.description ?? ''}
+          documentId={id ?? ''}
         />
       </legend>
     );
@@ -63,8 +64,12 @@ export namespace JESGOFiledTemplete {
             <JESGOComp.TypeLabel
               requireType={schema['jesgo:required'] ?? []}
               pId={id}
+              key={id}
             />
-            <JESGOComp.DescriptionToolTip descriptionText={rawDescription} />
+            <JESGOComp.DescriptionToolTip
+              descriptionText={rawDescription}
+              documentId={id ?? ''}
+            />
           </div>
         )}
         {children}
@@ -104,6 +109,7 @@ export namespace JESGOFiledTemplete {
             className="object-property-expand"
             onClick={onAddClick(schema)}
             disabled={disabled || readonly}
+            key={schema.$id}
           />
         )}
       </fieldset>
@@ -172,7 +178,10 @@ export namespace JESGOFiledTemplete {
               pId={props.idSchema.$id ?? ''}
             />
             {/* eslint-enable */}
-            <JESGOComp.DescriptionToolTip descriptionText={description ?? ''} />
+            <JESGOComp.DescriptionToolTip
+              descriptionText={description ?? ''}
+              documentId={id ?? ''}
+            />
           </legend>
           {/* eslint-disable react/destructuring-assignment */}
           <div
@@ -252,7 +261,10 @@ export namespace JESGOFiledTemplete {
               requireType={schema['jesgo:required'] ?? []}
               pId={props.idSchema.$id ?? ''}
             />
-            <JESGOComp.DescriptionToolTip descriptionText={description} />
+            <JESGOComp.DescriptionToolTip
+              descriptionText={description}
+              documentId={props.idSchema.$id ?? ''}
+            />
           </legend>
         )}
         {props.properties.map((prop) => prop.content)}

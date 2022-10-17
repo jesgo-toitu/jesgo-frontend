@@ -35,6 +35,7 @@
 /* descriptionのラベル */
 .description-tooptip {
   text-align: left;
+  white-space: pre-wrap;
 }
 
 /* 階層ドロップダウンのグループ */

@@ -991,7 +991,7 @@ export const isInfiniteLoopBlackList = (schemaId:number):boolean => {
   if(blackList.includes(schemaId)){
     const title = GetSchemaTitle(schemaId);
     // eslint-disable-next-line no-alert
-    alert(`${title}が循環参照をしているため自動展開を中止しました。スキーマ定義を見直してください。`)
+    alert(`${title}にエラーがあるため一部のスキーマが作成できませんでした。スキーマ定義を見直してください`)
     return true;
   }
   return false;

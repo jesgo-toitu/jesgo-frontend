@@ -141,7 +141,21 @@ export const storeSchemaInfo = async (dispatch:Dispatch<any>) => {
       rootSchemas: returnRootSchemaIdsApiObject.body,
     });
   }
-  
+
+  // ブラックリスト取得処理
+  const returnBlackListApiObject = await apiAccess(
+    METHOD_TYPE.GET,
+    `getblacklist`
+  );
+
+  if (returnBlackListApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+    const body = returnBlackListApiObject.body as {blackList: number[]};
+    dispatch({
+      type: 'BLACKLIST',
+      blackList: body.blackList,
+    });
+  }
+
   // 検索カラム取得APIを呼ぶ
   const returnSearchColumnsApiObject = await apiAccess(
     METHOD_TYPE.GET,

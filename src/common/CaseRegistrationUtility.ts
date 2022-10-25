@@ -979,3 +979,20 @@ export const GetBeforeInheritDocumentData = (
 
   return retDocs;
 };
+
+/**
+ * 無限ループの原因となっているスキーマかどうかを判定する
+ * 無限ループの原因である場合はその旨のアラートも出力する
+ * @param schemaId 調査対象のスキーマID
+ * @returns 無限ループの原因か否か
+ */
+export const isInfiniteLoopBlackList = (schemaId:number):boolean => {
+  const blackList:number[] = store.getState().schemaDataReducer.blackList;
+  if(blackList.includes(schemaId)){
+    const title = GetSchemaTitle(schemaId);
+    // eslint-disable-next-line no-alert
+    alert(`${title}が循環参照をしているため自動展開を中止しました。スキーマ定義を見直してください。`)
+    return true;
+  }
+  return false;
+}

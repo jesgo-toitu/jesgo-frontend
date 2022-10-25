@@ -13,6 +13,7 @@ import {
   SetSameSchemaTitleNumbering,
   hasFormDataInput,
   GetHiddenPropertyNames,
+  isInfiniteLoopBlackList,
 } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
 import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
@@ -212,40 +213,62 @@ const PanelSchema = React.memo((props: Props) => {
           title: GetSchemaTitle(id),
           isParentSchemaChange: isParentSchemaChange || isSchemaChange,
         };
-        dispSubSchemaIds.push(item);
+        if (isInfiniteLoopBlackList(item.schemaId) === false) {
+          dispSubSchemaIds.push(item);
 
-        let inheritDocuments: jesgoDocumentObjDefine[] = [];
-        // 継承した場合は削除したドキュメントの中から同じスキーマのドキュメントを取得
-        if (isSchemaChange) {
-          inheritDocuments = GetBeforeInheritDocumentData(documentId, id);
-        } else if (isParentSchemaChange) {
-          // 親スキーマで継承されていた場合は自身のdocIdは振り直しされているので全検索する
-          inheritDocuments = GetBeforeInheritDocumentData('', id);
-        }
-        if (inheritDocuments.length > 0) {
-          inheritDocuments.forEach((inheritItem) => {
-            const itemSchemaInfo = GetSchemaInfo(inheritItem.value.schema_id);
+          let inheritDocuments: jesgoDocumentObjDefine[] = [];
+          // 継承した場合は削除したドキュメントの中から同じスキーマのドキュメントを取得
+          if (isSchemaChange) {
+            inheritDocuments = GetBeforeInheritDocumentData(documentId, id);
+          } else if (isParentSchemaChange) {
+            // 親スキーマで継承されていた場合は自身のdocIdは振り直しされているので全検索する
+            inheritDocuments = GetBeforeInheritDocumentData('', id);
+          }
+          if (inheritDocuments.length > 0) {
+            inheritDocuments.forEach((inheritItem) => {
+              const itemSchemaInfo = GetSchemaInfo(inheritItem.value.schema_id);
 
-            // 同一サブスキーマが複数あった場合の対応
-            if (
-              inheritDocuments.length >
-              dispSubSchemaIds.filter((p) => p.schemaId === id).length
-            ) {
-              dispSubSchemaIds.push({
-                documentId: '',
+              // 同一サブスキーマが複数あった場合の対応
+              if (
+                inheritDocuments.length >
+                dispSubSchemaIds.filter((p) => p.schemaId === id).length
+              ) {
+                dispSubSchemaIds.push({
+                  documentId: '',
+                  schemaId: inheritItem.value.schema_id,
+                  deleted: false,
+                  compId: '',
+                  title: GetSchemaTitle(inheritItem.value.schema_id),
+                  isParentSchemaChange: isParentSchemaChange || isSchemaChange,
+                });
+              }
+
+              dispatch({
+                type: 'ADD_CHILD',
                 schemaId: inheritItem.value.schema_id,
-                deleted: false,
-                compId: '',
-                title: GetSchemaTitle(inheritItem.value.schema_id),
-                isParentSchemaChange: isParentSchemaChange || isSchemaChange,
+                documentId: '',
+                formData: inheritItem.value.document,
+                parentDocumentId: documentId,
+                dispChildSchemaIds: dispSubSchemaIds,
+                setDispChildSchemaIds: setDispSubSchemaIds,
+                isRootSchema: false,
+                schemaInfo: itemSchemaInfo,
+                setAddedDocumentCount,
               });
-            }
 
+              dispatch({
+                type: 'DATA_TRANSFER_PROCESSED',
+                processedDocId: inheritItem.key,
+              });
+            });
+          } else if (!item.documentId) {
+            // 新規時は必ずドキュメント作成する
+            const itemSchemaInfo = GetSchemaInfo(item.schemaId);
             dispatch({
               type: 'ADD_CHILD',
-              schemaId: inheritItem.value.schema_id,
-              documentId: '',
-              formData: inheritItem.value.document,
+              schemaId: item.schemaId,
+              documentId: item.documentId,
+              formData: {},
               parentDocumentId: documentId,
               dispChildSchemaIds: dispSubSchemaIds,
               setDispChildSchemaIds: setDispSubSchemaIds,
@@ -253,27 +276,7 @@ const PanelSchema = React.memo((props: Props) => {
               schemaInfo: itemSchemaInfo,
               setAddedDocumentCount,
             });
-
-            dispatch({
-              type: 'DATA_TRANSFER_PROCESSED',
-              processedDocId: inheritItem.key,
-            });
-          });
-        } else if (!item.documentId) {
-          // 新規時は必ずドキュメント作成する
-          const itemSchemaInfo = GetSchemaInfo(item.schemaId);
-          dispatch({
-            type: 'ADD_CHILD',
-            schemaId: item.schemaId,
-            documentId: item.documentId,
-            formData: {},
-            parentDocumentId: documentId,
-            dispChildSchemaIds: dispSubSchemaIds,
-            setDispChildSchemaIds: setDispSubSchemaIds,
-            isRootSchema: false,
-            schemaInfo: itemSchemaInfo,
-            setAddedDocumentCount,
-          });
+          }
         }
       });
     } else if (dispSubSchemaIds.length > 0) {

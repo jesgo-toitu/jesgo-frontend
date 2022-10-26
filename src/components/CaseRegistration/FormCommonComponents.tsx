@@ -6,7 +6,6 @@ import { useDispatch } from 'react-redux';
 import {
   convertTabKey,
   IsNotUpdate,
-  RegistrationErrors,
 } from '../../common/CaseRegistrationUtility';
 import SaveCommand, { responseResult } from '../../common/DBUtility';
 import store from '../../store';
@@ -14,15 +13,14 @@ import {
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
-import { ShowSaveDialogState } from '../../views/Registration';
+import {
+  RegistrationErrors,
+  ShowSaveDialogState,
+  ChildTabSelectedFuncObj,
+} from './Definition';
 import PanelSchema from './PanelSchema';
 import SaveConfirmDialog from './SaveConfirmDialog';
 import TabSchema from './TabSchema';
-
-export interface ChildTabSelectedFuncObj {
-  fnAddDocument: ((isTabSelected: boolean, eventKey: any) => void) | undefined;
-  fnSchemaChange: ((isTabSelected: boolean, eventKey: any) => void) | undefined;
-}
 
 export const createTab = (
   parentTabsId: string,
@@ -234,7 +232,7 @@ export const createTabs = (
     let targetTabId = tabId;
     if (tabId) {
       // 数値の場合はドキュメント追加時なので正しいタブ名に変換する
-      if (!isNaN(Number(tabId))) {
+      if (!Number.isNaN(Number(tabId))) {
         const tabIndex = parseInt(tabId, 10);
         if (allTabIds.length > tabIndex) {
           const convTabKey = allTabIds[tabIndex];

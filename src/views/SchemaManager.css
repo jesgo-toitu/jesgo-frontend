@@ -49,7 +49,7 @@ fieldset.schema-detail {
 }
 
 .relation-table {
-  width:70%;
+  width: 70%;
 }
 
 .sortable-table {
@@ -125,6 +125,8 @@ fieldset.schema-detail {
 
 div.caption-and-block {
   display: flex;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
 }
 div.caption-and-block > span:nth-child(1) {
   width: 9rem;

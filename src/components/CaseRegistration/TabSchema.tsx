@@ -7,7 +7,6 @@ import CustomDivForm from './JESGOCustomForm';
 import {
   GetBeforeInheritDocumentData,
   GetHiddenPropertyNames,
-  RegistrationErrors,
   GetSchemaTitle,
   SetSameSchemaTitleNumbering,
   SetTabStyle,
@@ -22,11 +21,8 @@ import {
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
 import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
-import {
-  ChildTabSelectedFuncObj,
-  createPanels,
-  createTabs,
-} from './FormCommonComponents';
+import { createPanels, createTabs } from './FormCommonComponents';
+import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
 import { responseResult } from '../../common/DBUtility';
 import '../../views/Registration.css';

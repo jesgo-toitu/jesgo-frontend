@@ -5,7 +5,7 @@ import MenuItem from 'react-bootstrap/lib/MenuItem';
 import { useNavigate } from 'react-router-dom';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
 import { StaffPasswordChangeModalDialog } from '../Staff/StaffPasswordChangeModal';
-import { ModalDialog } from './ModalDialog';
+import ModalDialog from './ModalDialog';
 
 export const UserMenu = (props: {
   title: string | null;
@@ -27,6 +27,7 @@ export const UserMenu = (props: {
     setShowPassowrdChange(true);
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const modalHide = useCallback(() => {}, []);
 
   const modalOk = useCallback(() => {

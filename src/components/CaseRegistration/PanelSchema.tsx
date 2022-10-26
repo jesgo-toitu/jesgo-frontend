@@ -4,11 +4,9 @@ import lodash from 'lodash';
 import { Panel } from 'react-bootstrap';
 import { useDispatch } from 'react-redux';
 import '../../views/Registration.css';
-import { useLocation } from 'react-router-dom';
 import CustomDivForm from './JESGOCustomForm';
 import {
   GetBeforeInheritDocumentData,
-  RegistrationErrors,
   GetSchemaTitle,
   SetSameSchemaTitleNumbering,
   hasFormDataInput,
@@ -22,11 +20,8 @@ import {
   jesgoDocumentObjDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
-import {
-  ChildTabSelectedFuncObj,
-  createPanels,
-  createTabs,
-} from './FormCommonComponents';
+import { createPanels, createTabs } from './FormCommonComponents';
+import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import { responseResult } from '../../common/DBUtility';

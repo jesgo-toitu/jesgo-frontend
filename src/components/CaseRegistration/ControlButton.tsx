@@ -11,7 +11,7 @@ import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import store from '../../store/index';
-import { ChildTabSelectedFuncObj } from './FormCommonComponents';
+import { ChildTabSelectedFuncObj } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
 
@@ -82,7 +82,6 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     formData,
     setSelectedTabKey,
-    subSchemaCount,
     tabSelectEvents,
     disabled,
   } = props;
@@ -231,6 +230,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             title = findItem.title;
           }
 
+          // eslint-disable-next-line
           if (confirm(`[${title}]を削除します。よろしいですか？`)) {
             // 自身を削除
             if (setDispSchemaIds != null) {
@@ -400,7 +400,6 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               }
             }
           } else if (schemaInfo && schemaInfo.subschema.length > 0) {
-
             // 未作成サブスキーマの場合、本来のサブスキーマの並び順を参考に追加する
 
             // 追加サブスキーマの並び順

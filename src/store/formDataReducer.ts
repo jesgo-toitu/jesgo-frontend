@@ -2,7 +2,7 @@ import lodash from 'lodash';
 import { Reducer } from 'redux';
 import React from 'react';
 import { JesgoDocumentSchema } from './schemaDataReducer';
-import { RegistrationErrors } from '../common/CaseRegistrationUtility';
+import { RegistrationErrors } from '../components/CaseRegistration/Definition';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -298,8 +298,6 @@ const formDataReducer: Reducer<
   const copyState = lodash.cloneDeep(state); // 現在の状態をコピー
 
   const { formDatas, saveData } = copyState;
-
-  console.log(`action.type=${action.type}`);
 
   if (isHeaderInfoAction(action)) {
     // ヘッダの患者情報入力

@@ -22,6 +22,7 @@ import './SchemaManager.css';
 import SchemaTree, {
   SCHEMA_TYPE,
   treeSchema,
+  treeApiObject,
 } from '../components/Schemamanager/SchemaTree';
 
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
@@ -46,7 +47,7 @@ const SchemaManager = () => {
   const navigate = useNavigate();
   const userName = localStorage.getItem('display_name');
   const [facilityName, setFacilityName] = useState('');
-  const [settingJson, setSettingJson] = useState<settings>({
+  const [, setSettingJson] = useState<settings>({
     facility_name: '',
   });
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
@@ -90,10 +91,13 @@ const SchemaManager = () => {
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < tempSubSchemaList.length; i++) {
         // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
-        currentSubSchemaList.push({
-          valid: i <= schema.subschema.length,
-          schema: GetSchemaInfo(tempSubSchemaList[i])!,
-        });
+        const tempSchema = GetSchemaInfo(tempSubSchemaList[i]);
+        if (tempSchema) {
+          currentSubSchemaList.push({
+            valid: i <= schema.subschema.length,
+            schema: tempSchema,
+          });
+        }
       }
       setSubSchemaList(currentSubSchemaList);
 
@@ -107,10 +111,13 @@ const SchemaManager = () => {
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < tempChildSchemaList.length; i++) {
         // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
-        currentChildSchemaList.push({
-          valid: i + 1 <= schema.child_schema.length,
-          schema: GetSchemaInfo(tempChildSchemaList[i])!,
-        });
+        const tempSchema = GetSchemaInfo(tempChildSchemaList[i]);
+        if (tempSchema) {
+          currentChildSchemaList.push({
+            valid: i + 1 <= schema.child_schema.length,
+            schema: tempSchema,
+          });
+        }
       }
       setChildSchemaList(currentChildSchemaList);
 
@@ -123,6 +130,7 @@ const SchemaManager = () => {
 
       const tmpInheritSchemaList = unionInheritSchemaList.map((inhId, i) => ({
         valid: i + 1 <= schema.inherit_schema.length,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         schema: GetSchemaInfo(inhId)!,
       }));
       setInheritSchemaList(tmpInheritSchemaList);
@@ -134,11 +142,16 @@ const SchemaManager = () => {
   // 表示に関係するスキーマの再取得を行う
   const schemaReload = async () => {
     // スキーマツリーを取得する
-    const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+    const treeApiReturnObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
 
-    if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-      const returned = treeApiObject.body as treeSchema[];
-      setTree(returned);
+    if (treeApiReturnObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      const returned = treeApiReturnObject.body as treeApiObject;
+      setTree(returned.treeSchema);
+      const newErrorMessages = lodash.cloneDeep(errorMessages);
+      for (let i = 0; i < returned.errorMessages.length; i++) {
+        newErrorMessages.push(returned.errorMessages[i]);
+      }
+      setErrorMessages(newErrorMessages);
     } else {
       RemoveBeforeUnloadEvent();
       navigate('/login');
@@ -171,11 +184,16 @@ const SchemaManager = () => {
       }
 
       // スキーマツリーを取得する
-      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+      const treeApiReturnObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
 
-      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        const returned = treeApiObject.body as treeSchema[];
-        setTree(returned);
+      if (treeApiReturnObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = treeApiReturnObject.body as treeApiObject;
+        setTree(returned.treeSchema);
+        const newErrorMessages = lodash.cloneDeep(errorMessages);
+        for (let i = 0; i < returned.errorMessages.length; i++) {
+          newErrorMessages.push(returned.errorMessages[i]);
+        }
+        setErrorMessages(newErrorMessages);
       } else {
         RemoveBeforeUnloadEvent();
         navigate('/login');
@@ -587,22 +605,25 @@ const SchemaManager = () => {
           <Navbar.Brand>
             <img src="./image/logo.png" alt="JESGO" className="img" />
           </Navbar.Brand>
-          <Navbar.Toggle />
         </Navbar.Header>
         <Navbar.Collapse>
           <Nav>
             <NavItem className="header-text">スキーマ管理</NavItem>
           </Nav>
+          <Navbar.Text pullRight>Ver.{Const.VERSION}</Navbar.Text>
           <Nav pullRight>
-            <Navbar.Text>{facilityName}</Navbar.Text>
-            <NavItem>
-              <UserMenu title={userName} i={0} isConfirm={leaveAlart} />
-            </NavItem>
-            <NavItem>
-              <SystemMenu title="設定" i={0} isConfirm={leaveAlart} />
-            </NavItem>
-            <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
+            <Navbar.Brand>
+              <div>
+                <UserMenu title={userName} i={0} isConfirm={null} />
+              </div>
+            </Navbar.Brand>
+            <Navbar.Brand>
+              <div>
+                <SystemMenu title="設定" i={0} isConfirm={null} />
+              </div>
+            </Navbar.Brand>
           </Nav>
+          <Navbar.Text pullRight>{facilityName}&nbsp;&nbsp;</Navbar.Text>
         </Navbar.Collapse>
       </Navbar>
 
@@ -637,7 +658,7 @@ const SchemaManager = () => {
         {errorMessages.length > 0 && (
           <Panel className="error-msg-panel-sm">
             {errorMessages.map((error: string) => (
-              <p>{error}</p>
+              <p key={error}>{error}</p>
             ))}
           </Panel>
         )}
@@ -754,90 +775,78 @@ const SchemaManager = () => {
                     <fieldset className="schema-manager-legend">
                       <legend>上位スキーマ</legend>
                       <div>
-                        <p>
-                          <div className="caption-and-block">
-                            <span>必須スキーマ ： </span>
-                            <DndSortableTable
-                              checkType={[
-                                RELATION_TYPE.PARENT,
-                                CHECK_TYPE.SUBSCHEMA,
-                              ]}
-                              schemaList={
-                                selectedSchemaParentInfo?.fromSubSchema
-                              }
-                              handleCheckClick={handleCheckClick}
-                              isDragDisabled
-                              isShowCheckDisabled
-                            />
-                          </div>
-                        </p>
-                        <p>
-                          <div className="caption-and-block">
-                            <span>任意スキーマ ： </span>
-                            <DndSortableTable
-                              checkType={[
-                                RELATION_TYPE.PARENT,
-                                CHECK_TYPE.CHILDSCHEMA,
-                              ]}
-                              schemaList={
-                                selectedSchemaParentInfo?.fromChildSchema
-                              }
-                              handleCheckClick={handleCheckClick}
-                              isDragDisabled
-                            />
-                          </div>
-                        </p>
-                      </div>
-                    </fieldset>
-                    <fieldset className="schema-manager-legend">
-                      <legend>下位スキーマ</legend>
-                      <p>
                         <div className="caption-and-block">
                           <span>必須スキーマ ： </span>
                           <DndSortableTable
                             checkType={[
-                              RELATION_TYPE.CHILD,
+                              RELATION_TYPE.PARENT,
                               CHECK_TYPE.SUBSCHEMA,
                             ]}
-                            schemaList={subSchemaList}
-                            setSchemaList={setSubSchemaList}
+                            schemaList={selectedSchemaParentInfo?.fromSubSchema}
                             handleCheckClick={handleCheckClick}
+                            isDragDisabled
                             isShowCheckDisabled
                           />
                         </div>
-                      </p>
-                      <p>
                         <div className="caption-and-block">
                           <span>任意スキーマ ： </span>
                           <DndSortableTable
                             checkType={[
-                              RELATION_TYPE.CHILD,
+                              RELATION_TYPE.PARENT,
                               CHECK_TYPE.CHILDSCHEMA,
                             ]}
-                            schemaList={childSchemaList}
-                            setSchemaList={setChildSchemaList}
+                            schemaList={
+                              selectedSchemaParentInfo?.fromChildSchema
+                            }
                             handleCheckClick={handleCheckClick}
+                            isDragDisabled
                           />
                         </div>
-                      </p>
+                      </div>
+                    </fieldset>
+                    <fieldset className="schema-manager-legend">
+                      <legend>下位スキーマ</legend>
+                      <div className="caption-and-block">
+                        <span>必須スキーマ ： </span>
+                        <DndSortableTable
+                          checkType={[
+                            RELATION_TYPE.CHILD,
+                            CHECK_TYPE.SUBSCHEMA,
+                          ]}
+                          schemaList={subSchemaList}
+                          setSchemaList={setSubSchemaList}
+                          handleCheckClick={handleCheckClick}
+                          isShowCheckDisabled
+                        />
+                      </div>
+                      <div className="caption-and-block">
+                        <span>任意スキーマ ： </span>
+                        <DndSortableTable
+                          checkType={[
+                            RELATION_TYPE.CHILD,
+                            CHECK_TYPE.CHILDSCHEMA,
+                          ]}
+                          schemaList={childSchemaList}
+                          setSchemaList={setChildSchemaList}
+                          handleCheckClick={handleCheckClick}
+                        />
+                      </div>
                     </fieldset>
                     <fieldset className="schema-manager-legend">
                       <legend>継承スキーマ</legend>
                       <div>
-                        <p>
-                          <div className="caption-and-block">
-                            <span />
-                            <DndSortableTable
-                              checkType={[
-                                RELATION_TYPE.INHERIT,
-                                CHECK_TYPE.INHERITSCHEMA,
-                              ]}
-                              schemaList={inheritSchemaList}
-                              handleCheckClick={handleCheckClick}
-                              isDragDisabled
-                            />
-                          </div>
-                        </p>
+                        <div className="caption-and-block">
+                          <span />
+                          <DndSortableTable
+                            checkType={[
+                              RELATION_TYPE.INHERIT,
+                              CHECK_TYPE.INHERITSCHEMA,
+                            ]}
+                            schemaList={inheritSchemaList}
+                            handleCheckClick={handleCheckClick}
+                            isDragDisabled
+                          />
+                        </div>
                       </div>
                     </fieldset>
                     <div className="SchemaManagerSaveButtonGroup">

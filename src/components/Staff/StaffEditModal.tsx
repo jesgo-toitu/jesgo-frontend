@@ -1,7 +1,5 @@
 import React, {
   MouseEventHandler,
-  ReactEventHandler,
-  SFC,
   useCallback,
   useEffect,
   useState,
@@ -12,7 +10,6 @@ import {
   ControlLabel,
   FormControl,
   FormGroup,
-  ModalProps,
 } from 'react-bootstrap';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import {
@@ -22,21 +19,21 @@ import {
   rollList,
   StaffErrorMessage,
 } from '../../common/StaffMaster';
-import { staffData } from '../../views/Stafflist';
 import Loading from '../CaseRegistration/Loading';
 import ModalDialog from '../common/ModalDialog';
 import './StaffEditModal.css';
+import { staffData } from './StaffData';
 
 export const StaffEditModalDialog = (props: {
-  onHide: Function;
-  onOk: Function;
+  onHide: () => void;
+  onOk: () => void;
   onCancel: MouseEventHandler<Button>;
   show: boolean;
   title: string;
   insert: boolean;
   data: staffData | undefined;
 }) => {
-  const { title, data } = props;
+  const { onHide, onOk, onCancel, show, title, insert, data } = props;
   const [userId, setUserId] = useState<number>(-1);
   const [loginId, setLoginId] = useState<string>('');
   const [displayName, setDisplayName] = useState<string>('');
@@ -50,8 +47,6 @@ export const StaffEditModalDialog = (props: {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log(props.insert);
-
     if (data !== undefined) {
       setUserId(data.user_id);
       setLoginId(data.name);
@@ -65,14 +60,12 @@ export const StaffEditModalDialog = (props: {
     }
     setPassword('');
     setPasswordConfilm('');
-  }, [props.show]);
+  }, [show]);
 
-  const onChangeItem = (event: any) => {
+  const onChangeItem = (event: React.FormEvent<FormControl>) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const eventTarget: EventTarget & HTMLInputElement =
       event.target as EventTarget & HTMLInputElement;
-
-    console.log('onChangeItem');
 
     let value: number | string;
     switch (eventTarget.id) {
@@ -145,7 +138,6 @@ export const StaffEditModalDialog = (props: {
     }
 
     if (errorMessage.length > 0) {
-      console.log(errorMessage);
       setMessage(errorMessage.join('\n'));
       setErrShow(true);
       return true;
@@ -155,8 +147,6 @@ export const StaffEditModalDialog = (props: {
   };
 
   const addUser = async () => {
-    console.log('addUser');
-
     // password policy
     // const errorMessage: string[] = [];
 
@@ -169,22 +159,22 @@ export const StaffEditModalDialog = (props: {
       password,
       roll_id: roll,
     });
-    console.log(returnApiObject);
     if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      // eslint-disable-next-line no-alert
       alert('登録しました');
-      props.onOk();
+      onOk();
     } else if (
       returnApiObject.statusNum === RESULT.FAILED_USER_ALREADY_REGISTERED
     ) {
+      // eslint-disable-next-line no-alert
       alert('【エラー】\nこのIDは既に登録されています');
     } else {
+      // eslint-disable-next-line no-alert
       alert('【エラー】\n登録エラー');
     }
   };
 
   const updateUser = async () => {
-    console.log('updateUser');
-
     if (hasInputError(false)) return;
 
     // jesgo_user list
@@ -195,18 +185,19 @@ export const StaffEditModalDialog = (props: {
       password,
       roll_id: roll,
     });
-    console.log(returnApiObject);
     if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      // eslint-disable-next-line no-alert
       alert('更新しました');
-      props.onOk();
+      onOk();
     } else {
+      // eslint-disable-next-line no-alert
       alert('【エラー】\n登録エラー');
     }
   };
 
   const onSave = async () => {
     setIsLoading(true);
-    if (props.insert) {
+    if (insert) {
       await addUser();
     } else {
       await updateUser();
@@ -214,6 +205,7 @@ export const StaffEditModalDialog = (props: {
     setIsLoading(false);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const errModalHide = useCallback(() => {}, []);
 
   const errModalOk = useCallback(() => {
@@ -226,7 +218,7 @@ export const StaffEditModalDialog = (props: {
 
   return (
     <>
-      <Modal show={props.show} onHide={props.onHide}>
+      <Modal show={show} onHide={onHide}>
         <Modal.Header closeButton>
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
@@ -242,7 +234,7 @@ export const StaffEditModalDialog = (props: {
               placeholder="ログインIDを入力"
               onChange={onChangeItem}
               value={loginId}
-              readOnly={!props.insert}
+              readOnly={!insert}
             />
           </FormGroup>
           <FormGroup controlId="displayName">
@@ -268,7 +260,7 @@ export const StaffEditModalDialog = (props: {
               onChange={onChangeItem}
               componentClass="select"
             >
-              <option value={-1}></option>
+              <option value={-1}> </option>
               {/* <option value={0}>システム管理者</option> */}
               <option value={1}>システムオペレーター</option>
               <option value={100}>上級ユーザー</option>
@@ -306,7 +298,7 @@ export const StaffEditModalDialog = (props: {
           </FormGroup>
         </Modal.Body>
         <Modal.Footer>
-          <Button bsStyle="secondary" onClick={props.onCancel}>
+          <Button bsStyle="default" onClick={onCancel}>
             キャンセル
           </Button>
           <Button bsStyle="primary" onClick={onSave}>

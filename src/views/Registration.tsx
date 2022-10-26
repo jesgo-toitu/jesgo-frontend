@@ -6,7 +6,6 @@ import React, {
   useLayoutEffect,
   useState,
 } from 'react';
-import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -32,7 +31,6 @@ import {
   IsNotUpdate,
   SetSameSchemaTitleNumbering,
   getErrMsg,
-  RegistrationErrors,
 } from '../common/CaseRegistrationUtility';
 import './Registration.css';
 import {
@@ -55,18 +53,20 @@ import {
 import store from '../store';
 import { Const } from '../common/Const';
 import SaveConfirmDialog from '../components/CaseRegistration/SaveConfirmDialog';
-import { GetRootSchema, GetSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
-
-export interface ShowSaveDialogState {
-  showFlg: boolean;
-  eventKey: any;
-}
+import {
+  GetRootSchema,
+  GetSchemaInfo,
+} from '../components/CaseRegistration/SchemaUtility';
+import {
+  ShowSaveDialogState,
+  RegistrationErrors,
+} from '../components/CaseRegistration/Definition';
 
 // 症例入力のおおもとの画面
 const Registration = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { search, state } = useLocation();
+  const { search } = useLocation();
 
   // 表示中のルートドキュメント
   const [dispRootSchemaIds, setDispRootSchemaIds] = useState<
@@ -115,7 +115,7 @@ const Registration = () => {
   // 選択中のタブインデックス
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(-1);
 
-  const [addedDocumentCount, setAddedDocumentCount] = useState<number>(-1);
+  const [, setAddedDocumentCount] = useState<number>(-1);
 
   // eslint-disable-next-line prefer-const
   let [loadData, setLoadData] = useState<SaveDataObjDefine | undefined>();
@@ -443,7 +443,7 @@ const Registration = () => {
       (info) => `root-tab-${info.compId}`
     );
 
-    if (!isNaN(Number(selectedTabKey))) {
+    if (!Number.isNaN(Number(selectedTabKey))) {
       const tabIndex = parseInt(selectedTabKey as string, 10);
       if (allTabIds.length > tabIndex) {
         const convTabKey = allTabIds[parseInt(selectedTabKey as string, 10)];
@@ -522,6 +522,7 @@ const Registration = () => {
     }
 
     if (saveResponse.resCode !== RESULT.NORMAL_TERMINATION) {
+      // eslint-disable-next-line no-alert
       alert(saveResponse.message);
     }
 
@@ -591,7 +592,7 @@ const Registration = () => {
   useEffect(() => {
     if (hasSchema) {
       const noTitles = dispRootSchemaIds.filter(
-        (p) => p.title === '' || !isNaN(Number(p.title))
+        (p) => p.title === '' || !Number.isNaN(Number(p.title))
       );
       if (noTitles.length > 0) {
         noTitles.forEach((item) => {
@@ -686,7 +687,7 @@ const Registration = () => {
           {message.length > 0 && (
             <Panel className="error-msg-panel">
               {message.map((error: string) => (
-                <p>{error}</p>
+                <p key={error}>{error}</p>
               ))}
             </Panel>
           )}
@@ -699,7 +700,7 @@ const Registration = () => {
                   onSelect={(eventKey) => onTabSelectEvent(true, eventKey)}
                 >
                   {dispRootSchemaIdsNotDeleted.map(
-                    (info: dispSchemaIdAndDocumentIdDefine, index: number) => {
+                    (info: dispSchemaIdAndDocumentIdDefine) => {
                       const title =
                         info.title + (info.titleNum?.toString() ?? '');
 

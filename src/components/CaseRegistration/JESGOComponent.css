@@ -10,18 +10,19 @@
 }
 
 /* 横並び type=object */
-.subschemastyle-column > fieldset{
+.subschemastyle-column > fieldset {
   display: flex;
   flex-wrap: wrap;
 }
 
 /* flexを無効化する */
-.subschemastyle-column > fieldset > .field-array,.field-object{
+.subschemastyle-column > fieldset > .field-array,
+.field-object {
   width: 100%;
 }
 
 /* arrayの中のobjectは階層が違うので別途定義 */
-.array-subschemastyle-column .field-object > fieldset{
+.array-subschemastyle-column .field-object > fieldset {
   display: flex;
   flex-wrap: wrap;
 }
@@ -34,6 +35,7 @@
 /* descriptionのラベル */
 .description-tooptip {
   text-align: left;
+  white-space: pre-wrap;
 }
 
 /* 階層ドロップダウンのグループ */
@@ -43,28 +45,28 @@
 
 /** subschemastyle:inline start*/
 /* type=object */
-.subschemastyle-inline > fieldset{
+.subschemastyle-inline > fieldset {
   display: flex;
   flex-wrap: wrap;
 }
-.subschemastyle-inline > fieldset > .form-group{
+.subschemastyle-inline > fieldset > .form-group {
   margin-right: 10px;
   margin-bottom: 5px;
 }
 
 /* arrayの中のobjectは階層が違うので別途定義 */
-.array-subschemastyle-inline .field-object > fieldset{
+.array-subschemastyle-inline .field-object > fieldset {
   display: flex;
   flex-wrap: wrap;
 }
-.array-subschemastyle-inline .field-object > fieldset > .form-group{
+.array-subschemastyle-inline .field-object > fieldset > .form-group {
   margin-right: 10px;
   margin-bottom: 5px;
 }
 
-
 /* flexを無効化する */
-.subschemastyle-inline > fieldset > .field-array,.field-object{
+.subschemastyle-inline > fieldset > .field-array,
+.field-object {
   width: 100%;
 }
 /** subschemastyle:inline end*/

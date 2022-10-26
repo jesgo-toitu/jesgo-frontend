@@ -14,6 +14,11 @@ export type treeSchema = {
   inheritschema: treeSchema[];
 };
 
+export type treeApiObject = {
+  treeSchema: treeSchema[];
+  errorMessages: string[];
+};
+
 export const SCHEMA_TYPE = {
   SUBSCHEMA: 0,
   CHILDSCHEMA: 1,
@@ -47,6 +52,7 @@ export const makeTree = (props: {
       {schemas.map((item: treeSchema) => (
         <CustomTreeItem
           nodeId={item.schema_id.toString()}
+          key={item.schema_id.toString()}
           label={titleGenerator(schemaType, item.schema_title)}
           collapseIcon={
             item.subschema.length +

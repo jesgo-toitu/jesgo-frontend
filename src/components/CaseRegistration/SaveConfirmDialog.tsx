@@ -36,7 +36,7 @@ const SaveConfirmDialog = (props: any) => {
         </div>
       </Modal.Body>
       <Modal.Footer>
-        <Button bsStyle="secondary" onClick={props.onCancel}>
+        <Button bsStyle="default" onClick={props.onCancel}>
           いいえ
         </Button>
         <Button bsStyle="primary" onClick={props.onOk}>

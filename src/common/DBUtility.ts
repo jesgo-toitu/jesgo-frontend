@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 /* eslint-disable no-alert */
 /* eslint-disable import/prefer-default-export */
@@ -12,12 +13,13 @@ import {
 import { SaveDataObjDefine } from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
+import { validateJesgoDocument } from './CaseRegistrationUtility';
 import {
   RegistrationErrors,
-  validateJesgoDocument,
   VALIDATE_TYPE,
-} from './CaseRegistrationUtility';
+} from '../components/CaseRegistration/Definition';
 import { Const } from './Const';
+import { formatDateStr } from './CommonUtility';
 
 export interface responseResult {
   resCode?: number;
@@ -26,43 +28,6 @@ export interface responseResult {
   caseId?: number;
   anyValue?: unknown;
 }
-// 日付(Date形式)をyyyy/MM/ddなどの形式に変換
-export const formatDate = (dateObj: Date, separator = ''): string => {
-  try {
-    const y = dateObj.getFullYear();
-    const m = `00${dateObj.getMonth() + 1}`.slice(-2);
-    const d = `00${dateObj.getDate()}`.slice(-2);
-    return `${y}${separator}${m}${separator}${d}`;
-  } catch {
-    return '';
-  }
-};
-
-// 日付(Date形式)から時刻を取り出しhh:mm:ssなどの形式に変換
-export const formatTime = (dateObj: Date, separator = ''): string => {
-  try {
-    const h = `00${dateObj.getHours()}`.slice(-2);
-    const m = `00${dateObj.getMinutes()}`.slice(-2);
-    const s = `00${dateObj.getSeconds()}`.slice(-2);
-    return `${h}${separator}${m}${separator}${s}`;
-  } catch {
-    return '';
-  }
-};
-
-// 日付文字列をyyyy/MM/ddなどの形式に変換
-export const formatDateStr = (dtStr: string, separator: string): string => {
-  if (!dtStr) return '';
-  try {
-    const dateObj = new Date(dtStr);
-    const y = dateObj.getFullYear();
-    const m = `00${dateObj.getMonth() + 1}`.slice(-2);
-    const d = `00${dateObj.getDate()}`.slice(-2);
-    return `${y}${separator}${m}${separator}${d}`;
-  } catch {
-    return '';
-  }
-};
 
 // 症例データの保存
 export const SaveFormDataToDB = async (
@@ -102,7 +67,7 @@ export const SaveFormDataToDB = async (
   }
 
   // case_idが返却される
-  if (apiResult.body && !isNaN(apiResult.body as any)) {
+  if (apiResult.body && !Number.isNaN(apiResult.body)) {
     res.caseId = apiResult.body as number;
   }
 

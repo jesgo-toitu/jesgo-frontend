@@ -9,7 +9,6 @@ import {
   GetHiddenPropertyNames,
   GetSchemaTitle,
   hasFormDataInput,
-  RegistrationErrors,
   SetSameSchemaTitleNumbering,
   SetTabStyle,
 } from '../../common/CaseRegistrationUtility';
@@ -20,7 +19,8 @@ import {
   jesgoDocumentObjDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
-import { ChildTabSelectedFuncObj, createTabs } from './FormCommonComponents';
+import { createTabs } from './FormCommonComponents';
+import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { responseResult } from '../../common/DBUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import store from '../../store';
@@ -60,7 +60,6 @@ const RootSchema = React.memo((props: Props) => {
     setSaveResponse,
     isSchemaChange,
     setErrors,
-    selectedTabKey,
     schemaAddModFunc,
   } = props;
 

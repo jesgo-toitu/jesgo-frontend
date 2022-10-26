@@ -2,11 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import lodash from 'lodash';
-import {
-  JSONSchema7,
-  JSONSchema7Definition,
-  JSONSchema7TypeName,
-} from 'json-schema';
+import { JSONSchema7, JSONSchema7TypeName } from 'json-schema';
 import store from '../store';
 import {
   dispSchemaIdAndDocumentIdDefine,
@@ -18,46 +14,14 @@ import {
   getPropItemsAndNames,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
-import {} from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import { Const } from './Const';
-
-// validation種別
-export enum VALIDATE_TYPE {
-  Message, // メッセージ(エラーではない)
-  Required, // 必須入力エラー
-  MinimumItem, // array最小個数エラー
-  MaximumItem, // array最大個数エラー
-  MinimumNumber, // 数値最小値エラー
-  MaximumNumber, // 数値最大値エラー
-  Regex, // 正規表現エラー
-  Range, // 数値範囲外エラー
-  Constant, // 固定値エラー
-  Enum, // リスト外エラー
-  Number, // 非数値エラー
-  Integer, // 非整数エラー
-  Other, // その他エラー
-}
-
-export type ValidationItem = {
-  message: string;
-  validateType: VALIDATE_TYPE;
-};
-
-export type validationResult = {
-  schema: JSONSchema7;
-  messages: ValidationItem[];
-};
-
-/**
- * validationエラー
- */
-export type RegistrationErrors = {
-  validationResult: validationResult;
-  errDocTitle: string;
-  schemaId: number;
-  documentId: string;
-};
+import {
+  RegistrationErrors,
+  VALIDATE_TYPE,
+  ValidationItem,
+  validationResult,
+} from '../components/CaseRegistration/Definition';
 
 /**
  * 入力値のvalidation
@@ -286,6 +250,7 @@ const customSchemaValidation = (
         if (formData.length < minItems) {
           errFlg = true;
           messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
             message: `　　[ ${displayName} ] ${minItems}件以上入力してください。`,
             validateType: VALIDATE_TYPE.MinimumItem,
           });
@@ -296,6 +261,7 @@ const customSchemaValidation = (
         if (formData.length > maxItems) {
           errFlg = true;
           messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
             message: `　　[ ${displayName} ] ${maxItems}件以下で入力してください。`,
             validateType: VALIDATE_TYPE.MaximumItem,
           });
@@ -315,11 +281,13 @@ const customSchemaValidation = (
         if (res.messages.length > 0) {
           errFlg = true;
           messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
             message: `　[ ${displayName}:${index + 1}行目 ]`,
             validateType: VALIDATE_TYPE.Message,
           });
           res.messages.forEach((item: ValidationItem) => {
             messages.push({
+              // eslint-disable-next-line no-irregular-whitespace
               message: `　　${item.message}`,
               validateType: item.validateType,
             });
@@ -340,6 +308,7 @@ const customSchemaValidation = (
     if (requiredMsg !== '') {
       errFlg = true;
       messages.push({
+        // eslint-disable-next-line no-irregular-whitespace
         message: `　[ ${displayName} ] ${requiredMsg}`,
         validateType: VALIDATE_TYPE.Required,
       });
@@ -369,6 +338,7 @@ const customSchemaValidation = (
       if (oneOfMatchCondition.length === 0) {
         errFlg = true;
         messages.push({
+          // eslint-disable-next-line no-irregular-whitespace
           message: `　[ ${displayName} ] ${subMessages.join('または、')}`,
           validateType: VALIDATE_TYPE.Other,
         });
@@ -390,6 +360,7 @@ const customSchemaValidation = (
     if (errMsgs.length > 0) {
       errFlg = true;
       messages.push({
+        // eslint-disable-next-line no-irregular-whitespace
         message: `　[ ${displayName} ] ${errMsgs
           .map((item) => item.message)
           .join('')}`,

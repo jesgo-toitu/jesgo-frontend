@@ -6,7 +6,10 @@ import '../../views/Registration.css';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import store from '../../store/index';
-import SaveCommand, { responseResult } from '../../common/DBUtility';
+import SaveCommand, {
+  GetPackagedDocument,
+  responseResult,
+} from '../../common/DBUtility';
 import { RESULT } from '../../common/ApiAccess';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
 import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
@@ -129,6 +132,20 @@ const SubmitButton = (props: ButtonProps) => {
   return (
     <Col className="user-info-button-col">
       <div className="user-info-button-div">
+        <Button
+          bsStyle="success"
+          className="normal-button"
+          onClick={() => {
+            GetPackagedDocument(
+              [store.getState().formDataReducer.saveData.jesgo_case],
+              undefined
+            ).then((res) => {
+              console.log(res);
+            });
+          }}
+        >
+          ドキュメント出力
+        </Button>
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
         <Button
           bsStyle="success"

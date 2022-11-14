@@ -14,6 +14,7 @@ import store from '../../store/index';
 import { ChildTabSelectedFuncObj } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
+import { GetPackagedDocument } from '../../common/DBUtility';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -282,6 +283,17 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             });
           }
           break;
+        //
+        case 'output':
+          GetPackagedDocument(
+            [store.getState().formDataReducer.saveData.jesgo_case],
+            undefined,
+            Number(documentId)
+          ).then((res) => {
+            console.log(res);
+          });
+
+          break;
         default:
           // 継承スキーマへの切り替え
           if (eventKey.startsWith('I') && setDispSchemaIds != null) {
@@ -532,6 +544,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           <Glyphicon glyph="th-list" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
+          <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
           {/* 自身の移動 */}
           {canMove && (
             <MenuItem eventKey="up">

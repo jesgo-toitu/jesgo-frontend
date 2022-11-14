@@ -10,7 +10,7 @@ import {
   getPropItemsAndNames,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
-import { SaveDataObjDefine } from '../store/formDataReducer';
+import { jesgoCaseDefine, SaveDataObjDefine } from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { validateJesgoDocument } from './CaseRegistrationUtility';
@@ -373,6 +373,36 @@ export const UploadSchemaFile = async (
 
   // 呼び元に返す
   setSchemaUploadResponse(res);
+};
+
+/**
+ * 一連のドキュメント取得
+ * @param jesgo_case
+ * @param schema_id
+ * @returns
+ */
+export const GetPackagedDocument = async (
+  jesgoCaseList: jesgoCaseDefine[],
+  schema_id?: number,
+  document_id?: number
+) => {
+  // TODO: タイムアウト15分の処理は入れること
+
+  const apiResult = await apiAccess(METHOD_TYPE.POST, `packaged-document/`, {
+    jesgoCaseList,
+    schema_id,
+    document_id,
+  });
+
+  const res: responseResult = {
+    message: '',
+    resCode: -1,
+  };
+
+  res.resCode = apiResult.statusNum;
+  res.anyValue = apiResult.body;
+
+  return res;
 };
 
 export default SaveCommand;

@@ -29,6 +29,8 @@ import { formatDate, formatTime } from '../common/CommonUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
+import { GetPackagedDocument } from '../common/DBUtility';
+import { jesgoCaseDefine } from '../store/formDataReducer';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -489,6 +491,34 @@ const Patients = () => {
                 </Button>
               </ButtonGroup>
             </ButtonToolbar>
+            <Button
+              bsStyle="success"
+              className="normal-button"
+              onClick={() => {
+                const decordedJson = JSON.parse(userListJson) as userDataList;
+                const caseInfoList = decordedJson.data.map((item) => {
+                  const caseinfo: jesgoCaseDefine = {
+                    case_id: item.caseId.toString(),
+                    name: item.patientName,
+                    date_of_birth: '1900-01-01',
+                    date_of_death: '1900-01-01',
+                    sex: 'F',
+                    his_id: item.patientId,
+                    decline: false,
+                    registrant: -1,
+                    last_updated: '1900-01-01',
+                    is_new_case: false,
+                  };
+                  return caseinfo;
+                });
+
+                GetPackagedDocument(caseInfoList).then((res) => {
+                  console.log(res);
+                });
+              }}
+            >
+              患者複数指定ドキュメント出力
+            </Button>
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (
               <Button

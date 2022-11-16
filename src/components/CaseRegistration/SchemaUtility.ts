@@ -54,6 +54,13 @@ export const GetSchemaInfo = (id: number) => {
   return undefined;
 };
 
+// スキーマIDからバージョン毎のスキーマ情報を取得
+export const GetSchemaVersionedInfo = (id: number) => {
+  const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
+  const schemaList = schemaInfos.get(id);
+  return schemaList ?? [];
+};
+
 // ルートスキーマのschema_idを取得
 export const GetRootSchema = () => {
   const roots = store.getState().schemaDataReducer.rootSchemas;

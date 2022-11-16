@@ -113,6 +113,26 @@ fieldset.schema-detail {
   text-align: center;
 }
 
+.sortable-table-cell3 {
+  width: 6rem;
+  text-align: center;
+}
+
+.sortable-table-cell4 {
+  width: 12rem;
+  text-align: center;
+}
+
+.sortable-table-cell5 {
+  width: 2rem;
+  text-align: center;
+}
+
+.sortable-table-cell6 {
+  width: 4rem;
+  text-align: center;
+}
+
 .drag-icon-style {
   margin-right: 5px;
 }

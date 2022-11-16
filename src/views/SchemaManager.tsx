@@ -32,12 +32,17 @@ import {
   GetParentSchemas,
   schemaWithValid,
   storeSchemaInfo,
+  GetSchemaVersionedInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import DndSortableTable from '../components/Schemamanager/DndSortableTable';
 import {
   AddBeforeUnloadEvent,
+  isDate,
   RemoveBeforeUnloadEvent,
 } from '../common/CommonUtility';
+import SchemaVersionTable, {
+  makeInitValidDate,
+} from '../components/Schemamanager/SchemaVersionTable';
 
 type settings = {
   facility_name: string;
@@ -67,6 +72,12 @@ const SchemaManager = () => {
   const [inheritSchemaList, setInheritSchemaList] = useState<schemaWithValid[]>(
     []
   );
+
+  const [versionedSchemaList, setVersionedSchemaList] = useState<
+    schemaWithValid[]
+  >([]);
+  const [validFrom, setValidFrom] = useState<string[]>([]);
+  const [validUntil, setValidUntil] = useState<string[]>([]);
 
   const [selectedBaseSchemaInfo, setSelectedBaseSchemaInfo] =
     useState<JesgoDocumentSchema>();
@@ -134,6 +145,23 @@ const SchemaManager = () => {
         schema: GetSchemaInfo(inhId)!,
       }));
       setInheritSchemaList(tmpInheritSchemaList);
+
+      // バージョン一覧
+      const tmpSchemaVersionList = GetSchemaVersionedInfo(
+        Number(selectedSchema)
+      );
+      const currentSchemaVersion: schemaWithValid[] = [];
+      // eslint-disable-next-line no-plusplus
+      for (let i = 0; i < tmpSchemaVersionList.length; i++) {
+        const tempSchema = tmpSchemaVersionList[i];
+        if (tempSchema) {
+          currentSchemaVersion.push({
+            valid: !tempSchema.hidden,
+            schema: tempSchema,
+          });
+        }
+      }
+      setVersionedSchemaList(currentSchemaVersion);
     }
 
     setSelectedSchemaParentInfo(GetParentSchemas(Number(selectedSchema)));
@@ -301,10 +329,174 @@ const SchemaManager = () => {
     return isChange;
   };
 
+  const isNeedUpdateValidDate = (): boolean => {
+    let isChange = false;
+    const tmpSchemaVersionList = GetSchemaVersionedInfo(Number(selectedSchema));
+    const defaultSchemaVersion: schemaWithValid[] = [];
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < tmpSchemaVersionList.length; i++) {
+      const tempSchema = tmpSchemaVersionList[i];
+      if (tempSchema) {
+        defaultSchemaVersion.push({
+          valid: !tempSchema.hidden,
+          schema: tempSchema,
+        });
+      }
+    }
+    const valids = makeInitValidDate(defaultSchemaVersion);
+    // 有効無効の一致確認
+    if (!lodash.isEqual(defaultSchemaVersion, versionedSchemaList)) {
+      isChange = true;
+    }
+
+    // 開始日の一致確認
+    if (!lodash.isEqual(valids.validFrom, validFrom)) {
+      isChange = true;
+    }
+
+    // 終了日の一致確認
+    if (!lodash.isEqual(valids.validUntil, validUntil)) {
+      isChange = true;
+    }
+
+    return isChange;
+  };
+
+  /**
+   * 有効期限にエラーがあるかを確認する
+   * @returns エラーが1個以上あれば警告を出してtrueを返す
+   */
+  const isValidDateError = (alertable = false): boolean => {
+    type enableSchemas = {
+      schema: JesgoDocumentSchema;
+      validFrom: string;
+      validUntil: string;
+    };
+    const enabledSchemas: enableSchemas[] = [];
+    const tmpErrorMessages = [];
+    let firstEnableChecked = false;
+
+    const VALID_TYPE = { FROM: 0, UNTIL: 1 };
+
+    const getVersionText = (schema: JesgoDocumentSchema) =>
+      `${schema.version_major}.${schema.version_minor}`;
+
+    const makeErrorMessage = (
+      schema: JesgoDocumentSchema,
+      validType: number
+    ): string => {
+      const validMessage =
+        validType === VALID_TYPE.FROM ? '有効期限開始日' : '有効期限終了日';
+      return `バージョン「${getVersionText(
+        schema
+      )}」の${validMessage}に誤りがあります。`;
+    };
+
+    // 各行について処理を行う、indexが若いものが一番最新のバージョン
+    for (let index = 0; index < versionedSchemaList.length; index++) {
+      const target = versionedSchemaList[index];
+      const targetValidFrom = validFrom[index];
+      const targetValidUntil = validUntil[index];
+
+      // 有効、無効問わず開始日は空文字不可
+      if (!isDate(targetValidFrom)) {
+        tmpErrorMessages.push(makeErrorMessage(target.schema, VALID_TYPE.FROM));
+      }
+
+      // 有効無効振り分け
+      if (target.valid) {
+        // 有効スキーマに追加
+        enabledSchemas.push({
+          schema: target.schema,
+          validFrom: targetValidFrom,
+          validUntil: targetValidUntil,
+        });
+
+        // 終了日は最新のみ空文字可能
+        if (!firstEnableChecked) {
+          firstEnableChecked = true;
+          // 一番新しい有効スキーマの場合は終了日にも空文字を許可する
+          if (targetValidUntil !== '' && !isDate(targetValidUntil)) {
+            tmpErrorMessages.push(
+              makeErrorMessage(target.schema, VALID_TYPE.UNTIL)
+            );
+          }
+        } else {
+          // それ以外の場合は必ず日付であることを確認する
+          // eslint-disable-next-line no-lonely-if
+          if (!isDate(targetValidUntil)) {
+            tmpErrorMessages.push(
+              makeErrorMessage(target.schema, VALID_TYPE.UNTIL)
+            );
+          }
+        }
+      } else {
+        // 無効の場合、常に終了日は空文字も許可する
+        // eslint-disable-next-line no-lonely-if
+        if (targetValidUntil !== '' && !isDate(targetValidUntil)) {
+          tmpErrorMessages.push(
+            makeErrorMessage(target.schema, VALID_TYPE.UNTIL)
+          );
+        }
+      }
+    }
+
+    // この時点でエラーが出ている場合比較が出来ないのでエラーを表示して終了する
+    if (tmpErrorMessages.length > 0) {
+      if (alertable) {
+        alert(tmpErrorMessages.join('\n'));
+      }
+      return true;
+    }
+
+    // 有効な物に関して、期限が繋がっているか、開始日と終了日が矛盾していないかを確認する
+    for (let index = enabledSchemas.length - 1; index > 0; index--) {
+      const target = enabledSchemas[index];
+      // 自身の中で開始日と終了日が矛盾していないかを確認、ただし最新スキーマで終了日が空文字の場合のみは比較しない
+      if (
+        !(index === 0 && target.validUntil === '') &&
+        new Date(target.validUntil).getTime() <
+          new Date(target.validFrom).getTime()
+      ) {
+        tmpErrorMessages.push(
+          `バージョン「${getVersionText(
+            target.schema
+          )}」の有効期限に矛盾があります。`
+        );
+      }
+
+      // 自身が最新でない場合、自身の終了日と自身より新しいバージョンの開始日が1日違いかを確認する
+      if (!(index === 0)) {
+        const targetValidUntil = new Date(target.validUntil);
+        // 自身の終了日の翌日
+        targetValidUntil.setDate(targetValidUntil.getDate() + 1);
+        // 新しいバージョンの開始日
+        const nextVersionValidFrom = new Date(
+          enabledSchemas[index - 1].validFrom
+        );
+
+        if (targetValidUntil.getTime() !== nextVersionValidFrom.getTime()) {
+          tmpErrorMessages.push(
+            `バージョン「${getVersionText(
+              target.schema
+            )}」の終了日とバージョン「${getVersionText(
+              enabledSchemas[index - 1].schema
+            )}」の開始日に矛盾があります。`
+          );
+        }
+      }
+    }
+    if (tmpErrorMessages.length > 0 && alertable) {
+      alert(tmpErrorMessages.join('\n'));
+    }
+
+    return tmpErrorMessages.length > 0;
+  };
+
   const leaveAlart = (): boolean => {
     const tempSchemaList = getNeedUpdateParents(true);
     const isChildEdited = isNeedUpdateSchema();
-    if (tempSchemaList.length > 0 || isChildEdited) {
+    if (tempSchemaList.length > 0 || isChildEdited || isNeedUpdateValidDate()) {
       // eslint-disable-next-line no-restricted-globals
       return confirm(
         'スキーマが編集中です。編集を破棄して移動してもよろしいですか？'
@@ -391,9 +583,30 @@ const SchemaManager = () => {
     // 更新用スキーマリストの初期値として変更済親スキーマのリストを取得(変更がない場合は空配列)
     const updateSchemaList = getNeedUpdateParents(false);
 
+    const baseSchemaInfo = lodash.cloneDeep(selectedSchemaInfo);
+    // 有効期限に変更がある場合、エラーがなければ更新を行う
+    if (isNeedUpdateValidDate() && !isValidDateError(true)) {
+      // 一番最新のスキーマのみ、baseSchemaInfoに更新する
+      if (baseSchemaInfo !== undefined) {
+        baseSchemaInfo.hidden = !versionedSchemaList[0].valid;
+        baseSchemaInfo.valid_from = validFrom[0];
+        baseSchemaInfo.valid_until = validUntil[0];
+      }
+      // それ以降は別で処理して更新リストに追加
+      for (let index = 1; index < versionedSchemaList.length; index++) {
+        const target = versionedSchemaList[index];
+        target.schema.hidden = !target.valid;
+        target.schema.valid_from = validFrom[index];
+        target.schema.valid_until = validUntil[index];
+        updateSchemaList.push(target.schema);
+      }
+    } else if (isNeedUpdateValidDate()) {
+      // エラーがある場合は処理を中断する
+      return;
+    }
+
     // 自スキーマのサブスキーマ、子スキーマに更新があれば変更リストに追加する
     if (isNeedUpdateSchema()) {
-      const baseSchemaInfo = lodash.cloneDeep(selectedSchemaInfo);
       if (baseSchemaInfo !== undefined) {
         // サブスキーマ
         // 編集中のサブスキーマのうち有効であるもののみのリストを作る
@@ -423,9 +636,15 @@ const SchemaManager = () => {
           }
         }
         baseSchemaInfo.inherit_schema = tempInheritSchemaList;
-
-        updateSchemaList.push(baseSchemaInfo);
       }
+    }
+
+    // 有効期限かサブスキーマ、子スキーマ、継承スキーマに変更があれば更新対象とする
+    if (
+      (isNeedUpdateValidDate() || isNeedUpdateSchema()) &&
+      baseSchemaInfo !== undefined
+    ) {
+      updateSchemaList.push(baseSchemaInfo);
     }
 
     // POST処理
@@ -501,10 +720,11 @@ const SchemaManager = () => {
     PARENT: 0,
     CHILD: 1,
     INHERIT: 2,
+    VERSION: 3,
   };
   // チェックボックス状態変更
   const handleCheckClick = (relation: number, type: number, v = ''): void => {
-    // 親スキーマか子スキーマのどっちかを分ける
+    // 親スキーマ、子スキーマ、継承スキーマ、バージョン一覧で処理を分ける
     if (relation === RELATION_TYPE.PARENT) {
       const copyParentInfo = lodash.cloneDeep(selectedSchemaParentInfo);
       // undefinedチェック
@@ -570,6 +790,11 @@ const SchemaManager = () => {
         }
       }
       setInheritSchemaList(copySchemaList);
+    } else if (relation === RELATION_TYPE.VERSION) {
+      // バージョン一覧の場合
+      const copySchemaList = lodash.cloneDeep(versionedSchemaList);
+      copySchemaList[Number(v)].valid = !copySchemaList[Number(v)].valid;
+      setVersionedSchemaList(copySchemaList);
     }
   };
 
@@ -839,7 +1064,31 @@ const SchemaManager = () => {
                         </div>
                       </div>
                     </fieldset>
+                    <fieldset className="schema-manager-legend">
+                      <legend>スキーマバージョン</legend>
+                      <div>
+                        <div className="caption-and-block">
+                          <span />
+                          <SchemaVersionTable
+                            checkType={RELATION_TYPE.VERSION}
+                            schemaList={versionedSchemaList}
+                            handleCheckClick={handleCheckClick}
+                            validFrom={validFrom}
+                            setValidFrom={setValidFrom}
+                            validUntil={validUntil}
+                            setValidUntil={setValidUntil}
+                          />
+                        </div>
+                      </div>
+                    </fieldset>
                     <div className="SchemaManagerSaveButtonGroup">
+                      <Button
+                        bsStyle="default"
+                        className="normal-button"
+                        onClick={() => isValidDateError()}
+                      >
+                        validerror
+                      </Button>
                       <Button
                         bsStyle="default"
                         className="normal-button"

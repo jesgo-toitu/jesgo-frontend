@@ -19,6 +19,7 @@
     "@mui/icons-material": "^5.8.4",
     "@mui/lab": "^5.0.0-alpha.92",
     "@mui/material": "^5.9.2",
+    "@react-icons/all-files": "^4.1.0",
     "@rjsf/core": "^4.2.3",
     "@types/json-schema": "^7.0.11",
     "@types/react-csv": "^1.1.3",

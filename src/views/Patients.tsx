@@ -31,6 +31,7 @@ import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
 import { GetPackagedDocument } from '../common/DBUtility';
 import { jesgoCaseDefine } from '../store/formDataReducer';
+import { OpenOutputView } from '../common/CaseRegistrationUtility';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -491,8 +492,9 @@ const Patients = () => {
                 </Button>
               </ButtonGroup>
             </ButtonToolbar>
+            {/* // ★TODO: 仮実装 */}
             <Button
-              bsStyle="success"
+              bsStyle="danger"
               className="normal-button"
               onClick={() => {
                 const decordedJson = JSON.parse(userListJson) as userDataList;
@@ -512,12 +514,19 @@ const Patients = () => {
                   return caseinfo;
                 });
 
-                GetPackagedDocument(caseInfoList).then((res) => {
-                  console.log(res);
+                // ★TODO: 仮実装
+                // eslint-disable-next-line no-void
+                void GetPackagedDocument(
+                  caseInfoList,
+                  undefined,
+                  undefined,
+                  true
+                ).then((res) => {
+                  OpenOutputView(window, res.anyValue);
                 });
               }}
             >
-              患者複数指定ドキュメント出力
+              ドキュメント出力
             </Button>
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (

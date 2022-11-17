@@ -950,3 +950,24 @@ export const GetBeforeInheritDocumentData = (
 
   return retDocs;
 };
+
+/**
+ * データ出力用画面オープン
+ * @param win window
+ * @param srcData 出力するデータ
+ */
+export const OpenOutputView = (win: typeof window, srcData: any) => {
+  win.addEventListener(
+    'message',
+    (e) => {
+      // 画面の準備ができたらデータをポストする
+      if (e.origin === win.location.origin && e.data === 'output_ready') {
+        // ★TODO: 仮実装
+        e.source?.postMessage({ jsonData: srcData });
+      }
+    },
+    false
+  );
+
+  win.open('/OutputView', 'outputview');
+};

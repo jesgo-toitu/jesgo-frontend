@@ -6,6 +6,7 @@ import {
   GetCreatedDocCountAfterInherit,
   GetInheritFormData,
   GetSchemaTitle,
+  OpenOutputView,
 } from '../../common/CaseRegistrationUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
@@ -283,14 +284,15 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             });
           }
           break;
-        //
+        // ★TODO: 仮実装
         case 'output':
           GetPackagedDocument(
             [store.getState().formDataReducer.saveData.jesgo_case],
             undefined,
-            Number(documentId)
+            Number(documentId),
+            true
           ).then((res) => {
-            console.log(res);
+            OpenOutputView(window, res.anyValue);
           });
 
           break;

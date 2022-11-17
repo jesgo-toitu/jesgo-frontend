@@ -12,7 +12,10 @@ import SaveCommand, {
 } from '../../common/DBUtility';
 import { RESULT } from '../../common/ApiAccess';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
-import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
+import {
+  IsNotUpdate,
+  OpenOutputView,
+} from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
 
 interface ButtonProps {
@@ -133,14 +136,17 @@ const SubmitButton = (props: ButtonProps) => {
     <Col className="user-info-button-col">
       <div className="user-info-button-div">
         <Button
-          bsStyle="success"
+          bsStyle="danger"
           className="normal-button"
           onClick={() => {
+            // ★TODO: 仮実装
             GetPackagedDocument(
               [store.getState().formDataReducer.saveData.jesgo_case],
-              undefined
+              undefined,
+              undefined,
+              true
             ).then((res) => {
-              console.log(res);
+              OpenOutputView(window, res.anyValue);
             });
           }}
         >

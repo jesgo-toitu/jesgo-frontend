@@ -384,7 +384,8 @@ export const UploadSchemaFile = async (
 export const GetPackagedDocument = async (
   jesgoCaseList: jesgoCaseDefine[],
   schema_id?: number,
-  document_id?: number
+  document_id?: number,
+  attachPatientInfoDetail?: boolean
 ) => {
   // TODO: タイムアウト15分の処理は入れること
 
@@ -392,6 +393,7 @@ export const GetPackagedDocument = async (
     jesgoCaseList,
     schema_id,
     document_id,
+    attachPatientInfoDetail,
   });
 
   const res: responseResult = {

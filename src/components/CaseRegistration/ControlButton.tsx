@@ -16,6 +16,7 @@ import { ChildTabSelectedFuncObj } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
 import { GetPackagedDocument } from '../../common/DBUtility';
+import { setTimeoutPromise } from '../../common/CommonUtility';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -60,6 +61,7 @@ type ControlButtonProps = {
   subSchemaCount: number;
   tabSelectEvents?: ChildTabSelectedFuncObj;
   disabled?: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -86,6 +88,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     setSelectedTabKey,
     tabSelectEvents,
     disabled,
+    setIsLoading,
   } = props;
 
   // 追加可能判定
@@ -284,18 +287,33 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             });
           }
           break;
-        // ★TODO: 仮実装
-        case 'output':
-          GetPackagedDocument(
-            [store.getState().formDataReducer.saveData.jesgo_case],
-            undefined,
-            Number(documentId),
-            true
-          ).then((res) => {
-            OpenOutputView(window, res.anyValue);
-          });
+        // TODO: ★仮実装
+        case 'output': {
+          const wrapperFunc = () =>
+            GetPackagedDocument(
+              [store.getState().formDataReducer.saveData.jesgo_case],
+              undefined,
+              Number(documentId),
+              true
+            );
+
+          setIsLoading(true);
+
+          setTimeoutPromise(wrapperFunc)
+            .then((res) => {
+              OpenOutputView(window, (res as any).anyValue);
+            })
+            .catch((err) => {
+              if (err === 'timeout') {
+                alert('操作がタイムアウトしました');
+              }
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
 
           break;
+        }
         default:
           // 継承スキーマへの切り替え
           if (eventKey.startsWith('I') && setDispSchemaIds != null) {

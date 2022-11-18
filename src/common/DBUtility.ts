@@ -387,8 +387,6 @@ export const GetPackagedDocument = async (
   document_id?: number,
   attachPatientInfoDetail?: boolean
 ) => {
-  // TODO: タイムアウト15分の処理は入れること
-
   const apiResult = await apiAccess(METHOD_TYPE.POST, `packaged-document/`, {
     jesgoCaseList,
     schema_id,

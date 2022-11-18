@@ -561,6 +561,7 @@ const RootSchema = React.memo((props: Props) => {
           subSchemaCount={0}
           tabSelectEvents={childTabSelectedFunc}
           addableSubSchemaIds={addableSubSchemaIds}
+          setIsLoading={setIsLoading}
         />
       </div>
       {createTabs(

@@ -11,7 +11,10 @@ import SaveCommand, {
   responseResult,
 } from '../../common/DBUtility';
 import { RESULT } from '../../common/ApiAccess';
-import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
+import {
+  RemoveBeforeUnloadEvent,
+  setTimeoutPromise,
+} from '../../common/CommonUtility';
 import {
   IsNotUpdate,
   OpenOutputView,
@@ -140,14 +143,28 @@ const SubmitButton = (props: ButtonProps) => {
           className="normal-button"
           onClick={() => {
             // ★TODO: 仮実装
-            GetPackagedDocument(
-              [store.getState().formDataReducer.saveData.jesgo_case],
-              undefined,
-              undefined,
-              true
-            ).then((res) => {
-              OpenOutputView(window, res.anyValue);
-            });
+            const wrapperFunc = () =>
+              GetPackagedDocument(
+                [store.getState().formDataReducer.saveData.jesgo_case],
+                undefined,
+                undefined,
+                true
+              );
+
+            setIsLoading(true);
+
+            setTimeoutPromise(wrapperFunc)
+              .then((res) => {
+                OpenOutputView(window, (res as any).anyValue);
+              })
+              .catch((err) => {
+                if (err === 'timeout') {
+                  alert('操作がタイムアウトしました');
+                }
+              })
+              .finally(() => {
+                setIsLoading(false);
+              });
           }}
         >
           ドキュメント出力

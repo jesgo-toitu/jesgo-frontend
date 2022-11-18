@@ -86,3 +86,22 @@ export const formatDateStr = (dtStr: string, separator: string): string => {
     return '';
   }
 };
+
+const fTimeout = (timeoutSec: number) =>
+  new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // eslint-disable-next-line prefer-promise-reject-errors
+      reject('timeout');
+    }, timeoutSec * 1000);
+  });
+
+/**
+ * タイムアウト処理
+ * @param promiseFunc 実行するPromise
+ * @param timeoutSec タイムアウトの秒数
+ * @returns
+ */
+export const setTimeoutPromise = async (
+  promiseFunc: () => Promise<unknown>,
+  timeoutSec = 15 * 60 // デフォルト15分
+) => Promise.race([fTimeout(timeoutSec), promiseFunc()]);

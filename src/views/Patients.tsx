@@ -25,7 +25,11 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
-import { formatDate, formatTime } from '../common/CommonUtility';
+import {
+  formatDate,
+  formatTime,
+  setTimeoutPromise,
+} from '../common/CommonUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
@@ -514,16 +518,25 @@ const Patients = () => {
                   return caseinfo;
                 });
 
-                // ★TODO: 仮実装
-                // eslint-disable-next-line no-void
-                void GetPackagedDocument(
-                  caseInfoList,
-                  undefined,
-                  undefined,
-                  true
-                ).then((res) => {
-                  OpenOutputView(window, res.anyValue);
-                });
+                // TODO: ★仮実装
+
+                const wrapperFunc = () =>
+                  GetPackagedDocument(caseInfoList, undefined, undefined, true);
+
+                setIsLoading(true);
+
+                setTimeoutPromise(wrapperFunc)
+                  .then((res) => {
+                    OpenOutputView(window, (res as any).anyValue);
+                  })
+                  .catch((err) => {
+                    if (err === 'timeout') {
+                      alert('操作がタイムアウトしました');
+                    }
+                  })
+                  .finally(() => {
+                    setIsLoading(false);
+                  });
               }}
             >
               ドキュメント出力

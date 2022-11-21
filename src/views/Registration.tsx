@@ -754,6 +754,7 @@ const Registration = () => {
                 fnSchemaChange: undefined,
               }}
               disabled={!isSaved}
+              setIsLoading={setIsLoading}
             />
           </div>
         </>

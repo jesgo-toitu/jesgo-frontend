@@ -620,6 +620,7 @@ const TabSchema = React.memo((props: Props) => {
           subSchemaCount={subSchemaCount}
           tabSelectEvents={childTabSelectedFunc}
           addableSubSchemaIds={addableSubSchemaIds}
+          setIsLoading={setIsLoading}
         />
       </div>
       {isTab

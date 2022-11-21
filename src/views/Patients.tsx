@@ -25,10 +25,17 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
-import { formatDate, formatTime } from '../common/CommonUtility';
+import {
+  formatDate,
+  formatTime,
+  setTimeoutPromise,
+} from '../common/CommonUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
+import { GetPackagedDocument } from '../common/DBUtility';
+import { jesgoCaseDefine } from '../store/formDataReducer';
+import { OpenOutputView } from '../common/CaseRegistrationUtility';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -489,6 +496,51 @@ const Patients = () => {
                 </Button>
               </ButtonGroup>
             </ButtonToolbar>
+            {/* // ★TODO: 仮実装 */}
+            <Button
+              bsStyle="danger"
+              className="normal-button"
+              onClick={() => {
+                const decordedJson = JSON.parse(userListJson) as userDataList;
+                const caseInfoList = decordedJson.data.map((item) => {
+                  const caseinfo: jesgoCaseDefine = {
+                    case_id: item.caseId.toString(),
+                    name: item.patientName,
+                    date_of_birth: '1900-01-01',
+                    date_of_death: '1900-01-01',
+                    sex: 'F',
+                    his_id: item.patientId,
+                    decline: false,
+                    registrant: -1,
+                    last_updated: '1900-01-01',
+                    is_new_case: false,
+                  };
+                  return caseinfo;
+                });
+
+                // TODO: ★仮実装
+
+                const wrapperFunc = () =>
+                  GetPackagedDocument(caseInfoList, undefined, undefined, true);
+
+                setIsLoading(true);
+
+                setTimeoutPromise(wrapperFunc)
+                  .then((res) => {
+                    OpenOutputView(window, (res as any).anyValue);
+                  })
+                  .catch((err) => {
+                    if (err === 'timeout') {
+                      alert('操作がタイムアウトしました');
+                    }
+                  })
+                  .finally(() => {
+                    setIsLoading(false);
+                  });
+              }}
+            >
+              ドキュメント出力
+            </Button>
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (
               <Button

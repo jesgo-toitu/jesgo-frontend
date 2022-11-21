@@ -470,7 +470,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         )
       ) {
         // 追加されるサブスキーマを取得
-        const allSubSchemaIds = GetAllSubSchemaIds(eventKey);
+        const allSubSchemaIds = GetAllSubSchemaIds(eventKey, true);
 
         // タブ追加後に選択するタブのインデックス
         let tabIndex = '';

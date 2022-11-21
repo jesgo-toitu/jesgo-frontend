@@ -617,6 +617,7 @@ const PanelSchema = React.memo((props: Props) => {
           subSchemaCount={subschema.length}
           tabSelectEvents={childTabSelectedFunc}
           addableSubSchemaIds={addableSubSchemaIds}
+          setIsLoading={setIsLoading}
         />
       </div>
       {isTab

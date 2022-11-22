@@ -497,50 +497,57 @@ const Patients = () => {
               </ButtonGroup>
             </ButtonToolbar>
             {/* // ★TODO: 仮実装 */}
-            <Button
-              bsStyle="danger"
-              className="normal-button"
-              onClick={() => {
-                const decordedJson = JSON.parse(userListJson) as userDataList;
-                const caseInfoList = decordedJson.data.map((item) => {
-                  const caseinfo: jesgoCaseDefine = {
-                    case_id: item.caseId.toString(),
-                    name: item.patientName,
-                    date_of_birth: '1900-01-01',
-                    date_of_death: '1900-01-01',
-                    sex: 'F',
-                    his_id: item.patientId,
-                    decline: false,
-                    registrant: -1,
-                    last_updated: '1900-01-01',
-                    is_new_case: false,
-                  };
-                  return caseinfo;
-                });
-
-                // TODO: ★仮実装
-
-                const wrapperFunc = () =>
-                  GetPackagedDocument(caseInfoList, undefined, undefined, true);
-
-                setIsLoading(true);
-
-                setTimeoutPromise(wrapperFunc)
-                  .then((res) => {
-                    OpenOutputView(window, (res as any).anyValue);
-                  })
-                  .catch((err) => {
-                    if (err === 'timeout') {
-                      alert('操作がタイムアウトしました');
-                    }
-                  })
-                  .finally(() => {
-                    setIsLoading(false);
+            {process.env.DEV_MODE === '1' && (
+              <Button
+                bsStyle="danger"
+                className="normal-button"
+                onClick={() => {
+                  const decordedJson = JSON.parse(userListJson) as userDataList;
+                  const caseInfoList = decordedJson.data.map((item) => {
+                    const caseinfo: jesgoCaseDefine = {
+                      case_id: item.caseId.toString(),
+                      name: item.patientName,
+                      date_of_birth: '1900-01-01',
+                      date_of_death: '1900-01-01',
+                      sex: 'F',
+                      his_id: item.patientId,
+                      decline: false,
+                      registrant: -1,
+                      last_updated: '1900-01-01',
+                      is_new_case: false,
+                    };
+                    return caseinfo;
                   });
-              }}
-            >
-              ドキュメント出力
-            </Button>
+
+                  // TODO: ★仮実装
+
+                  const wrapperFunc = () =>
+                    GetPackagedDocument(
+                      caseInfoList,
+                      undefined,
+                      undefined,
+                      true
+                    );
+
+                  setIsLoading(true);
+
+                  setTimeoutPromise(wrapperFunc)
+                    .then((res) => {
+                      OpenOutputView(window, (res as any).anyValue);
+                    })
+                    .catch((err) => {
+                      if (err === 'timeout') {
+                        alert('操作がタイムアウトしました');
+                      }
+                    })
+                    .finally(() => {
+                      setIsLoading(false);
+                    });
+                }}
+              >
+                ドキュメント出力
+              </Button>
+            )}
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (
               <Button

@@ -138,37 +138,39 @@ const SubmitButton = (props: ButtonProps) => {
   return (
     <Col className="user-info-button-col">
       <div className="user-info-button-div">
-        <Button
-          bsStyle="danger"
-          className="normal-button"
-          onClick={() => {
-            // ★TODO: 仮実装
-            const wrapperFunc = () =>
-              GetPackagedDocument(
-                [store.getState().formDataReducer.saveData.jesgo_case],
-                undefined,
-                undefined,
-                true
-              );
+        {process.env.DEV_MODE === '1' && (
+          <Button
+            bsStyle="danger"
+            className="normal-button"
+            onClick={() => {
+              // ★TODO: 仮実装
+              const wrapperFunc = () =>
+                GetPackagedDocument(
+                  [store.getState().formDataReducer.saveData.jesgo_case],
+                  undefined,
+                  undefined,
+                  true
+                );
 
-            setIsLoading(true);
+              setIsLoading(true);
 
-            setTimeoutPromise(wrapperFunc)
-              .then((res) => {
-                OpenOutputView(window, (res as any).anyValue);
-              })
-              .catch((err) => {
-                if (err === 'timeout') {
-                  alert('操作がタイムアウトしました');
-                }
-              })
-              .finally(() => {
-                setIsLoading(false);
-              });
-          }}
-        >
-          ドキュメント出力
-        </Button>
+              setTimeoutPromise(wrapperFunc)
+                .then((res) => {
+                  OpenOutputView(window, (res as any).anyValue);
+                })
+                .catch((err) => {
+                  if (err === 'timeout') {
+                    alert('操作がタイムアウトしました');
+                  }
+                })
+                .finally(() => {
+                  setIsLoading(false);
+                });
+            }}
+          >
+            ドキュメント出力
+          </Button>
+        )}
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
         <Button
           bsStyle="success"

@@ -575,9 +575,7 @@ export const GetAllSubSchemaIds = (id: number, showAlert = false) => {
     schemaIds.push(...schemaInfo[0].subschema);
 
     schemaInfo[0].subschema.forEach((schemaId) => {
-      if (isInfiniteLoopBlackList(schemaId, showAlert) === false) {
-        schemaIds.push(...GetAllSubSchemaIds(schemaId, showAlert)); // 再帰
-      }
+      schemaIds.push(...GetAllSubSchemaIds(schemaId, showAlert)); // 再帰
     });
   }
 

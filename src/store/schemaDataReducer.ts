@@ -26,12 +26,14 @@ export type JesgoDocumentSchema = {
 export interface schemaDataState {
   schemaDatas: Map<number, JesgoDocumentSchema[]>;
   rootSchemas: number[];
+  blackList: number[];
   inheritSchemaIds: Map<number, number[]>;
 }
 
 const initialState: schemaDataState = {
   schemaDatas: new Map(),
   rootSchemas: [],
+  blackList: [],
   inheritSchemaIds: new Map(),
 };
 
@@ -40,6 +42,7 @@ export interface schemaDataAction {
   type: string;
   schemaDatas: JesgoDocumentSchema[];
   rootSchemas: number[];
+  blackList: number[];
 }
 
 const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
@@ -107,6 +110,11 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
 
       break;
 
+    case 'BLACKLIST':
+      copyState.blackList = action.blackList;
+
+      break;
+      
     default:
   }
   return copyState;

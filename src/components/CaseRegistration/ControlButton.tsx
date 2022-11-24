@@ -470,7 +470,28 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         )
       ) {
         // 追加されるサブスキーマを取得
-        const allSubSchemaIds = GetAllSubSchemaIds(eventKey);
+        let allSubSchemaIds: number[] = [];
+        try {
+          allSubSchemaIds = GetAllSubSchemaIds(eventKey, true);
+        } catch (err) {
+          // 無限ループ発生時はアラート出して処理中断
+          if (
+            err instanceof Error &&
+            err.name === 'RangeError' &&
+            err.message.includes('Maximum call stack size exceeded')
+          ) {
+            // eslint-disable-next-line no-alert
+            alert(
+              `${GetSchemaTitle(
+                eventKey
+              )}、もしくはその子スキーマにエラーがあるため作成できませんでした。スキーマ定義を見直してください`
+            );
+          } else {
+            console.log(err);
+          }
+
+          return;
+        }
 
         // タブ追加後に選択するタブのインデックス
         let tabIndex = '';
@@ -564,7 +585,9 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           <Glyphicon glyph="th-list" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
+          {process.env.DEV_MODE === '1' && (
+            <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
+          )}
           {/* 自身の移動 */}
           {canMove && (
             <MenuItem eventKey="up">

@@ -530,8 +530,43 @@ export const getErrMsg = (errorList: RegistrationErrors[]) => {
   }
   return message;
 };
+
+// スキーマのタイトル取得
+export const GetSchemaTitle = (id: number) => {
+  const schemaInfo = GetSchemaInfo(id);
+  let title = schemaInfo?.title ?? '';
+  if (schemaInfo?.subtitle) {
+    title += ` ${schemaInfo.subtitle}`;
+  }
+  return title;
+};
+
+/**
+ * 無限ループの原因となっているスキーマかどうかを判定する
+ * 無限ループの原因である場合はその旨のアラートも出力する
+ * @param schemaId 調査対象のスキーマID
+ * @returns 無限ループの原因か否か
+ */
+export const isInfiniteLoopBlackList = (
+  schemaId: number,
+  showAlert = false
+): boolean => {
+  const blackList: number[] = store.getState().schemaDataReducer.blackList;
+  if (blackList.includes(schemaId)) {
+    const title = GetSchemaTitle(schemaId);
+    if (showAlert) {
+      // eslint-disable-next-line no-alert
+      alert(
+        `${title}にエラーがあるため一部のスキーマが作成できませんでした。スキーマ定義を見直してください`
+      );
+    }
+    return true;
+  }
+  return false;
+};
+
 // 指定スキーマのサブスキーマIDを孫スキーマ含めすべて取得
-export const GetAllSubSchemaIds = (id: number) => {
+export const GetAllSubSchemaIds = (id: number, showAlert = false) => {
   const schemaIds: number[] = [];
 
   const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
@@ -540,7 +575,7 @@ export const GetAllSubSchemaIds = (id: number) => {
     schemaIds.push(...schemaInfo[0].subschema);
 
     schemaInfo[0].subschema.forEach((schemaId) => {
-      schemaIds.push(...GetAllSubSchemaIds(schemaId)); // 再帰
+      schemaIds.push(...GetAllSubSchemaIds(schemaId, showAlert)); // 再帰
     });
   }
 
@@ -637,16 +672,6 @@ export const convertTabKey = (parentTabKey: string, tabKey: any) => {
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return convTabKey;
-};
-
-// スキーマのタイトル取得
-export const GetSchemaTitle = (id: number) => {
-  const schemaInfo = GetSchemaInfo(id);
-  let title = schemaInfo?.title ?? '';
-  if (schemaInfo?.subtitle) {
-    title += ` ${schemaInfo.subtitle}`;
-  }
-  return title;
 };
 
 // Schemaから非表示項目を取得

@@ -585,7 +585,9 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           <Glyphicon glyph="th-list" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
+          {process.env.DEV_MODE === '1' && (
+            <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
+          )}
           {/* 自身の移動 */}
           {canMove && (
             <MenuItem eventKey="up">

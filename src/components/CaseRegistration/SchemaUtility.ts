@@ -11,6 +11,7 @@ import JSONPointer from 'jsonpointer';
 import lodash from 'lodash';
 import { Dispatch } from 'redux';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { isDate } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import store from '../../store';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
@@ -44,15 +45,66 @@ export const getPropItemsAndNames = (item: JSONSchema7) => {
   return result;
 };
 
+// スキーマ$ID(スキーマのパス)からスキーマID(数値)を取得
+export const GetSchemaIdFromString = (id: string):number => {
+  const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
+  // eslint-disable-next-line consistent-return
+  schemaInfos.forEach((value, key) => {
+    if(value[0].schema_id_string === id){
+      return key
+    }
+  });
+  return -1;
+}
+
 // スキーマIDからスキーマ情報を取得
-export const GetSchemaInfo = (id: number) => {
+export const GetSchemaInfo = (id: number, eventDate: string | null = null) => {
   const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
   const schemaList = schemaInfos.get(id);
-  if (schemaList && schemaList[0]) {
-    return schemaList[0];
+  if (schemaList) {
+    if (eventDate === null || !isDate(eventDate)) {
+      if (schemaList[0]) {
+        return schemaList[0];
+      }
+    } else {
+      let enableedNewest = null;
+      // 有効期限内で無効になっていないものを探す
+      // eslint-disable-next-line no-plusplus
+      for (let index = 0; index < schemaList.length; index++) {
+        const target = schemaList[index];
+        if (target.hidden) {
+          // 有効でない場合は次のものを見る
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+        if (enableedNewest === null) {
+          // 最新の有効スキーマがまだ取得されていないのであれば保存しておく
+          enableedNewest = target;
+        }
+        // eventDateが有効期限開始日より前であれば次のものを見る
+        if (new Date(eventDate) < new Date(target.valid_from)) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
+        // 有効期限終了日が設定されていない場合か、eventDateが有効期限終了日より前であれば確定する
+        if (
+          target.valid_until === null ||
+          target.valid_until === '' ||
+          new Date(eventDate) < new Date(target.valid_until)
+        ) {
+          return target;
+        }
+      }
+
+      // 有効期限内かつ無効になっていないものが見つからなかった場合、無効になっていない最新を返す
+      if (enableedNewest !== null) {
+        return enableedNewest;
+      }
+    }
   }
-  return undefined;
-};
+
+}
 
 // スキーマIDからバージョン毎のスキーマ情報を取得
 export const GetSchemaVersionedInfo = (id: number) => {

@@ -444,7 +444,7 @@ const GetParentDocumentTitle = (saveData: SaveDataObjDefine, docId: string) => {
   if (!parentDoc) {
     return titleNames;
   }
-  const schemaInfo = GetSchemaInfo(parentDoc.value.schema_id);
+  const schemaInfo = GetSchemaInfo(parentDoc.value.schema_id, parentDoc.value.event_date);
   if (!schemaInfo) {
     return titleNames;
   }
@@ -474,10 +474,11 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const formData = doc.value.document;
       const schemaId = doc.value.schema_id;
+      const eventDate = doc.value.event_date
       const documentId = doc.key;
 
       // schemaの取得
-      const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
+      const schemaInfo = GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema;
       const schema = schemaInfo.document_schema;
 
       // schemaのカスタマイズ
@@ -827,37 +828,74 @@ interface Obj {
   [prop: string]: any;
 }
 
-export const GetInheritFormData = (
+const GET_CHANGE_TYPE = {
+  INHERIT:0,
+  VERSION:1,
+}
+
+export const GetChangedFormData = (
+  changeType: number,
   baseSchemaId: number,
   inheritSchemaId: number,
+  oldSchemaInfo: JSONSchema7|null,
+  eventDate: string,
   formData: any
 ) => {
+  // 形式に関わらずformDataが存在しないか中身が空の場合はそのまま使いまわす
   if (
     !formData ||
-    Object.keys(formData).length === 0 ||
-    // スキーマIDが同じ場合はそのまま使用できるのでそのまま返す
-    baseSchemaId === inheritSchemaId
+    Object.keys(formData).length === 0 
   ) {
     return formData;
   }
 
-  const baseSchemaInfo = GetSchemaInfo(baseSchemaId);
-  const inheritSchemaInfo = GetSchemaInfo(inheritSchemaId);
+  let baseCustomSchema:JSONSchema7;
+  let changedSchema:JSONSchema7;
 
-  if (!baseSchemaInfo || !inheritSchemaInfo) {
-    return formData;
+  // 継承の場合
+  if(changeType === GET_CHANGE_TYPE.INHERIT) {
+  // スキーマIDが同じ場合はそのまま使用できるのでそのまま返す
+    if(baseSchemaId === inheritSchemaId) {
+      return formData;
+    }
+    
+    const baseSchemaInfo = GetSchemaInfo(baseSchemaId);
+    const changedSchemaInfo = GetSchemaInfo(inheritSchemaId);
+  
+    if (!baseSchemaInfo || !changedSchemaInfo) {
+      return formData;
+    }
+  
+    // 継承元のスキーマ
+    baseCustomSchema = CustomSchema({
+      orgSchema: baseSchemaInfo.document_schema,
+      formData,
+    });
+    // 継承先のスキーマ
+    changedSchema = CustomSchema({
+      orgSchema: changedSchemaInfo.document_schema,
+      formData: {},
+    });
+    
   }
+  // バージョン変更の場合
+  else if(changeType === GET_CHANGE_TYPE.VERSION) {
+    const changedSchemaInfo = GetSchemaInfo(baseSchemaId, eventDate);
+    if (!oldSchemaInfo || !changedSchemaInfo) {
+      return formData;
+    }
 
-  // 継承元のスキーマ
-  const baseCustomSchema = CustomSchema({
-    orgSchema: baseSchemaInfo.document_schema,
-    formData,
-  });
-  // 継承先のスキーマ
-  const inheritSchema = CustomSchema({
-    orgSchema: inheritSchemaInfo.document_schema,
-    formData: {},
-  });
+    // 継承元のスキーマ
+    baseCustomSchema = CustomSchema({
+      orgSchema: oldSchemaInfo,
+      formData,
+    });
+    // 継承先のスキーマ
+    changedSchema = CustomSchema({
+      orgSchema: changedSchemaInfo.document_schema,
+      formData: {},
+    });
+  }
 
   const newFormData: Obj = {};
 
@@ -871,8 +909,8 @@ export const GetInheritFormData = (
     if (baseCustomSchema.properties) {
       jsonSchema1 = baseCustomSchema.properties[propName] as JSONSchema7;
     }
-    if (inheritSchema.properties) {
-      jsonSchema2 = inheritSchema.properties[propName] as JSONSchema7;
+    if (changedSchema.properties) {
+      jsonSchema2 = changedSchema.properties[propName] as JSONSchema7;
     }
 
     if (jsonSchema1 && !jsonSchema2) {
@@ -908,6 +946,20 @@ export const GetInheritFormData = (
 
   return newFormData;
 };
+
+export const GetInheritFormData = (
+  baseSchemaId: number,
+  inheritSchemaId: number,
+  formData: any
+) => GetChangedFormData(GET_CHANGE_TYPE.INHERIT, baseSchemaId, inheritSchemaId, null, '', formData);
+
+export const GetVersionedFormData = (
+  schemaId: number,
+  oldSchemaInfo: JSONSchema7,
+  eventDate: string,
+  formData: any
+) => GetChangedFormData(GET_CHANGE_TYPE.VERSION, schemaId, schemaId, oldSchemaInfo, eventDate, formData);
+
 
 export const GetBeforeInheritDocumentData = (
   parentDocId: string,

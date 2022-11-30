@@ -7,9 +7,15 @@ import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/Vali
 import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
-import { isNotEmptyObject } from '../../common/CaseRegistrationUtility';
+import {
+  GetVersionedFormData,
+  isNotEmptyObject,
+} from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
+import { GetSchemaIdFromString } from './SchemaUtility';
+import { getEventDate } from '../../common/DBUtility';
+import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 
 interface CustomDivFormProp extends FormProps<any> {
   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -18,6 +24,10 @@ interface CustomDivFormProp extends FormProps<any> {
   setFormData: React.Dispatch<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   documentId: string;
   isTabItem: boolean;
+  dispSchemaIds: dispSchemaIdAndDocumentIdDefine[];
+  setDispSchemaIds: React.Dispatch<
+    React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
+  >;
 }
 
 // カスタムフォーム
@@ -120,9 +130,23 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onChange = (e: IChangeEvent<any>) => {
     let data = e.formData;
+    let changedEventDate = false;
     // データがないと保存時にnot null制約違反になるため空オブジェクトに変換
     if (data === undefined || data === null) {
       data = {};
+    }
+
+    if (thisDocument) {
+      const newFormdata = GetVersionedFormData(
+        GetSchemaIdFromString(e.schema.$id!),
+        e.schema,
+        getEventDate(thisDocument, data),
+        data
+      );
+      if (newFormdata) {
+        data = newFormdata;
+        changedEventDate = true;
+      }
     }
 
     let hasDefault = false;

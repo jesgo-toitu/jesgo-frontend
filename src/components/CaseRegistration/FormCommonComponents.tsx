@@ -30,7 +30,6 @@ export const createTab = (
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >,
   isChildSchema: boolean,
-  loadedData: SaveDataObjDefine | undefined,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
   subSchemaCount: number,
@@ -61,7 +60,6 @@ export const createTab = (
           documentId={info.documentId}
           dispSchemaIds={[...schemaIds]}
           setDispSchemaIds={setSchemaIds}
-          loadedData={loadedData}
           setIsLoading={setIsLoading}
           setSaveResponse={setSaveResponse}
           setSelectedTabKey={setSelectedTabKey}
@@ -90,7 +88,6 @@ export const createTabs = (
   setDispChildSchemaIds: React.Dispatch<
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >,
-  loadedData: SaveDataObjDefine | undefined,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
@@ -288,7 +285,6 @@ export const createTabs = (
             subschemaIdsNotDeleted,
             setSubschemaIds,
             false,
-            loadedData,
             setIsLoading,
             setSaveResponse,
             0,
@@ -306,7 +302,6 @@ export const createTabs = (
             dispChildSchemaIdsNotDeleted,
             setDispChildSchemaIds,
             true,
-            loadedData,
             setIsLoading,
             setSaveResponse,
             subschemaIdsNotDeleted.length,
@@ -337,7 +332,6 @@ export const createPanel = (
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >,
   isChildSchema: boolean,
-  loadedData: SaveDataObjDefine | undefined,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
@@ -357,7 +351,6 @@ export const createPanel = (
       documentId={info.documentId}
       dispSchemaIds={[...schemaIds]}
       setDispSchemaIds={setSchemaIds}
-      loadedData={loadedData}
       setIsLoading={setIsLoading}
       setSaveResponse={setSaveResponse}
       isSchemaChange={info.isSchemaChange}
@@ -382,8 +375,6 @@ export const createPanels = (
   setDispChildSchemaIds: React.Dispatch<
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >,
-
-  loadedData: SaveDataObjDefine | undefined,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>,
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
@@ -400,7 +391,6 @@ export const createPanels = (
         subschemaIdsNotDeleted,
         setSubschemaIds,
         false,
-        loadedData,
         setIsLoading,
         setSaveResponse,
         setErrors,
@@ -414,7 +404,6 @@ export const createPanels = (
         dispChildSchemaIdsNotDeleted,
         setDispChildSchemaIds,
         true,
-        loadedData,
         setIsLoading,
         setSaveResponse,
         setErrors,

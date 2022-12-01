@@ -720,7 +720,6 @@ const Registration = () => {
                             documentId={info.documentId}
                             dispSchemaIds={[...dispRootSchemaIds]}
                             setDispSchemaIds={setDispRootSchemaIds}
-                            loadedData={loadData}
                             setSelectedTabKey={setSelectedTabKey}
                             setIsLoading={setIsLoading}
                             setSaveResponse={setSaveResponse}

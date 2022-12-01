@@ -327,12 +327,11 @@ const TabSchema = React.memo((props: Props) => {
         (p) => p.key === documentId
       );
 
+      const editedDocuments =
+        store.getState().formDataReducer.saveData.jesgo_document;
+
       // 編集中のデータ
-      const saveParentDoc = store
-        .getState()
-        .formDataReducer.saveData.jesgo_document.find(
-          (p) => p.key === documentId
-        );
+      const saveParentDoc = editedDocuments.find((p) => p.key === documentId);
       // 継承した場合は編集中のデータをセットする
       if (saveParentDoc) {
         parentDoc = saveParentDoc;
@@ -382,9 +381,9 @@ const TabSchema = React.memo((props: Props) => {
         // 子ドキュメントがあればサブスキーマとchildスキーマを判定してそれぞれの配列に格納
         if (childDocuments.length > 0) {
           childDocuments.forEach((childDocId) => {
-            const childDoc = loadedData.jesgo_document.find(
-              (p) => p.key === childDocId
-            );
+            const childDoc =
+              editedDocuments.find((p) => p.key === childDocId) ||
+              loadedData.jesgo_document.find((p) => p.key === childDocId);
             if (childDoc) {
               const item: dispSchemaIdAndDocumentIdDefine = {
                 documentId: childDoc.key,

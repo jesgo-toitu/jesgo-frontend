@@ -14,7 +14,7 @@ import 'prismjs/themes/prism-tomorrow.min.css';
  */
 const OutputView = () => {
   // 表示する文字列
-  const [resultStr, setResultStr] = useState<string>('');
+  const [resultStr, setResultStr] = useState<string | null>('');
 
   // メッセージ受信準備が完了したら呼び元に通知する
   useEffect(() => {
@@ -38,8 +38,13 @@ const OutputView = () => {
         // eslint-disable-next-line no-prototype-builtins
         if ((e.data as object)?.hasOwnProperty('jsonData')) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          const jsonstr = JSON.stringify(e.data.jsonData, null, 2);
-          setResultStr(jsonstr);
+          if (e.data.jsonData) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const jsonstr = JSON.stringify(e.data.jsonData, null, 2);
+            setResultStr(jsonstr);
+          } else {
+            setResultStr(null);
+          }
         }
       }
     });

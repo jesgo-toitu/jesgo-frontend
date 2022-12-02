@@ -234,10 +234,6 @@ const RootSchema = React.memo((props: Props) => {
                 isRootSchema: false,
                 schemaInfo: itemSchemaInfo,
                 setAddedDocumentCount,
-              });
-
-              dispatch({
-                type: 'DATA_TRANSFER_PROCESSED',
                 processedDocId: inheritItem.key,
               });
             });
@@ -431,10 +427,6 @@ const RootSchema = React.memo((props: Props) => {
               isRootSchema: false,
               schemaInfo: GetSchemaInfo(doc.value.schema_id),
               setAddedDocumentCount,
-            });
-
-            dispatch({
-              type: 'DATA_TRANSFER_PROCESSED',
               processedDocId: doc.key,
             });
           });

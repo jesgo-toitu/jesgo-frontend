@@ -213,11 +213,8 @@ const PanelSchema = React.memo((props: Props) => {
 
           let inheritDocuments: jesgoDocumentObjDefine[] = [];
           // 継承した場合は削除したドキュメントの中から同じスキーマのドキュメントを取得
-          if (isSchemaChange) {
+          if (isSchemaChange || isParentSchemaChange) {
             inheritDocuments = GetBeforeInheritDocumentData(documentId, id);
-          } else if (isParentSchemaChange) {
-            // 親スキーマで継承されていた場合は自身のdocIdは振り直しされているので全検索する
-            inheritDocuments = GetBeforeInheritDocumentData('', id);
           }
           if (inheritDocuments.length > 0) {
             inheritDocuments.forEach((inheritItem) => {
@@ -249,10 +246,6 @@ const PanelSchema = React.memo((props: Props) => {
                 isRootSchema: false,
                 schemaInfo: itemSchemaInfo,
                 setAddedDocumentCount,
-              });
-
-              dispatch({
-                type: 'DATA_TRANSFER_PROCESSED',
                 processedDocId: inheritItem.key,
               });
             });
@@ -336,7 +329,7 @@ const PanelSchema = React.memo((props: Props) => {
           item1.deletedChildDocuments.some((item2) => {
             if (
               item2.value.schema_id === schemaId &&
-              !processedDocumentIds.has(item2.key)
+              !processedDocumentIds.find((p) => p[0] === item2.key)
             ) {
               sourceDoc = item2;
               return true;
@@ -350,6 +343,7 @@ const PanelSchema = React.memo((props: Props) => {
           dispatch({
             type: 'DATA_TRANSFER_PROCESSED',
             processedDocId: sourceDoc.key,
+            processedNewDocId: documentId,
           });
         }
       }
@@ -433,12 +427,10 @@ const PanelSchema = React.memo((props: Props) => {
       if (childSchema.length > 0) {
         const searchChildDocs: jesgoDocumentObjDefine[] = [];
         childSchema.forEach((id) => {
-          if (isSchemaChange) {
+          if (isSchemaChange || isParentSchemaChange) {
             searchChildDocs.push(
               ...GetBeforeInheritDocumentData(documentId, id)
             );
-          } else if (isParentSchemaChange) {
-            searchChildDocs.push(...GetBeforeInheritDocumentData('', id));
           }
         });
 
@@ -450,6 +442,7 @@ const PanelSchema = React.memo((props: Props) => {
               deleted: false,
               compId: '',
               title: GetSchemaTitle(doc.value.schema_id),
+              isParentSchemaChange: isParentSchemaChange || isSchemaChange,
             };
             dispChildSchemaIds.push(item);
 
@@ -464,10 +457,6 @@ const PanelSchema = React.memo((props: Props) => {
               isRootSchema: false,
               schemaInfo: GetSchemaInfo(doc.value.schema_id),
               setAddedDocumentCount,
-            });
-
-            dispatch({
-              type: 'DATA_TRANSFER_PROCESSED',
               processedDocId: doc.key,
             });
           });

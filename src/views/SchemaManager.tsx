@@ -449,6 +449,13 @@ const SchemaManager = () => {
       return true;
     }
 
+    // 有効なものが一つもない場合はエラーとする
+    if (enabledSchemas.length === 0) {
+      tmpErrorMessages.push(
+        '最低でも一つのバージョンを有効にする必要があります。'
+      );
+    }
+
     // 有効な物に関して、期限が繋がっているか、開始日と終了日が矛盾していないかを確認する
     for (let index = enabledSchemas.length - 1; index > 0; index--) {
       const target = enabledSchemas[index];
@@ -654,7 +661,7 @@ const SchemaManager = () => {
   // 初期設定の読込
   const loadDefault = () => {
     // eslint-disable-next-line no-restricted-globals
-    if (confirm('初期設定を読み込みますか？')) {
+    if (confirm('下位スキーマと継承スキーマの初期設定を読み込みますか？')) {
       const tempSubSchemaList: schemaWithValid[] = [];
       const tempChildSchemaList: schemaWithValid[] = [];
       const tempInheritSchemaList: schemaWithValid[] = [];
@@ -813,6 +820,35 @@ const SchemaManager = () => {
     }
   }, [schemaUploadResponse]);
 
+  const downloadSchema = (
+    targetSchema: JesgoDocumentSchema | null,
+    version = ''
+  ) => {
+    if (targetSchema) {
+      const jsonStr = JSON.stringify(targetSchema.document_schema, null, 2);
+      const blob = new Blob([jsonStr], {
+        type: 'application/json',
+      });
+      let fileName = '';
+      if (targetSchema.schema_id_string) {
+        // ファイル名はスキーマIDの先頭と末尾から"/"を除き、残りの"/"は"_"へ変換する
+        fileName = targetSchema.schema_id_string
+          .replace(/^\/+|\/+$/g, '')
+          .replace(/\//g, '_');
+      }
+      if (fileName) {
+        if (version && version !== '') {
+          saveAs(blob, `${fileName}_${version}.json`);
+        } else {
+          saveAs(blob, `${fileName}.json`);
+        }
+
+        return;
+      }
+    }
+    alert('ダウンロード不可なスキーマです。');
+  };
+
   return (
     <div className="page-area">
       <Navbar collapseOnSelect fixedTop>
@@ -953,34 +989,12 @@ const SchemaManager = () => {
                           {!selectedBaseSchemaInfo && '(なし)'}
                         </span>
                       </div>
-                      {/* TODO: スキーマダウンロードボタンサンプル */}
                       <div>
                         <Button
                           bsStyle="success"
                           className="normal-button nomargin"
                           title="スキーマファイルをダウンロードします"
-                          onClick={() => {
-                            const jsonStr = JSON.stringify(
-                              selectedSchemaInfo.document_schema,
-                              null,
-                              2
-                            );
-                            const blob = new Blob([jsonStr], {
-                              type: 'application/json',
-                            });
-                            let fileName = '';
-                            if (selectedSchemaInfo.schema_id_string) {
-                              // ファイル名はスキーマIDの先頭と末尾から"/"を除き、残りの"/"は"_"へ変換する
-                              fileName = selectedSchemaInfo.schema_id_string
-                                .replace(/^\/+|\/+$/g, '')
-                                .replace(/\//g, '_');
-                            }
-                            if (fileName) {
-                              saveAs(blob, `${fileName}.json`);
-                            } else {
-                              alert('ダウンロード不可なスキーマです。');
-                            }
-                          }}
+                          onClick={() => downloadSchema(selectedSchemaInfo)}
                         >
                           {' '}
                           スキーマダウンロード
@@ -1072,6 +1086,7 @@ const SchemaManager = () => {
                           <SchemaVersionTable
                             checkType={RELATION_TYPE.VERSION}
                             schemaList={versionedSchemaList}
+                            handleDownloadClick={downloadSchema}
                             handleCheckClick={handleCheckClick}
                             validFrom={validFrom}
                             setValidFrom={setValidFrom}

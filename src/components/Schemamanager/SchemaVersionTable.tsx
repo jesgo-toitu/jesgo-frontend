@@ -5,10 +5,15 @@ import { FaDownload } from '@react-icons/all-files/fa/FaDownload';
 import { cloneDeep } from 'lodash';
 import { schemaWithValid } from '../CaseRegistration/SchemaUtility';
 import { formatDateStr } from '../../common/CommonUtility';
+import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 
 type SchemaVersionTableProps = {
   schemaList: schemaWithValid[];
   handleCheckClick: (relation: number, type: number, v?: string) => void;
+  handleDownloadClick: (
+    schemaInfo: JesgoDocumentSchema | null,
+    version?: string
+  ) => void;
   checkType: number;
   validFrom: string[];
   validUntil: string[];
@@ -24,9 +29,9 @@ export const makeInitValidDate = (
   // eslint-disable-next-line no-plusplus
   for (let index = 0; index < schemaList.length; index++) {
     const schema = schemaList[index].schema;
-    initValidFrom.push(formatDateStr(schema.valid_from, '/'));
+    initValidFrom.push(formatDateStr(schema.valid_from, '-'));
     initValidUntil.push(
-      schema.valid_until ? formatDateStr(schema.valid_until, '/') : ''
+      schema.valid_until ? formatDateStr(schema.valid_until, '-') : ''
     );
   }
   return { validFrom: initValidFrom, validUntil: initValidUntil };
@@ -36,6 +41,7 @@ const SchemaVersionTable = (props: SchemaVersionTableProps) => {
   const {
     schemaList,
     handleCheckClick,
+    handleDownloadClick,
     checkType,
     validFrom,
     validUntil,
@@ -85,65 +91,80 @@ const SchemaVersionTable = (props: SchemaVersionTableProps) => {
 
   return (
     // eslint-disable-next-line react/jsx-no-useless-fragment
-    <table className="sortable-table">
-      <thead>
-        <tr className="sortable-table-head">
-          <th className="sortable-table-cell3">バージョン</th>
-          <th className="sortable-table-cell4">開始日</th>
-          <th className="sortable-table-cell5"> </th>
-          <th className="sortable-table-cell4">終了日</th>
-          <th className="sortable-table-cell6">表示</th>
-        </tr>
-      </thead>
-      <tbody className="sortable-table-body">
-        {schemaList.map((row, index) => (
-          <tr className="sortable-table-row">
-            <td className="sortable-table-cell3">
-              <div style={{ marginTop: 0.1, marginBottom: 0.1 }}>
-                {`${row.schema.version_major}.${row.schema.version_minor}`}
-                <div className="spacer10" />
-                <Button>
-                  <FaDownload />
-                </Button>
-              </div>
-            </td>
-            <td className="sortable-table-cell4">
-              <div>
-                <input
-                  size={16}
-                  value={validFrom[index]}
-                  onChange={(e) =>
-                    handleInputChange(e, index, INPUT_TYPE.VALID)
-                  }
-                />
-              </div>
-            </td>
-            <td className="sortable-table-cell5">～</td>
-            <td className="sortable-table-cell4">
-              <div>
-                <input
-                  size={16}
-                  value={validUntil[index]}
-                  onChange={(e) =>
-                    handleInputChange(e, index, INPUT_TYPE.UNTIL)
-                  }
-                />
-              </div>
-            </td>
-            <td className="sortable-table-cell6">
-              <Checkbox
-                className="show-flg-checkbox"
-                checked={row.valid}
-                onChange={() => {
-                  setCheckEdit(true);
-                  handleCheckClick(checkType, -1, index.toString());
-                }}
-              />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <>
+      {!schemaList || schemaList[0].schema.schema_id === 0 ? (
+        <span>(なし)</span>
+      ) : (
+        // eslint-disable-next-line react/jsx-no-useless-fragment
+        <table className="sortable-table">
+          <thead>
+            <tr className="sortable-table-head">
+              <th className="sortable-table-cell3">バージョン</th>
+              <th className="sortable-table-cell4">開始日</th>
+              <th className="sortable-table-cell5"> </th>
+              <th className="sortable-table-cell4">終了日</th>
+              <th className="sortable-table-cell6">表示</th>
+            </tr>
+          </thead>
+          <tbody className="sortable-table-body">
+            {schemaList.map((row, index) => (
+              <tr className="version-table-row">
+                <td className="sortable-table-cell3">
+                  {`${row.schema.version_major}.${row.schema.version_minor}`}
+                  <div className="spacer10" />
+                  <Button
+                    className="version-download"
+                    onClick={() =>
+                      handleDownloadClick(
+                        row.schema,
+                        `${row.schema.version_major}.${row.schema.version_minor}`
+                      )
+                    }
+                  >
+                    <FaDownload />
+                  </Button>
+                </td>
+                <td className="sortable-table-cell4">
+                  <div>
+                    <input
+                      type="date"
+                      size={16}
+                      value={validFrom[index]}
+                      onChange={(e) =>
+                        handleInputChange(e, index, INPUT_TYPE.VALID)
+                      }
+                    />
+                  </div>
+                </td>
+                <td className="sortable-table-cell5">～</td>
+                <td className="sortable-table-cell4">
+                  <div>
+                    <input
+                      type="date"
+                      size={16}
+                      value={validUntil[index]}
+                      onChange={(e) =>
+                        handleInputChange(e, index, INPUT_TYPE.UNTIL)
+                      }
+                    />
+                  </div>
+                </td>
+                <td className="sortable-table-cell6">
+                  <Checkbox
+                    className="show-flg-checkbox"
+                    checked={row.valid}
+                    onChange={() => {
+                      setCheckEdit(true);
+                      handleCheckClick(checkType, -1, index.toString());
+                    }}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </>
   );
 };
 

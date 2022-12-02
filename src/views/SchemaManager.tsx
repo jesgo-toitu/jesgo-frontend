@@ -1100,13 +1100,6 @@ const SchemaManager = () => {
                       <Button
                         bsStyle="default"
                         className="normal-button"
-                        onClick={() => isValidDateError()}
-                      >
-                        validerror
-                      </Button>
-                      <Button
-                        bsStyle="default"
-                        className="normal-button"
                         onClick={() => loadDefault()}
                       >
                         初期設定を反映

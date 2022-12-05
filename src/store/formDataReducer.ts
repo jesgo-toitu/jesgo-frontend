@@ -65,7 +65,7 @@ export interface formDataState {
     parentDocumentId: string;
     deletedChildDocuments: jesgoDocumentObjDefine[];
   }[];
-  processedDocumentIds: Set<string>;
+  processedDocumentIds: [string, string][];
   formDataInputStates: Map<string, boolean>;
 }
 
@@ -119,6 +119,7 @@ export interface formDataAction {
   isUpdateInput: boolean;
   isNotUniqueSubSchemaAdded: boolean;
   processedDocId: string;
+  processedNewDocId: string;
 
   hasFormDataInput: boolean;
 }
@@ -183,7 +184,7 @@ const initialState: formDataState = {
   tabSelectEvent: undefined,
   selectedTabKeyName: '',
   deletedDocuments: [],
-  processedDocumentIds: new Set(),
+  processedDocumentIds: [],
   formDataInputStates: new Map(),
 };
 
@@ -455,6 +456,13 @@ const formDataReducer: Reducer<
           action.setAddedDocumentCount(copyState.addedDocumentCount);
         }
 
+        // 継承時の処理済みdocumentIdと新規で振られたdocumentIdを紐づける
+        if (action.processedDocId) {
+          if(!copyState.processedDocumentIds.find(p => p[0] === action.processedDocId)) {
+            copyState.processedDocumentIds.push([action.processedDocId, docId]);
+          }
+        }
+
         break;
       }
 
@@ -496,7 +504,7 @@ const formDataReducer: Reducer<
             if (deletedDocIds.length > 0) {
               // #region 継承後のデータ引継ぎ用に削除した子ドキュメントの情報を持っておく
               copyState.deletedDocuments = []; // 初期化
-              copyState.processedDocumentIds = new Set(); // 反映済みドキュメントID初期化
+              copyState.processedDocumentIds = []; // 反映済みドキュメントID初期化
               deletedDocIds.forEach((deleteDocId) => {
                 // 親ドキュメント
                 const pDoc = saveData.jesgo_document.find((p) =>
@@ -545,7 +553,9 @@ const formDataReducer: Reducer<
       // データ引継ぎ済みdocumentIdの更新
       case 'DATA_TRANSFER_PROCESSED': {
         if (action.processedDocId) {
-          copyState.processedDocumentIds.add(action.processedDocId);
+          if(!copyState.processedDocumentIds.find(p => p[0] === action.processedDocId)) {
+            copyState.processedDocumentIds.push([action.processedDocId, action.processedNewDocId]);
+          }
         }
         break;
       }

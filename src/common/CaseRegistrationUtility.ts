@@ -531,8 +531,43 @@ export const getErrMsg = (errorList: RegistrationErrors[]) => {
   }
   return message;
 };
+
+// スキーマのタイトル取得
+export const GetSchemaTitle = (id: number) => {
+  const schemaInfo = GetSchemaInfo(id);
+  let title = schemaInfo?.title ?? '';
+  if (schemaInfo?.subtitle) {
+    title += ` ${schemaInfo.subtitle}`;
+  }
+  return title;
+};
+
+/**
+ * 無限ループの原因となっているスキーマかどうかを判定する
+ * 無限ループの原因である場合はその旨のアラートも出力する
+ * @param schemaId 調査対象のスキーマID
+ * @returns 無限ループの原因か否か
+ */
+export const isInfiniteLoopBlackList = (
+  schemaId: number,
+  showAlert = false
+): boolean => {
+  const blackList: number[] = store.getState().schemaDataReducer.blackList;
+  if (blackList.includes(schemaId)) {
+    const title = GetSchemaTitle(schemaId);
+    if (showAlert) {
+      // eslint-disable-next-line no-alert
+      alert(
+        `${title}にエラーがあるため一部のスキーマが作成できませんでした。スキーマ定義を見直してください`
+      );
+    }
+    return true;
+  }
+  return false;
+};
+
 // 指定スキーマのサブスキーマIDを孫スキーマ含めすべて取得
-export const GetAllSubSchemaIds = (id: number) => {
+export const GetAllSubSchemaIds = (id: number, showAlert = false) => {
   const schemaIds: number[] = [];
 
   const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
@@ -541,7 +576,7 @@ export const GetAllSubSchemaIds = (id: number) => {
     schemaIds.push(...schemaInfo[0].subschema);
 
     schemaInfo[0].subschema.forEach((schemaId) => {
-      schemaIds.push(...GetAllSubSchemaIds(schemaId)); // 再帰
+      schemaIds.push(...GetAllSubSchemaIds(schemaId, showAlert)); // 再帰
     });
   }
 
@@ -638,16 +673,6 @@ export const convertTabKey = (parentTabKey: string, tabKey: any) => {
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return convTabKey;
-};
-
-// スキーマのタイトル取得
-export const GetSchemaTitle = (id: number) => {
-  const schemaInfo = GetSchemaInfo(id);
-  let title = schemaInfo?.title ?? '';
-  if (schemaInfo?.subtitle) {
-    title += ` ${schemaInfo.subtitle}`;
-  }
-  return title;
 };
 
 // Schemaから非表示項目を取得
@@ -966,6 +991,7 @@ export const GetBeforeInheritDocumentData = (
   schemaId: number
 ) => {
   let retDocs: jesgoDocumentObjDefine[] = [];
+  let searchDocId = parentDocId;
 
   const deletedDocuments = store.getState().formDataReducer.deletedDocuments;
 
@@ -973,12 +999,21 @@ export const GetBeforeInheritDocumentData = (
   const processedDocumentIds =
     store.getState().formDataReducer.processedDocumentIds;
 
-  if (parentDocId === '') {
+  // 親のIDが仮番の場合、旧IDを取得
+  if (parentDocId.startsWith('K')) {
+    const item = processedDocumentIds.find((p) => p[1] === parentDocId);
+    if (item) {
+      searchDocId = item[0];
+    }
+  }
+
+  if (searchDocId === '') {
     // documentIdの指定がない場合は全検索
     deletedDocuments.forEach((item) => {
       const filter = item.deletedChildDocuments.filter(
         (p) =>
-          p.value.schema_id === schemaId && !processedDocumentIds.has(p.key)
+          p.value.schema_id === schemaId &&
+          !processedDocumentIds.find((q) => q[0] === p.key)
       );
       if (filter.length > 0) {
         retDocs = filter;
@@ -987,12 +1022,13 @@ export const GetBeforeInheritDocumentData = (
   } else {
     // documentIdの指定がある場合はそのdocumentIdに紐づくデータを取得
     const deletedItem = deletedDocuments.find(
-      (p) => p.parentDocumentId === parentDocId
+      (p) => p.parentDocumentId === searchDocId
     );
     if (deletedItem) {
       const baseDoc = deletedItem.deletedChildDocuments.filter(
         (p) =>
-          p.value.schema_id === schemaId && !processedDocumentIds.has(p.key)
+          p.value.schema_id === schemaId &&
+          !processedDocumentIds.find((q) => q[0] === p.key)
       );
       if (baseDoc.length > 0) {
         retDocs = baseDoc;
@@ -1001,4 +1037,25 @@ export const GetBeforeInheritDocumentData = (
   }
 
   return retDocs;
+};
+
+/**
+ * データ出力用画面オープン
+ * @param win window
+ * @param srcData 出力するデータ
+ */
+export const OpenOutputView = (win: typeof window, srcData: any) => {
+  win.addEventListener(
+    'message',
+    (e) => {
+      // 画面の準備ができたらデータをポストする
+      if (e.origin === win.location.origin && e.data === 'output_ready') {
+        // ★TODO: 仮実装
+        e.source?.postMessage({ jsonData: srcData });
+      }
+    },
+    false
+  );
+
+  win.open('/OutputView', 'outputview');
 };

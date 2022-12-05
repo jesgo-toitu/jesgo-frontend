@@ -1,5 +1,11 @@
 "use strict";
 const path = require('path');  //path モジュールの読み込み
+const Dotenv = require('dotenv-webpack');
+let enviroment = 'development';
+const modeIdx = process.argv.findIndex(arg => arg.toLowerCase() === '--mode');
+if(modeIdx > -1 && process.argv.length > modeIdx + 1) {
+  enviroment = process.argv[modeIdx + 1];
+}
 
 module.exports = {
   mode: 'development',  //モード
@@ -50,4 +56,9 @@ module.exports = {
       }
     ]
   },
+  plugins: [
+    new Dotenv({
+      path: path.resolve(__dirname, `.env.${enviroment}`)
+    }),
+  ]
 };

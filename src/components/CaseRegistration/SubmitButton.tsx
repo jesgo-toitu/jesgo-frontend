@@ -6,10 +6,19 @@ import '../../views/Registration.css';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import store from '../../store/index';
-import SaveCommand, { responseResult } from '../../common/DBUtility';
+import SaveCommand, {
+  GetPackagedDocument,
+  responseResult,
+} from '../../common/DBUtility';
 import { RESULT } from '../../common/ApiAccess';
-import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
-import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
+import {
+  RemoveBeforeUnloadEvent,
+  setTimeoutPromise,
+} from '../../common/CommonUtility';
+import {
+  IsNotUpdate,
+  OpenOutputView,
+} from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
 
 interface ButtonProps {
@@ -129,6 +138,39 @@ const SubmitButton = (props: ButtonProps) => {
   return (
     <Col className="user-info-button-col">
       <div className="user-info-button-div">
+        {process.env.DEV_MODE === '1' && (
+          <Button
+            bsStyle="danger"
+            className="normal-button"
+            onClick={() => {
+              // ★TODO: 仮実装
+              const wrapperFunc = () =>
+                GetPackagedDocument(
+                  [store.getState().formDataReducer.saveData.jesgo_case],
+                  undefined,
+                  undefined,
+                  true
+                );
+
+              setIsLoading(true);
+
+              setTimeoutPromise(wrapperFunc)
+                .then((res) => {
+                  OpenOutputView(window, (res as any).anyValue);
+                })
+                .catch((err) => {
+                  if (err === 'timeout') {
+                    alert('操作がタイムアウトしました');
+                  }
+                })
+                .finally(() => {
+                  setIsLoading(false);
+                });
+            }}
+          >
+            ドキュメント出力
+          </Button>
+        )}
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
         <Button
           bsStyle="success"

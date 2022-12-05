@@ -720,7 +720,6 @@ const Registration = () => {
                             documentId={info.documentId}
                             dispSchemaIds={[...dispRootSchemaIds]}
                             setDispSchemaIds={setDispRootSchemaIds}
-                            loadedData={loadData}
                             setSelectedTabKey={setSelectedTabKey}
                             setIsLoading={setIsLoading}
                             setSaveResponse={setSaveResponse}
@@ -754,6 +753,7 @@ const Registration = () => {
                 fnSchemaChange: undefined,
               }}
               disabled={!isSaved}
+              setIsLoading={setIsLoading}
             />
           </div>
         </>

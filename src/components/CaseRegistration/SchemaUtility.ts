@@ -46,20 +46,22 @@ export const getPropItemsAndNames = (item: JSONSchema7) => {
 };
 
 // スキーマ$ID(スキーマのパス)からスキーマID(数値)を取得
-export const GetSchemaIdFromString = (id: string):number => {
-  const schemaInfos:Map<number, JesgoDocumentSchema[]> = store.getState().schemaDataReducer.schemaDatas;
+export const GetSchemaIdFromString = (id: string): number => {
+  const schemaInfos: Map<number, JesgoDocumentSchema[]> =
+    store.getState().schemaDataReducer.schemaDatas;
   // eslint-disable-next-line consistent-return
   schemaInfos.forEach((value, key) => {
-    if(value[0].schema_id_string === id){
-      return key
+    if (value[0].schema_id_string === id) {
+      return key;
     }
   });
   return -1;
-}
+};
 
 // スキーマIDからスキーマ情報を取得
 export const GetSchemaInfo = (id: number, eventDate: string | null = null) => {
-  const schemaInfos:Map<number, JesgoDocumentSchema[]> = store.getState().schemaDataReducer.schemaDatas;
+  const schemaInfos: Map<number, JesgoDocumentSchema[]> =
+    store.getState().schemaDataReducer.schemaDatas;
   const schemaList = schemaInfos.get(id);
   if (schemaList) {
     if (eventDate === null || !isDate(eventDate)) {
@@ -104,11 +106,12 @@ export const GetSchemaInfo = (id: number, eventDate: string | null = null) => {
     }
   }
   return undefined;
-}
+};
 
 // スキーマIDからバージョン毎のスキーマ情報を取得
 export const GetSchemaVersionedInfo = (id: number) => {
-  const schemaInfos:Map<number, JesgoDocumentSchema[]> = store.getState().schemaDataReducer.schemaDatas;
+  const schemaInfos: Map<number, JesgoDocumentSchema[]> =
+    store.getState().schemaDataReducer.schemaDatas;
   const schemaList = schemaInfos.get(id);
   return schemaList ?? [];
 };
@@ -193,6 +196,20 @@ export const storeSchemaInfo = async (dispatch: Dispatch<any>) => {
     dispatch({
       type: 'ROOT',
       rootSchemas: returnRootSchemaIdsApiObject.body,
+    });
+  }
+
+  // ブラックリスト取得処理
+  const returnBlackListApiObject = await apiAccess(
+    METHOD_TYPE.GET,
+    `getblacklist`
+  );
+
+  if (returnBlackListApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+    const body = returnBlackListApiObject.body as { blackList: number[] };
+    dispatch({
+      type: 'BLACKLIST',
+      blackList: body.blackList,
     });
   }
 

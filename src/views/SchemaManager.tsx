@@ -173,8 +173,13 @@ const SchemaManager = () => {
     const treeApiReturnObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
 
     if (treeApiReturnObject.statusNum === RESULT.NORMAL_TERMINATION) {
-      const returned = treeApiReturnObject.body as treeSchema[];
-      setTree(returned);
+      const returned = treeApiReturnObject.body as treeApiObject;
+      setTree(returned.treeSchema);
+      const newErrorMessages = lodash.cloneDeep(errorMessages);
+      for (let i = 0; i < returned.errorMessages.length; i++) {
+        newErrorMessages.push(returned.errorMessages[i]);
+      }
+      setErrorMessages(newErrorMessages);
     } else {
       RemoveBeforeUnloadEvent();
       navigate('/login');
@@ -210,8 +215,13 @@ const SchemaManager = () => {
       const treeApiReturnObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
 
       if (treeApiReturnObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        const returned = treeApiReturnObject.body as treeSchema[];
-        setTree(returned);
+        const returned = treeApiReturnObject.body as treeApiObject;
+        setTree(returned.treeSchema);
+        const newErrorMessages = lodash.cloneDeep(errorMessages);
+        for (let i = 0; i < returned.errorMessages.length; i++) {
+          newErrorMessages.push(returned.errorMessages[i]);
+        }
+        setErrorMessages(newErrorMessages);
       } else {
         RemoveBeforeUnloadEvent();
         navigate('/login');

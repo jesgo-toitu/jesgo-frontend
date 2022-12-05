@@ -6,6 +6,7 @@ import {
   GetCreatedDocCountAfterInherit,
   GetInheritFormData,
   GetSchemaTitle,
+  OpenOutputView,
 } from '../../common/CaseRegistrationUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
@@ -14,6 +15,8 @@ import store from '../../store/index';
 import { ChildTabSelectedFuncObj } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
+import { GetPackagedDocument } from '../../common/DBUtility';
+import { setTimeoutPromise } from '../../common/CommonUtility';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -58,6 +61,7 @@ type ControlButtonProps = {
   subSchemaCount: number;
   tabSelectEvents?: ChildTabSelectedFuncObj;
   disabled?: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -84,6 +88,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     setSelectedTabKey,
     tabSelectEvents,
     disabled,
+    setIsLoading,
   } = props;
 
   // 追加可能判定
@@ -282,6 +287,33 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             });
           }
           break;
+        // TODO: ★仮実装
+        case 'output': {
+          const wrapperFunc = () =>
+            GetPackagedDocument(
+              [store.getState().formDataReducer.saveData.jesgo_case],
+              undefined,
+              Number(documentId),
+              true
+            );
+
+          setIsLoading(true);
+
+          setTimeoutPromise(wrapperFunc)
+            .then((res) => {
+              OpenOutputView(window, (res as any).anyValue);
+            })
+            .catch((err) => {
+              if (err === 'timeout') {
+                alert('操作がタイムアウトしました');
+              }
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
+
+          break;
+        }
         default:
           // 継承スキーマへの切り替え
           if (eventKey.startsWith('I') && setDispSchemaIds != null) {
@@ -438,7 +470,28 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         )
       ) {
         // 追加されるサブスキーマを取得
-        const allSubSchemaIds = GetAllSubSchemaIds(eventKey);
+        let allSubSchemaIds: number[] = [];
+        try {
+          allSubSchemaIds = GetAllSubSchemaIds(eventKey, true);
+        } catch (err) {
+          // 無限ループ発生時はアラート出して処理中断
+          if (
+            err instanceof Error &&
+            err.name === 'RangeError' &&
+            err.message.includes('Maximum call stack size exceeded')
+          ) {
+            // eslint-disable-next-line no-alert
+            alert(
+              `${GetSchemaTitle(
+                eventKey
+              )}、もしくはその子スキーマにエラーがあるため作成できませんでした。スキーマ定義を見直してください`
+            );
+          } else {
+            console.log(err);
+          }
+
+          return;
+        }
 
         // タブ追加後に選択するタブのインデックス
         let tabIndex = '';
@@ -532,6 +585,9 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           <Glyphicon glyph="th-list" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
+          {process.env.DEV_MODE === '1' && (
+            <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
+          )}
           {/* 自身の移動 */}
           {canMove && (
             <MenuItem eventKey="up">

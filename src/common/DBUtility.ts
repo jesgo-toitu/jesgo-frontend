@@ -10,7 +10,11 @@ import {
   getPropItemsAndNames,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
-import { jesgoDocumentObjDefine, SaveDataObjDefine } from '../store/formDataReducer';
+import {
+  jesgoCaseDefine,
+  jesgoDocumentObjDefine,
+  SaveDataObjDefine,
+} from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { validateJesgoDocument } from './CaseRegistrationUtility';
@@ -121,18 +125,22 @@ export const loadJesgoCaseAndDocument = async (
 };
 
 // event_date取得処理
-export const getEventDate = (jesgoDoc:jesgoDocumentObjDefine, formData:any):string => {
+export const getEventDate = (
+  jesgoDoc: jesgoDocumentObjDefine,
+  formData: any
+): string => {
   let eventDatePropName = '';
   let deathDataPropName = '';
   let eventDate = '';
   const { document_schema: documentSchema } = GetSchemaInfo(
-    jesgoDoc.value.schema_id, jesgoDoc.value.event_date
+    jesgoDoc.value.schema_id,
+    jesgoDoc.value.event_date
   ) as JesgoDocumentSchema;
   const customSchema = CustomSchema({
     orgSchema: documentSchema,
     formData, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
   });
-  
+
   const propList = getPropItemsAndNames(customSchema);
   propList.pNames.forEach((propName: string) => {
     const pItem = propList.pItems[propName] as JSONSchema7;
@@ -151,17 +159,11 @@ export const getEventDate = (jesgoDoc:jesgoDocumentObjDefine, formData:any):stri
       (p) => p[0] === eventDatePropName
     );
 
-    eventDate = eventDateProp
-      ? (eventDateProp[1] as string)
-      : '';
+    eventDate = eventDateProp ? (eventDateProp[1] as string) : '';
   }
 
   // 死亡日時の設定(jesgo_case)
-  if (
-    deathDataPropName &&
-    eventDatePropName &&
-    formData
-  ) {
+  if (deathDataPropName && eventDatePropName && formData) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const deathProp = Object.entries(formData).find(
       (p) => p[0] === jesgoDoc.death_data_prop_name
@@ -174,7 +176,7 @@ export const getEventDate = (jesgoDoc:jesgoDocumentObjDefine, formData:any):stri
   }
   // jesgoDoc.value.last_updated = updateDate;
   return eventDate;
-}
+};
 
 // 保存処理の呼び出し
 const SaveChanges = async (
@@ -197,7 +199,8 @@ const SaveChanges = async (
         let eventDatePropName = '';
         let deathDataPropName = '';
         const { document_schema: documentSchema } = GetSchemaInfo(
-          jesgoDoc.value.schema_id, jesgoDoc.value.event_date
+          jesgoDoc.value.schema_id,
+          jesgoDoc.value.event_date
         ) as JesgoDocumentSchema;
         const customSchema = CustomSchema({
           orgSchema: documentSchema,
@@ -429,6 +432,36 @@ export const UploadSchemaFile = async (
 
   // 呼び元に返す
   setSchemaUploadResponse(res);
+};
+
+/**
+ * 一連のドキュメント取得
+ * @param jesgo_case
+ * @param schema_id
+ * @returns
+ */
+export const GetPackagedDocument = async (
+  jesgoCaseList: jesgoCaseDefine[],
+  schema_id?: number,
+  document_id?: number,
+  attachPatientInfoDetail?: boolean
+) => {
+  const apiResult = await apiAccess(METHOD_TYPE.POST, `packaged-document/`, {
+    jesgoCaseList,
+    schema_id,
+    document_id,
+    attachPatientInfoDetail,
+  });
+
+  const res: responseResult = {
+    message: '',
+    resCode: -1,
+  };
+
+  res.resCode = apiResult.statusNum;
+  res.anyValue = apiResult.body;
+
+  return res;
 };
 
 export default SaveCommand;

@@ -24,6 +24,7 @@ import {
 } from '../components/CaseRegistration/Definition';
 import { Const } from './Const';
 import { formatDateStr } from './CommonUtility';
+import store from '../store';
 
 export interface responseResult {
   resCode?: number;
@@ -162,6 +163,20 @@ export const getEventDate = (
     eventDate = eventDateProp ? (eventDateProp[1] as string) : '';
   }
 
+  if (!eventDate) {
+    // 親のeventDate取得処理
+    const jesgoDocList =
+      store.getState().formDataReducer.saveData.jesgo_document;
+    const parentDoc = jesgoDocList.find((p) =>
+      p.value.child_documents.includes(jesgoDoc.key)
+    );
+    if (parentDoc) {
+      // 見つかるまでルートまで探索
+      eventDate = getEventDate(parentDoc, parentDoc.value.document);
+    }
+  }
+
+  // TODO: 死亡日時とイベント日は違うがここで取得してよい？
   // 死亡日時の設定(jesgo_case)
   if (deathDataPropName && eventDatePropName && formData) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -196,6 +211,7 @@ const SaveChanges = async (
         const jesgoDoc = copySaveData.jesgo_document[idx];
         jesgoDoc.value.document = formData; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
 
+        // TODO: イベント日、死亡日時の設定は関数化したのでそちらを使うこと
         let eventDatePropName = '';
         let deathDataPropName = '';
         const { document_schema: documentSchema } = GetSchemaInfo(

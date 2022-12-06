@@ -24,7 +24,7 @@ import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
 import { createPanels, createTabs } from './FormCommonComponents';
 import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
-import { responseResult } from '../../common/DBUtility';
+import { getEventDate, responseResult } from '../../common/DBUtility';
 import '../../views/Registration.css';
 import store from '../../store';
 
@@ -96,8 +96,13 @@ const TabSchema = React.memo((props: Props) => {
   const [updateChildFormData, setUpdateChildFormData] =
     useState<boolean>(false);
 
+  const saveDoc = store
+    .getState()
+    .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
+  const eventDate = saveDoc ? getEventDate(saveDoc, formData) : null;
+
   // schemaIdをもとに情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
+  const schemaInfo = GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema;
   const {
     document_schema: documentSchema,
     subschema,

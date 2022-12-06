@@ -92,7 +92,9 @@ const SchemaVersionTable = (props: SchemaVersionTableProps) => {
   return (
     // eslint-disable-next-line react/jsx-no-useless-fragment
     <>
-      {!schemaList || schemaList[0].schema.schema_id === 0 ? (
+      {!schemaList ||
+      schemaList.length === 0 ||
+      schemaList[0].schema.schema_id === 0 ? (
         <span>(なし)</span>
       ) : (
         // eslint-disable-next-line react/jsx-no-useless-fragment
@@ -103,7 +105,7 @@ const SchemaVersionTable = (props: SchemaVersionTableProps) => {
               <th className="sortable-table-cell4">開始日</th>
               <th className="sortable-table-cell5"> </th>
               <th className="sortable-table-cell4">終了日</th>
-              <th className="sortable-table-cell6">表示</th>
+              <th className="sortable-table-cell6">有効</th>
             </tr>
           </thead>
           <tbody className="sortable-table-body">

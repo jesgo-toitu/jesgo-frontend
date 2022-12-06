@@ -24,7 +24,7 @@ import { createPanels, createTabs } from './FormCommonComponents';
 import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
-import { responseResult } from '../../common/DBUtility';
+import { getEventDate, responseResult } from '../../common/DBUtility';
 import store from '../../store';
 
 // 孫スキーマ以降
@@ -64,8 +64,16 @@ const PanelSchema = React.memo((props: Props) => {
     schemaAddModFunc,
     setUpdateFormData,
   } = props;
+
+  const [formData, setFormData] = useState<any>({}); // eslint-disable-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
+
+  const saveDoc = store
+    .getState()
+    .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
+  const eventDate = saveDoc ? getEventDate(saveDoc, formData) : null;
+
   // schemaIdをもとに情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
+  const schemaInfo = GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema;
   if (schemaInfo == null) {
     return null;
   }
@@ -77,7 +85,6 @@ const PanelSchema = React.memo((props: Props) => {
   const [dispChildSchemaIdsNotDeleted, setDispChildSchemaIdsNotDeleted] =
     useState<dispSchemaIdAndDocumentIdDefine[]>([]);
 
-  const [formData, setFormData] = useState<any>({}); // eslint-disable-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
   // サブスキーマ用
   const [dispSubSchemaIds, setDispSubSchemaIds] = useState<
     dispSchemaIdAndDocumentIdDefine[]

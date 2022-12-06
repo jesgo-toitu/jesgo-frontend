@@ -393,13 +393,13 @@ const SchemaManager = () => {
 
     const makeErrorMessage = (
       schema: JesgoDocumentSchema,
-      validType: number
+      validType: number,
+      subMessage: string
     ): string => {
-      const validMessage =
-        validType === VALID_TYPE.FROM ? '有効期限開始日' : '有効期限終了日';
+      const validMessage = validType === VALID_TYPE.FROM ? '開始日' : '終了日';
       return `バージョン「${getVersionText(
         schema
-      )}」の${validMessage}に誤りがあります。`;
+      )}」の${validMessage}に誤りがあります。${subMessage}`;
     };
 
     // 各行について処理を行う、indexが若いものが一番最新のバージョン
@@ -410,7 +410,13 @@ const SchemaManager = () => {
 
       // 有効、無効問わず開始日は空文字不可
       if (!isDate(targetValidFrom)) {
-        tmpErrorMessages.push(makeErrorMessage(target.schema, VALID_TYPE.FROM));
+        tmpErrorMessages.push(
+          makeErrorMessage(
+            target.schema,
+            VALID_TYPE.FROM,
+            '開始日を入力してください。'
+          )
+        );
       }
 
       // 有効無効振り分け
@@ -428,7 +434,11 @@ const SchemaManager = () => {
           // 一番新しい有効スキーマの場合は終了日にも空文字を許可する
           if (targetValidUntil !== '' && !isDate(targetValidUntil)) {
             tmpErrorMessages.push(
-              makeErrorMessage(target.schema, VALID_TYPE.UNTIL)
+              makeErrorMessage(
+                target.schema,
+                VALID_TYPE.UNTIL,
+                '終了日を入力してください。'
+              )
             );
           }
         } else {
@@ -436,7 +446,11 @@ const SchemaManager = () => {
           // eslint-disable-next-line no-lonely-if
           if (!isDate(targetValidUntil)) {
             tmpErrorMessages.push(
-              makeErrorMessage(target.schema, VALID_TYPE.UNTIL)
+              makeErrorMessage(
+                target.schema,
+                VALID_TYPE.UNTIL,
+                '終了日を入力してください。'
+              )
             );
           }
         }
@@ -444,8 +458,13 @@ const SchemaManager = () => {
         // 無効の場合、常に終了日は空文字も許可する
         // eslint-disable-next-line no-lonely-if
         if (targetValidUntil !== '' && !isDate(targetValidUntil)) {
+          // 日付形式以外の入力は不可なので、通常このルートは通らない
           tmpErrorMessages.push(
-            makeErrorMessage(target.schema, VALID_TYPE.UNTIL)
+            makeErrorMessage(
+              target.schema,
+              VALID_TYPE.UNTIL,
+              '終了日を正しい日付形式で入力してください。'
+            )
           );
         }
       }
@@ -454,6 +473,7 @@ const SchemaManager = () => {
     // この時点でエラーが出ている場合比較が出来ないのでエラーを表示して終了する
     if (tmpErrorMessages.length > 0) {
       if (alertable) {
+        tmpErrorMessages.unshift('【エラー】保存に失敗しました。');
         alert(tmpErrorMessages.join('\n'));
       }
       return true;
@@ -462,12 +482,12 @@ const SchemaManager = () => {
     // 有効なものが一つもない場合はエラーとする
     if (enabledSchemas.length === 0) {
       tmpErrorMessages.push(
-        '最低でも一つのバージョンを有効にする必要があります。'
+        '最低でも一つ以上のバージョンを有効にする必要があります。'
       );
     }
 
     // 有効な物に関して、期限が繋がっているか、開始日と終了日が矛盾していないかを確認する
-    for (let index = enabledSchemas.length - 1; index > 0; index--) {
+    for (let index = enabledSchemas.length - 1; index >= 0; index--) {
       const target = enabledSchemas[index];
       // 自身の中で開始日と終了日が矛盾していないかを確認、ただし最新スキーマで終了日が空文字の場合のみは比較しない
       if (
@@ -478,7 +498,7 @@ const SchemaManager = () => {
         tmpErrorMessages.push(
           `バージョン「${getVersionText(
             target.schema
-          )}」の有効期限に矛盾があります。`
+          )}」の開始日と終了日に矛盾があります。`
         );
       }
 
@@ -495,15 +515,16 @@ const SchemaManager = () => {
         if (targetValidUntil.getTime() !== nextVersionValidFrom.getTime()) {
           tmpErrorMessages.push(
             `バージョン「${getVersionText(
-              target.schema
-            )}」の終了日とバージョン「${getVersionText(
               enabledSchemas[index - 1].schema
-            )}」の開始日に矛盾があります。`
+            )}」の開始日はバージョン「${getVersionText(
+              target.schema
+            )}」の終了日の翌日にしてください。`
           );
         }
       }
     }
     if (tmpErrorMessages.length > 0 && alertable) {
+      tmpErrorMessages.unshift('【エラー】保存に失敗しました。');
       alert(tmpErrorMessages.join('\n'));
     }
 

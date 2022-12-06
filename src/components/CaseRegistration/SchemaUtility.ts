@@ -49,12 +49,13 @@ export const getPropItemsAndNames = (item: JSONSchema7) => {
 export const GetSchemaIdFromString = (id: string): number => {
   const schemaInfos: Map<number, JesgoDocumentSchema[]> =
     store.getState().schemaDataReducer.schemaDatas;
-  // eslint-disable-next-line consistent-return
-  schemaInfos.forEach((value, key) => {
-    if (value[0].schema_id_string === id) {
-      return key;
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const item of schemaInfos) {
+    if (item[1].length > 0 && item[1][0].schema_id_string === id) {
+      return item[0];
     }
-  });
+  }
   return -1;
 };
 
@@ -64,7 +65,7 @@ export const GetSchemaInfo = (id: number, eventDate: string | null = null) => {
     store.getState().schemaDataReducer.schemaDatas;
   const schemaList = schemaInfos.get(id);
   if (schemaList) {
-    if (eventDate === null || !isDate(eventDate)) {
+    if (!eventDate || !isDate(eventDate)) {
       if (schemaList[0]) {
         return schemaList[0];
       }
@@ -93,7 +94,7 @@ export const GetSchemaInfo = (id: number, eventDate: string | null = null) => {
         if (
           target.valid_until === null ||
           target.valid_until === '' ||
-          new Date(eventDate) < new Date(target.valid_until)
+          new Date(eventDate) <= new Date(target.valid_until)
         ) {
           return target;
         }

@@ -22,7 +22,7 @@ import {
 } from '../../store/formDataReducer';
 import { createTabs } from './FormCommonComponents';
 import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
-import { responseResult } from '../../common/DBUtility';
+import { getEventDate, responseResult } from '../../common/DBUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import store from '../../store';
 import { Const } from '../../common/Const';
@@ -90,8 +90,13 @@ const RootSchema = React.memo((props: Props) => {
 
   const dispatch = useDispatch();
 
+  const saveDoc = store
+    .getState()
+    .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
+  const eventDate = saveDoc ? getEventDate(saveDoc, formData) : null;
+
   // ルートのschema情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
+  const schemaInfo = GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema;
   if (schemaInfo === undefined) {
     return null;
   }

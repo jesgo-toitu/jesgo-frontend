@@ -87,7 +87,7 @@ const SchemaManager = () => {
 
   // 選択中のスキーマと関係性のあるスキーマを更新する
   const upDateSchemaRelation = () => {
-    const schema = GetSchemaInfo(Number(selectedSchema));
+    const schema = GetSchemaInfo(Number(selectedSchema), null, false, true);
     if (schema !== undefined) {
       setSelectedSchemaInfo(schema);
 
@@ -102,7 +102,12 @@ const SchemaManager = () => {
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < tempSubSchemaList.length; i++) {
         // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
-        const tempSchema = GetSchemaInfo(tempSubSchemaList[i]);
+        const tempSchema = GetSchemaInfo(
+          tempSubSchemaList[i],
+          null,
+          false,
+          true
+        );
         if (tempSchema) {
           currentSubSchemaList.push({
             valid: i <= schema.subschema.length,
@@ -122,7 +127,12 @@ const SchemaManager = () => {
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < tempChildSchemaList.length; i++) {
         // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
-        const tempSchema = GetSchemaInfo(tempChildSchemaList[i]);
+        const tempSchema = GetSchemaInfo(
+          tempChildSchemaList[i],
+          null,
+          false,
+          true
+        );
         if (tempSchema) {
           currentChildSchemaList.push({
             valid: i + 1 <= schema.child_schema.length,
@@ -142,7 +152,7 @@ const SchemaManager = () => {
       const tmpInheritSchemaList = unionInheritSchemaList.map((inhId, i) => ({
         valid: i + 1 <= schema.inherit_schema.length,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        schema: GetSchemaInfo(inhId)!,
+        schema: GetSchemaInfo(inhId, null, false, true)!,
       }));
       setInheritSchemaList(tmpInheritSchemaList);
 
@@ -187,7 +197,9 @@ const SchemaManager = () => {
 
     // スキーマ取得処理
     await storeSchemaInfo(dispatch);
-    setSelectedSchemaInfo(GetSchemaInfo(Number(selectedSchema)));
+    setSelectedSchemaInfo(
+      GetSchemaInfo(Number(selectedSchema), null, false, true)
+    );
     upDateSchemaRelation();
   };
 
@@ -610,7 +622,12 @@ const SchemaManager = () => {
   // 基底スキーマ情報更新
   useEffect(() => {
     if (selectedSchemaInfo && selectedSchemaInfo.base_schema) {
-      const baseInfo = GetSchemaInfo(selectedSchemaInfo.base_schema);
+      const baseInfo = GetSchemaInfo(
+        selectedSchemaInfo.base_schema,
+        null,
+        false,
+        true
+      );
       setSelectedBaseSchemaInfo(baseInfo);
     } else {
       setSelectedBaseSchemaInfo(undefined);
@@ -703,7 +720,7 @@ const SchemaManager = () => {
           tempSubSchemaList.push({
             valid: true,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            schema: GetSchemaInfo(schemaId)!,
+            schema: GetSchemaInfo(schemaId, null, false, true)!,
           });
         }
 
@@ -713,7 +730,7 @@ const SchemaManager = () => {
           tempChildSchemaList.push({
             valid: true,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            schema: GetSchemaInfo(schemaId)!,
+            schema: GetSchemaInfo(schemaId, null, false, true)!,
           });
         }
 
@@ -723,7 +740,7 @@ const SchemaManager = () => {
           tempInheritSchemaList.push({
             valid: true,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            schema: GetSchemaInfo(schemaId)!,
+            schema: GetSchemaInfo(schemaId, null, false, true)!,
           });
         }
 

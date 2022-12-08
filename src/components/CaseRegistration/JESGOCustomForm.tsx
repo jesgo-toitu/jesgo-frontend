@@ -183,7 +183,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
       !hasDefault ||
       (isFirstOnChange && isFirstRederComplited)
     ) {
-      // TODO formDataだと一つ前のデータが表示されるため、変更後の値を直接更新
+      // formDataだと一つ前のデータが表示されるため、変更後の値を直接更新
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       dispatch({
         type: 'INPUT',

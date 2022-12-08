@@ -11,7 +11,7 @@ import JSONPointer from 'jsonpointer';
 import lodash from 'lodash';
 import { Dispatch } from 'redux';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
-import { isDate } from '../../common/CommonUtility';
+import { formatDate, isDate } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import store from '../../store';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
@@ -59,51 +59,69 @@ export const GetSchemaIdFromString = (id: string): number => {
   return -1;
 };
 
-// スキーマIDからスキーマ情報を取得
-export const GetSchemaInfo = (id: number, eventDate: string | null = null) => {
+/**
+ * スキーマIDからスキーマ情報を取得
+ * @param id スキーマID
+ * @param eventDate イベント日(基準日)
+ * @param validSchemaOnly
+ * @param forceGetLatestSchema true:有効期限に関わらず最新取得 false:有効期限考慮
+ * @returns
+ */
+export const GetSchemaInfo = (
+  id: number,
+  eventDate: string | null = null,
+  validSchemaOnly = false,
+  forceGetLatestSchema = false
+) => {
   const schemaInfos: Map<number, JesgoDocumentSchema[]> =
     store.getState().schemaDataReducer.schemaDatas;
   const schemaList = schemaInfos.get(id);
   if (schemaList) {
+    // ルート、もしくは強制取得のフラグがあれば最新取得
+    if ((id === 0 && schemaList.length > 0) || forceGetLatestSchema) {
+      return schemaList[0];
+    }
+
+    let searchDate: Date | undefined;
     if (!eventDate || !isDate(eventDate)) {
-      if (schemaList[0]) {
-        return schemaList[0];
-      }
+      // eventDateがない場合は現在日とする
+      searchDate = new Date(formatDate(new Date(), '-'));
     } else {
-      let enableedNewest = null;
-      // 有効期限内で無効になっていないものを探す
-      // eslint-disable-next-line no-plusplus
-      for (let index = 0; index < schemaList.length; index++) {
-        const target = schemaList[index];
-        if (target.hidden) {
-          // 有効でない場合は次のものを見る
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-        if (enableedNewest === null) {
-          // 最新の有効スキーマがまだ取得されていないのであれば保存しておく
-          enableedNewest = target;
-        }
-        // eventDateが有効期限開始日より前であれば次のものを見る
-        if (new Date(eventDate) < new Date(target.valid_from)) {
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-
-        // 有効期限終了日が設定されていない場合か、eventDateが有効期限終了日より前であれば確定する
-        if (
-          target.valid_until === null ||
-          target.valid_until === '' ||
-          new Date(eventDate) <= new Date(target.valid_until)
-        ) {
-          return target;
-        }
+      searchDate = new Date(eventDate);
+    }
+    let enableedNewest = null;
+    // 有効期限内で無効になっていないものを探す
+    // eslint-disable-next-line no-plusplus
+    for (let index = 0; index < schemaList.length; index++) {
+      const target = schemaList[index];
+      if (target.hidden) {
+        // 有効でない場合は次のものを見る
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+      if (enableedNewest === null) {
+        // 最新の有効スキーマがまだ取得されていないのであれば保存しておく
+        enableedNewest = target;
+      }
+      // eventDateが有効期限開始日より前であれば次のものを見る
+      if (searchDate < new Date(target.valid_from)) {
+        // eslint-disable-next-line no-continue
+        continue;
       }
 
-      // 有効期限内かつ無効になっていないものが見つからなかった場合、無効になっていない最新を返す
-      if (enableedNewest !== null) {
-        return enableedNewest;
+      // 有効期限終了日が設定されていない場合か、eventDateが有効期限終了日より前であれば確定する
+      if (
+        target.valid_until === null ||
+        target.valid_until === '' ||
+        searchDate <= new Date(target.valid_until)
+      ) {
+        return target;
       }
+    }
+
+    // 有効期限内かつ無効になっていないものが見つからなかった場合、無効になっていない最新を返す
+    if (!validSchemaOnly && enableedNewest !== null) {
+      return enableedNewest;
     }
   }
   return undefined;
@@ -120,7 +138,9 @@ export const GetSchemaVersionedInfo = (id: number) => {
 // ルートスキーマのschema_idを取得
 export const GetRootSchema = () => {
   const roots = store.getState().schemaDataReducer.rootSchemas;
-  return roots;
+
+  // 現在有効なスキーマのみ取得
+  return roots.filter((id) => GetSchemaInfo(id, null, true));
 };
 
 export type schemaWithValid = {
@@ -267,7 +287,7 @@ const mergeSchemaItem = (props: {
           tItem.readOnly === true
         ) {
           const value = tItem.default;
-          if (value) {
+          if (typeof value === 'boolean' || value) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             formData[pName] = value;
           }

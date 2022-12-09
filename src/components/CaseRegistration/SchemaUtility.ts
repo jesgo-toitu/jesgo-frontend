@@ -44,6 +44,18 @@ export const getPropItemsAndNames = (item: JSONSchema7) => {
   return result;
 };
 
+// スキーマ$ID(スキーマのパス)からスキーマID(数値)を取得
+export const GetSchemaIdFromString = (id: string):number => {
+  const schemaInfos:Map<number, JesgoDocumentSchema[]> = store.getState().schemaDataReducer.schemaDatas;
+  let schemaId = -1;
+  schemaInfos.forEach((value, key) => {
+    if(value[0].schema_id_string === id){
+      schemaId = key;
+    }
+  });
+  return schemaId;
+}
+
 // スキーマIDからスキーマ情報を取得
 export const GetSchemaInfo = (id: number) => {
   const schemaInfos = store.getState().schemaDataReducer.schemaDatas;

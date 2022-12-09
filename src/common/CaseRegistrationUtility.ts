@@ -996,3 +996,19 @@ export const OpenOutputView = (win: typeof window, srcData: any) => {
 
   win.open('/OutputView', 'outputview');
 };
+
+export const OpenOutputViewScript = (win: typeof window, srcData: string) => {
+  win.addEventListener(
+    'message',
+    (e) => {
+      // 画面の準備ができたらデータをポストする
+      if (e.origin === win.location.origin && e.data === 'output_ready') {
+        // ★TODO: 仮実装
+        e.source?.postMessage(srcData);
+      }
+    },
+    false
+  );
+
+  win.open('/OutputView', 'outputview');
+};

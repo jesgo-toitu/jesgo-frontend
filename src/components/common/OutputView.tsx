@@ -45,6 +45,8 @@ const OutputView = () => {
           } else {
             setResultStr(null);
           }
+        } else if (typeof e.data === 'string') {
+          setResultStr(e.data);
         }
       }
     });

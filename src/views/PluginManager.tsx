@@ -6,33 +6,29 @@ import {
   Button,
   Nav,
   NavItem,
-  Panel,
-  Checkbox,
   Table,
-  Radio,
+  ButtonGroup,
+  ButtonToolbar,
+  Glyphicon,
 } from 'react-bootstrap';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import ChevronRight from '@mui/icons-material/ChevronRight';
-import TreeView from '@mui/lab/TreeView';
-import Box from '@mui/material/Box';
-import { saveAs } from 'file-saver';
-import CustomTreeItem from '../components/Schemamanager/CustomTreeItem';
+import { useNavigate } from 'react-router-dom';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import Loading from '../components/CaseRegistration/Loading';
 import { Const } from '../common/Const';
 import './SchemaManager.css';
-import SchemaTree, {
-  SCHEMA_TYPE,
-} from '../components/Schemamanager/SchemaTree';
 import {
   AddBeforeUnloadEvent,
   RemoveBeforeUnloadEvent,
 } from '../common/CommonUtility';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { settingsFromApi } from './Settings';
-import { useNavigate } from 'react-router-dom';
 import { responseResult, UploadPluginFile } from '../common/DBUtility';
+import {
+  GetSchemaTitle,
+  OpenOutputViewScript,
+} from '../common/CaseRegistrationUtility';
+import './PluginManager.css';
 
 type settings = {
   facility_name: string;
@@ -78,6 +74,18 @@ const PluginManager = () => {
     button?.click();
   };
 
+  const getSchemaNameList = (idList: number[]): string => {
+    const schemaNameList: string[] = [];
+    for (let index = 0; index < idList.length; index++) {
+      const schemaId = idList[index];
+      const schemaTitle = GetSchemaTitle(schemaId);
+      if (schemaTitle !== '') {
+        schemaNameList.push(schemaTitle);
+      }
+    }
+    return schemaNameList.join('\n');
+  };
+
   useEffect(() => {
     // ブラウザの戻る・更新の防止
     AddBeforeUnloadEvent();
@@ -101,6 +109,7 @@ const PluginManager = () => {
       const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
       if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
         const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+        console.log(pluginList);
         setJesgoPluginList(pluginList);
       } else {
         RemoveBeforeUnloadEvent();
@@ -141,6 +150,36 @@ const PluginManager = () => {
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       UploadPluginFile(file, setPluginUploadResponse, setErrorMessages);
+    }
+  };
+
+  const leaveAlart = (): boolean => {
+    /* const tempSchemaList = getNeedUpdateParents(true);
+     const isChildEdited = isNeedUpdateSchema();
+    if (tempSchemaList.length > 0 || isChildEdited) {
+      // eslint-disable-next-line no-restricted-globals
+      return confirm(
+        'スキーマが編集中です。編集を破棄して移動してもよろしいですか？'
+      );
+    }
+    */
+    return true;
+  };
+
+  const clickCancel = () => {
+    if (leaveAlart()) {
+      RemoveBeforeUnloadEvent();
+      navigate('/Patients');
+    }
+  };
+
+  const openSyntax = (selectedId: number) => {
+    const targetPlugin = jesgoPluginList.find(
+      (p) => p.plugin_id === selectedId
+    );
+    if (targetPlugin) {
+      const script = targetPlugin.script_text;
+      OpenOutputViewScript(window, script);
     }
   };
 
@@ -193,40 +232,54 @@ const PluginManager = () => {
             onChange={onFileSelected}
             style={{ display: 'none' }}
           />
+          <Button
+            onClick={clickCancel}
+            bsStyle="primary"
+            className="normal-button"
+          >
+            リストに戻る
+          </Button>
         </div>
       </div>
 
-      {/* <div>
-        <Table striped className="setting-table">
-          <thead style={{ position: 'sticky' }}>
+      <div className="plugin-list">
+        <Table striped className="plugin-table">
+          <thead>
             <tr>
-              <th>ログイン名</th>
-              <th>表示名称</th>
-              <th>権限</th>
-              <th>編集/削除</th>
+              <th>プラグイン名</th>
+              <th className="plugin-table-short">バージョン</th>
+              <th className="plugin-table-short">プラグイン種別</th>
+              <th>対象スキーマ名</th>
+              <th>詳細</th>
+              <th className="plugin-table-short">
+                {/*ボタン類(DL/スクリプト/削除)*/}
+              </th>
             </tr>
           </thead>
           <tbody>
-            {staffList.map((staff) => (
-              <tr key={staff.user_id.toString()}>
-                <td>{staff.name}</td>
-                <td>{staff.display_name}</td>
-                <td>{convertRollName(staff.roll_id)}</td>
+            {jesgoPluginList.map((plugin) => (
+              <tr key={plugin.plugin_id.toString()}>
+                <td>{plugin.plugin_name}</td>
+                <td className="plugin-table-short">{plugin.plugin_version}</td>
+                <td className="plugin-table-short">
+                  {plugin.update_db ? 'データ更新' : 'データ出力'}
+                </td>
                 <td>
+                  {plugin.target_schema_id
+                    ? getSchemaNameList(plugin.target_schema_id)
+                    : ''}
+                </td>
+                <td>{plugin.explain}</td>
+                <td className="plugin-table-short">
                   <ButtonToolbar>
                     <ButtonGroup>
-                      <Button onClick={() => editStaff(staff)}>
-                        <Glyphicon glyph="edit" />
+                      <Button onClick={() => openSyntax(plugin.plugin_id)}>
+                        <Glyphicon glyph="list-alt" />
                       </Button>
-                      <Button
-                        onClick={() =>
-                          deleteStaff(
-                            staff.user_id,
-                            staff.name,
-                            staff.display_name
-                          )
-                        }
-                      >
+                      <Button>
+                        <Glyphicon glyph="download-alt" />
+                      </Button>
+                      <Button>
                         <Glyphicon glyph="trash" />
                       </Button>
                     </ButtonGroup>
@@ -236,7 +289,7 @@ const PluginManager = () => {
             ))}
           </tbody>
         </Table>
-      </div> */}
+      </div>
       {isLoading && <Loading />}
     </>
   );

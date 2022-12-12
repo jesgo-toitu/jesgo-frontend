@@ -50,6 +50,10 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     formData = thisDocument.value.document;
   }
 
+  const [eventDate, setEventDate] = useState<string>(
+    thisDocument ? getEventDate(thisDocument, formData) : ''
+  );
+
   // 継承直後、データ入力判定を動かすためにsetFormDataする
   if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
     setFormData(formData);
@@ -130,22 +134,26 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onChange = (e: IChangeEvent<any>) => {
     let data = e.formData;
-    let changedEventDate = false;
     // データがないと保存時にnot null制約違反になるため空オブジェクトに変換
     if (data === undefined || data === null) {
       data = {};
     }
 
     if (thisDocument) {
-      const newFormdata = GetVersionedFormData(
-        GetSchemaIdFromString(e.schema.$id!),
-        e.schema,
-        getEventDate(thisDocument, data),
-        data
-      );
-      if (newFormdata) {
-        data = newFormdata;
-        changedEventDate = true;
+      const currentEventDate = getEventDate(thisDocument, data);
+      // eventdateに変更があればスキーマに合わせたformData生成
+      if (eventDate !== currentEventDate) {
+        const newFormdata = GetVersionedFormData(
+          GetSchemaIdFromString(e.schema.$id!),
+          e.schema,
+          currentEventDate,
+          data
+        );
+        if (newFormdata) {
+          data = newFormdata;
+        }
+        // eventdate更新
+        setEventDate(currentEventDate);
       }
     }
 

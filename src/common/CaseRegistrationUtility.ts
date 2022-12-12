@@ -930,7 +930,11 @@ export const GetChangedFormData = (
   formData: any
 ) => {
   // 形式に関わらずformDataが存在しないか中身が空の場合はそのまま使いまわす
-  if (!formData || Object.keys(formData).length === 0) {
+  if (
+    !formData ||
+    typeof formData !== 'object' ||
+    Object.keys(formData).length === 0
+  ) {
     return formData;
   }
 

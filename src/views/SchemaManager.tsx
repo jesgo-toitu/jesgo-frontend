@@ -346,6 +346,12 @@ const SchemaManager = () => {
     const fileList = e.target.files;
     if (fileList) {
       const file = fileList[0];
+      if (file.size > 153600) {
+        alert(
+          '一度にアップロードするファイルのサイズは150KBまでにしてください'
+        );
+        return;
+      }
       const fileName: string = file.name.toLocaleLowerCase();
       if (!fileName.endsWith('.zip') && !fileName.endsWith('.json')) {
         alert('ZIPファイルもしくはJSONファイルを選択してください');

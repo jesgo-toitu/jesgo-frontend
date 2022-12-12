@@ -11,16 +11,13 @@ import {
   ButtonToolbar,
   Glyphicon,
 } from 'react-bootstrap';
+import { saveAs } from 'file-saver';
 import { useNavigate } from 'react-router-dom';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import Loading from '../components/CaseRegistration/Loading';
 import { Const } from '../common/Const';
 import './SchemaManager.css';
-import {
-  AddBeforeUnloadEvent,
-  RemoveBeforeUnloadEvent,
-} from '../common/CommonUtility';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { settingsFromApi } from './Settings';
 import { responseResult, UploadPluginFile } from '../common/DBUtility';
@@ -86,10 +83,18 @@ const PluginManager = () => {
     return schemaNameList.join('\n');
   };
 
-  useEffect(() => {
-    // ブラウザの戻る・更新の防止
-    AddBeforeUnloadEvent();
+  // プラグイン全ロード処理
+  const loadPluginList = async () => {
+    const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
+    if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+      const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+      setJesgoPluginList(pluginList);
+    } else {
+      navigate('/login');
+    }
+  };
 
+  useEffect(() => {
     const f = async () => {
       // 設定情報取得APIを呼ぶ
       const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
@@ -102,37 +107,33 @@ const PluginManager = () => {
         setFacilityName(returned.facility_name);
         setSettingJson(setting);
       } else {
-        RemoveBeforeUnloadEvent();
         navigate('/login');
       }
 
-      const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
-      if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
-        const pluginList = pluginListReturn.body as jesgoPluginColumns[];
-        console.log(pluginList);
-        setJesgoPluginList(pluginList);
-      } else {
-        RemoveBeforeUnloadEvent();
-        navigate('/login');
-      }
+      await loadPluginList();
     };
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     f();
   }, []);
 
   useEffect(() => {
-    if (pluginUploadResponse.resCode !== undefined) {
-      alert(pluginUploadResponse.message);
-      setPluginUploadResponse({ message: '', resCode: undefined });
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    const f = async () => {
+      if (pluginUploadResponse.resCode !== undefined) {
+        alert(pluginUploadResponse.message);
+        setPluginUploadResponse({ message: '', resCode: undefined });
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
 
-      setIsLoading(false);
+        await loadPluginList();
+        setIsLoading(false);
 
-      // アップロード対象ファイルクリア
-      if (refBtnUpload.current) {
-        refBtnUpload.current.value = '';
+        // アップロード対象ファイルクリア
+        if (refBtnUpload.current) {
+          refBtnUpload.current.value = '';
+        }
       }
-    }
+    };
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
   }, [pluginUploadResponse]);
 
   // ファイル選択
@@ -140,6 +141,12 @@ const PluginManager = () => {
     const fileList = e.target.files;
     if (fileList) {
       const file = fileList[0];
+      if (file.size > 153600) {
+        alert(
+          '一度にアップロードするファイルのサイズは150KBまでにしてください'
+        );
+        return;
+      }
       const fileName: string = file.name.toLocaleLowerCase();
       if (!fileName.endsWith('.zip') && !fileName.endsWith('.js')) {
         alert('ZIPファイルもしくはJSファイルを選択してください');
@@ -153,26 +160,6 @@ const PluginManager = () => {
     }
   };
 
-  const leaveAlart = (): boolean => {
-    /* const tempSchemaList = getNeedUpdateParents(true);
-     const isChildEdited = isNeedUpdateSchema();
-    if (tempSchemaList.length > 0 || isChildEdited) {
-      // eslint-disable-next-line no-restricted-globals
-      return confirm(
-        'スキーマが編集中です。編集を破棄して移動してもよろしいですか？'
-      );
-    }
-    */
-    return true;
-  };
-
-  const clickCancel = () => {
-    if (leaveAlart()) {
-      RemoveBeforeUnloadEvent();
-      navigate('/Patients');
-    }
-  };
-
   const openSyntax = (selectedId: number) => {
     const targetPlugin = jesgoPluginList.find(
       (p) => p.plugin_id === selectedId
@@ -183,6 +170,58 @@ const PluginManager = () => {
     }
   };
 
+  const downloadPlugin = (targetPlugin: jesgoPluginColumns) => {
+    if (targetPlugin) {
+      const script = targetPlugin.script_text;
+      const blob = new Blob([script], {
+        type: 'application/javascript',
+      });
+      let fileName = '';
+      if (targetPlugin.plugin_name) {
+        fileName = targetPlugin.plugin_name;
+      }
+      if (fileName) {
+        saveAs(blob, `${fileName}.js`);
+
+        return;
+      }
+    }
+    alert('ダウンロード不可なプラグインです。');
+  };
+
+  const deletePlugin = async (plugin: jesgoPluginColumns): Promise<void> => {
+    // eslint-disable-next-line
+    const result = confirm(`${plugin.plugin_name} を削除しても良いですか？`);
+    if (result) {
+      const token = localStorage.getItem('token');
+      if (token == null) {
+        // eslint-disable-next-line no-alert
+        alert('【エラー】\n処理に失敗しました。');
+        return;
+      }
+
+      setIsLoading(true);
+
+      // 削除APIを呼ぶ
+      const returnApiObject = await apiAccess(
+        METHOD_TYPE.POST,
+        `deletePlugin/`,
+        {
+          plugin_id: plugin.plugin_id,
+        }
+      );
+      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        // eslint-disable-next-line no-alert
+        alert('削除しました。');
+        await loadPluginList();
+      } else {
+        // eslint-disable-next-line no-alert
+        alert('【エラー】\n削除に失敗しました。');
+      }
+
+      setIsLoading(false);
+    }
+  };
   return (
     <>
       <div className="page-area">
@@ -233,7 +272,7 @@ const PluginManager = () => {
             style={{ display: 'none' }}
           />
           <Button
-            onClick={clickCancel}
+            onClick={() => navigate('/Patients')}
             bsStyle="primary"
             className="normal-button"
           >
@@ -252,7 +291,7 @@ const PluginManager = () => {
               <th>対象スキーマ名</th>
               <th>詳細</th>
               <th className="plugin-table-short">
-                {/*ボタン類(DL/スクリプト/削除)*/}
+                {/* ボタン類(DL/スクリプト/削除) */}
               </th>
             </tr>
           </thead>
@@ -276,10 +315,10 @@ const PluginManager = () => {
                       <Button onClick={() => openSyntax(plugin.plugin_id)}>
                         <Glyphicon glyph="list-alt" />
                       </Button>
-                      <Button>
+                      <Button onClick={() => downloadPlugin(plugin)}>
                         <Glyphicon glyph="download-alt" />
                       </Button>
-                      <Button>
+                      <Button onClick={() => deletePlugin(plugin)}>
                         <Glyphicon glyph="trash" />
                       </Button>
                     </ButtonGroup>

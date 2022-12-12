@@ -4,6 +4,7 @@ import fileDownload from 'js-file-download';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-jsx.min';
 import 'prismjs/components/prism-json.min';
+import 'prismjs/components/prism-javascript.min';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.min.css';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.min';
 import 'prismjs/themes/prism-tomorrow.min.css';
@@ -15,6 +16,13 @@ import 'prismjs/themes/prism-tomorrow.min.css';
 const OutputView = () => {
   // 表示する文字列
   const [resultStr, setResultStr] = useState<string | null>('');
+
+  const CODE_TYPES = {
+    NONE: '',
+    JSON: 'language-json',
+    JAVA_SCRIPT: 'language-js',
+  };
+  const [codeType, setCodeType] = useState<string>(CODE_TYPES.NONE);
 
   // メッセージ受信準備が完了したら呼び元に通知する
   useEffect(() => {
@@ -32,6 +40,7 @@ const OutputView = () => {
 
     // データ受信時の処理
     window.addEventListener('message', (e) => {
+      setCodeType(CODE_TYPES.NONE);
       if (e.origin === window.location.origin && e.data) {
         // TODO: 本実装時はここで渡されたデータの種類を判別し、テーブル形式ならテーブルで表示する
 
@@ -41,11 +50,13 @@ const OutputView = () => {
           if (e.data.jsonData) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             const jsonstr = JSON.stringify(e.data.jsonData, null, 2);
+            setCodeType(CODE_TYPES.JSON);
             setResultStr(jsonstr);
           } else {
             setResultStr(null);
           }
         } else if (typeof e.data === 'string') {
+          setCodeType(CODE_TYPES.JAVA_SCRIPT);
           setResultStr(e.data);
         }
       }
@@ -69,12 +80,18 @@ const OutputView = () => {
   return (
     <div>
       <div>
-        <Button bsStyle="success" className="normal-button" onClick={saveClick}>
-          ダウンロード
-        </Button>
+        {codeType === CODE_TYPES.JSON && (
+          <Button
+            bsStyle="success"
+            className="normal-button"
+            onClick={saveClick}
+          >
+            ダウンロード
+          </Button>
+        )}
       </div>
       <pre style={{ margin: '1rem ' }} className="line-numbers">
-        <code className="language-json">
+        <code className={codeType}>
           {resultStr || '表示可能なデータがありません'}
         </code>
       </pre>

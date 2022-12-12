@@ -7,12 +7,11 @@ import CustomDivForm from './JESGOCustomForm';
 import {
   GetBeforeInheritDocumentData,
   GetHiddenPropertyNames,
-  GetSchemaInfo,
-  RegistrationErrors,
   GetSchemaTitle,
   SetSameSchemaTitleNumbering,
   SetTabStyle,
   hasFormDataInput,
+  isInfiniteLoopBlackList,
 } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
@@ -21,12 +20,9 @@ import {
   jesgoDocumentObjDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
-import { CustomSchema } from './SchemaUtility';
-import {
-  ChildTabSelectedFuncObj,
-  createPanels,
-  createTabs,
-} from './FormCommonComponents';
+import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
+import { createPanels, createTabs } from './FormCommonComponents';
+import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
 import { responseResult } from '../../common/DBUtility';
 import '../../views/Registration.css';
@@ -43,7 +39,6 @@ type Props = {
   >;
   documentId: string;
   isChildSchema: boolean;
-  loadedData: SaveDataObjDefine | undefined;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setSaveResponse: React.Dispatch<React.SetStateAction<responseResult>>;
   setSelectedTabKey: React.Dispatch<React.SetStateAction<any>>;
@@ -65,7 +60,6 @@ const TabSchema = React.memo((props: Props) => {
     setDispSchemaIds,
     documentId,
     isChildSchema,
-    loadedData,
     setIsLoading,
     setSaveResponse,
     setSelectedTabKey,
@@ -77,33 +71,6 @@ const TabSchema = React.memo((props: Props) => {
     schemaAddModFunc,
     setUpdateFormData,
   } = props;
-
-  // schemaIdをもとに情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
-  const {
-    document_schema: documentSchema,
-    subschema,
-    child_schema: childSchema,
-  } = schemaInfo;
-
-  // unique=falseの追加可能なサブスキーマ
-  const addableSubSchemaIds = useMemo(() => {
-    const retIds: number[] = [];
-    if (subschema.length > 0) {
-      subschema.forEach((id) => {
-        const info = GetSchemaInfo(id);
-        if (info) {
-          if (
-            (info.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false) ===
-            false
-          ) {
-            retIds.push(id);
-          }
-        }
-      });
-    }
-    return retIds;
-  }, [subschema]);
 
   // 表示中のchild_schema
   const [dispChildSchemaIds, setDispChildSchemaIds] = useState<
@@ -128,6 +95,36 @@ const TabSchema = React.memo((props: Props) => {
   // 子ドキュメントの更新有無
   const [updateChildFormData, setUpdateChildFormData] =
     useState<boolean>(false);
+
+  // schemaIdをもとに情報を取得
+  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
+  const {
+    document_schema: documentSchema,
+    subschema,
+    child_schema: childSchema,
+  } = schemaInfo;
+
+  // unique=falseの追加可能なサブスキーマまたは未作成サブスキーマ
+  const addableSubSchemaIds = useMemo(() => {
+    const retIds: number[] = [];
+    if (subschema.length > 0) {
+      subschema.forEach((id) => {
+        const info = GetSchemaInfo(id);
+        if (info) {
+          if (
+            (info.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false) ===
+              false ||
+            !dispSubSchemaIds.find(
+              (p) => p.deleted === false && p.schemaId === info.schema_id
+            )
+          ) {
+            retIds.push(id);
+          }
+        }
+      });
+    }
+    return retIds;
+  }, [subschema, dispSubSchemaIds]);
 
   const dispatch = useDispatch();
 
@@ -195,8 +192,7 @@ const TabSchema = React.memo((props: Props) => {
       subschema.length > 0 &&
       (isSchemaChange ||
         isParentSchemaChange ||
-        (dispSubSchemaIds.length === 0 &&
-          (!loadedData || documentId.startsWith('K'))))
+        (dispSubSchemaIds.length === 0 && documentId.startsWith('K')))
     ) {
       dispSubSchemaIds.length = 0; // 一旦クリア
       subschema.forEach((id) => {
@@ -208,41 +204,56 @@ const TabSchema = React.memo((props: Props) => {
           title: GetSchemaTitle(id),
           isParentSchemaChange: isParentSchemaChange || isSchemaChange,
         };
-        dispSubSchemaIds.push(item);
+        if (isInfiniteLoopBlackList(item.schemaId) === false) {
+          dispSubSchemaIds.push(item);
 
-        let inheritDocuments: jesgoDocumentObjDefine[] = [];
-        // 継承した場合は削除したドキュメントの中から同じスキーマのドキュメントを取得
-        if (isSchemaChange) {
-          inheritDocuments = GetBeforeInheritDocumentData(documentId, id);
-        } else if (isParentSchemaChange) {
-          // 親スキーマで継承されていた場合は自身のdocIdは振り直しされているので全検索する
-          inheritDocuments = GetBeforeInheritDocumentData('', id);
-        }
+          let inheritDocuments: jesgoDocumentObjDefine[] = [];
+          // 継承した場合は削除したドキュメントの中から同じスキーマのドキュメントを取得
+          if (isSchemaChange || isParentSchemaChange) {
+            inheritDocuments = GetBeforeInheritDocumentData(documentId, id);
+          }
 
-        if (inheritDocuments.length > 0) {
-          inheritDocuments.forEach((inheritItem) => {
-            const itemSchemaInfo = GetSchemaInfo(inheritItem.value.schema_id);
+          if (inheritDocuments.length > 0) {
+            inheritDocuments.forEach((inheritItem) => {
+              const itemSchemaInfo = GetSchemaInfo(inheritItem.value.schema_id);
 
-            // 同一サブスキーマが複数あった場合の対応
-            if (
-              inheritDocuments.length >
-              dispSubSchemaIds.filter((p) => p.schemaId === id).length
-            ) {
-              dispSubSchemaIds.push({
-                documentId: '',
+              // 同一サブスキーマが複数あった場合の対応
+              if (
+                inheritDocuments.length >
+                dispSubSchemaIds.filter((p) => p.schemaId === id).length
+              ) {
+                dispSubSchemaIds.push({
+                  documentId: '',
+                  schemaId: inheritItem.value.schema_id,
+                  deleted: false,
+                  compId: '',
+                  title: GetSchemaTitle(inheritItem.value.schema_id),
+                  isParentSchemaChange: isParentSchemaChange || isSchemaChange,
+                });
+              }
+
+              dispatch({
+                type: 'ADD_CHILD',
                 schemaId: inheritItem.value.schema_id,
-                deleted: false,
-                compId: '',
-                title: GetSchemaTitle(inheritItem.value.schema_id),
-                isParentSchemaChange: isParentSchemaChange || isSchemaChange,
+                documentId: '',
+                formData: inheritItem.value.document,
+                parentDocumentId: documentId,
+                dispChildSchemaIds: dispSubSchemaIds,
+                setDispChildSchemaIds: setDispSubSchemaIds,
+                isRootSchema: false,
+                schemaInfo: itemSchemaInfo,
+                setAddedDocumentCount,
+                processedDocId: inheritItem.key,
               });
-            }
-
+            });
+          } else if (!item.documentId) {
+            // 新規時は必ずドキュメント作成する
+            const itemSchemaInfo = GetSchemaInfo(item.schemaId);
             dispatch({
               type: 'ADD_CHILD',
-              schemaId: inheritItem.value.schema_id,
-              documentId: '',
-              formData: inheritItem.value.document,
+              schemaId: item.schemaId,
+              documentId: item.documentId,
+              formData: {},
               parentDocumentId: documentId,
               dispChildSchemaIds: dispSubSchemaIds,
               setDispChildSchemaIds: setDispSubSchemaIds,
@@ -250,27 +261,7 @@ const TabSchema = React.memo((props: Props) => {
               schemaInfo: itemSchemaInfo,
               setAddedDocumentCount,
             });
-
-            dispatch({
-              type: 'DATA_TRANSFER_PROCESSED',
-              processedDocId: inheritItem.key,
-            });
-          });
-        } else if (!item.documentId) {
-          // 新規時は必ずドキュメント作成する
-          const itemSchemaInfo = GetSchemaInfo(item.schemaId);
-          dispatch({
-            type: 'ADD_CHILD',
-            schemaId: item.schemaId,
-            documentId: item.documentId,
-            formData: {},
-            parentDocumentId: documentId,
-            dispChildSchemaIds: dispSubSchemaIds,
-            setDispChildSchemaIds: setDispSubSchemaIds,
-            isRootSchema: false,
-            schemaInfo: itemSchemaInfo,
-            setAddedDocumentCount,
-          });
+          }
         }
       });
     } else if (dispSubSchemaIds.length > 0) {
@@ -324,108 +315,103 @@ const TabSchema = React.memo((props: Props) => {
 
   // DBから読み込んだデータを設定
   useEffect(() => {
-    if (loadedData) {
-      let parentDoc = loadedData.jesgo_document.find(
-        (p) => p.key === documentId
+    // 編集中のデータ
+    const editedDocuments =
+      store.getState().formDataReducer.saveData.jesgo_document;
+
+    let parentDoc = editedDocuments.find((p) => p.key === documentId);
+
+    if (isParentSchemaChange) {
+      // TODO: ★関数化したい
+      // データ引継ぎ済みdocumentId一覧
+      const processedDocumentIds =
+        store.getState().formDataReducer.processedDocumentIds;
+      let sourceDoc: jesgoDocumentObjDefine | undefined;
+      store.getState().formDataReducer.deletedDocuments.some((item1) =>
+        // スキーマ継承により削除されたドキュメントの中から同じスキーマIDのものを復元する
+        item1.deletedChildDocuments.some((item2) => {
+          if (
+            item2.value.schema_id === schemaId &&
+            !processedDocumentIds.find((p) => p[0] === item2.key)
+          ) {
+            sourceDoc = item2;
+            return true;
+          }
+          return false;
+        })
       );
 
-      // 編集中のデータ
-      const saveParentDoc = store
-        .getState()
-        .formDataReducer.saveData.jesgo_document.find(
-          (p) => p.key === documentId
-        );
-      // 継承した場合は編集中のデータをセットする
-      if (saveParentDoc) {
-        parentDoc = saveParentDoc;
-      }
-
-      if (isParentSchemaChange) {
-        // TODO: ★関数化したい
-        // データ引継ぎ済みdocumentId一覧
-        const processedDocumentIds =
-          store.getState().formDataReducer.processedDocumentIds;
-        let sourceDoc: jesgoDocumentObjDefine | undefined;
-        store.getState().formDataReducer.deletedDocuments.some((item1) =>
-          // スキーマ継承により削除されたドキュメントの中から同じスキーマIDのものを復元する
-          item1.deletedChildDocuments.some((item2) => {
-            if (
-              item2.value.schema_id === schemaId &&
-              !processedDocumentIds.has(item2.key)
-            ) {
-              sourceDoc = item2;
-              return true;
-            }
-            return false;
-          })
-        );
-
-        if (sourceDoc) {
-          parentDoc = sourceDoc;
-          dispatch({
-            type: 'DATA_TRANSFER_PROCESSED',
-            processedDocId: sourceDoc.key,
-          });
-        }
-      }
-
-      if (parentDoc) {
-        setFormData(parentDoc.value.document);
+      if (sourceDoc) {
+        parentDoc = sourceDoc;
         dispatch({
-          type: 'INPUT',
-          schemaId,
-          formData: parentDoc.value.document,
-          documentId,
-          isUpdateInput: false,
+          type: 'DATA_TRANSFER_PROCESSED',
+          processedDocId: sourceDoc.key,
+          processedNewDocId: documentId,
+        });
+      }
+    }
+    if (parentDoc) {
+      setFormData(parentDoc.value.document);
+      dispatch({
+        type: 'INPUT',
+        schemaId,
+        formData: parentDoc.value.document,
+        documentId,
+        isUpdateInput: false,
+      });
+
+      const childDocuments = parentDoc.value.child_documents;
+
+      // 子ドキュメントがあればサブスキーマとchildスキーマを判定してそれぞれの配列に格納
+      if (childDocuments.length > 0) {
+        childDocuments.forEach((childDocId) => {
+          const childDoc = editedDocuments.find((p) => p.key === childDocId);
+          if (childDoc) {
+            const item: dispSchemaIdAndDocumentIdDefine = {
+              documentId: childDoc.key,
+              schemaId: childDoc.value.schema_id,
+              deleted: childDoc.value.deleted,
+              compId: childDoc.compId,
+              title: GetSchemaTitle(childDoc.value.schema_id),
+            };
+
+            const cDocSchemaInfo = GetSchemaInfo(childDoc.value.schema_id);
+
+            // サブスキーマに追加
+            // unique=falseのサブスキーマの場合もサブスキーマに追加する必要あり
+            if (
+              subschema.length > 0 &&
+              (!dispSubSchemaIds.find(
+                (p) => p.schemaId === childDoc.value.schema_id
+              ) ||
+                addableSubSchemaIds.includes(childDoc.value.schema_id)) &&
+              subSchemaAndInherit.includes(childDoc.value.schema_id)
+            ) {
+              dispSubSchemaIds.push(item);
+            } else if (
+              cDocSchemaInfo?.base_schema &&
+              addableSubSchemaIds.includes(cDocSchemaInfo.base_schema)
+            ) {
+              // 継承元のスキーマがサブスキーマの場合もサブスキーマに追加
+              dispSubSchemaIds.push(item);
+            } else {
+              // childスキーマに追加
+              dispChildSchemaIds.push(item);
+            }
+          }
         });
 
-        const childDocuments = parentDoc.value.child_documents;
+        SetSameSchemaTitleNumbering(dispSubSchemaIds, dispChildSchemaIds);
 
-        // 子ドキュメントがあればサブスキーマとchildスキーマを判定してそれぞれの配列に格納
-        if (childDocuments.length > 0) {
-          childDocuments.forEach((childDocId) => {
-            const childDoc = loadedData.jesgo_document.find(
-              (p) => p.key === childDocId
-            );
-            if (childDoc) {
-              const item: dispSchemaIdAndDocumentIdDefine = {
-                documentId: childDoc.key,
-                schemaId: childDoc.value.schema_id,
-                deleted: childDoc.value.deleted,
-                compId: childDoc.compId,
-                title: GetSchemaTitle(childDoc.value.schema_id),
-              };
-
-              // サブスキーマに追加
-              // unique=falseのサブスキーマの場合もサブスキーマに追加する必要あり
-              if (
-                subschema.length > 0 &&
-                (!dispSubSchemaIds.find(
-                  (p) => p.schemaId === childDoc.value.schema_id
-                ) ||
-                  addableSubSchemaIds.includes(childDoc.value.schema_id)) &&
-                subSchemaAndInherit.includes(childDoc.value.schema_id)
-              ) {
-                dispSubSchemaIds.push(item);
-              } else {
-                // childスキーマに追加
-                dispChildSchemaIds.push(item);
-              }
-            }
-          });
-
-          SetSameSchemaTitleNumbering(dispSubSchemaIds, dispChildSchemaIds);
-
-          if (dispSubSchemaIds.length > 0) {
-            setDispSubSchemaIds([...dispSubSchemaIds]);
-          }
-          if (dispChildSchemaIds.length > 0) {
-            setDispChildSchemaIds([...dispChildSchemaIds]);
-          }
+        if (dispSubSchemaIds.length > 0) {
+          setDispSubSchemaIds([...dispSubSchemaIds]);
+        }
+        if (dispChildSchemaIds.length > 0) {
+          setDispChildSchemaIds([...dispChildSchemaIds]);
         }
       }
     }
-  }, [loadedData, documentId]);
+  }, [documentId]);
 
   // サブスキーマ
   useEffect(() => {
@@ -440,12 +426,10 @@ const TabSchema = React.memo((props: Props) => {
       if (childSchema.length > 0) {
         const searchChildDocs: jesgoDocumentObjDefine[] = [];
         childSchema.forEach((id) => {
-          if (isSchemaChange) {
+          if (isSchemaChange || isParentSchemaChange) {
             searchChildDocs.push(
               ...GetBeforeInheritDocumentData(documentId, id)
             );
-          } else if (isParentSchemaChange) {
-            searchChildDocs.push(...GetBeforeInheritDocumentData('', id));
           }
         });
 
@@ -457,6 +441,7 @@ const TabSchema = React.memo((props: Props) => {
               deleted: false,
               compId: '',
               title: GetSchemaTitle(doc.value.schema_id),
+              isParentSchemaChange: isParentSchemaChange || isSchemaChange,
             };
             dispChildSchemaIds.push(item);
 
@@ -471,10 +456,6 @@ const TabSchema = React.memo((props: Props) => {
               isRootSchema: false,
               schemaInfo: GetSchemaInfo(doc.value.schema_id),
               setAddedDocumentCount,
-            });
-
-            dispatch({
-              type: 'DATA_TRANSFER_PROCESSED',
               processedDocId: doc.key,
             });
           });
@@ -611,6 +592,7 @@ const TabSchema = React.memo((props: Props) => {
           subSchemaCount={subSchemaCount}
           tabSelectEvents={childTabSelectedFunc}
           addableSubSchemaIds={addableSubSchemaIds}
+          setIsLoading={setIsLoading}
         />
       </div>
       {isTab
@@ -623,7 +605,6 @@ const TabSchema = React.memo((props: Props) => {
             dispChildSchemaIds,
             dispChildSchemaIdsNotDeleted,
             setDispChildSchemaIds,
-            loadedData,
             setIsLoading,
             setSaveResponse,
             setErrors,
@@ -639,7 +620,6 @@ const TabSchema = React.memo((props: Props) => {
             dispChildSchemaIds,
             dispChildSchemaIdsNotDeleted,
             setDispChildSchemaIds,
-            loadedData,
             setIsLoading,
             setSaveResponse,
             setErrors,

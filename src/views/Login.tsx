@@ -7,6 +7,7 @@ import './Login.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { settingsFromApi } from './Settings';
 import Loading from '../components/CaseRegistration/Loading';
+import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
 
 export interface localStorageObject {
   user_id: number;
@@ -36,7 +37,7 @@ export const Login = () => {
       // 設定情報取得APIを呼ぶ
       const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
 
-      // 正常に取得できた場合施設名を設定
+      // 正常に取得できた場合設定情報をlocalStorageに格納
       if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
         const returned = returnApiObject.body as settingsFromApi;
         localStorage.setItem('alignment', returned.hisid_alignment);
@@ -51,6 +52,7 @@ export const Login = () => {
   }, []);
 
   const submit = async () => {
+    setIsLoading(true);
     const loginInfo = { name: username, password };
     // ログインAPIを呼ぶ
     const returnApiObject = await apiAccess(
@@ -91,48 +93,25 @@ export const Login = () => {
       );
 
       // スキーマ取得処理
-      const returnSchemaApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        `getJsonSchema`
-      );
+      await storeSchemaInfo(dispatch);
 
-      if (returnSchemaApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        dispatch({
-          type: 'SCHEMA',
-          schemaDatas: returnSchemaApiObject.body,
-        });
-      }
-
-      // ルートスキーマID取得処理
-      const returnRootSchemaIdsApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        `getRootSchemaIds`
-      );
-      if (
-        returnRootSchemaIdsApiObject.statusNum === RESULT.NORMAL_TERMINATION
-      ) {
-        dispatch({
-          type: 'ROOT',
-          rootSchemas: returnRootSchemaIdsApiObject.body,
-        });
-      }
       navigate('/Patients');
     } else if (returnApiObject.statusNum === RESULT.NETWORK_ERROR) {
       // eslint-disable-next-line no-alert
       alert(`【エラー】\nサーバーへの接続に失敗しました。`);
+      setIsLoading(false);
     } else {
       // eslint-disable-next-line no-alert
       alert(
         `【エラー】\nログインに失敗しました。ユーザ名かパスワードが間違っています。`
       );
+      setIsLoading(false);
     }
   };
 
   const onSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoading(true);
     await submit();
-    setIsLoading(false);
   };
 
   const onChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {

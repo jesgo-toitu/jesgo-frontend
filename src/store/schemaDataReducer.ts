@@ -3,6 +3,8 @@ import { Reducer } from 'redux';
 import { JSONSchema7 } from 'json-schema';
 
 // 症例情報の定義
+// バックエンドのSchemas.tsと同じものを使用するため
+// どちらかに更新が入ったらもう片方も更新すること
 export type JesgoDocumentSchema = {
   schema_id: number;
   schema_id_string: string;
@@ -14,18 +16,24 @@ export type JesgoDocumentSchema = {
   inherit_schema: number[];
   base_schema: number | null;
   version_major: number;
+  version_minor: number;
   schema_primary_id: number;
+  subschema_default: number[];
+  child_schema_default: number[];
+  inherit_schema_default: number[];
 };
 
 export interface schemaDataState {
   schemaDatas: Map<number, JesgoDocumentSchema[]>;
   rootSchemas: number[];
+  blackList: number[];
   inheritSchemaIds: Map<number, number[]>;
 }
 
 const initialState: schemaDataState = {
   schemaDatas: new Map(),
   rootSchemas: [],
+  blackList: [],
   inheritSchemaIds: new Map(),
 };
 
@@ -34,6 +42,7 @@ export interface schemaDataAction {
   type: string;
   schemaDatas: JesgoDocumentSchema[];
   rootSchemas: number[];
+  blackList: number[];
 }
 
 const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
@@ -44,6 +53,9 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
   const copyState = lodash.cloneDeep(state); // 現在の状態をコピー
   switch (action.type) {
     case 'SCHEMA':
+      // 一旦配列をクリアする
+      copyState.schemaDatas.clear();
+
       // eslint-disable-next-line array-callback-return
       action.schemaDatas.map((schema: JesgoDocumentSchema) => {
         // nullが入っている場合空配列に置換する。
@@ -51,15 +63,23 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
           // eslint-disable-next-line no-param-reassign
           schema.subschema = [];
         }
+        if (schema.subschema_default === null) {
+          // eslint-disable-next-line no-param-reassign
+          schema.subschema_default = [];
+        }
         if (schema.child_schema === null) {
           // eslint-disable-next-line no-param-reassign
           schema.child_schema = [];
         }
+        if (schema.child_schema_default === null) {
+          // eslint-disable-next-line no-param-reassign
+          schema.child_schema_default = [];
+        }
         const tempSchemas = copyState.schemaDatas.get(schema.schema_id);
-        if(tempSchemas){
+        if (tempSchemas) {
           tempSchemas.push(schema);
           copyState.schemaDatas.set(schema.schema_id, tempSchemas);
-        }else{
+        } else {
           copyState.schemaDatas.set(schema.schema_id, [schema]);
         }
 
@@ -84,13 +104,17 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
 
         copyState.inheritSchemaIds.set(schema.schema_id, inheritIds);
       });
-
       break;
     case 'ROOT':
       copyState.rootSchemas = action.rootSchemas;
 
       break;
 
+    case 'BLACKLIST':
+      copyState.blackList = action.blackList;
+
+      break;
+      
     default:
   }
   return copyState;

@@ -2,7 +2,7 @@ import lodash from 'lodash';
 import { Reducer } from 'redux';
 import React from 'react';
 import { JesgoDocumentSchema } from './schemaDataReducer';
-import { RegistrationErrors } from '../common/CaseRegistrationUtility';
+import { RegistrationErrors } from '../components/CaseRegistration/Definition';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -65,7 +65,7 @@ export interface formDataState {
     parentDocumentId: string;
     deletedChildDocuments: jesgoDocumentObjDefine[];
   }[];
-  processedDocumentIds: Set<string>;
+  processedDocumentIds: [string, string][];
   formDataInputStates: Map<string, boolean>;
 }
 
@@ -119,6 +119,7 @@ export interface formDataAction {
   isUpdateInput: boolean;
   isNotUniqueSubSchemaAdded: boolean;
   processedDocId: string;
+  processedNewDocId: string;
 
   hasFormDataInput: boolean;
 }
@@ -183,7 +184,7 @@ const initialState: formDataState = {
   tabSelectEvent: undefined,
   selectedTabKeyName: '',
   deletedDocuments: [],
-  processedDocumentIds: new Set(),
+  processedDocumentIds: [],
   formDataInputStates: new Map(),
 };
 
@@ -299,8 +300,6 @@ const formDataReducer: Reducer<
 
   const { formDatas, saveData } = copyState;
 
-  console.log(`action.type=${action.type}`);
-
   if (isHeaderInfoAction(action)) {
     // ヘッダの患者情報入力
     switch (action.type) {
@@ -401,12 +400,26 @@ const formDataReducer: Reducer<
                 i -= 1
               ) {
                 // 子のdocumentIdの中で同スキーマのものを検索
+                // 継承/回帰関係があればそちらも同スキーマとして扱う
                 const childDocId = parentDocData.value.child_documents[i];
+
+                // 追加対象のスキーマと継承/回帰関係にあるスキーマを取得
+                const relationalSchemaIds: Set<number> = new Set();
+                if (action.schemaInfo.base_schema) {
+                  relationalSchemaIds.add(action.schemaInfo.base_schema);
+                }
+                if (action.schemaInfo.inherit_schema) {
+                  action.schemaInfo.inherit_schema.forEach((inhId) =>
+                    relationalSchemaIds.add(inhId)
+                  );
+                }
+
                 const searchChildDoc = saveData.jesgo_document.find(
                   (p) =>
                     p.key === childDocId &&
-                    p.value.schema_id === action.schemaId &&
-                    p.value.deleted === false
+                    p.value.deleted === false &&
+                    (p.value.schema_id === action.schemaId ||
+                      relationalSchemaIds.has(p.value.schema_id))
                 );
                 if (searchChildDoc) {
                   // 同スキーマの右に追加(+1)
@@ -441,6 +454,13 @@ const formDataReducer: Reducer<
         copyState.addedDocumentCount += 1;
         if (action.setAddedDocumentCount) {
           action.setAddedDocumentCount(copyState.addedDocumentCount);
+        }
+
+        // 継承時の処理済みdocumentIdと新規で振られたdocumentIdを紐づける
+        if (action.processedDocId) {
+          if(!copyState.processedDocumentIds.find(p => p[0] === action.processedDocId)) {
+            copyState.processedDocumentIds.push([action.processedDocId, docId]);
+          }
         }
 
         break;
@@ -484,7 +504,7 @@ const formDataReducer: Reducer<
             if (deletedDocIds.length > 0) {
               // #region 継承後のデータ引継ぎ用に削除した子ドキュメントの情報を持っておく
               copyState.deletedDocuments = []; // 初期化
-              copyState.processedDocumentIds = new Set(); // 反映済みドキュメントID初期化
+              copyState.processedDocumentIds = []; // 反映済みドキュメントID初期化
               deletedDocIds.forEach((deleteDocId) => {
                 // 親ドキュメント
                 const pDoc = saveData.jesgo_document.find((p) =>
@@ -533,7 +553,9 @@ const formDataReducer: Reducer<
       // データ引継ぎ済みdocumentIdの更新
       case 'DATA_TRANSFER_PROCESSED': {
         if (action.processedDocId) {
-          copyState.processedDocumentIds.add(action.processedDocId);
+          if(!copyState.processedDocumentIds.find(p => p[0] === action.processedDocId)) {
+            copyState.processedDocumentIds.push([action.processedDocId, action.processedNewDocId]);
+          }
         }
         break;
       }

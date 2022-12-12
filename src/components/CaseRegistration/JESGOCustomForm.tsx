@@ -3,14 +3,12 @@ import lodash from 'lodash';
 import React, { useEffect, useState } from 'react';
 import Form, { FormProps, IChangeEvent } from '@rjsf/core';
 import { Dispatch } from 'redux';
+import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/ValidationError';
 import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
-import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/ValidationError';
-import {
-  isNotEmptyObject,
-  RegistrationErrors,
-} from '../../common/CaseRegistrationUtility';
+import { isNotEmptyObject } from '../../common/CaseRegistrationUtility';
+import { RegistrationErrors } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
 
 interface CustomDivFormProp extends FormProps<any> {
@@ -80,10 +78,20 @@ const CustomDivForm = (props: CustomDivFormProp) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (classNames && isNotEmptyObject(formData[propName])) {
           // classNamesからrequired-itemを除外して赤枠を解除
+          const schemaItem = uiSchema[propName];
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          uiSchema[propName].classNames = classNames
+          schemaItem.classNames = classNames
             .replace(/required-item/g, '')
             .trim();
+
+          // itemsもあればそちらも解除する
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          if (schemaItem.items) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+            schemaItem.items.classNames = schemaItem.items.classNames
+              .replace(/required-item/g, '')
+              .trim();
+          }
         }
       });
   }

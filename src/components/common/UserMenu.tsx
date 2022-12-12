@@ -3,28 +3,37 @@ import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 import DropdownButton from 'react-bootstrap/lib/DropdownButton';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
 import { useNavigate } from 'react-router-dom';
+import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
 import { StaffPasswordChangeModalDialog } from '../Staff/StaffPasswordChangeModal';
-import { ModalDialog } from './ModalDialog';
+import ModalDialog from './ModalDialog';
 
-export const UserMenu = (props: { title: string | null; i: number }) => {
-  const { title, i } = props;
+export const UserMenu = (props: {
+  title: string | null;
+  i: number;
+  isConfirm: (() => boolean) | null;
+}) => {
+  const { title, i, isConfirm } = props;
   const navigate = useNavigate();
   const [show, setShow] = useState(false);
   const [showPasswordChange, setShowPassowrdChange] = useState(false);
 
-  const handleShow = useCallback(() => {
-    setShow(true);
-  }, [setShow]);
+  const handleShow = () => {
+    if (isConfirm === null || isConfirm()) {
+      setShow(true);
+    }
+  };
 
   const handlPasswordChenge = useCallback(() => {
     setShowPassowrdChange(true);
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const modalHide = useCallback(() => {}, []);
 
   const modalOk = useCallback(() => {
-    const token = localStorage.removeItem('token');
+    localStorage.removeItem('token');
     setShow(false);
+    RemoveBeforeUnloadEvent();
     navigate('/login');
   }, [setShow]);
 

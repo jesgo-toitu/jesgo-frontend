@@ -1,3 +1,6 @@
 /node_modules
 /dist/main.js
 /dist/*.js
+
+#output
+/export/release/*

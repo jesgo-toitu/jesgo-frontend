@@ -8,6 +8,7 @@ import Autocomplete, {
 import { Label, Tooltip, OverlayTrigger, Glyphicon } from 'react-bootstrap';
 import './JESGOComponent.css';
 import './JESGOFieldTemplete.css';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { WidgetProps } from '@rjsf/core';
 import { JSONSchema7Type, JSONSchema7 } from 'json-schema'; // eslint-disable-line import/no-unresolved
 import { IconButton } from './RjsfDefaultComponents';
@@ -45,20 +46,17 @@ export namespace JESGOComp {
   };
 
   // "description"用ラベル
-  export const DescriptionToolTip = (props: { descriptionText: string }) => {
-    const { descriptionText } = props;
+  export const DescriptionToolTip = (props: {
+    descriptionText: string;
+    documentId: string;
+  }) => {
+    const { descriptionText, documentId } = props;
     if (!descriptionText) return null;
 
     const tooltip = (
-      <Tooltip>
+      <Tooltip id={`${documentId}_${descriptionText}`}>
         <div className="description-tooptip">
-          {/* <br>,<br/>タグを改行に置き換え */}
-          {descriptionText.split(/<br>|<br\/>/).map((item: string) => (
-            <>
-              {item}
-              <br />
-            </>
-          ))}
+          {descriptionText.replace(/<br>/g, '\n')}
         </div>
       </Tooltip>
     );
@@ -610,118 +608,140 @@ export namespace JESGOComp {
       }
     }, [blurFlg]);
 
+    // AutoCompliteのスタイルを上書き
+    const autoCompleteTheme = createTheme({
+      components: {
+        MuiAutocomplete: {
+          styleOverrides: {
+            root: {
+              marginTop: '5px',
+              maxWidth: '100%',
+              '& .MuiOutlinedInput-root': {
+                padding: '0px 39px 0px 0px',
+                '& .MuiAutocomplete-input': {
+                  padding: '4px 4px 8px 12px',
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
     return (
-      <Autocomplete
-        key={`${id}-autocomplete`}
-        id={`${id}-autocomplete`}
-        disableListWrap
-        disableClearable
-        freeSolo
-        clearOnBlur={false}
-        handleHomeEndKeys={false}
-        disabled={readonly}
-        ref={comboComponent}
-        value={selectedValue}
-        inputValue={inputValue}
-        onChange={comboOnChange}
-        onInputChange={comboOnChange}
-        onBlur={() => {
-          // フリー入力不可の場合、リストにない入力値はクリアする
-          if (isFreeInput) {
-            onChange(inputValue);
-            return;
-          }
-          const findItem = comboItemList.find(
-            (item) => item.label === inputValue
-          );
-          if (!findItem) {
-            comboOnChange(undefined, '', 'onBlur');
-          } else if (findItem.seqNo === 0) {
-            onChange('');
-          }
-        }}
-        options={comboItemList}
-        renderInput={(params) => (
-          <div className="with-units-div">
-            <TextField
-              {...params}
-              className="input-text"
-              label=""
-              key={`${id}-combotext`}
-              id={`${id}-combotext`}
-            />
-            {units && <span>{`（${units}）`}</span>}
-          </div>
-        )}
-        renderOption={(
-          renderProps,
-          option: ComboItemDefine,
-          optionState: AutocompleteRenderOptionState
-        ) => {
-          const indent = ''.padStart(option.level, '　');
-          return (
-            // eslint-disable-next-line react/jsx-no-useless-fragment
-            <>
-              {option.title ? (
-                // タイトル部
-                <div className="layer-combobox-group-title">
-                  {`${indent}${option.title}`}
-                </div>
-              ) : (
-                // 選択肢
-                <li
-                  key={`${id}-listitem-${option.seqNo}`}
-                  {...renderProps}
-                  className="MuiAutocomplete-option layer-combobox-item"
-                >
-                  <div>{`${indent}${option.label ? option.label : ''}`}</div>
-                </li>
-              )}
-            </>
-          );
-        }}
-        getOptionLabel={(option) => {
-          if (typeof option === 'string') {
-            return option;
-          }
-          return option.label ?? '';
-        }}
-        isOptionEqualToValue={(option, val) => {
-          // 選択中の選択肢ハイライト
-          const inputStr =
-            typeof val === 'string'
-              ? (val as unknown as string)
-              : val.label ?? '';
-          return option.label === inputStr;
-        }}
-        filterOptions={(options, state) => {
-          // 選択肢の検索
+      <ThemeProvider theme={autoCompleteTheme}>
+        <Autocomplete
+          key={`${id}-autocomplete`}
+          id={`${id}-autocomplete`}
+          disableListWrap
+          disableClearable
+          freeSolo
+          clearOnBlur={false}
+          handleHomeEndKeys={false}
+          disabled={readonly}
+          ref={comboComponent}
+          value={selectedValue}
+          inputValue={inputValue}
+          onChange={comboOnChange}
+          onInputChange={comboOnChange}
+          onBlur={() => {
+            // フリー入力不可の場合、リストにない入力値はクリアする
+            if (isFreeInput) {
+              onChange(inputValue);
+              return;
+            }
+            const findItem = comboItemList.find(
+              (item) => item.label === inputValue
+            );
+            if (!findItem) {
+              comboOnChange(undefined, '', 'onBlur');
+            } else if (findItem.seqNo === 0) {
+              onChange('');
+            }
+          }}
+          options={comboItemList}
+          renderInput={(params) => (
+            <div className="with-units-div">
+              <TextField
+                {...params}
+                className="input-text"
+                label=""
+                key={`${id}-combotext`}
+                id={`${id}-combotext`}
+              />
+              {units && <span>{`（${units}）`}</span>}
+            </div>
+          )}
+          renderOption={(
+            renderProps,
+            option: ComboItemDefine,
+            optionState: AutocompleteRenderOptionState
+          ) => {
+            const indent = ''.padStart(option.level, '　');
+            return (
+              // eslint-disable-next-line react/jsx-no-useless-fragment
+              <>
+                {option.title ? (
+                  // タイトル部
+                  <div className="layer-combobox-group-title">
+                    {`${indent}${option.title}`}
+                  </div>
+                ) : (
+                  // 選択肢
+                  <li
+                    key={`${id}-listitem-${option.seqNo}`}
+                    {...renderProps}
+                    className="MuiAutocomplete-option layer-combobox-item"
+                  >
+                    <div>{`${indent}${option.label ? option.label : ''}`}</div>
+                  </li>
+                )}
+              </>
+            );
+          }}
+          getOptionLabel={(option) => {
+            if (typeof option === 'string') {
+              return option;
+            }
+            return option.label ?? '';
+          }}
+          isOptionEqualToValue={(option, val) => {
+            // 選択中の選択肢ハイライト
+            const inputStr =
+              typeof val === 'string'
+                ? (val as unknown as string)
+                : val.label ?? '';
+            return option.label === inputStr;
+          }}
+          filterOptions={(options, state) => {
+            // 選択肢の検索
 
-          // comboの場合は選択肢の検索をしない
-          if (
-            schema[Const.EX_VOCABULARY.UI_LISTTYPE] ===
-            Const.JESGO_UI_LISTTYPE.COMBO
-          ) {
-            return options;
-          }
+            // comboの場合は選択肢の検索をしない
+            if (
+              schema[Const.EX_VOCABULARY.UI_LISTTYPE] ===
+              Const.JESGO_UI_LISTTYPE.COMBO
+            ) {
+              return options;
+            }
 
-          // 同一グループのタイトルは表示させる
-          const groupIds = options
-            // .filter((op) => (op.label ?? '').startsWith(state.inputValue)) // 前方一致
-            .filter((op) => (op.label ?? '').includes(state.inputValue)) // 部分一致
-            .map((op) => op.groupId);
+            // 同一グループのタイトルは表示させる
+            const groupIds = options
+              // .filter((op) => (op.label ?? '').startsWith(state.inputValue)) // 前方一致
+              .filter((op) => (op.label ?? '').includes(state.inputValue)) // 部分一致
+              .map((op) => op.groupId);
 
-          const filteredOptions = options.filter(
-            (op) =>
-              // (op.label ?? '').startsWith(state.inputValue) ||
-              (op.label ?? '').includes(state.inputValue) ||
-              (groupIds.includes(op.groupId) && op.title)
-          );
+            const filteredOptions = options.filter(
+              (op) =>
+                // (op.label ?? '').startsWith(state.inputValue) ||
+                (op.label ?? '').includes(state.inputValue) ||
+                (groupIds.includes(op.groupId) && op.title)
+            );
 
-          return filteredOptions.length > 0 ? filteredOptions : options;
-        }}
-        noOptionsText="検索結果がありません"
-      />
+            return filteredOptions.length > 0 ? filteredOptions : options;
+          }}
+          noOptionsText="検索結果がありません"
+        />
+      </ThemeProvider>
     );
   };
 

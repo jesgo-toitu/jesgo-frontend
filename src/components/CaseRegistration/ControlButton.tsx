@@ -5,16 +5,18 @@ import {
   GetAllSubSchemaIds,
   GetCreatedDocCountAfterInherit,
   GetInheritFormData,
-  GetRootSchema,
-  GetSchemaInfo,
   GetSchemaTitle,
+  OpenOutputView,
 } from '../../common/CaseRegistrationUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import store from '../../store/index';
-import { ChildTabSelectedFuncObj } from './FormCommonComponents';
+import { ChildTabSelectedFuncObj } from './Definition';
 import { Const } from '../../common/Const';
+import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
+import { GetPackagedDocument } from '../../common/DBUtility';
+import { setTimeoutPromise } from '../../common/CommonUtility';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -59,6 +61,7 @@ type ControlButtonProps = {
   subSchemaCount: number;
   tabSelectEvents?: ChildTabSelectedFuncObj;
   disabled?: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -83,9 +86,9 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     formData,
     setSelectedTabKey,
-    subSchemaCount,
     tabSelectEvents,
     disabled,
+    setIsLoading,
   } = props;
 
   // 追加可能判定
@@ -130,8 +133,11 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         ))
     );
   };
+
+  const schemaInfo = GetSchemaInfo(schemaId);
+
   // 基底スキーマを取得
-  const baseSchemaId = GetSchemaInfo(schemaId)?.base_schema;
+  const baseSchemaId = schemaInfo?.base_schema;
   const baseSchema = baseSchemaId ? GetSchemaInfo(baseSchemaId) : undefined;
   const baseSchemaName = baseSchema
     ? `${baseSchema.title} ${baseSchema.subtitle}`
@@ -139,9 +145,9 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
   // 継承スキーマを取得
   const inheritIds = baseSchemaId
     ? GetSchemaInfo(baseSchemaId)?.inherit_schema
-    : GetSchemaInfo(schemaId)?.inherit_schema;
+    : schemaInfo?.inherit_schema;
 
-  const schemaDocument = GetSchemaInfo(schemaId)?.document_schema;
+  const schemaDocument = schemaInfo?.document_schema;
   let isTab = true;
   // ルートは必ずタブ。それ以外はsubschemastyleで判断
   if (Type !== COMP_TYPE.ROOT && Type !== COMP_TYPE.ROOT_TAB) {
@@ -229,6 +235,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             title = findItem.title;
           }
 
+          // eslint-disable-next-line
           if (confirm(`[${title}]を削除します。よろしいですか？`)) {
             // 自身を削除
             if (setDispSchemaIds != null) {
@@ -280,6 +287,33 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             });
           }
           break;
+        // TODO: ★仮実装
+        case 'output': {
+          const wrapperFunc = () =>
+            GetPackagedDocument(
+              [store.getState().formDataReducer.saveData.jesgo_case],
+              undefined,
+              Number(documentId),
+              true
+            );
+
+          setIsLoading(true);
+
+          setTimeoutPromise(wrapperFunc)
+            .then((res) => {
+              OpenOutputView(window, (res as any).anyValue);
+            })
+            .catch((err) => {
+              if (err === 'timeout') {
+                alert('操作がタイムアウトしました');
+              }
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
+
+          break;
+        }
         default:
           // 継承スキーマへの切り替え
           if (eventKey.startsWith('I') && setDispSchemaIds != null) {
@@ -344,19 +378,79 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
       const copyIds: dispSchemaIdAndDocumentIdDefine[] = [];
       let isSubSchema = false;
       let subschemaLastIdx = -1; // 同サブスキーマの位置
+
+      const targetSchemaInfo = GetSchemaInfo(eventKey);
+      // 継承/回帰関係にあるスキーマを取得
+      const relatedSchemaIds: Set<number> = new Set();
+      if (targetSchemaInfo?.base_schema) {
+        relatedSchemaIds.add(targetSchemaInfo.base_schema);
+      }
+      targetSchemaInfo?.inherit_schema.forEach((inhId) =>
+        relatedSchemaIds.add(inhId)
+      );
+
+      const isUnique =
+        !!targetSchemaInfo &&
+        (targetSchemaInfo.document_schema[Const.EX_VOCABULARY.UNIQUE] ?? false);
+
       // 子ドキュメントの追加
       // unique=falseのサブスキーマ
       if (addableSubSchemaIds && addableSubSchemaIds.length > 0) {
-        if (addableSubSchemaIds.includes(eventKey)) {
+        // サブスキーマから継承/回帰できるスキーマID取得
+        const addableSubSchemaInheritIds: Set<number> = new Set();
+        addableSubSchemaIds.forEach((id) => {
+          const sInfo = GetSchemaInfo(id);
+          if (sInfo?.base_schema) {
+            addableSubSchemaInheritIds.add(sInfo.base_schema);
+          }
+          if (sInfo?.inherit_schema) {
+            sInfo.inherit_schema.forEach((inhId) =>
+              addableSubSchemaInheritIds.add(inhId)
+            );
+          }
+        });
+
+        if (
+          addableSubSchemaIds.includes(eventKey) ||
+          addableSubSchemaInheritIds.has(eventKey) // サブスキーマから継承したスキーマもサブスキーマ扱い
+        ) {
           isSubSchema = true;
           copyIds.push(...dispSubSchemaIds);
 
           // 追加済みのサブスキーマ探索
-          for (let index = copyIds.length - 1; index >= 0; index -= 1) {
-            const item = copyIds[index];
-            if (item.deleted === false && item.schemaId === eventKey) {
-              subschemaLastIdx = index;
-              break;
+          if (!isUnique) {
+            for (let index = copyIds.length - 1; index >= 0; index -= 1) {
+              const item = copyIds[index];
+              if (
+                // unique=falseのサブスキーマの場合
+                item.deleted === false &&
+                (item.schemaId === eventKey ||
+                  relatedSchemaIds.has(item.schemaId))
+              ) {
+                subschemaLastIdx = index;
+                break;
+              }
+            }
+          } else if (schemaInfo && schemaInfo.subschema.length > 0) {
+            // 未作成サブスキーマの場合、本来のサブスキーマの並び順を参考に追加する
+
+            // 追加サブスキーマの並び順
+            const addSubSchemaIndex = schemaInfo.subschema.findIndex(
+              (id) => id === eventKey
+            );
+            for (let index = copyIds.length - 1; index >= 0; index -= 1) {
+              const item = copyIds[index];
+              const currentSubSchemaIndex = schemaInfo.subschema.findIndex(
+                (id) => id === item.schemaId
+              );
+
+              if (
+                item.deleted === false &&
+                addSubSchemaIndex >= currentSubSchemaIndex
+              ) {
+                subschemaLastIdx = index;
+                break;
+              }
             }
           }
         }
@@ -376,7 +470,28 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         )
       ) {
         // 追加されるサブスキーマを取得
-        const allSubSchemaIds = GetAllSubSchemaIds(eventKey);
+        let allSubSchemaIds: number[] = [];
+        try {
+          allSubSchemaIds = GetAllSubSchemaIds(eventKey, true);
+        } catch (err) {
+          // 無限ループ発生時はアラート出して処理中断
+          if (
+            err instanceof Error &&
+            err.name === 'RangeError' &&
+            err.message.includes('Maximum call stack size exceeded')
+          ) {
+            // eslint-disable-next-line no-alert
+            alert(
+              `${GetSchemaTitle(
+                eventKey
+              )}、もしくはその子スキーマにエラーがあるため作成できませんでした。スキーマ定義を見直してください`
+            );
+          } else {
+            console.log(err);
+          }
+
+          return;
+        }
 
         // タブ追加後に選択するタブのインデックス
         let tabIndex = '';
@@ -408,9 +523,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         };
         // unique=falseのサブスキーマを追加する場合、展開済みサブスキーマの末尾に追加する
         if (isSubSchema) {
-          if (subschemaLastIdx > -1) {
-            copyIds.splice(subschemaLastIdx + 1, 0, addItem);
-          }
+          copyIds.splice(subschemaLastIdx + 1, 0, addItem);
 
           if (setDispSubSchemaIds) {
             setDispSubSchemaIds([...copyIds]);
@@ -438,9 +551,18 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
 
   // サブスキーマの場合は同一スキーマが2件以上あれば削除可とする
   if (!isChildSchema) {
-    const sameSchema = dispSchemaIds.filter(
-      (p) => p.deleted === false && p.schemaId === schemaId
-    );
+    const sameSchema = dispSchemaIds.filter((p) => {
+      if (p.deleted === true) return false;
+      if (p.schemaId === schemaId) {
+        return true;
+      }
+      // 継承/回帰関係のスキーマは同一と扱う
+      const sInfo = GetSchemaInfo(p.schemaId);
+      return (
+        (sInfo?.base_schema && sInfo.base_schema === schemaId) ||
+        (sInfo?.inherit_schema && sInfo.inherit_schema.includes(schemaId))
+      );
+    });
     canDelete = !!(sameSchema.length >= 2);
   }
   // 追加可否
@@ -463,6 +585,9 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           <Glyphicon glyph="th-list" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
+          {process.env.DEV_MODE === '1' && (
+            <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
+          )}
           {/* 自身の移動 */}
           {canMove && (
             <MenuItem eventKey="up">

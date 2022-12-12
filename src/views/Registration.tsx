@@ -6,7 +6,6 @@ import React, {
   useLayoutEffect,
   useState,
 } from 'react';
-import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -28,13 +27,10 @@ import RootSchema from '../components/CaseRegistration/RootSchema';
 import SubmitButton from '../components/CaseRegistration/SubmitButton';
 import {
   convertTabKey,
-  GetRootSchema,
-  GetSchemaInfo,
   GetSchemaTitle,
   IsNotUpdate,
   SetSameSchemaTitleNumbering,
   getErrMsg,
-  RegistrationErrors,
 } from '../common/CaseRegistrationUtility';
 import './Registration.css';
 import {
@@ -57,17 +53,20 @@ import {
 import store from '../store';
 import { Const } from '../common/Const';
 import SaveConfirmDialog from '../components/CaseRegistration/SaveConfirmDialog';
-
-export interface ShowSaveDialogState {
-  showFlg: boolean;
-  eventKey: any;
-}
+import {
+  GetRootSchema,
+  GetSchemaInfo,
+} from '../components/CaseRegistration/SchemaUtility';
+import {
+  ShowSaveDialogState,
+  RegistrationErrors,
+} from '../components/CaseRegistration/Definition';
 
 // 症例入力のおおもとの画面
 const Registration = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { search, state } = useLocation();
+  const { search } = useLocation();
 
   // 表示中のルートドキュメント
   const [dispRootSchemaIds, setDispRootSchemaIds] = useState<
@@ -116,7 +115,7 @@ const Registration = () => {
   // 選択中のタブインデックス
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(-1);
 
-  const [addedDocumentCount, setAddedDocumentCount] = useState<number>(-1);
+  const [, setAddedDocumentCount] = useState<number>(-1);
 
   // eslint-disable-next-line prefer-const
   let [loadData, setLoadData] = useState<SaveDataObjDefine | undefined>();
@@ -444,7 +443,7 @@ const Registration = () => {
       (info) => `root-tab-${info.compId}`
     );
 
-    if (!isNaN(Number(selectedTabKey))) {
+    if (!Number.isNaN(Number(selectedTabKey))) {
       const tabIndex = parseInt(selectedTabKey as string, 10);
       if (allTabIds.length > tabIndex) {
         const convTabKey = allTabIds[parseInt(selectedTabKey as string, 10)];
@@ -523,6 +522,7 @@ const Registration = () => {
     }
 
     if (saveResponse.resCode !== RESULT.NORMAL_TERMINATION) {
+      // eslint-disable-next-line no-alert
       alert(saveResponse.message);
     }
 
@@ -592,7 +592,7 @@ const Registration = () => {
   useEffect(() => {
     if (hasSchema) {
       const noTitles = dispRootSchemaIds.filter(
-        (p) => p.title === '' || !isNaN(Number(p.title))
+        (p) => p.title === '' || !Number.isNaN(Number(p.title))
       );
       if (noTitles.length > 0) {
         noTitles.forEach((item) => {
@@ -610,9 +610,9 @@ const Registration = () => {
     <div className="page-area">
       {/* 患者情報入力 */}
       <div className="patient-area">
-        <Panel className="panel-style">
+        <Panel className="panel-style patient-area-panel">
           <Row className="patientInfo user-info-row">
-            <Col lg={2} md={2}>
+            <Col className="user-info-col">
               <FormGroup controlId="patientId">
                 <ControlLabel>患者ID：</ControlLabel>
                 <FormControl
@@ -624,7 +624,7 @@ const Registration = () => {
                 />
               </FormGroup>
             </Col>
-            <Col lg={2} md={2}>
+            <Col className="user-info-col">
               <FormGroup controlId="patientName">
                 <ControlLabel>患者氏名：</ControlLabel>
                 <FormControl
@@ -635,7 +635,7 @@ const Registration = () => {
                 />
               </FormGroup>
             </Col>
-            <Col lg={2} md={3}>
+            <Col className="user-info-col">
               <FormGroup controlId="birthday">
                 <ControlLabel>生年月日</ControlLabel>
                 <FormControl
@@ -647,7 +647,7 @@ const Registration = () => {
                 />
               </FormGroup>
             </Col>
-            <Col lg={1} md={1}>
+            <Col className="user-info-age">
               <FormGroup>
                 <ControlLabel>年齢</ControlLabel>
                 <div>
@@ -657,7 +657,7 @@ const Registration = () => {
                 </div>
               </FormGroup>
             </Col>
-            <Col lg={2} md={2}>
+            <Col>
               <FormGroup>
                 <ControlLabel />
                 <div>
@@ -672,14 +672,14 @@ const Registration = () => {
                 </div>
               </FormGroup>
             </Col>
-            <SubmitButton
-              setIsLoading={setIsLoading}
-              setLoadedJesgoCase={setLoadedJesgoCase}
-              setCaseId={setCaseId}
-              setIsReload={setIsReload}
-              setErrors={setErrors}
-            />
           </Row>
+          <SubmitButton
+            setIsLoading={setIsLoading}
+            setLoadedJesgoCase={setLoadedJesgoCase}
+            setCaseId={setCaseId}
+            setIsReload={setIsReload}
+            setErrors={setErrors}
+          />
         </Panel>
       </div>
       {!isLoading && hasSchema && (
@@ -687,7 +687,7 @@ const Registration = () => {
           {message.length > 0 && (
             <Panel className="error-msg-panel">
               {message.map((error: string) => (
-                <p>{error}</p>
+                <p key={error}>{error}</p>
               ))}
             </Panel>
           )}
@@ -700,7 +700,7 @@ const Registration = () => {
                   onSelect={(eventKey) => onTabSelectEvent(true, eventKey)}
                 >
                   {dispRootSchemaIdsNotDeleted.map(
-                    (info: dispSchemaIdAndDocumentIdDefine, index: number) => {
+                    (info: dispSchemaIdAndDocumentIdDefine) => {
                       const title =
                         info.title + (info.titleNum?.toString() ?? '');
 
@@ -720,7 +720,6 @@ const Registration = () => {
                             documentId={info.documentId}
                             dispSchemaIds={[...dispRootSchemaIds]}
                             setDispSchemaIds={setDispRootSchemaIds}
-                            loadedData={loadData}
                             setSelectedTabKey={setSelectedTabKey}
                             setIsLoading={setIsLoading}
                             setSaveResponse={setSaveResponse}
@@ -754,6 +753,7 @@ const Registration = () => {
                 fnSchemaChange: undefined,
               }}
               disabled={!isSaved}
+              setIsLoading={setIsLoading}
             />
           </div>
         </>

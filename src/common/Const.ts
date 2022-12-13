@@ -26,6 +26,8 @@ export namespace Const {
     UI_SUBSCHEMA_STYLE: 'jesgo:ui:subschemastyle',
     UI_VISIBLE_WHWN: 'jesgo:ui:visibleWhen',
     UI_HIDDEN: 'jesgo:ui:hidden',
+    GET: 'jesgo:get',
+    SET: 'jesgo:set',
   } as const;
 
   // jesgo:ui:listtypeに使用できる項目定義

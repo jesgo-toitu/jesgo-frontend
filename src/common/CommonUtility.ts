@@ -27,26 +27,63 @@ export const RemoveBeforeUnloadEvent = () => {
 /**
  * 年齢計算(現在日時点)
  * @param {string} birthday - 生年月日
- * @returns {string} - 年齢
+ * @param {string} calcType - 計算の種類。年齢、月齢、週齢、日齢に対応
+ * @param {string | null} eventDate - 基準日
+ * @returns {string} - 計算の種類に応じた計算結果
  */
-export const calcAge = (birthday: string) => {
+export const calcAge = (
+  birthday: string,
+  calcType: 'age' | 'month' | 'week' | 'day' = 'age',
+  eventDate: string | null = null
+) => {
   if (!birthday) return '';
+
+  let baseDate = new Date().toDateString();
+  if (eventDate) {
+    baseDate = eventDate;
+  }
 
   // 生年月日
   const birthdayDateObj = new Date(birthday);
+  // 基準日
+  const nowDate = new Date(baseDate);
+
   const birthNum =
     birthdayDateObj.getFullYear() * 10000 +
     (birthdayDateObj.getMonth() + 1) * 100 +
     birthdayDateObj.getDate();
 
-  // 現在日
-  const nowDate = new Date();
   const nowNum =
     nowDate.getFullYear() * 10000 +
     (nowDate.getMonth() + 1) * 100 +
     nowDate.getDate();
 
-  return Math.floor((nowNum - birthNum) / 10000).toString();
+  const age = Math.floor((nowNum - birthNum) / 10000);
+
+  // 年齢
+  if (calcType === 'age') {
+    return age.toString();
+  }
+
+  const dayTime = 86400000; // 1日 = 24h * 60min * 60sec * 1000ms
+  const diff = nowDate.getTime() - birthdayDateObj.getTime();
+
+  // 月齢
+  if (calcType === 'month') {
+    return Math.floor((diff - 365 * age) / dayTime / (365 / 12)).toString();
+  }
+
+  // 週齢
+  if (calcType === 'week') {
+    return Math.floor(diff / dayTime / 7).toString();
+  }
+
+  // 日齢
+  if (calcType === 'day') {
+    return Math.floor(diff / dayTime).toString();
+  }
+
+  return '';
 };
 
 // 日付(Date形式)をyyyy/MM/ddなどの形式に変換

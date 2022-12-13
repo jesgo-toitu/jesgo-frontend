@@ -11,6 +11,7 @@ import JSONPointer from 'jsonpointer';
 import lodash from 'lodash';
 import { Dispatch } from 'redux';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { calcAge } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import store from '../../store';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
@@ -144,7 +145,7 @@ export const storeSchemaInfo = async (dispatch: Dispatch<any>) => {
   );
 
   if (returnBlackListApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-    const body = returnBlackListApiObject.body as {blackList: number[]};
+    const body = returnBlackListApiObject.body as { blackList: number[] };
     dispatch({
       type: 'BLACKLIST',
       blackList: body.blackList,
@@ -497,6 +498,41 @@ const customSchemaAppendFormDataProperty = (
         // 元スキーマのプロパティに追加
         copySchema.properties![item[0]] = schemaObj;
       });
+  }
+
+  type Obj = { [prop: string]: any };
+
+  if (copySchema && copySchema.properties) {
+    const propItems = getPropItemsAndNames(copySchema);
+    propItems.pNames.forEach((pName) => {
+      const item = propItems.pItems[pName] as JSONSchema7;
+      if (item[Const.EX_VOCABULARY.GET]) {
+        let setValue: any = '';
+        const getType = item[Const.EX_VOCABULARY.GET];
+        if (getType != null && getType !== '') {
+          // TODO: eventdate取得できたテイ
+          const eventDate = '2020-02-29';
+          if (getType === 'eventdate') {
+            setValue = eventDate;
+          } else if (['age', 'month', 'week', 'day'].includes(getType)) {
+            // 年齢など
+            setValue = calcAge(
+              store.getState().formDataReducer.saveData.jesgo_case
+                .date_of_birth,
+              getType as 'age',
+              eventDate
+            );
+          }
+
+          if (setValue != null && setValue !== '') {
+            (formData as Obj)[pName] = setValue;
+          }
+
+          // 読取専用にする
+          (copySchema.properties![pName] as Obj).readOnly = true;
+        }
+      }
+    });
   }
 
   return copySchema;

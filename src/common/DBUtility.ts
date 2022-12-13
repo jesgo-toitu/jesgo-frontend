@@ -150,9 +150,9 @@ const SaveChanges = async (
         const propList = getPropItemsAndNames(customSchema);
         propList.pNames.forEach((propName: string) => {
           const pItem = propList.pItems[propName] as JSONSchema7;
-          if (pItem['jesgo:set'] === 'eventdate') {
+          if (pItem[Const.EX_VOCABULARY.SET] === 'eventdate') {
             eventDatePropName = propName;
-          } else if (pItem['jesgo:set'] === 'death') {
+          } else if (pItem[Const.EX_VOCABULARY.SET] === 'death') {
             deathDataPropName = propName;
           }
         });

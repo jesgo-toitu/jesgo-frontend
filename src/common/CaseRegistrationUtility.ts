@@ -939,6 +939,7 @@ export const GetBeforeInheritDocumentData = (
   schemaId: number
 ) => {
   let retDocs: jesgoDocumentObjDefine[] = [];
+  let searchDocId = parentDocId;
 
   const deletedDocuments = store.getState().formDataReducer.deletedDocuments;
 
@@ -946,12 +947,21 @@ export const GetBeforeInheritDocumentData = (
   const processedDocumentIds =
     store.getState().formDataReducer.processedDocumentIds;
 
-  if (parentDocId === '') {
+  // 親のIDが仮番の場合、旧IDを取得
+  if (parentDocId.startsWith('K')) {
+    const item = processedDocumentIds.find((p) => p[1] === parentDocId);
+    if (item) {
+      searchDocId = item[0];
+    }
+  }
+
+  if (searchDocId === '') {
     // documentIdの指定がない場合は全検索
     deletedDocuments.forEach((item) => {
       const filter = item.deletedChildDocuments.filter(
         (p) =>
-          p.value.schema_id === schemaId && !processedDocumentIds.has(p.key)
+          p.value.schema_id === schemaId &&
+          !processedDocumentIds.find((q) => q[0] === p.key)
       );
       if (filter.length > 0) {
         retDocs = filter;
@@ -960,12 +970,13 @@ export const GetBeforeInheritDocumentData = (
   } else {
     // documentIdの指定がある場合はそのdocumentIdに紐づくデータを取得
     const deletedItem = deletedDocuments.find(
-      (p) => p.parentDocumentId === parentDocId
+      (p) => p.parentDocumentId === searchDocId
     );
     if (deletedItem) {
       const baseDoc = deletedItem.deletedChildDocuments.filter(
         (p) =>
-          p.value.schema_id === schemaId && !processedDocumentIds.has(p.key)
+          p.value.schema_id === schemaId &&
+          !processedDocumentIds.find((q) => q[0] === p.key)
       );
       if (baseDoc.length > 0) {
         retDocs = baseDoc;

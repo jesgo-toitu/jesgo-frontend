@@ -577,6 +577,7 @@ const TabSchema = React.memo((props: Props) => {
           isTabItem
           dispSchemaIds={[...dispSchemaIds]}
           setDispSchemaIds={setDispSchemaIds}
+          setErrors={setErrors}
         />
         <ControlButton
           tabId={tabId}

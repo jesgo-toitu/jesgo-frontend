@@ -110,6 +110,7 @@ export const loadJesgoCaseAndDocument = async (
         '-'
       );
 
+      // childDocumentsのIDは数値→文字列に変更
       res.loadedSaveData.jesgo_document.forEach((doc) => {
         if (doc.value.child_documents && doc.value.child_documents.length > 0) {
           // eslint-disable-next-line no-param-reassign
@@ -117,6 +118,10 @@ export const loadJesgoCaseAndDocument = async (
             p.toString()
           );
         }
+
+        // eventdate
+        // eslint-disable-next-line no-param-reassign
+        doc.value.event_date = formatDateStr(doc.value.event_date, '-');
       });
     }
   }
@@ -142,12 +147,19 @@ export const getEventDate = (
   });
 
   const propList = getPropItemsAndNames(customSchema);
-  propList.pNames.forEach((propName: string) => {
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const propName of propList.pNames) {
     const pItem = propList.pItems[propName] as JSONSchema7;
-    if (pItem['jesgo:set'] === 'eventdate') {
+    if (
+      pItem['jesgo:set'] === 'eventdate' &&
+      pItem.type === 'string' &&
+      pItem.format === 'date'
+    ) {
       eventDatePropName = propName;
+      break;
     }
-  });
+  }
 
   // event_dateの設定
   if (eventDatePropName && formData) {
@@ -196,7 +208,11 @@ export const getDeathDate = (
   const propList = getPropItemsAndNames(customSchema);
   propList.pNames.forEach((propName: string) => {
     const pItem = propList.pItems[propName] as JSONSchema7;
-    if (pItem['jesgo:set'] === 'death') {
+    if (
+      pItem['jesgo:set'] === 'death' &&
+      pItem.type === 'string' &&
+      pItem.format === 'date'
+    ) {
       deathDataPropName = propName;
     }
   });
@@ -213,6 +229,149 @@ export const getDeathDate = (
   }
 
   return deathDate;
+};
+
+export type schemaValueSet = {
+  schema_id: number;
+  primary_id: number;
+  valid_from: string;
+  valid_until: string | null;
+  eventPropName: string;
+  eventDate: string | undefined;
+  majorVersion: number;
+  minorVersion: number;
+  conflictPrimaryId?: number;
+};
+
+/**
+ * formDataからスキーマの各バージョンごとのeventdateを取得
+ * @param formData
+ * @param schemaList
+ * @returns
+ */
+export const getSchemaEventDateRelation = (
+  formData: any,
+  schemaList: JesgoDocumentSchema[] | undefined
+): schemaValueSet[] => {
+  if (!schemaList || schemaList.length === 0) {
+    return [];
+  }
+
+  return schemaList.map((schema) => {
+    const ret: schemaValueSet = {
+      schema_id: schema.schema_id,
+      primary_id: schema.schema_primary_id,
+      valid_from: schema.valid_from,
+      valid_until: schema.valid_until,
+      eventPropName: '',
+      eventDate: '',
+      majorVersion: schema.version_major,
+      minorVersion: schema.version_minor,
+    };
+
+    const documentSchema = schema.document_schema;
+
+    const customSchema = CustomSchema({
+      orgSchema: documentSchema,
+      formData, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+    });
+
+    if (customSchema) {
+      const propList = getPropItemsAndNames(customSchema);
+
+      let eventDatePropName = '';
+
+      // eventdateの項目名を取得
+      // eslint-disable-next-line no-restricted-syntax
+      for (const propName of propList.pNames) {
+        const pItem = propList.pItems[propName] as JSONSchema7;
+        if (
+          pItem['jesgo:set'] === 'eventdate' &&
+          pItem.type === 'string' &&
+          pItem.format === 'date'
+        ) {
+          eventDatePropName = propName;
+          break;
+        }
+      }
+
+      // eventdateの項目名からeventdateの値を取得
+      let eventDate = '';
+      if (eventDatePropName && formData) {
+        const eventDateProp = Object.entries(formData).find(
+          (p) => p[0] === eventDatePropName
+        );
+
+        eventDate = eventDateProp ? (eventDateProp[1] as string) : '';
+      }
+
+      ret.eventDate = eventDate;
+      ret.eventPropName = eventDatePropName;
+    }
+    return ret;
+  });
+};
+
+/**
+ * eventdateによる取得スキーマ無限ループ検知
+ * @param formData
+ * @param schemaList
+ * @param relation
+ * @returns true: 正常 false:無限ループ発生
+ */
+export const checkEventDateInfinityLoop = (
+  formData: any,
+  schemaList: JesgoDocumentSchema[] | undefined,
+  relation: schemaValueSet[] = []
+) => {
+  if (!formData || !schemaList || Object.keys(formData).length === 0)
+    return true;
+
+  // スキーマが1件しかない場合はOK
+  if (schemaList.length <= 1) {
+    return true;
+  }
+
+  const schemaRelation = getSchemaEventDateRelation(formData, schemaList);
+
+  // eventdateのプロパティ名が全てのスキーマで共通ならOK
+  if (
+    schemaRelation.every(
+      (p) => p.eventPropName === schemaRelation[0].eventPropName
+    )
+  ) {
+    return true;
+  }
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const item of schemaRelation) {
+    const schemaInfo1 = GetSchemaInfo(item.schema_id, item.eventDate);
+    if (schemaInfo1) {
+      const tmpSchema = schemaRelation.find(
+        (p) =>
+          p.primary_id === schemaInfo1.schema_primary_id &&
+          p.primary_id !== item.primary_id
+      );
+      if (tmpSchema) {
+        // 切り替え先のスキーマのeventdateを用いてスキーマ再取得
+        const schemaInfo2 = GetSchemaInfo(
+          tmpSchema.schema_id,
+          tmpSchema.eventDate
+        );
+        if (schemaInfo2) {
+          // スキーマを再取得した結果、参照するスキーマが変わってしまった場合はループ発生するのでNG
+          if (schemaInfo1.schema_primary_id !== schemaInfo2.schema_primary_id) {
+            // 競合するスキーマを取得
+            item.conflictPrimaryId = schemaInfo1.schema_primary_id;
+          }
+        }
+      }
+    }
+  }
+
+  relation.push(...schemaRelation);
+
+  return !schemaRelation.some((p) => p.conflictPrimaryId);
 };
 
 // 保存処理の呼び出し
@@ -235,7 +394,20 @@ const SaveChanges = async (
         jesgoDoc.value.document = formData; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
 
         // eventDateの更新
+        if (
+          !checkEventDateInfinityLoop(
+            formData,
+            store
+              .getState()
+              .schemaDataReducer.schemaDatas.get(jesgoDoc.value.schema_id)
+          )
+        ) {
+          // 無限ループ発生時は現在日時点の最新にしたいため、eventdate一旦クリア
+          jesgoDoc.value.event_date = '';
+        }
+
         jesgoDoc.value.event_date = getEventDate(jesgoDoc, formData);
+
         // 死亡日時は最初に見つかったものを取得
         const tmpDeathDate = getDeathDate(jesgoDoc, formData);
         if (tmpDeathDate && !deathDate) {

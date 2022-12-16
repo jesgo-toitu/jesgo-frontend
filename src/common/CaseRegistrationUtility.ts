@@ -22,6 +22,8 @@ import {
   ValidationItem,
   validationResult,
 } from '../components/CaseRegistration/Definition';
+import { checkEventDateInfinityLoop, schemaValueSet } from './DBUtility';
+import { formatDateStr } from './CommonUtility';
 
 /**
  * 入力値のvalidation
@@ -204,12 +206,14 @@ const validateRequired = (
 /**
  * validationの結果によりschemaを書き換える
  * @param schema
+ * @param schemaId
  * @param formData
  * @param propName
  * @returns
  */
 const customSchemaValidation = (
   schema: JSONSchema7,
+  schemaId: number,
   formData: any,
   propName: string,
   required: string[]
@@ -228,6 +232,7 @@ const customSchemaValidation = (
       const targetItem = targetSchema.pItems[iname] as JSONSchema7;
       const res = customSchemaValidation(
         targetItem,
+        schemaId,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         formData[iname] ?? {},
         iname,
@@ -272,6 +277,7 @@ const customSchemaValidation = (
       formData.forEach((data: any, index: number) => {
         const res = customSchemaValidation(
           targetSchema,
+          schemaId,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           data ?? {},
           propName,
@@ -371,6 +377,62 @@ const customSchemaValidation = (
       });
     }
   }
+
+  // #region eventdate不整合による無限ループエラーの表示
+  const errorEventDateList: schemaValueSet[] = [];
+  if (
+    !checkEventDateInfinityLoop(
+      formData,
+      store.getState().schemaDataReducer.schemaDatas.get(schemaId),
+      errorEventDateList
+    )
+  ) {
+    // TODO: エラーメッセージがわかりにくい
+    let message =
+      `　基準となる日付に不整合があるため、暫定的に最新スキーマを表示しています。意図しないスキーマが表示されている可能性があります。\n` +
+      '　以下の詳細を参考に、入力した日付に誤りがあれば修正してください。日付が正しい場合はスキーマの有効期限を見直してください。\n';
+
+    errorEventDateList
+      .filter((p) => p.conflictPrimaryId)
+      .forEach((item, index) => {
+        if (index > 0) {
+          message += '\n';
+        }
+
+        let validUntil = formatDateStr(item.valid_until ?? '', '/');
+        if (!validUntil) validUntil = '無制限';
+
+        const conflictInfo = errorEventDateList.find(
+          (p) => p.primary_id === item.conflictPrimaryId
+        );
+
+        const ver1 = `${item.majorVersion}.${item.minorVersion}`;
+        const ver2 = `${conflictInfo!.majorVersion}.${
+          conflictInfo!.minorVersion
+        }`;
+        const today = formatDateStr(new Date().toString(), '/');
+        const msgTmplate1 = `現在日：${today}時点で有効なスキーマVer${ver2}へ切り替えますが、Ver${ver2}も問題があるため切り替えられません。`;
+
+        if (!item.eventPropName) {
+          message += `　・Ver${ver1}　${msgTmplate1}`;
+        } else if (!item.eventDate) {
+          message += `　・Ver${ver1}　[ ${item.eventPropName} ]が未入力のため、${msgTmplate1}`;
+        } else {
+          message += `　・Ver${ver1}　[ ${item.eventPropName}：${formatDateStr(
+            item.eventDate,
+            '/'
+          )} ]が、有効期限 [${formatDateStr(
+            item.valid_from,
+            '/'
+          )}] ～ [${validUntil}]の範囲外のためVer${ver2}へ切り替えますが、Ver${ver2}も問題があるため切り替えられません。`;
+        }
+      });
+    messages.push({
+      message,
+      validateType: VALIDATE_TYPE.Message,
+    });
+  }
+  // #endregion
 
   if (errFlg) {
     // エラーのある項目は内部用の独自ボキャブラリーを付与
@@ -492,6 +554,7 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
       const customSchema = CustomSchema({ orgSchema: schema, formData });
       const validResult: validationResult = customSchemaValidation(
         customSchema,
+        schemaId,
         formData,
         '',
         []

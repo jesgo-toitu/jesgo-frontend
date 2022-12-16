@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import '../../views/Registration.css';
@@ -532,6 +532,7 @@ const RootSchema = React.memo((props: Props) => {
           isTabItem
           dispSchemaIds={[...dispSchemaIds]}
           setDispSchemaIds={setDispSchemaIds}
+          setErrors={setErrors}
         />
         <ControlButton
           tabId={tabId}

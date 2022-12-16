@@ -122,6 +122,7 @@ export interface formDataAction {
   processedNewDocId: string;
 
   hasFormDataInput: boolean;
+  eventDate: string;
 }
 
 // ユーザID取得
@@ -458,7 +459,11 @@ const formDataReducer: Reducer<
 
         // 継承時の処理済みdocumentIdと新規で振られたdocumentIdを紐づける
         if (action.processedDocId) {
-          if(!copyState.processedDocumentIds.find(p => p[0] === action.processedDocId)) {
+          if (
+            !copyState.processedDocumentIds.find(
+              (p) => p[0] === action.processedDocId
+            )
+          ) {
             copyState.processedDocumentIds.push([action.processedDocId, docId]);
           }
         }
@@ -553,8 +558,15 @@ const formDataReducer: Reducer<
       // データ引継ぎ済みdocumentIdの更新
       case 'DATA_TRANSFER_PROCESSED': {
         if (action.processedDocId) {
-          if(!copyState.processedDocumentIds.find(p => p[0] === action.processedDocId)) {
-            copyState.processedDocumentIds.push([action.processedDocId, action.processedNewDocId]);
+          if (
+            !copyState.processedDocumentIds.find(
+              (p) => p[0] === action.processedDocId
+            )
+          ) {
+            copyState.processedDocumentIds.push([
+              action.processedDocId,
+              action.processedNewDocId,
+            ]);
           }
         }
         break;
@@ -711,6 +723,16 @@ const formDataReducer: Reducer<
           action.documentId,
           action.hasFormDataInput
         );
+        break;
+      }
+
+      case 'EVENT_DATE': {
+        const doc = saveData.jesgo_document.find(
+          (p) => p.key === action.documentId
+        );
+        if (doc) {
+          doc.value.event_date = action.eventDate;
+        }
         break;
       }
 

@@ -1007,3 +1007,72 @@ export const OpenOutputView = (win: typeof window, srcData: any) => {
 
   win.open('/OutputView', 'outputview');
 };
+
+// 子ドキュメントから特定のスキーマドキュメントを取得
+export const findJesgoDocumentChildren = (
+  parentDoc: jesgoDocumentObjDefine,
+  searchSchemaId: number
+) => {
+  let searchedDoc: jesgoDocumentObjDefine[] = [];
+
+  const jesgoDoc = store.getState().formDataReducer.saveData.jesgo_document;
+  if (!jesgoDoc) {
+    return searchedDoc;
+  }
+
+  // 子ドキュメントから特定のスキーマドキュメントを抽出
+  parentDoc.value.child_documents.forEach((docId) => {
+    const doc = jesgoDoc.find((p) => p.key === docId);
+    if (doc && doc.value.schema_id === searchSchemaId) {
+      searchedDoc.push(doc);
+    }
+  });
+
+  if (searchedDoc.length > 0) {
+    return searchedDoc;
+  }
+
+  // 見つからない場合は孫まで見る
+  parentDoc.value.child_documents.forEach((docId) => {
+    const doc = jesgoDoc.find((p) => p.key === docId);
+    if (doc && doc.value.child_documents.length > 0) {
+      doc.value.child_documents.forEach((cDocId) => {
+        const cDoc = jesgoDoc.find((p) => p.key === cDocId);
+        if (cDoc) {
+          searchedDoc.push(...findJesgoDocumentChildren(cDoc, searchSchemaId));
+        }
+      });
+    }
+  });
+
+  return searchedDoc;
+};
+
+/**
+ * 初回治療開始日取得
+ * @param documentId 検索の起点となるドキュメントのID
+ * @returns 
+ */
+export const GetInitialTreatmentDate = (documentId: string): string => {
+  let initialDate = '';
+  // 初回治療スキーマのIDを取得
+  const initialTreatmentSchemaId = 50;
+  // const initialTreatmentSchemaId = getSchemaForIdString('/schema/treatment/initial_treatment')
+
+  const jesgoDoc = store.getState().formDataReducer.saveData.jesgo_document;
+
+  const currentDoc = jesgoDoc.find((p) => p.key === documentId);
+  if (currentDoc) {
+    // 指定されたドキュメントの子ドキュメントから初回治療スキーマを取得
+    const initialTreatmentDoc = findJesgoDocumentChildren(
+      currentDoc,
+      initialTreatmentSchemaId
+    );
+    if (initialTreatmentDoc.length > 0) {
+      // 初回治療スキーマがあればeventdate取得
+      // initialDate = getEventDate(initialTreatmentDoc[0].value.document, initialTreatmentDoc[0].value.schema_id, 'child');
+    }
+  }
+
+  return initialDate;
+};

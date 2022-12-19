@@ -11,6 +11,7 @@ import JSONPointer from 'jsonpointer';
 import lodash from 'lodash';
 import { Dispatch } from 'redux';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { GetInitialTreatmentDate } from '../../common/CaseRegistrationUtility';
 import { calcAge } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import store from '../../store';
@@ -506,31 +507,9 @@ const customSchemaAppendFormDataProperty = (
     const propItems = getPropItemsAndNames(copySchema);
     propItems.pNames.forEach((pName) => {
       const item = propItems.pItems[pName] as JSONSchema7;
+      // jesgo:getの項目は読取専用にする
       if (item[Const.EX_VOCABULARY.GET]) {
-        let setValue: any = '';
-        const getType = item[Const.EX_VOCABULARY.GET];
-        if (getType != null && getType !== '') {
-          // TODO: eventdate取得できたテイ
-          const eventDate = '2020-02-29';
-          if (getType === 'eventdate') {
-            setValue = eventDate;
-          } else if (['age', 'month', 'week', 'day'].includes(getType)) {
-            // 年齢など
-            setValue = calcAge(
-              store.getState().formDataReducer.saveData.jesgo_case
-                .date_of_birth,
-              getType as 'age',
-              eventDate
-            );
-          }
-
-          if (setValue != null && setValue !== '') {
-            (formData as Obj)[pName] = setValue;
-          }
-
-          // 読取専用にする
-          (copySchema.properties![pName] as Obj).readOnly = true;
-        }
+        (copySchema.properties![pName] as Obj).readOnly = true;
       }
     });
   }

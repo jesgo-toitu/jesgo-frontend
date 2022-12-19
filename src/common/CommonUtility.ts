@@ -1,5 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 
+import { Const } from "./Const";
+
 /* ここには画面機能に依存しない共通関数などを記述する */
 
 /**
@@ -33,7 +35,7 @@ export const RemoveBeforeUnloadEvent = () => {
  */
 export const calcAge = (
   birthday: string,
-  calcType: 'age' | 'month' | 'week' | 'day' = 'age',
+  calcType: string = Const.JESGO_GETTYPE.AGE,
   eventDate: string | null = null
 ) => {
   if (!birthday) return '';

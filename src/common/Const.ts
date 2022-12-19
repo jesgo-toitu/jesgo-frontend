@@ -68,6 +68,15 @@ export namespace Const {
     NUMBER: 'number',
   } as const;
 
+  export const JESGO_GETTYPE = {
+    EVENT_DATE: 'eventdate',
+    AGE: 'age',
+    MONTH: 'month',
+    WEEK: 'week',
+    DAY: 'day',
+    INITIAL_TREATMENT: 'initial_treatment',
+  } as const;
+
   /**
    * 必須項目のラベル横に出るマーク
    */

@@ -7,8 +7,12 @@ import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/Vali
 import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
-import { isNotEmptyObject } from '../../common/CaseRegistrationUtility';
-import { RegistrationErrors } from './Definition';
+import {
+  GetSchemaTitle,
+  isNotEmptyObject,
+  popJesgoError,
+} from '../../common/CaseRegistrationUtility';
+import { RegistrationErrors, VALIDATE_TYPE } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
 
 interface CustomDivFormProp extends FormProps<any> {
@@ -18,6 +22,7 @@ interface CustomDivFormProp extends FormProps<any> {
   setFormData: React.Dispatch<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   documentId: string;
   isTabItem: boolean;
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
 }
 
 // カスタムフォーム
@@ -27,7 +32,8 @@ interface CustomDivFormProp extends FormProps<any> {
 // - onChangeでuseStateで保持しているformDataを更新する
 const CustomDivForm = (props: CustomDivFormProp) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { schemaId, dispatch, setFormData, documentId, isTabItem } = props;
+  const { schemaId, dispatch, setFormData, documentId, isTabItem, setErrors } =
+    props;
   let { formData, schema } = props;
 
   const copyProps = { ...props };
@@ -39,12 +45,6 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   if (thisDocument) {
     formData = thisDocument.value.document;
   }
-
-  // 継承直後、データ入力判定を動かすためにsetFormDataする
-  if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
-    setFormData(formData);
-  }
-  copyProps.formData = formData;
 
   // validationエラーの取得
   const errors = store.getState().formDataReducer.extraErrors;
@@ -59,6 +59,52 @@ const CustomDivForm = (props: CustomDivFormProp) => {
       schema = targetErrors.validationResult.schema;
     }
   }
+
+  // プラグインにて付与されたjesgo:errorがformDataにあればエラーとして表示する
+  const jesgoErrors = popJesgoError(formData);
+  if (jesgoErrors.length > 0) {
+    let tmpErr = errors.find((p) => p.documentId === documentId);
+    if (!tmpErr) {
+      tmpErr = {
+        errDocTitle: GetSchemaTitle(schemaId),
+        schemaId,
+        documentId,
+        validationResult: { schema, messages: [] },
+      };
+      errors.push(tmpErr);
+    }
+
+    const messages = tmpErr.validationResult.messages;
+
+    jesgoErrors.forEach((errorItem) => {
+      if (typeof errorItem === 'string') {
+        // 文字列の場合はそのまま表示
+        messages.push({
+          message: `　　${errorItem}`,
+          validateType: VALIDATE_TYPE.Message,
+        });
+      } else if (typeof errorItem === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        Object.entries(errorItem).forEach((item) => {
+          // objectの場合はKeyに項目名、valueにメッセージが格納されている想定
+          messages.push({
+            message: `　　[ ${item[0]} ] ${item[1] as string}`,
+            validateType: VALIDATE_TYPE.Message,
+          });
+        });
+      }
+    });
+
+    setErrors([...errors]);
+    dispatch({ type: 'SET_ERROR', extraErrors: errors });
+  }
+
+  // 継承直後、データ入力判定を動かすためにsetFormDataする
+  if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
+    setFormData(formData);
+  }
+
+  copyProps.formData = formData;
 
   // uiSchema作成
   const uiSchema = CreateUISchema(schema);

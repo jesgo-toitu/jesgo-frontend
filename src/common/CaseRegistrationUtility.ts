@@ -23,6 +23,23 @@ import {
   validationResult,
 } from '../components/CaseRegistration/Definition';
 
+// formDataからjesgo:errorを取り出して削除
+export const popJesgoError = (formData: any) => {
+  let popValue: any[] = [];
+  if (formData && !Array.isArray(formData) && typeof formData === 'object') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (formData['jesgo:error']) {
+      // 取り出して元のformDataからは削除
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      popValue = formData['jesgo:error'];
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, no-param-reassign
+      delete formData['jesgo:error'];
+    }
+  }
+
+  return popValue;
+};
+
 /**
  * 入力値のvalidation
  * @param resultSchema

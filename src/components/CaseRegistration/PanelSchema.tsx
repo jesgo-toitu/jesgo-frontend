@@ -571,6 +571,7 @@ const PanelSchema = React.memo((props: Props) => {
           schema={customSchema}
           formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
           isTabItem={false}
+          setErrors={setErrors}
         />
         <ControlButton
           tabId={parentTabsId}

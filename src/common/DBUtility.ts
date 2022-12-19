@@ -383,13 +383,13 @@ export const UploadSchemaFile = async (
  */
 export const GetPackagedDocument = async (
   jesgoCaseList: jesgoCaseDefine[],
-  schema_id?: number,
+  schema_ids?: number[],
   document_id?: number,
   attachPatientInfoDetail?: boolean
 ) => {
   const apiResult = await apiAccess(METHOD_TYPE.POST, `packaged-document/`, {
     jesgoCaseList,
-    schema_id,
+    schema_ids,
     document_id,
     attachPatientInfoDetail,
   });

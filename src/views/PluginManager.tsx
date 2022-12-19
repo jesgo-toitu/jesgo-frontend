@@ -26,22 +26,10 @@ import {
   OpenOutputViewScript,
 } from '../common/CaseRegistrationUtility';
 import './PluginManager.css';
+import { jesgoPluginColumns, moduleInit, moduleMain } from '../common/Plugin';
 
 type settings = {
   facility_name: string;
-};
-
-export type jesgoPluginColumns = {
-  plugin_id: number;
-  plugin_name: string;
-  plugin_version?: string;
-  script_text: string;
-  target_schema_id?: number[];
-  target_schema_id_string?: string;
-  all_patient: boolean;
-  update_db: boolean;
-  attach_patient_info: boolean;
-  explain?: string;
 };
 
 const PluginManager = () => {
@@ -302,6 +290,9 @@ const PluginManager = () => {
                 <td className="plugin-table-short">{plugin.plugin_version}</td>
                 <td className="plugin-table-short">
                   {plugin.update_db ? 'データ更新' : 'データ出力'}
+                  <Button onClick={() => moduleInit(plugin.script_text)}>
+                    init
+                  </Button>
                 </td>
                 <td>
                   {plugin.target_schema_id

@@ -28,6 +28,7 @@ import { csvHeader, patientListCsv } from '../common/MakeCsv';
 import {
   formatDate,
   formatTime,
+  fTimeout,
   setTimeoutPromise,
 } from '../common/CommonUtility';
 import { Const } from '../common/Const';
@@ -36,6 +37,7 @@ import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
 import { GetPackagedDocument } from '../common/DBUtility';
 import { jesgoCaseDefine } from '../store/formDataReducer';
 import { OpenOutputView } from '../common/CaseRegistrationUtility';
+import { executePlugin, jesgoPluginColumns } from '../common/Plugin';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -109,7 +111,9 @@ const Patients = () => {
   const [facilityName, setFacilityName] = useState('');
   const [csvData, setCsvData] = useState<object[]>([]);
   const [csvFileName, setCsvFileName] = useState<string>('');
-
+  const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
 
@@ -137,6 +141,15 @@ const Patients = () => {
 
       if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
         setUserListJson(JSON.stringify(returnApiObject.body));
+      } else {
+        navigate('/login');
+      }
+
+      // プラグイン全ロード処理
+      const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
+      if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+        const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+        setJesgoPluginList(pluginList);
       } else {
         navigate('/login');
       }
@@ -370,6 +383,64 @@ const Patients = () => {
     }
   };
 
+  // 現在表示されている患者リストの一覧をJesgoCaseDefineとして返す
+  const getPatientList = () => {
+    const decordedJson = JSON.parse(userListJson) as userDataList;
+    const caseInfoList = decordedJson.data.map((item) => {
+      const caseinfo: jesgoCaseDefine = {
+        case_id: item.caseId.toString(),
+        name: item.patientName,
+        date_of_birth: '1900-01-01',
+        date_of_death: '1900-01-01',
+        sex: 'F',
+        his_id: item.patientId,
+        decline: false,
+        registrant: -1,
+        last_updated: '1900-01-01',
+        is_new_case: false,
+      };
+      return caseinfo;
+    });
+    return caseInfoList;
+  };
+
+  const createDocument = async (plugin: jesgoPluginColumns) => {
+    setIsLoading(true);
+    await Promise.race([fTimeout(2), executePlugin(plugin, getPatientList())])
+      .then((res) => {
+        // eslint-disable-next-line
+        OpenOutputView(window, (res as any).anyValue);
+      })
+      .catch((err) => {
+        if (err === 'timeout') {
+          alert('操作がタイムアウトしました');
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  const createDocumentSample = () => {
+    const wrapperFunc = () =>
+      GetPackagedDocument(getPatientList(), undefined, undefined, true);
+
+    setIsLoading(true);
+
+    setTimeoutPromise(wrapperFunc)
+      .then((res) => {
+        OpenOutputView(window, (res as any).anyValue);
+      })
+      .catch((err) => {
+        if (err === 'timeout') {
+          alert('操作がタイムアウトしました');
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
   const submit = async (type: string) => {
     setIsLoading(true);
     const token = localStorage.getItem('token');
@@ -498,55 +569,23 @@ const Patients = () => {
             </ButtonToolbar>
             {/* // ★TODO: 仮実装 */}
             {process.env.DEV_MODE === '1' && (
-              <Button
-                bsStyle="danger"
-                className="normal-button"
-                onClick={() => {
-                  const decordedJson = JSON.parse(userListJson) as userDataList;
-                  const caseInfoList = decordedJson.data.map((item) => {
-                    const caseinfo: jesgoCaseDefine = {
-                      case_id: item.caseId.toString(),
-                      name: item.patientName,
-                      date_of_birth: '1900-01-01',
-                      date_of_death: '1900-01-01',
-                      sex: 'F',
-                      his_id: item.patientId,
-                      decline: false,
-                      registrant: -1,
-                      last_updated: '1900-01-01',
-                      is_new_case: false,
-                    };
-                    return caseinfo;
-                  });
-
-                  // TODO: ★仮実装
-
-                  const wrapperFunc = () =>
-                    GetPackagedDocument(
-                      caseInfoList,
-                      undefined,
-                      undefined,
-                      true
-                    );
-
-                  setIsLoading(true);
-
-                  setTimeoutPromise(wrapperFunc)
-                    .then((res) => {
-                      OpenOutputView(window, (res as any).anyValue);
-                    })
-                    .catch((err) => {
-                      if (err === 'timeout') {
-                        alert('操作がタイムアウトしました');
-                      }
-                    })
-                    .finally(() => {
-                      setIsLoading(false);
-                    });
-                }}
-              >
-                ドキュメント出力
-              </Button>
+              <>
+                {jesgoPluginList.map(
+                  (plugin: jesgoPluginColumns) =>
+                    plugin.all_patient && (
+                      <Button onClick={() => createDocument(plugin)}>
+                        {plugin.plugin_name}
+                      </Button>
+                    )
+                )}
+                <Button
+                  bsStyle="danger"
+                  className="normal-button"
+                  onClick={() => createDocumentSample()}
+                >
+                  ドキュメント出力
+                </Button>
+              </>
             )}
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (

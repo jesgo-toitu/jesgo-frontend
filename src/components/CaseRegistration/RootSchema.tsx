@@ -519,6 +519,7 @@ const RootSchema = React.memo((props: Props) => {
           formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
           schema={customSchema}
           isTabItem
+          setErrors={setErrors}
         />
         <ControlButton
           tabId={tabId}

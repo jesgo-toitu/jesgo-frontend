@@ -385,12 +385,14 @@ export const GetPackagedDocument = async (
   jesgoCaseList: jesgoCaseDefine[],
   schema_ids?: number[],
   document_id?: number,
+  filter_query?: string,
   attachPatientInfoDetail?: boolean
 ) => {
   const apiResult = await apiAccess(METHOD_TYPE.POST, `packaged-document/`, {
     jesgoCaseList,
     schema_ids,
     document_id,
+    filter_query,
     attachPatientInfoDetail,
   });
 

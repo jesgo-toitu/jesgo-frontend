@@ -423,7 +423,13 @@ const Patients = () => {
 
   const createDocumentSample = () => {
     const wrapperFunc = () =>
-      GetPackagedDocument(getPatientList(), undefined, undefined, true);
+      GetPackagedDocument(
+        getPatientList(),
+        undefined,
+        undefined,
+        undefined,
+        true
+      );
 
     setIsLoading(true);
 

@@ -16,8 +16,16 @@ export type jesgoPluginColumns = {
   all_patient: boolean;
   update_db: boolean;
   attach_patient_info: boolean;
+  show_upload_dialog: boolean;
+  filter_schema_query?: string;
   explain?: string;
 };
+
+type argDoc = {
+  caseList:jesgoCaseDefine[];
+  targetSchemas:number[]|undefined;
+  filterQuery:string|undefined;
+}
 
 // モジュールのFunc定義インターフェース
 interface IPluginModule {
@@ -51,9 +59,9 @@ export const moduleInit = (scriptText:string) => {
   });
 };
 
-const getPatientsDocument = async (doc:{caseList:jesgoCaseDefine[], targetSchemas:number[]}) => {
-  const schemaIds = doc.targetSchemas.length > 0 ? doc.targetSchemas : undefined;
-  const ret = await GetPackagedDocument(doc.caseList, schemaIds, undefined, true);
+const getPatientsDocument = async (doc:argDoc) => {
+  const schemaIds = doc.targetSchemas && doc.targetSchemas.length > 0 ? doc.targetSchemas : undefined;
+  const ret = await GetPackagedDocument(doc.caseList, schemaIds, undefined, doc.filterQuery, true);
   if(ret.resCode === RESULT.NORMAL_TERMINATION){
     return ret;
   }
@@ -75,11 +83,13 @@ export const executePlugin = async (plugin:jesgoPluginColumns, patientList:(jesg
     if(patientList){
       if(plugin.target_schema_id && plugin.target_schema_id.length > 0){
         // スキーマ指定あり
-        const retValue = await moduleMain(plugin.script_text, getPatientsDocument, {caseList:patientList, targetSchemas:plugin.target_schema_id});
+        const doc:argDoc = {caseList:patientList, targetSchemas:plugin.target_schema_id, filterQuery:plugin.filter_schema_query};
+        const retValue = await moduleMain(plugin.script_text, getPatientsDocument, doc);
         return retValue;
       }
         // スキーマ指定なし
-        const retValue = await moduleMain(plugin.script_text, getPatientsDocument, {caseList:patientList, targetSchemas:undefined});
+        const doc:argDoc = {caseList:patientList, targetSchemas:undefined, filterQuery:plugin.filter_schema_query};
+        const retValue = await moduleMain(plugin.script_text, getPatientsDocument, doc);
         return retValue;
     }
     alert('対象患者がいません');

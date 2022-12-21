@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import lodash from 'lodash';
 import { Reducer } from 'redux';
 import React from 'react';
@@ -732,6 +733,24 @@ const formDataReducer: Reducer<
         );
         if (doc) {
           doc.value.event_date = action.eventDate;
+        }
+        break;
+      }
+
+      // スキーマの切り替え発生
+      case 'CHANGED_SCHEMA': {
+        const doc = saveData.jesgo_document.find(
+          (p) => p.key === action.documentId
+        );
+        // スキーマ関連の情報を更新する
+        if (doc && action.schemaInfo) {
+          const { schema_id, schema_primary_id, version_major } =
+            action.schemaInfo;
+          doc.value.schema_id = schema_id;
+          doc.value.schema_primary_id = schema_primary_id;
+          doc.value.schema_major_version = version_major;
+          doc.value.last_updated = new Date().toLocaleString();
+          doc.value.registrant = getLoginUserId();
         }
         break;
       }

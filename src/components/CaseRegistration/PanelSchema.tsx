@@ -564,6 +564,14 @@ const PanelSchema = React.memo((props: Props) => {
       // 親タブに子タブの更新を伝える
       setUpdateFormData(true);
     }
+
+    // 適応するスキーマが変更された場合、バージョンなどの情報を更新する
+    if (
+      saveDoc &&
+      saveDoc.value.schema_primary_id !== schemaInfo.schema_primary_id
+    ) {
+      dispatch({ type: 'CHANGED_SCHEMA', documentId, schemaInfo });
+    }
   }, [formData, updateChildFormData]);
 
   return (

@@ -10,7 +10,11 @@ import {
   getPropItemsAndNames,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
-import { jesgoCaseDefine, SaveDataObjDefine } from '../store/formDataReducer';
+import {
+  jesgoCaseDefine,
+  jesgoDocumentObjDefine,
+  SaveDataObjDefine,
+} from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { validateJesgoDocument } from './CaseRegistrationUtility';
@@ -20,6 +24,7 @@ import {
 } from '../components/CaseRegistration/Definition';
 import { Const } from './Const';
 import { formatDateStr } from './CommonUtility';
+import store from '../store';
 
 export interface responseResult {
   resCode?: number;
@@ -120,6 +125,96 @@ export const loadJesgoCaseAndDocument = async (
   setJesgoCaseData(res);
 };
 
+// event_date取得処理
+export const getEventDate = (
+  jesgoDoc: jesgoDocumentObjDefine,
+  formData: any
+): string => {
+  let eventDatePropName = '';
+  let eventDate = '';
+  const { document_schema: documentSchema } = GetSchemaInfo(
+    jesgoDoc.value.schema_id,
+    jesgoDoc.value.event_date
+  ) as JesgoDocumentSchema;
+  const customSchema = CustomSchema({
+    orgSchema: documentSchema,
+    formData, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+  });
+
+  const propList = getPropItemsAndNames(customSchema);
+  propList.pNames.forEach((propName: string) => {
+    const pItem = propList.pItems[propName] as JSONSchema7;
+    if (pItem['jesgo:set'] === 'eventdate') {
+      eventDatePropName = propName;
+    }
+  });
+
+  // event_dateの設定
+  if (eventDatePropName && formData) {
+    // formDataからevent_dateに指定されているプロパティの値を取得する
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const eventDateProp = Object.entries(formData).find(
+      (p) => p[0] === eventDatePropName
+    );
+
+    eventDate = eventDateProp ? (eventDateProp[1] as string) : '';
+  }
+
+  if (!eventDate) {
+    // 親のeventDate取得処理
+    const jesgoDocList =
+      store.getState().formDataReducer.saveData.jesgo_document;
+    const parentDoc = jesgoDocList.find((p) =>
+      p.value.child_documents.includes(jesgoDoc.key)
+    );
+    if (parentDoc) {
+      // 見つかるまでルートまで探索
+      eventDate = getEventDate(parentDoc, parentDoc.value.document);
+    }
+  }
+
+  return eventDate;
+};
+
+// 死亡日時取得
+export const getDeathDate = (
+  jesgoDoc: jesgoDocumentObjDefine,
+  formData: any
+): string => {
+  let deathDataPropName = '';
+  let deathDate = '';
+
+  const { document_schema: documentSchema } = GetSchemaInfo(
+    jesgoDoc.value.schema_id,
+    jesgoDoc.value.event_date
+  ) as JesgoDocumentSchema;
+  const customSchema = CustomSchema({
+    orgSchema: documentSchema,
+    formData, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+  });
+
+  const propList = getPropItemsAndNames(customSchema);
+  propList.pNames.forEach((propName: string) => {
+    const pItem = propList.pItems[propName] as JSONSchema7;
+    if (pItem['jesgo:set'] === 'death') {
+      deathDataPropName = propName;
+    }
+  });
+
+  if (deathDataPropName && formData) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const deathProp = Object.entries(formData).find(
+      (p) => p[0] === deathDataPropName
+    );
+    if (deathProp && (deathProp[1] as boolean) === true) {
+      // 死亡フラグが立っていればevent_dateを死亡日時にセットする
+      deathDate = getEventDate(jesgoDoc, formData);
+    }
+  }
+
+  return deathDate;
+};
+
 // 保存処理の呼び出し
 const SaveChanges = async (
   dispatch: Dispatch<any>,
@@ -132,73 +227,29 @@ const SaveChanges = async (
 
   // jesgo_document更新
   if (formDatas) {
+    let deathDate = '';
     formDatas.forEach((formData: any, docId) => {
       const idx = copySaveData.jesgo_document.findIndex((p) => p.key === docId);
       if (idx > -1) {
         const jesgoDoc = copySaveData.jesgo_document[idx];
         jesgoDoc.value.document = formData; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
 
-        let eventDatePropName = '';
-        let deathDataPropName = '';
-        const { document_schema: documentSchema } = GetSchemaInfo(
-          jesgoDoc.value.schema_id
-        ) as JesgoDocumentSchema;
-        const customSchema = CustomSchema({
-          orgSchema: documentSchema,
-          formData, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-        });
-        const propList = getPropItemsAndNames(customSchema);
-        propList.pNames.forEach((propName: string) => {
-          const pItem = propList.pItems[propName] as JSONSchema7;
-          if (pItem['jesgo:set'] === 'eventdate') {
-            eventDatePropName = propName;
-          } else if (pItem['jesgo:set'] === 'death') {
-            deathDataPropName = propName;
-          }
-        });
-
-        jesgoDoc.event_date_prop_name = eventDatePropName;
-        jesgoDoc.death_data_prop_name = deathDataPropName;
-
-        // event_dateの設定
-        if (jesgoDoc.event_date_prop_name && formData) {
-          // formDataからevent_dateに指定されているプロパティの値を取得する
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          const eventDateProp = Object.entries(formData).find(
-            (p) => p[0] === jesgoDoc.event_date_prop_name
-          );
-
-          jesgoDoc.value.event_date = eventDateProp
-            ? (eventDateProp[1] as string)
-            : '';
+        // eventDateの更新
+        jesgoDoc.value.event_date = getEventDate(jesgoDoc, formData);
+        // 死亡日時は最初に見つかったものを取得
+        const tmpDeathDate = getDeathDate(jesgoDoc, formData);
+        if (tmpDeathDate && !deathDate) {
+          deathDate = tmpDeathDate;
         }
-
-        // 死亡日時の設定(jesgo_case)
-        copySaveData.jesgo_case.date_of_death = ''; // 一旦リセット
-        if (
-          jesgoDoc.death_data_prop_name &&
-          jesgoDoc.event_date_prop_name &&
-          formData
-        ) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          const deathProp = Object.entries(formData).find(
-            (p) => p[0] === jesgoDoc.death_data_prop_name
-          );
-          if (deathProp && (deathProp[1] as boolean) === true) {
-            // 死亡フラグが立っていればevent_dateを死亡日時にセットする
-            copySaveData.jesgo_case.date_of_death = jesgoDoc.value.event_date;
-          }
-          // saveData.jesgo_case.last_updated = updateDate;
-        }
-        // jesgoDoc.value.last_updated = updateDate;
       }
     });
+
+    // 死亡日時更新
+    copySaveData.jesgo_case.date_of_death = deathDate;
 
     // storeに保存
     dispatch({ type: 'SAVE', saveData: copySaveData });
   }
-
-  // console.log(JSON.stringify(copySaveData));
 
   // API経由でのDB保存
   await SaveFormDataToDB(copySaveData, setSaveResponse, isBack);

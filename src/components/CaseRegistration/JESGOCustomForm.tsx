@@ -7,9 +7,15 @@ import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/Vali
 import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
-import { isNotEmptyObject } from '../../common/CaseRegistrationUtility';
+import {
+  GetVersionedFormData,
+  isNotEmptyObject,
+} from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
+import { GetSchemaIdFromString } from './SchemaUtility';
+import { getEventDate } from '../../common/DBUtility';
+import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 
 interface CustomDivFormProp extends FormProps<any> {
   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -18,6 +24,10 @@ interface CustomDivFormProp extends FormProps<any> {
   setFormData: React.Dispatch<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   documentId: string;
   isTabItem: boolean;
+  dispSchemaIds: dispSchemaIdAndDocumentIdDefine[];
+  setDispSchemaIds: React.Dispatch<
+    React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
+  >;
 }
 
 // カスタムフォーム
@@ -39,6 +49,10 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   if (thisDocument) {
     formData = thisDocument.value.document;
   }
+
+  const [eventDate, setEventDate] = useState<string>(
+    thisDocument ? getEventDate(thisDocument, formData) : ''
+  );
 
   // 継承直後、データ入力判定を動かすためにsetFormDataする
   if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
@@ -125,6 +139,24 @@ const CustomDivForm = (props: CustomDivFormProp) => {
       data = {};
     }
 
+    if (thisDocument) {
+      const currentEventDate = getEventDate(thisDocument, data);
+      // eventdateに変更があればスキーマに合わせたformData生成
+      if (eventDate !== currentEventDate) {
+        const newFormdata = GetVersionedFormData(
+          GetSchemaIdFromString(e.schema.$id!),
+          e.schema,
+          currentEventDate,
+          data
+        );
+        if (newFormdata) {
+          data = newFormdata;
+        }
+        // eventdate更新
+        setEventDate(currentEventDate);
+      }
+    }
+
     let hasDefault = false;
     if (e.schema.properties) {
       // デフォルト値を持っているプロパティ有無
@@ -159,7 +191,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
       !hasDefault ||
       (isFirstOnChange && isFirstRederComplited)
     ) {
-      // TODO formDataだと一つ前のデータが表示されるため、変更後の値を直接更新
+      // formDataだと一つ前のデータが表示されるため、変更後の値を直接更新
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       dispatch({
         type: 'INPUT',

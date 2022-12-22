@@ -292,13 +292,23 @@ export const getSchemaEventDateRelation = (
 
       // eventdateの項目名からeventdateの値を取得
       let eventDate = '';
-      if (eventDatePropName && formData) {
-        const eventDateProp = Object.entries(formData).find(
+      const func = (targetObject: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        const eventDateProp = Object.entries(targetObject).find(
           (p) => p[0] === eventDatePropName
         );
 
         eventDate = eventDateProp ? (eventDateProp[1] as string) : '';
-      }
+        if (!eventDate) {
+          Object.entries(targetObject)
+            .filter((p) => !Array.isArray(p[1]) && typeof p[1] === 'object')
+            .some((item) => {
+              func(item[1]);
+              return !!eventDate;
+            });
+        }
+      };
+      func(formData);
 
       ret.eventDate = eventDate;
       ret.eventPropName = eventDatePropName;

@@ -635,3 +635,58 @@ export const CustomSchema = (props: {
 
   return schema;
 };
+
+/**
+ * スキーマから特定のキーと値を持つプロパティ名を取得
+ * @param customSchema 書き換え済みスキーマ
+ * @param searchPropName 検索するプロパティ(キー)名
+ * @param searchValueName 検索する値
+ * @returns
+ */
+export const getJesgoSchemaPropValue = (
+  customSchema: JSONSchema7,
+  searchPropName: string,
+  searchValueName: string
+) => {
+  const propList = getPropItemsAndNames(customSchema);
+
+  type Obj = {
+    [prop: string]: any;
+  };
+
+  let retPropName = '';
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const propName of propList.pNames) {
+    const pItem = propList.pItems[propName] as JSONSchema7;
+    if ((pItem as Obj)[searchPropName] === searchValueName) {
+      if (searchPropName === 'jesgo:set' && searchValueName === 'eventdate') {
+        // eventdateが対象の場合は日付フォーマット指定が必要
+        if (pItem.type === 'string' && pItem.format === 'date') {
+          retPropName = propName;
+          break;
+        }
+      } else {
+        retPropName = propName;
+        break;
+      }
+    }
+  }
+
+  // 見つからない場合、objectの項目を再帰で検索する
+  if (!retPropName) {
+    Object.entries(propList.pItems)
+      .filter((p) => (p[1] as JSONSchema7).type === 'object')
+      .some((item) => {
+        const schema = item[1] as JSONSchema7;
+        retPropName = getJesgoSchemaPropValue(
+          schema,
+          searchPropName,
+          searchValueName
+        );
+        return !!retPropName;
+      });
+  }
+
+  return retPropName;
+};

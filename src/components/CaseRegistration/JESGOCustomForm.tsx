@@ -13,8 +13,16 @@ import {
 } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
-import { GetSchemaIdFromString } from './SchemaUtility';
-import { getEventDate } from '../../common/DBUtility';
+import {
+  getPropItemsAndNames,
+  GetSchemaIdFromString,
+  GetSchemaInfo,
+} from './SchemaUtility';
+import {
+  checkEventDateInfinityLoop,
+  getEventDate,
+  getSchemaEventDateRelation,
+} from '../../common/DBUtility';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 
 interface CustomDivFormProp extends FormProps<any> {
@@ -28,6 +36,7 @@ interface CustomDivFormProp extends FormProps<any> {
   setDispSchemaIds: React.Dispatch<
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >;
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
 }
 
 // カスタムフォーム
@@ -37,7 +46,8 @@ interface CustomDivFormProp extends FormProps<any> {
 // - onChangeでuseStateで保持しているformDataを更新する
 const CustomDivForm = (props: CustomDivFormProp) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { schemaId, dispatch, setFormData, documentId, isTabItem } = props;
+  const { schemaId, dispatch, setFormData, documentId, isTabItem, setErrors } =
+    props;
   let { formData, schema } = props;
 
   const copyProps = { ...props };
@@ -50,15 +60,35 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     formData = thisDocument.value.document;
   }
 
-  const [eventDate, setEventDate] = useState<string>(
-    thisDocument ? getEventDate(thisDocument, formData) : ''
+  const isNotInfinityLoop = checkEventDateInfinityLoop(
+    formData,
+    store.getState().schemaDataReducer.schemaDatas.get(schemaId)
   );
+  // eventdateの初期値設定
+  let initEventDate = '';
+  if (thisDocument) {
+    if (!isNotInfinityLoop) {
+      // 無限ループ発生時は一旦クリア
+      thisDocument.value.event_date = '';
+    }
+    initEventDate = getEventDate(thisDocument, formData);
+  }
+
+  const [eventDate, setEventDate] = useState<string>(initEventDate);
 
   // 継承直後、データ入力判定を動かすためにsetFormDataする
   if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
     setFormData(formData);
   }
   copyProps.formData = formData;
+
+  // eventdate不整合の場合、現在日時点で有効な最新スキーマを適応する
+  if (!isNotInfinityLoop) {
+    const newSchema = GetSchemaInfo(schemaId, null, true);
+    if (newSchema) {
+      schema = newSchema.document_schema;
+    }
+  }
 
   // validationエラーの取得
   const errors = store.getState().formDataReducer.extraErrors;
@@ -120,6 +150,10 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     isUpdateInput: false,
   });
 
+  dispatch({ type: 'EVENT_DATE', eventDate, documentId });
+
+  copyProps.schema = schema;
+
   // 初回onChangeフラグ
   const [isFirstOnChange, setIsFirstOnChange] = useState<boolean>(true);
   // 初回描画済みフラグ
@@ -150,10 +184,24 @@ const CustomDivForm = (props: CustomDivFormProp) => {
           data
         );
         if (newFormdata) {
+          if (
+            checkEventDateInfinityLoop(
+              newFormdata,
+              store.getState().schemaDataReducer.schemaDatas.get(schemaId)
+            )
+          ) {
+            // eventdate更新
+            setEventDate(currentEventDate);
+
+            dispatch({
+              type: 'EVENT_DATE',
+              eventDate: currentEventDate,
+              documentId,
+            });
+          }
+
           data = newFormdata;
         }
-        // eventdate更新
-        setEventDate(currentEventDate);
       }
     }
 

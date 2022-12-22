@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import '../../views/Registration.css';
@@ -516,6 +516,14 @@ const RootSchema = React.memo((props: Props) => {
         hasFormDataInput: hasInput,
       });
     }
+
+    // 適応するスキーマが変更された場合、バージョンなどの情報を更新する
+    if (
+      saveDoc &&
+      saveDoc.value.schema_primary_id !== schemaInfo.schema_primary_id
+    ) {
+      dispatch({ type: 'CHANGED_SCHEMA', documentId, schemaInfo });
+    }
   }, [formData, updateChildFormData]);
 
   return (
@@ -532,6 +540,7 @@ const RootSchema = React.memo((props: Props) => {
           isTabItem
           dispSchemaIds={[...dispSchemaIds]}
           setDispSchemaIds={setDispSchemaIds}
+          setErrors={setErrors}
         />
         <ControlButton
           tabId={tabId}

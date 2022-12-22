@@ -22,6 +22,8 @@ import {
   ValidationItem,
   validationResult,
 } from '../components/CaseRegistration/Definition';
+import { checkEventDateInfinityLoop, schemaValueSet } from './DBUtility';
+import { formatDateStr } from './CommonUtility';
 
 /**
  * 入力値のvalidation
@@ -204,12 +206,14 @@ const validateRequired = (
 /**
  * validationの結果によりschemaを書き換える
  * @param schema
+ * @param schemaId
  * @param formData
  * @param propName
  * @returns
  */
 const customSchemaValidation = (
   schema: JSONSchema7,
+  schemaId: number,
   formData: any,
   propName: string,
   required: string[]
@@ -228,6 +232,7 @@ const customSchemaValidation = (
       const targetItem = targetSchema.pItems[iname] as JSONSchema7;
       const res = customSchemaValidation(
         targetItem,
+        schemaId,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         formData[iname] ?? {},
         iname,
@@ -272,6 +277,7 @@ const customSchemaValidation = (
       formData.forEach((data: any, index: number) => {
         const res = customSchemaValidation(
           targetSchema,
+          schemaId,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           data ?? {},
           propName,
@@ -492,6 +498,7 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
       const customSchema = CustomSchema({ orgSchema: schema, formData });
       const validResult: validationResult = customSchemaValidation(
         customSchema,
+        schemaId,
         formData,
         '',
         []

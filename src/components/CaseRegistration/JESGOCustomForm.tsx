@@ -13,15 +13,10 @@ import {
 } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
-import {
-  getPropItemsAndNames,
-  GetSchemaIdFromString,
-  GetSchemaInfo,
-} from './SchemaUtility';
+import { GetSchemaIdFromString, GetSchemaInfo } from './SchemaUtility';
 import {
   checkEventDateInfinityLoop,
   getEventDate,
-  getSchemaEventDateRelation,
 } from '../../common/DBUtility';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 
@@ -60,6 +55,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     formData = thisDocument.value.document;
   }
 
+  // 無限ループチェック
   const isNotInfinityLoop = checkEventDateInfinityLoop(
     formData,
     store.getState().schemaDataReducer.schemaDatas.get(schemaId)
@@ -67,10 +63,6 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   // eventdateの初期値設定
   let initEventDate = '';
   if (thisDocument) {
-    if (!isNotInfinityLoop) {
-      // 無限ループ発生時は一旦クリア
-      thisDocument.value.event_date = '';
-    }
     initEventDate = getEventDate(thisDocument, formData);
   }
 

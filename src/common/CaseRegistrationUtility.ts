@@ -22,8 +22,6 @@ import {
   ValidationItem,
   validationResult,
 } from '../components/CaseRegistration/Definition';
-import { checkEventDateInfinityLoop, schemaValueSet } from './DBUtility';
-import { formatDateStr } from './CommonUtility';
 
 /**
  * 入力値のvalidation

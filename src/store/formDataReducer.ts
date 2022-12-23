@@ -4,6 +4,11 @@ import { Reducer } from 'redux';
 import React from 'react';
 import { JesgoDocumentSchema } from './schemaDataReducer';
 import { RegistrationErrors } from '../components/CaseRegistration/Definition';
+import {
+  CustomSchema,
+  getJesgoSchemaPropValue,
+  GetSchemaInfo,
+} from '../components/CaseRegistration/SchemaUtility';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -124,6 +129,8 @@ export interface formDataAction {
 
   hasFormDataInput: boolean;
   eventDate: string;
+
+  SchemaInfoMap: Map<number, JesgoDocumentSchema[]>;
 }
 
 // ユーザID取得
@@ -788,7 +795,47 @@ const formDataReducer: Reducer<
                   .at(-1)?.root_order ?? 0) + 1;
             }
 
-            // TODO: eventdateに該当する項目はクリアする処理が必要
+            // eventdateに該当する項目はコピー対象外のためクリアする
+            const scInfo = GetSchemaInfo(
+              copyDoc.value.schema_id,
+              copyDoc.value.event_date,
+              true,
+              false,
+              action.SchemaInfoMap
+            );
+            if (
+              scInfo &&
+              copyDoc.value.document &&
+              !Array.isArray(copyDoc.value.document) &&
+              typeof copyDoc.value.document === 'object' &&
+              Object.entries(copyDoc.value.document).length > 0
+            ) {
+              const customSchema = CustomSchema({
+                orgSchema: scInfo.document_schema,
+                formData: copyDoc.value.document,
+              });
+
+              const eventDatePropName = getJesgoSchemaPropValue(
+                customSchema,
+                'jesgo:set',
+                'eventdate'
+              );
+
+              if (eventDatePropName) {
+                // formDataからeventdateに指定されているプロパティを削除する
+                const func = (targetObj: any) => {
+                  delete targetObj[eventDatePropName];
+                  Object.entries(targetObj)
+                    .filter(
+                      (p) => !Array.isArray(p[1]) && typeof p[1] === 'object'
+                    )
+                    .forEach((item) => {
+                      func(item[1]);
+                    });
+                };
+                func(copyDoc.value.document);
+              }
+            }
 
             const newChildDocIds: string[] = [];
 

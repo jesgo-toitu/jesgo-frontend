@@ -14,10 +14,14 @@ import {
 } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
-import { getPropItemsAndNames } from './SchemaUtility';
 import { Const } from '../../common/Const';
 import { calcAge } from '../../common/CommonUtility';
-import { GetSchemaIdFromString, GetSchemaInfo } from './SchemaUtility';
+import {
+  CustomSchema,
+  GetSchemaIdFromString,
+  GetSchemaInfo,
+  getPropItemsAndNames,
+} from './SchemaUtility';
 import {
   checkEventDateInfinityLoop,
   getEventDate,
@@ -145,7 +149,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   if (!isNotInfinityLoop) {
     const newSchema = GetSchemaInfo(schemaId, null, true);
     if (newSchema) {
-      schema = newSchema.document_schema;
+      schema = CustomSchema({ orgSchema: newSchema.document_schema, formData });
     }
   }
 

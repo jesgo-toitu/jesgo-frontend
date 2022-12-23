@@ -75,6 +75,14 @@ fieldset.schema-detail {
   background: white;
 }
 
+.version-table-row {
+  height: 2.5rem;
+  width: auto;
+  border-bottom: 1px solid #a0a0a0;
+  border-right: 1px solid #a0a0a0;
+  background: white;
+}
+
 .sortable-table-row-disabled {
   background: gray;
 }
@@ -113,6 +121,26 @@ fieldset.schema-detail {
   text-align: center;
 }
 
+.sortable-table-cell3 {
+  width: 6rem;
+  text-align: center;
+}
+
+.sortable-table-cell4 {
+  width: 12rem;
+  text-align: center;
+}
+
+.sortable-table-cell5 {
+  width: 2rem;
+  text-align: center;
+}
+
+.sortable-table-cell6 {
+  width: 4rem;
+  text-align: center;
+}
+
 .drag-icon-style {
   margin-right: 5px;
 }
@@ -121,6 +149,10 @@ fieldset.schema-detail {
   margin: 0px;
   vertical-align: middle;
   text-align: center;
+}
+
+.version-download {
+  padding:3px 6px;
 }
 
 div.caption-and-block {

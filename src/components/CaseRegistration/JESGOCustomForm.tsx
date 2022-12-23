@@ -9,6 +9,7 @@ import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
 import {
   GetInitialTreatmentDate,
+  GetVersionedFormData,
   isNotEmptyObject,
 } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
@@ -16,6 +17,12 @@ import { CreateUISchema } from './UISchemaUtility';
 import { getPropItemsAndNames } from './SchemaUtility';
 import { Const } from '../../common/Const';
 import { calcAge } from '../../common/CommonUtility';
+import { GetSchemaIdFromString, GetSchemaInfo } from './SchemaUtility';
+import {
+  checkEventDateInfinityLoop,
+  getEventDate,
+} from '../../common/DBUtility';
+import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 
 interface CustomDivFormProp extends FormProps<any> {
   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -24,6 +31,11 @@ interface CustomDivFormProp extends FormProps<any> {
   setFormData: React.Dispatch<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   documentId: string;
   isTabItem: boolean;
+  dispSchemaIds: dispSchemaIdAndDocumentIdDefine[];
+  setDispSchemaIds: React.Dispatch<
+    React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
+  >;
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
 }
 
 // jesgo:getの項目を計算してformDataにセットする
@@ -93,7 +105,8 @@ const adaptJesgoGetValueToFormData = (
 // - onChangeでuseStateで保持しているformDataを更新する
 const CustomDivForm = (props: CustomDivFormProp) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { schemaId, dispatch, setFormData, documentId, isTabItem } = props;
+  const { schemaId, dispatch, setFormData, documentId, isTabItem, setErrors } =
+    props;
   let { formData, schema } = props;
 
   const copyProps = { ...props };
@@ -108,12 +121,33 @@ const CustomDivForm = (props: CustomDivFormProp) => {
 
   // jesgo:getの値反映
   adaptJesgoGetValueToFormData(formData, schema, documentId);
+  
+  // 無限ループチェック
+  const isNotInfinityLoop = checkEventDateInfinityLoop(
+    formData,
+    store.getState().schemaDataReducer.schemaDatas.get(schemaId)
+  );
+  // eventdateの初期値設定
+  let initEventDate = '';
+  if (thisDocument) {
+    initEventDate = getEventDate(thisDocument, formData);
+  }
+
+  const [eventDate, setEventDate] = useState<string>(initEventDate);
 
   // 継承直後、データ入力判定を動かすためにsetFormDataする
   if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
     setFormData(formData);
   }
   copyProps.formData = formData;
+
+  // eventdate不整合の場合、現在日時点で有効な最新スキーマを適応する
+  if (!isNotInfinityLoop) {
+    const newSchema = GetSchemaInfo(schemaId, null, true);
+    if (newSchema) {
+      schema = newSchema.document_schema;
+    }
+  }
 
   // validationエラーの取得
   const errors = store.getState().formDataReducer.extraErrors;
@@ -175,6 +209,10 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     isUpdateInput: false,
   });
 
+  dispatch({ type: 'EVENT_DATE', eventDate, documentId });
+
+  copyProps.schema = schema;
+
   // 初回onChangeフラグ
   const [isFirstOnChange, setIsFirstOnChange] = useState<boolean>(true);
   // 初回描画済みフラグ
@@ -192,6 +230,38 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     // データがないと保存時にnot null制約違反になるため空オブジェクトに変換
     if (data === undefined || data === null) {
       data = {};
+    }
+
+    if (thisDocument) {
+      const currentEventDate = getEventDate(thisDocument, data);
+      // eventdateに変更があればスキーマに合わせたformData生成
+      if (eventDate !== currentEventDate) {
+        const newFormdata = GetVersionedFormData(
+          GetSchemaIdFromString(e.schema.$id!),
+          e.schema,
+          currentEventDate,
+          data
+        );
+        if (newFormdata) {
+          if (
+            checkEventDateInfinityLoop(
+              newFormdata,
+              store.getState().schemaDataReducer.schemaDatas.get(schemaId)
+            )
+          ) {
+            // eventdate更新
+            setEventDate(currentEventDate);
+
+            dispatch({
+              type: 'EVENT_DATE',
+              eventDate: currentEventDate,
+              documentId,
+            });
+          }
+
+          data = newFormdata;
+        }
+      }
     }
 
     let hasDefault = false;
@@ -231,7 +301,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
       !hasDefault ||
       (isFirstOnChange && isFirstRederComplited)
     ) {
-      // TODO formDataだと一つ前のデータが表示されるため、変更後の値を直接更新
+      // formDataだと一つ前のデータが表示されるため、変更後の値を直接更新
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       dispatch({
         type: 'INPUT',

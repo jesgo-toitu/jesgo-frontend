@@ -79,7 +79,13 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   copyProps.formData = formData;
 
   // eventdate不整合の場合、現在日時点で有効な最新スキーマを適応する
-  if (!isNotInfinityLoop) {
+  if (isNotInfinityLoop.isNotLoop && isNotInfinityLoop.schema) {
+    // ループ検証時にスキーマが取得できていればそちらを採用
+    schema = CustomSchema({
+      orgSchema: isNotInfinityLoop.schema.document_schema,
+      formData,
+    });
+  } else if (!isNotInfinityLoop.isNotLoop) {
     const newSchema = GetSchemaInfo(schemaId, null, true);
     if (newSchema) {
       schema = CustomSchema({ orgSchema: newSchema.document_schema, formData });
@@ -184,7 +190,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
             checkEventDateInfinityLoop(
               newFormdata,
               store.getState().schemaDataReducer.schemaDatas.get(schemaId)
-            )
+            ).isNotLoop
           ) {
             // eventdate更新
             setEventDate(currentEventDate);

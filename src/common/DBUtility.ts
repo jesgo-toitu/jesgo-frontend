@@ -24,6 +24,7 @@ import {
 import { Const } from './Const';
 import { formatDate, formatDateStr } from './CommonUtility';
 import store from '../store';
+import { JSONSchema7 } from 'json-schema';
 
 export interface responseResult {
   resCode?: number;
@@ -213,18 +214,23 @@ export const getSchemaEventDateRelation = (
  * @param formData
  * @param schemaList
  * @param relation
- * @returns true: 正常 false:無限ループ発生
+ * @returns
  */
 export const checkEventDateInfinityLoop = (
   formData: any,
   schemaList: JesgoDocumentSchema[] | undefined
-) => {
-  if (!formData || !schemaList || Object.keys(formData).length === 0)
-    return true;
+): { isNotLoop: boolean; schema?: JesgoDocumentSchema } => {
+  const ret: { isNotLoop: boolean; schema?: JesgoDocumentSchema } = {
+    isNotLoop: true,
+  };
+
+  if (!formData || !schemaList || Object.keys(formData).length === 0) {
+    return ret;
+  }
 
   // スキーマが1件しかない場合はOK
   if (schemaList.length <= 1) {
-    return true;
+    return ret;
   }
 
   const schemaRelation = getSchemaEventDateRelation(formData, schemaList);
@@ -235,7 +241,7 @@ export const checkEventDateInfinityLoop = (
       (p) => p.eventPropName === schemaRelation[0].eventPropName
     )
   ) {
-    return true;
+    return ret;
   }
 
   // eslint-disable-next-line no-restricted-syntax
@@ -256,14 +262,16 @@ export const checkEventDateInfinityLoop = (
         if (schemaInfo2) {
           // スキーマを再取得した結果、同じスキーマが取得できたらそこで確定できるため終了
           if (schemaInfo1.schema_primary_id === schemaInfo2.schema_primary_id) {
-            return true;
+            ret.schema = schemaInfo1;
+            return ret;
           }
         }
       }
     }
   }
 
-  return false;
+  ret.isNotLoop = false;
+  return ret;
 };
 
 // event_date取得処理
@@ -279,10 +287,22 @@ export const getEventDate = (
     store.getState().schemaDataReducer.schemaDatas.get(jesgoDoc.value.schema_id)
   );
 
-  const { document_schema: documentSchema } = GetSchemaInfo(
-    jesgoDoc.value.schema_id,
-    isNotInfinityLoop ? jesgoDoc.value.event_date : formatDate(new Date(), '-') // 無限ループ発生時は現在日時点の最新スキーマ取得
-  ) as JesgoDocumentSchema;
+  let documentSchema: JSONSchema7;
+
+  if (isNotInfinityLoop.isNotLoop && isNotInfinityLoop.schema) {
+    // ループ検証時にスキーマが取得できていればそちらを採用
+    documentSchema = isNotInfinityLoop.schema.document_schema;
+  } else {
+    documentSchema = (
+      GetSchemaInfo(
+        jesgoDoc.value.schema_id,
+        isNotInfinityLoop.isNotLoop
+          ? jesgoDoc.value.event_date
+          : formatDate(new Date(), '-') // 無限ループ発生時は現在日時点の最新スキーマ取得
+      ) as JesgoDocumentSchema
+    ).document_schema;
+  }
+
   const customSchema = CustomSchema({
     orgSchema: documentSchema,
     formData, // eslint-disable-line @typescript-eslint/no-unsafe-assignment

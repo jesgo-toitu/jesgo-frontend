@@ -299,6 +299,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               documentId,
               parentSubSchemaIds: copyIds,
               setParentSubSchemaIds: setDispSchemaIds,
+              SchemaInfoMap: store.getState().schemaDataReducer.schemaDatas,
             });
 
             if (Type === COMP_TYPE.ROOT_TAB) {

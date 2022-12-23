@@ -1,8 +1,14 @@
+/* eslint-disable camelcase */
 import lodash from 'lodash';
 import { Reducer } from 'redux';
 import React from 'react';
 import { JesgoDocumentSchema } from './schemaDataReducer';
 import { RegistrationErrors } from '../components/CaseRegistration/Definition';
+import {
+  CustomSchema,
+  getJesgoSchemaPropValue,
+  GetSchemaInfo,
+} from '../components/CaseRegistration/SchemaUtility';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -122,6 +128,9 @@ export interface formDataAction {
   processedNewDocId: string;
 
   hasFormDataInput: boolean;
+  eventDate: string;
+
+  SchemaInfoMap: Map<number, JesgoDocumentSchema[]>;
 }
 
 // ユーザID取得
@@ -725,6 +734,34 @@ const formDataReducer: Reducer<
         break;
       }
 
+      case 'EVENT_DATE': {
+        const doc = saveData.jesgo_document.find(
+          (p) => p.key === action.documentId
+        );
+        if (doc) {
+          doc.value.event_date = action.eventDate;
+        }
+        break;
+      }
+
+      // スキーマの切り替え発生
+      case 'CHANGED_SCHEMA': {
+        const doc = saveData.jesgo_document.find(
+          (p) => p.key === action.documentId
+        );
+        // スキーマ関連の情報を更新する
+        if (doc && action.schemaInfo) {
+          const { schema_id, schema_primary_id, version_major } =
+            action.schemaInfo;
+          doc.value.schema_id = schema_id;
+          doc.value.schema_primary_id = schema_primary_id;
+          doc.value.schema_major_version = version_major;
+          doc.value.last_updated = new Date().toLocaleString();
+          doc.value.registrant = getLoginUserId();
+        }
+        break;
+      }
+
       case 'COPY': {
         const { documentId, parentSubSchemaIds, setParentSubSchemaIds } =
           action;
@@ -758,7 +795,47 @@ const formDataReducer: Reducer<
                   .at(-1)?.root_order ?? 0) + 1;
             }
 
-            // TODO: eventdateに該当する項目はクリアする処理が必要
+            // eventdateに該当する項目はコピー対象外のためクリアする
+            const scInfo = GetSchemaInfo(
+              copyDoc.value.schema_id,
+              copyDoc.value.event_date,
+              true,
+              false,
+              action.SchemaInfoMap
+            );
+            if (
+              scInfo &&
+              copyDoc.value.document &&
+              !Array.isArray(copyDoc.value.document) &&
+              typeof copyDoc.value.document === 'object' &&
+              Object.entries(copyDoc.value.document).length > 0
+            ) {
+              const customSchema = CustomSchema({
+                orgSchema: scInfo.document_schema,
+                formData: copyDoc.value.document,
+              });
+
+              const eventDatePropName = getJesgoSchemaPropValue(
+                customSchema,
+                'jesgo:set',
+                'eventdate'
+              );
+
+              if (eventDatePropName) {
+                // formDataからeventdateに指定されているプロパティを削除する
+                const func = (targetObj: any) => {
+                  delete targetObj[eventDatePropName];
+                  Object.entries(targetObj)
+                    .filter(
+                      (p) => !Array.isArray(p[1]) && typeof p[1] === 'object'
+                    )
+                    .forEach((item) => {
+                      func(item[1]);
+                    });
+                };
+                func(copyDoc.value.document);
+              }
+            }
 
             const newChildDocIds: string[] = [];
 

@@ -49,6 +49,9 @@ export const calcAge = (birthday: string) => {
   return Math.floor((nowNum - birthNum) / 10000).toString();
 };
 
+// 日付の妥当性チェック
+export const isDate = (v: string) => !Number.isNaN(Date.parse(v));
+
 // 日付(Date形式)をyyyy/MM/ddなどの形式に変換
 export const formatDate = (dateObj: Date, separator = ''): string => {
   try {

@@ -214,13 +214,13 @@ export const getSchemaEventDateRelation = (
  * @param formData
  * @param schemaList
  * @param relation
- * @returns
+ * @returns [ isNotLoop: ループしない場合はTrue ] [ finalizedSchema: ループしない場合、最終的に選択されるスキーマ ]
  */
 export const checkEventDateInfinityLoop = (
   formData: any,
   schemaList: JesgoDocumentSchema[] | undefined
-): { isNotLoop: boolean; schema?: JesgoDocumentSchema } => {
-  const ret: { isNotLoop: boolean; schema?: JesgoDocumentSchema } = {
+): { isNotLoop: boolean; finalizedSchema?: JesgoDocumentSchema } => {
+  const ret: { isNotLoop: boolean; finalizedSchema?: JesgoDocumentSchema } = {
     isNotLoop: true,
   };
 
@@ -262,7 +262,7 @@ export const checkEventDateInfinityLoop = (
         if (schemaInfo2) {
           // スキーマを再取得した結果、同じスキーマが取得できたらそこで確定できるため終了
           if (schemaInfo1.schema_primary_id === schemaInfo2.schema_primary_id) {
-            ret.schema = schemaInfo1;
+            ret.finalizedSchema = schemaInfo1;
             return ret;
           }
         }
@@ -282,21 +282,21 @@ export const getEventDate = (
   let eventDate = '';
 
   // 無限ループチェック
-  const isNotInfinityLoop = checkEventDateInfinityLoop(
+  const loopCheck = checkEventDateInfinityLoop(
     formData,
     store.getState().schemaDataReducer.schemaDatas.get(jesgoDoc.value.schema_id)
   );
 
   let documentSchema: JSONSchema7;
 
-  if (isNotInfinityLoop.isNotLoop && isNotInfinityLoop.schema) {
+  if (loopCheck.isNotLoop && loopCheck.finalizedSchema) {
     // ループ検証時にスキーマが取得できていればそちらを採用
-    documentSchema = isNotInfinityLoop.schema.document_schema;
+    documentSchema = loopCheck.finalizedSchema.document_schema;
   } else {
     documentSchema = (
       GetSchemaInfo(
         jesgoDoc.value.schema_id,
-        isNotInfinityLoop.isNotLoop
+        loopCheck.isNotLoop
           ? jesgoDoc.value.event_date
           : formatDate(new Date(), '-') // 無限ループ発生時は現在日時点の最新スキーマ取得
       ) as JesgoDocumentSchema

@@ -60,7 +60,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   }
 
   // 無限ループチェック
-  const isNotInfinityLoop = checkEventDateInfinityLoop(
+  const loopCheck = checkEventDateInfinityLoop(
     formData,
     store.getState().schemaDataReducer.schemaDatas.get(schemaId)
   );
@@ -79,13 +79,13 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   copyProps.formData = formData;
 
   // eventdate不整合の場合、現在日時点で有効な最新スキーマを適応する
-  if (isNotInfinityLoop.isNotLoop && isNotInfinityLoop.schema) {
+  if (loopCheck.isNotLoop && loopCheck.finalizedSchema) {
     // ループ検証時にスキーマが取得できていればそちらを採用
     schema = CustomSchema({
-      orgSchema: isNotInfinityLoop.schema.document_schema,
+      orgSchema: loopCheck.finalizedSchema.document_schema,
       formData,
     });
-  } else if (!isNotInfinityLoop.isNotLoop) {
+  } else if (!loopCheck.isNotLoop) {
     const newSchema = GetSchemaInfo(schemaId, null, true);
     if (newSchema) {
       schema = CustomSchema({ orgSchema: newSchema.document_schema, formData });

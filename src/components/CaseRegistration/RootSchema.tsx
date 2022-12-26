@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import '../../views/Registration.css';
@@ -22,7 +22,7 @@ import {
 } from '../../store/formDataReducer';
 import { createTabs } from './FormCommonComponents';
 import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
-import { responseResult } from '../../common/DBUtility';
+import { getEventDate, responseResult } from '../../common/DBUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import store from '../../store';
 import { Const } from '../../common/Const';
@@ -90,8 +90,13 @@ const RootSchema = React.memo((props: Props) => {
 
   const dispatch = useDispatch();
 
+  const saveDoc = store
+    .getState()
+    .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
+  const eventDate = saveDoc ? getEventDate(saveDoc, formData) : null;
+
   // ルートのschema情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
+  const schemaInfo = GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema;
   if (schemaInfo === undefined) {
     return null;
   }
@@ -177,7 +182,7 @@ const RootSchema = React.memo((props: Props) => {
         });
       }
     } else if (
-      // 新規または継承時
+      // 新規または継承時、スキーマ変更時
       subschema.length > 0 &&
       (isSchemaChange ||
         (dispSubSchemaIds.length === 0 && documentId.startsWith('K')))
@@ -203,7 +208,10 @@ const RootSchema = React.memo((props: Props) => {
           }
           if (inheritDocuments.length > 0) {
             inheritDocuments.forEach((inheritItem) => {
-              const itemSchemaInfo = GetSchemaInfo(inheritItem.value.schema_id);
+              const itemSchemaInfo = GetSchemaInfo(
+                inheritItem.value.schema_id,
+                inheritItem.value.event_date
+              );
 
               // 同一サブスキーマが複数あった場合の対応
               if (
@@ -410,7 +418,10 @@ const RootSchema = React.memo((props: Props) => {
               dispChildSchemaIds,
               setDispChildSchemaIds,
               isRootSchema: false,
-              schemaInfo: GetSchemaInfo(doc.value.schema_id),
+              schemaInfo: GetSchemaInfo(
+                doc.value.schema_id,
+                doc.value.event_date
+              ),
               setAddedDocumentCount,
               processedDocId: doc.key,
             });
@@ -505,6 +516,14 @@ const RootSchema = React.memo((props: Props) => {
         hasFormDataInput: hasInput,
       });
     }
+
+    // 適応するスキーマが変更された場合、バージョンなどの情報を更新する
+    if (
+      saveDoc &&
+      saveDoc.value.schema_primary_id !== schemaInfo.schema_primary_id
+    ) {
+      dispatch({ type: 'CHANGED_SCHEMA', documentId, schemaInfo });
+    }
   }, [formData, updateChildFormData]);
 
   return (
@@ -519,6 +538,9 @@ const RootSchema = React.memo((props: Props) => {
           formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
           schema={customSchema}
           isTabItem
+          dispSchemaIds={[...dispSchemaIds]}
+          setDispSchemaIds={setDispSchemaIds}
+          setErrors={setErrors}
         />
         <ControlButton
           tabId={tabId}

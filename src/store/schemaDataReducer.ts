@@ -21,6 +21,9 @@ export type JesgoDocumentSchema = {
   subschema_default: number[];
   child_schema_default: number[];
   inherit_schema_default: number[];
+  valid_from: string;
+  valid_until: string | null;
+  hidden: boolean;
 };
 
 export interface schemaDataState {

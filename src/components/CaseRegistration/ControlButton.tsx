@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dispatch } from 'redux';
 import { Dropdown, Glyphicon, MenuItem, SelectCallback } from 'react-bootstrap';
 import {
@@ -16,7 +16,9 @@ import { ChildTabSelectedFuncObj } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
 import { GetPackagedDocument } from '../../common/DBUtility';
-import { setTimeoutPromise } from '../../common/CommonUtility';
+import { fTimeout, setTimeoutPromise } from '../../common/CommonUtility';
+import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
+import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -90,6 +92,24 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     disabled,
     setIsLoading,
   } = props;
+
+  const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
+    []
+  );
+
+  useEffect(() => {
+    const f = async () => {
+      // プラグイン全ロード処理
+      const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
+      if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+        const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+        setJesgoPluginList(pluginList);
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
+  }, []);
 
   // 追加可能判定
   const canAddSchema = (
@@ -196,6 +216,11 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
 
       const index = copyIds.findIndex((p) => p.documentId === documentId);
       const findItem = copyIds.find((p) => p.documentId === documentId);
+      let plugin: jesgoPluginColumns | undefined;
+      if (eventKey.startsWith('plugin_')) {
+        const pluginId = eventKey.replace('plugin_', '');
+        plugin = jesgoPluginList.find((p) => p.plugin_id === Number(pluginId));
+      }
 
       switch (eventKey) {
         case 'up':
@@ -294,7 +319,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               [store.getState().formDataReducer.saveData.jesgo_case],
               undefined,
               Number(documentId),
-              undefined, 
+              undefined,
               true
             );
 
@@ -313,6 +338,39 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               setIsLoading(false);
             });
 
+          break;
+        }
+        case eventKey.startsWith('plugin_') && eventKey: {
+          setIsLoading(true);
+          const f = async () => {
+            if (plugin) {
+              await Promise.race([
+                fTimeout(2),
+                executePlugin(
+                  plugin,
+                  [store.getState().formDataReducer.saveData.jesgo_case],
+                  Number(documentId)
+                ),
+              ])
+                .then((res) => {
+                  // eslint-disable-next-line
+                  OpenOutputView(window, (res as any).anyValue);
+                })
+                .catch((err) => {
+                  if (err === 'timeout') {
+                    alert('操作がタイムアウトしました');
+                  }
+                })
+                .finally(() => {
+                  setIsLoading(false);
+                });
+            } else {
+              alert('不正な入力です。');
+            }
+          };
+
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          f();
           break;
         }
         default:
@@ -589,6 +647,18 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           {process.env.DEV_MODE === '1' && (
             <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
           )}
+
+          {jesgoPluginList.map(
+            (plugin: jesgoPluginColumns) =>
+              !plugin.all_patient &&
+              plugin.target_schema_id &&
+              plugin.target_schema_id.includes(schemaId) && (
+                <MenuItem eventKey={`plugin_${plugin.plugin_id}`}>
+                  プラグイン:{plugin.plugin_name}
+                </MenuItem>
+              )
+          )}
+
           {/* 自身の移動 */}
           {canMove && (
             <MenuItem eventKey="up">

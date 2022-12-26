@@ -19,6 +19,9 @@ export interface localStorageObject {
   is_add_roll: boolean;
   is_edit_roll: boolean;
   is_remove_roll: boolean;
+  is_plugin_registerable: boolean;
+  is_plugin_executable_select: boolean;
+  is_plugin_executable_update: boolean;
   is_data_manage_roll: boolean;
   is_system_manage_roll: boolean;
 }
@@ -82,6 +85,18 @@ export const Login = () => {
       localStorage.setItem(
         'is_remove_roll',
         localStorageObj.is_remove_roll.toString()
+      );
+      localStorage.setItem(
+        'is_plugin_registerable',
+        localStorageObj.is_plugin_registerable.toString()
+      );
+      localStorage.setItem(
+        'is_plugin_executable_select',
+        localStorageObj.is_plugin_executable_select.toString()
+      );
+      localStorage.setItem(
+        'is_plugin_executable_update',
+        localStorageObj.is_plugin_executable_update.toString()
       );
       localStorage.setItem(
         'is_data_manage_roll',

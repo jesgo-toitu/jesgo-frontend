@@ -28,7 +28,6 @@ import { csvHeader, patientListCsv } from '../common/MakeCsv';
 import {
   formatDate,
   formatTime,
-  fTimeout,
   setTimeoutPromise,
 } from '../common/CommonUtility';
 import { Const } from '../common/Const';
@@ -37,7 +36,8 @@ import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
 import { GetPackagedDocument } from '../common/DBUtility';
 import { jesgoCaseDefine } from '../store/formDataReducer';
 import { OpenOutputView } from '../common/CaseRegistrationUtility';
-import { executePlugin, jesgoPluginColumns } from '../common/Plugin';
+import { jesgoPluginColumns } from '../common/Plugin';
+import { PatientListPluginButton } from '../components/common/PluginButton';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -404,23 +404,6 @@ const Patients = () => {
     return caseInfoList;
   };
 
-  const createDocument = async (plugin: jesgoPluginColumns) => {
-    setIsLoading(true);
-    await Promise.race([fTimeout(2), executePlugin(plugin, getPatientList())])
-      .then((res) => {
-        // eslint-disable-next-line
-        OpenOutputView(window, (res as any).anyValue);
-      })
-      .catch((err) => {
-        if (err === 'timeout') {
-          alert('操作がタイムアウトしました');
-        }
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  };
-
   const createDocumentSample = () => {
     const wrapperFunc = () =>
       GetPackagedDocument(
@@ -573,25 +556,20 @@ const Patients = () => {
                 </Button>
               </ButtonGroup>
             </ButtonToolbar>
+            <PatientListPluginButton
+              pluginList={jesgoPluginList}
+              getTargetFunction={getPatientList}
+              setIsLoading={setIsLoading}
+            />
             {/* // ★TODO: 仮実装 */}
             {process.env.DEV_MODE === '1' && (
-              <>
-                {jesgoPluginList.map(
-                  (plugin: jesgoPluginColumns) =>
-                    plugin.all_patient && (
-                      <Button onClick={() => createDocument(plugin)}>
-                        {plugin.plugin_name}
-                      </Button>
-                    )
-                )}
-                <Button
-                  bsStyle="danger"
-                  className="normal-button"
-                  onClick={() => createDocumentSample()}
-                >
-                  ドキュメント出力
-                </Button>
-              </>
+              <Button
+                bsStyle="danger"
+                className="normal-button"
+                onClick={() => createDocumentSample()}
+              >
+                ドキュメント出力
+              </Button>
             )}
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (

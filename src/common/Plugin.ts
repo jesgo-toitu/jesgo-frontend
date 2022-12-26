@@ -23,7 +23,8 @@ export type jesgoPluginColumns = {
 
 type argDoc = {
   caseList:jesgoCaseDefine[];
-  targetSchemas:number[]|undefined;
+  targetSchemas?:number[]|undefined;
+  targetDocument?:number|undefined
   filterQuery:string|undefined;
 }
 
@@ -65,6 +66,15 @@ const getPatientsDocument = async (doc:argDoc) => {
   if(ret.resCode === RESULT.NORMAL_TERMINATION){
     return ret;
   }
+  return undefined;
+}
+
+const getTargetDocument = async (doc:argDoc) => {
+  const ret = await GetPackagedDocument(doc.caseList, undefined, doc.targetDocument, doc.filterQuery, true);
+  if(ret.resCode === RESULT.NORMAL_TERMINATION){
+    return ret;
+  }
+  return undefined;
 }
 
 export const moduleMain = async (scriptText:string, func:(doc:any)=>Promise<any>, doc?:{caseList?:jesgoCaseDefine[], targetSchemas?:number[]}):Promise<unknown> => {
@@ -75,23 +85,30 @@ export const moduleMain = async (scriptText:string, func:(doc:any)=>Promise<any>
   return retValue;
 }
 
-export const executePlugin = async (plugin:jesgoPluginColumns, patientList:(jesgoCaseDefine[]|undefined) = undefined) => {
+export const executePlugin = async (plugin:jesgoPluginColumns, patientList:(jesgoCaseDefine[]|undefined), targetDocumentId:number|undefined = undefined) => {
   if(plugin.update_db){
     // データ更新系
   }else{
-    // データ出力系
+    // データ出力系)
     if(patientList){
+      if(targetDocumentId) {
+        // ドキュメント指定あり
+        const doc:argDoc = {caseList:patientList, targetDocument:targetDocumentId, filterQuery:plugin.filter_schema_query};
+        const retValue = await moduleMain(plugin.script_text, getTargetDocument, doc);
+        return retValue;
+      }
       if(plugin.target_schema_id && plugin.target_schema_id.length > 0){
         // スキーマ指定あり
         const doc:argDoc = {caseList:patientList, targetSchemas:plugin.target_schema_id, filterQuery:plugin.filter_schema_query};
         const retValue = await moduleMain(plugin.script_text, getPatientsDocument, doc);
         return retValue;
       }
-        // スキーマ指定なし
+        // ドキュメント、スキーマ指定なし
         const doc:argDoc = {caseList:patientList, targetSchemas:undefined, filterQuery:plugin.filter_schema_query};
         const retValue = await moduleMain(plugin.script_text, getPatientsDocument, doc);
         return retValue;
     }
     alert('対象患者がいません');
   }
+  return undefined;
 }

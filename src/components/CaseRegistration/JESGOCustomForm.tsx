@@ -232,6 +232,14 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     if (isFirstOnChange && hasDefault && !isFirstRederComplited) {
       // 作成直後のデフォルト値設定によるonChangeの場合は表示中のデータとデフォルト値をマージする
       data = lodash.merge(formData, e.formData);
+
+      dispatch({
+        type: 'INPUT',
+        schemaId,
+        formData: data,
+        documentId,
+        isUpdateInput: true,
+      });
     }
 
     setFormData(data);

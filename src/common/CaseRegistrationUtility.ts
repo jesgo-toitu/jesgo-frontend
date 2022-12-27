@@ -781,7 +781,7 @@ export const IsNotUpdate = () => {
 export const isNotEmptyObject = (obj: any) => {
   let hasInput = false;
 
-  if (obj === undefined || obj === null) {
+  if (obj == null) {
     return hasInput;
   }
 
@@ -892,9 +892,22 @@ const transferFormData = (
       jsonSchema2 = changedSchema.properties[propName] as JSONSchema7;
     }
 
+    // 継承先にデフォルト値設定ありの場合は引き継がない
+    if (
+      jsonSchema2 &&
+      jsonSchema2.default != null &&
+      jsonSchema2.default !== ''
+    ) {
+      return;
+    }
+
     if (jsonSchema1 && !jsonSchema2) {
       // 継承先にプロパティがない → 引き継ぐ
-      if (typeof propValue === 'object' && propValue) {
+      if (
+        !Array.isArray(propValue) &&
+        typeof propValue === 'object' &&
+        propValue
+      ) {
         // undefinedなプロパティは引き継がない
         const omitValue = lodash.omit(
           propValue,
@@ -906,7 +919,8 @@ const transferFormData = (
         if (Object.keys(omitValue).length > 0) {
           newFormData[propName] = omitValue;
         }
-      } else {
+      } else if (!Array.isArray(propValue) || propValue.length > 0) {
+        // Array以外、またはArrayの場合は項目があれば引き継ぐ
         newFormData[propName] = propValue;
       }
     } else if (jsonSchema1 && jsonSchema2) {

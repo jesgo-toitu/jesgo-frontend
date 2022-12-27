@@ -508,14 +508,14 @@ const RootSchema = React.memo((props: Props) => {
     }
 
     if (beforeInputState !== hasInput) {
-      SetTabStyle(`root-tabs-tab-${tabId}`, hasInput);
-
       dispatch({
         type: 'SET_FORMDATA_INPUT_STATE',
         documentId,
         hasFormDataInput: hasInput,
       });
     }
+
+    SetTabStyle(`root-tabs-tab-${tabId}`, hasInput);
 
     // 適応するスキーマが変更された場合、バージョンなどの情報を更新する
     if (

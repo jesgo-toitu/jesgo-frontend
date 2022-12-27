@@ -551,8 +551,6 @@ const TabSchema = React.memo((props: Props) => {
     }
 
     if (beforeInputState !== hasInput) {
-      SetTabStyle(`${parentTabsId}-tabs-tab-${tabId}`, hasInput);
-
       dispatch({
         type: 'SET_FORMDATA_INPUT_STATE',
         documentId,
@@ -562,6 +560,8 @@ const TabSchema = React.memo((props: Props) => {
       // 親タブに子タブの更新を伝える
       setUpdateFormData(true);
     }
+
+    SetTabStyle(`${parentTabsId}-tabs-tab-${tabId}`, hasInput);
 
     // 適応するスキーマが変更された場合、バージョンなどの情報を更新する
     if (

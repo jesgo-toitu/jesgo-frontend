@@ -1,16 +1,18 @@
 {
   "name": "jesgo-web",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node start.js",
+    "start": "C:\\jesgo\\node\\node-v16.13.2-win-x64\\node start.js",
+    "dev-start": "node start.js",
     "build": "webpack --progress --mode development",
-    "release-build": "webpack --progress --mode production",
-    "release-export": "powershell -File ./export/export.ps1",
+    "release-build": "powershell -File ./export/export.ps1",
     "postinstall": "patch-package",
     "lint": "eslint --ext .jsx,.js,.tsx,.ts src/",
-    "fmt": "prettier --write src/**/*"
+    "fmt": "prettier --write src/**/*",
+    "install-service": "winser -i",
+    "uninstall-service": "winser -r -x"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +21,7 @@
     "@mui/icons-material": "^5.8.4",
     "@mui/lab": "^5.0.0-alpha.92",
     "@mui/material": "^5.9.2",
+    "@react-icons/all-files": "^4.1.0",
     "@rjsf/core": "^4.2.3",
     "@types/json-schema": "^7.0.11",
     "@types/prismjs": "^1.26.0",

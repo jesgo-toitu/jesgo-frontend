@@ -11,6 +11,8 @@ import JSONPointer from 'jsonpointer';
 import lodash from 'lodash';
 import { Dispatch } from 'redux';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { isNotEmptyObject } from '../../common/CaseRegistrationUtility';
+import { formatDate, isDate } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import store from '../../store';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
@@ -45,31 +47,101 @@ export const getPropItemsAndNames = (item: JSONSchema7) => {
 };
 
 // スキーマ$ID(スキーマのパス)からスキーマID(数値)を取得
-export const GetSchemaIdFromString = (id: string):number => {
-  const schemaInfos:Map<number, JesgoDocumentSchema[]> = store.getState().schemaDataReducer.schemaDatas;
-  let schemaId = -1;
-  schemaInfos.forEach((value, key) => {
-    if(value[0].schema_id_string === id){
-      schemaId = key;
-    }
-  });
-  return schemaId;
-}
+export const GetSchemaIdFromString = (id: string): number => {
+  const schemaInfos: Map<number, JesgoDocumentSchema[]> =
+    store.getState().schemaDataReducer.schemaDatas;
 
-// スキーマIDからスキーマ情報を取得
-export const GetSchemaInfo = (id: number) => {
-  const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
+  // eslint-disable-next-line no-restricted-syntax
+  for (const item of schemaInfos) {
+    if (item[1].length > 0 && item[1][0].schema_id_string === id) {
+      return item[0];
+    }
+  }
+  return -1;
+};
+
+/**
+ * スキーマIDからスキーマ情報を取得
+ * @param id スキーマID
+ * @param eventDate イベント日(基準日)
+ * @param validSchemaOnly
+ * @param forceGetLatestSchema true:有効期限に関わらず最新取得 false:有効期限考慮
+ * @returns
+ */
+export const GetSchemaInfo = (
+  id: number,
+  eventDate: string | null = null,
+  validSchemaOnly = false,
+  forceGetLatestSchema = false
+) => {
+  const schemaInfos: Map<number, JesgoDocumentSchema[]> =
+    store.getState().schemaDataReducer.schemaDatas;
   const schemaList = schemaInfos.get(id);
-  if (schemaList && schemaList[0]) {
-    return schemaList[0];
+  if (schemaList) {
+    // ルート、もしくは強制取得のフラグがあれば最新取得
+    if ((id === 0 && schemaList.length > 0) || forceGetLatestSchema) {
+      return schemaList[0];
+    }
+
+    let searchDate: Date | undefined;
+    if (!eventDate || !isDate(eventDate)) {
+      // eventDateがない場合は現在日とする
+      searchDate = new Date(formatDate(new Date(), '-'));
+    } else {
+      searchDate = new Date(eventDate);
+    }
+    let enableedNewest = null;
+    // 有効期限内で無効になっていないものを探す
+    // eslint-disable-next-line no-plusplus
+    for (let index = 0; index < schemaList.length; index++) {
+      const target = schemaList[index];
+      if (target.hidden) {
+        // 有効でない場合は次のものを見る
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+      if (enableedNewest === null) {
+        // 最新の有効スキーマがまだ取得されていないのであれば保存しておく
+        enableedNewest = target;
+      }
+      // eventDateが有効期限開始日より前であれば次のものを見る
+      if (searchDate < new Date(target.valid_from)) {
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+
+      // 有効期限終了日が設定されていない場合か、eventDateが有効期限終了日より前であれば確定する
+      if (
+        target.valid_until === null ||
+        target.valid_until === '' ||
+        searchDate <= new Date(target.valid_until)
+      ) {
+        return target;
+      }
+    }
+
+    // 有効期限内かつ無効になっていないものが見つからなかった場合、無効になっていない最新を返す
+    if (!validSchemaOnly && enableedNewest !== null) {
+      return enableedNewest;
+    }
   }
   return undefined;
+};
+
+// スキーマIDからバージョン毎のスキーマ情報を取得
+export const GetSchemaVersionedInfo = (id: number) => {
+  const schemaInfos: Map<number, JesgoDocumentSchema[]> =
+    store.getState().schemaDataReducer.schemaDatas;
+  const schemaList = schemaInfos.get(id);
+  return schemaList ?? [];
 };
 
 // ルートスキーマのschema_idを取得
 export const GetRootSchema = () => {
   const roots = store.getState().schemaDataReducer.rootSchemas;
-  return roots;
+
+  // 現在有効なスキーマのみ取得
+  return roots.filter((id) => GetSchemaInfo(id, null, true));
 };
 
 export type schemaWithValid = {
@@ -156,7 +228,7 @@ export const storeSchemaInfo = async (dispatch: Dispatch<any>) => {
   );
 
   if (returnBlackListApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-    const body = returnBlackListApiObject.body as {blackList: number[]};
+    const body = returnBlackListApiObject.body as { blackList: number[] };
     dispatch({
       type: 'BLACKLIST',
       blackList: body.blackList,
@@ -216,7 +288,7 @@ const mergeSchemaItem = (props: {
           tItem.readOnly === true
         ) {
           const value = tItem.default;
-          if (value) {
+          if (typeof value === 'boolean' || value) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             formData[pName] = value;
           }
@@ -466,7 +538,11 @@ const GetSchemaFromPropItem = (val: any) => {
     schemaObj.type = 'object';
     schemaObj.properties = {};
     Object.entries(val).forEach((entryItem) => {
-      schemaObj.properties![entryItem[0]] = GetSchemaFromPropItem(entryItem[1]);
+      if (isNotEmptyObject(entryItem[1])) {
+        schemaObj.properties![entryItem[0]] = GetSchemaFromPropItem(
+          entryItem[1]
+        );
+      }
     });
   }
 
@@ -503,9 +579,17 @@ const customSchemaAppendFormDataProperty = (
     Object.entries(formData)
       .filter((p) => formKeys.includes(p[0]))
       .forEach((item) => {
+        // 空オブジェクトは除外
+        if (
+          !Array.isArray(item[1]) &&
+          typeof item[1] === 'object' &&
+          !isNotEmptyObject(item[1])
+        ) {
+          return;
+        }
+
         // formDataのプロパティからスキーマ生成
         const schemaObj = GetSchemaFromPropItem(item[1]);
-
         // 元スキーマのプロパティに追加
         copySchema.properties![item[0]] = schemaObj;
       });
@@ -563,4 +647,59 @@ export const CustomSchema = (props: {
   schema = customSchemaAppendFormDataProperty(schema, formData);
 
   return schema;
+};
+
+/**
+ * スキーマから特定のキーと値を持つプロパティ名を取得
+ * @param customSchema 書き換え済みスキーマ
+ * @param searchPropName 検索するプロパティ(キー)名
+ * @param searchValueName 検索する値
+ * @returns
+ */
+export const getJesgoSchemaPropValue = (
+  customSchema: JSONSchema7,
+  searchPropName: string,
+  searchValueName: string
+) => {
+  const propList = getPropItemsAndNames(customSchema);
+
+  type Obj = {
+    [prop: string]: any;
+  };
+
+  let retPropName = '';
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const propName of propList.pNames) {
+    const pItem = propList.pItems[propName] as JSONSchema7;
+    if ((pItem as Obj)[searchPropName] === searchValueName) {
+      if (searchPropName === 'jesgo:set' && searchValueName === 'eventdate') {
+        // eventdateが対象の場合は日付フォーマット指定が必要
+        if (pItem.type === 'string' && pItem.format === 'date') {
+          retPropName = propName;
+          break;
+        }
+      } else {
+        retPropName = propName;
+        break;
+      }
+    }
+  }
+
+  // 見つからない場合、objectの項目を再帰で検索する
+  if (!retPropName) {
+    Object.entries(propList.pItems)
+      .filter((p) => (p[1] as JSONSchema7).type === 'object')
+      .some((item) => {
+        const schema = item[1] as JSONSchema7;
+        retPropName = getJesgoSchemaPropValue(
+          schema,
+          searchPropName,
+          searchValueName
+        );
+        return !!retPropName;
+      });
+  }
+
+  return retPropName;
 };

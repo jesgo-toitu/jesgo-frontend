@@ -24,7 +24,7 @@ import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
 import { createPanels, createTabs } from './FormCommonComponents';
 import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
-import { responseResult } from '../../common/DBUtility';
+import { getEventDate, responseResult } from '../../common/DBUtility';
 import '../../views/Registration.css';
 import store from '../../store';
 
@@ -96,8 +96,13 @@ const TabSchema = React.memo((props: Props) => {
   const [updateChildFormData, setUpdateChildFormData] =
     useState<boolean>(false);
 
+  const saveDoc = store
+    .getState()
+    .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
+  const eventDate = saveDoc ? getEventDate(saveDoc, formData) : null;
+
   // schemaIdをもとに情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
+  const schemaInfo = GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema;
   const {
     document_schema: documentSchema,
     subschema,
@@ -546,8 +551,6 @@ const TabSchema = React.memo((props: Props) => {
     }
 
     if (beforeInputState !== hasInput) {
-      SetTabStyle(`${parentTabsId}-tabs-tab-${tabId}`, hasInput);
-
       dispatch({
         type: 'SET_FORMDATA_INPUT_STATE',
         documentId,
@@ -556,6 +559,16 @@ const TabSchema = React.memo((props: Props) => {
 
       // 親タブに子タブの更新を伝える
       setUpdateFormData(true);
+    }
+
+    SetTabStyle(`${parentTabsId}-tabs-tab-${tabId}`, hasInput);
+
+    // 適応するスキーマが変更された場合、バージョンなどの情報を更新する
+    if (
+      saveDoc &&
+      saveDoc.value.schema_primary_id !== schemaInfo.schema_primary_id
+    ) {
+      dispatch({ type: 'CHANGED_SCHEMA', documentId, schemaInfo });
     }
   }, [formData, updateChildFormData]);
 
@@ -570,6 +583,9 @@ const TabSchema = React.memo((props: Props) => {
           schema={customSchema}
           formData={formData} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
           isTabItem
+          dispSchemaIds={[...dispSchemaIds]}
+          setDispSchemaIds={setDispSchemaIds}
+          setErrors={setErrors}
         />
         <ControlButton
           tabId={tabId}

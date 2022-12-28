@@ -687,7 +687,14 @@ const Registration = () => {
           {message.length > 0 && (
             <Panel className="error-msg-panel">
               {message.map((error: string) => (
-                <p key={error}>{error}</p>
+                <p key={error}>
+                  {error.split('\n').map((item, index) => (
+                    <>
+                      {index > 0 && <br />}
+                      {item}
+                    </>
+                  ))}
+                </p>
               ))}
             </Panel>
           )}

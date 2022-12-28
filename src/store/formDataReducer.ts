@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import lodash from 'lodash';
 import { Reducer } from 'redux';
 import React from 'react';
@@ -122,6 +123,7 @@ export interface formDataAction {
   processedNewDocId: string;
 
   hasFormDataInput: boolean;
+  eventDate: string;
 }
 
 // ユーザID取得
@@ -458,7 +460,11 @@ const formDataReducer: Reducer<
 
         // 継承時の処理済みdocumentIdと新規で振られたdocumentIdを紐づける
         if (action.processedDocId) {
-          if(!copyState.processedDocumentIds.find(p => p[0] === action.processedDocId)) {
+          if (
+            !copyState.processedDocumentIds.find(
+              (p) => p[0] === action.processedDocId
+            )
+          ) {
             copyState.processedDocumentIds.push([action.processedDocId, docId]);
           }
         }
@@ -553,8 +559,15 @@ const formDataReducer: Reducer<
       // データ引継ぎ済みdocumentIdの更新
       case 'DATA_TRANSFER_PROCESSED': {
         if (action.processedDocId) {
-          if(!copyState.processedDocumentIds.find(p => p[0] === action.processedDocId)) {
-            copyState.processedDocumentIds.push([action.processedDocId, action.processedNewDocId]);
+          if (
+            !copyState.processedDocumentIds.find(
+              (p) => p[0] === action.processedDocId
+            )
+          ) {
+            copyState.processedDocumentIds.push([
+              action.processedDocId,
+              action.processedNewDocId,
+            ]);
           }
         }
         break;
@@ -711,6 +724,34 @@ const formDataReducer: Reducer<
           action.documentId,
           action.hasFormDataInput
         );
+        break;
+      }
+
+      case 'EVENT_DATE': {
+        const doc = saveData.jesgo_document.find(
+          (p) => p.key === action.documentId
+        );
+        if (doc) {
+          doc.value.event_date = action.eventDate;
+        }
+        break;
+      }
+
+      // スキーマの切り替え発生
+      case 'CHANGED_SCHEMA': {
+        const doc = saveData.jesgo_document.find(
+          (p) => p.key === action.documentId
+        );
+        // スキーマ関連の情報を更新する
+        if (doc && action.schemaInfo) {
+          const { schema_id, schema_primary_id, version_major } =
+            action.schemaInfo;
+          doc.value.schema_id = schema_id;
+          doc.value.schema_primary_id = schema_primary_id;
+          doc.value.schema_major_version = version_major;
+          doc.value.last_updated = new Date().toLocaleString();
+          doc.value.registrant = getLoginUserId();
+        }
         break;
       }
 

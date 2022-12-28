@@ -12,8 +12,6 @@ import lodash from 'lodash';
 import { Dispatch } from 'redux';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import { formatDate, isDate } from '../../common/CommonUtility';
-import { GetInitialTreatmentDate } from '../../common/CaseRegistrationUtility';
-import { calcAge } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import store from '../../store';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
@@ -586,16 +584,26 @@ const customSchemaAppendFormDataProperty = (
 
   type Obj = { [prop: string]: any };
 
-  if (copySchema && copySchema.properties) {
-    const propItems = getPropItemsAndNames(copySchema);
-    propItems.pNames.forEach((pName) => {
-      const item = propItems.pItems[pName] as JSONSchema7;
-      // jesgo:getの項目は読取専用にする
-      if (item[Const.EX_VOCABULARY.GET]) {
-        (copySchema.properties![pName] as Obj).readOnly = true;
-      }
-    });
-  }
+  const func = (targetSchema: JSONSchema7) => {
+    if (
+      targetSchema &&
+      targetSchema.type === 'object' &&
+      targetSchema.properties
+    ) {
+      const propItems = getPropItemsAndNames(targetSchema);
+      propItems.pNames.forEach((pName) => {
+        const item = propItems.pItems[pName] as JSONSchema7;
+        // jesgo:getの項目は読取専用にする
+        if (item[Const.EX_VOCABULARY.GET]) {
+          (targetSchema.properties![pName] as Obj).readOnly = true;
+        } else if (item.type === 'object') {
+          func(item);
+        }
+      });
+    }
+  };
+
+  func(copySchema);
 
   return copySchema;
 };
@@ -675,7 +683,10 @@ export const getJesgoSchemaPropValue = (
   for (const propName of propList.pNames) {
     const pItem = propList.pItems[propName] as JSONSchema7;
     if ((pItem as Obj)[searchPropName] === searchValueName) {
-      if (searchPropName === 'jesgo:set' && searchValueName === 'eventdate') {
+      if (
+        searchPropName === Const.EX_VOCABULARY.SET &&
+        searchValueName === 'eventdate'
+      ) {
         // eventdateが対象の場合は日付フォーマット指定が必要
         if (pItem.type === 'string' && pItem.format === 'date') {
           retPropName = propName;

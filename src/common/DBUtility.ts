@@ -178,7 +178,7 @@ export const getSchemaEventDateRelation = (
       // eventdateの項目名を取得
       const eventDatePropName = getJesgoSchemaPropValue(
         customSchema,
-        'jesgo:set',
+        Const.EX_VOCABULARY.SET,
         'eventdate'
       );
 
@@ -310,7 +310,7 @@ export const getEventDate = (
 
   const eventDatePropName = getJesgoSchemaPropValue(
     customSchema,
-    'jesgo:set',
+    Const.EX_VOCABULARY.SET,
     'eventdate'
   );
 
@@ -370,7 +370,7 @@ export const getDeathDate = (
 
   const deathDataPropName = getJesgoSchemaPropValue(
     customSchema,
-    'jesgo:set',
+    Const.EX_VOCABULARY.SET,
     'death'
   );
 

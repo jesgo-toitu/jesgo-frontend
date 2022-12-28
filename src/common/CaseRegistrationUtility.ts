@@ -12,6 +12,7 @@ import {
 import {
   CustomSchema,
   getPropItemsAndNames,
+  GetSchemaIdFromString,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
@@ -22,6 +23,7 @@ import {
   ValidationItem,
   validationResult,
 } from '../components/CaseRegistration/Definition';
+import { getEventDate } from './DBUtility';
 
 /**
  * 入力値のvalidation
@@ -1146,27 +1148,50 @@ export const findJesgoDocumentChildren = (
 /**
  * 初回治療開始日取得
  * @param documentId 検索の起点となるドキュメントのID
- * @returns 
+ * @param formData
+ * @returns
  */
-export const GetInitialTreatmentDate = (documentId: string): string => {
+export const GetInitialTreatmentDate = (
+  documentId: string,
+  formData: any
+): string => {
   let initialDate = '';
-  // 初回治療スキーマのIDを取得
-  const initialTreatmentSchemaId = 50;
-  // const initialTreatmentSchemaId = getSchemaForIdString('/schema/treatment/initial_treatment')
 
   const jesgoDoc = store.getState().formDataReducer.saveData.jesgo_document;
 
   const currentDoc = jesgoDoc.find((p) => p.key === documentId);
   if (currentDoc) {
-    // 指定されたドキュメントの子ドキュメントから初回治療スキーマを取得
-    const initialTreatmentDoc = findJesgoDocumentChildren(
-      currentDoc,
-      initialTreatmentSchemaId
+    // 初回治療スキーマのIDを取得
+    const initialTreatmentSchemaId = GetSchemaIdFromString(
+      '/schema/treatment/initial_treatment'
     );
-    if (initialTreatmentDoc.length > 0) {
-      // 初回治療スキーマがあればeventdate取得
-      // initialDate = getEventDate(initialTreatmentDoc[0].value.document, initialTreatmentDoc[0].value.schema_id, 'child');
+    const schemaInfo = GetSchemaInfo(initialTreatmentSchemaId);
+    const schemaIdList: number[] = [initialTreatmentSchemaId];
+    if (schemaInfo) {
+      // 継承先スキーマも対象
+      schemaInfo.inherit_schema.forEach((id) => {
+        if (!schemaIdList.includes(id)) schemaIdList.push(id);
+      });
+      // 継承元スキーマも対象
+      if (
+        schemaInfo.base_schema &&
+        !schemaIdList.includes(schemaInfo.base_schema)
+      ) {
+        schemaIdList.push(schemaInfo.base_schema);
+      }
     }
+
+    schemaIdList.forEach((schemaId) => {
+      // 指定されたドキュメントの子ドキュメントから初回治療スキーマを取得
+      const initialTreatmentDoc = findJesgoDocumentChildren(
+        currentDoc,
+        schemaId
+      );
+      if (initialTreatmentDoc.length > 0) {
+        // 初回治療スキーマがあればeventdate取得
+        initialDate = getEventDate(currentDoc, formData);
+      }
+    });
   }
 
   return initialDate;

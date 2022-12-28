@@ -26,7 +26,10 @@ import {
   checkEventDateInfinityLoop,
   getEventDate,
 } from '../../common/DBUtility';
-import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
+import {
+  dispSchemaIdAndDocumentIdDefine,
+  jesgoDocumentObjDefine,
+} from '../../store/formDataReducer';
 
 interface CustomDivFormProp extends FormProps<any> {
   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -44,37 +47,39 @@ interface CustomDivFormProp extends FormProps<any> {
 
 // jesgo:getの項目を計算してformDataにセットする
 const adaptJesgoGetValueToFormData = (
-  formData: any,
+  jesgoDoc: jesgoDocumentObjDefine,
+  baseFormData: any,
+  targetFormData: any,
   schema: JSONSchema7,
   documentId: string
 ) => {
   type Obj = { [prop: string]: any };
 
-  if (schema && schema.properties) {
+  if (schema && schema.type === 'object' && schema.properties) {
     const propItems = getPropItemsAndNames(schema);
-    propItems.pNames.forEach((pName) => {
-      const item = propItems.pItems[pName] as JSONSchema7;
+    Object.entries(propItems.pItems).forEach((pItem) => {
+      const pName = pItem[0];
+      const item = pItem[1] as JSONSchema7;
+
       // jesgo:getの対応
-      if (item[Const.EX_VOCABULARY.GET]) {
+      if (item.type !== 'object' && item[Const.EX_VOCABULARY.GET]) {
         let setValue: any = '';
         const getType = item[Const.EX_VOCABULARY.GET];
         if (getType != null && getType !== '') {
-          // const schemas = store.getState().schemaDataReducer.schemaDatas.get(GetSchemaIdFromString(schema.$id));
-          // const eventDate = getEventDate(formData, schemas);
-          // TODO: eventdate取得できたテイ
-          const eventDate = '2020-12-20';
+          const eventDate = getEventDate(jesgoDoc, baseFormData);
 
           switch (getType) {
+            // eventdate
             case Const.JESGO_GETTYPE.EVENT_DATE: {
               setValue = eventDate;
               break;
             }
 
+            // 年齢など
             case Const.JESGO_GETTYPE.AGE:
             case Const.JESGO_GETTYPE.MONTH:
             case Const.JESGO_GETTYPE.WEEK:
             case Const.JESGO_GETTYPE.DAY: {
-              // 年齢など
               setValue = calcAge(
                 store.getState().formDataReducer.saveData.jesgo_case
                   .date_of_birth,
@@ -85,7 +90,7 @@ const adaptJesgoGetValueToFormData = (
             }
 
             case Const.JESGO_GETTYPE.INITIAL_TREATMENT: {
-              setValue = GetInitialTreatmentDate(documentId);
+              setValue = GetInitialTreatmentDate(documentId, baseFormData);
               break;
             }
 
@@ -94,9 +99,21 @@ const adaptJesgoGetValueToFormData = (
           }
 
           if (setValue != null && setValue !== '') {
-            (formData as Obj)[pName] = setValue;
+            (targetFormData as Obj)[pName] = setValue;
           }
         }
+      } else if (item.type === 'object') {
+        if ((targetFormData as Obj)[pName] == null) {
+          (targetFormData as Obj)[pName] = {};
+        }
+        // オブジェクトの場合はその下層も参照する
+        adaptJesgoGetValueToFormData(
+          jesgoDoc,
+          baseFormData,
+          (targetFormData as Obj)[pName],
+          item,
+          documentId
+        );
       }
     });
   }
@@ -123,9 +140,6 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     formData = thisDocument.value.document;
   }
 
-  // jesgo:getの値反映
-  adaptJesgoGetValueToFormData(formData, schema, documentId);
-  
   // 無限ループチェック
   const loopCheck = checkEventDateInfinityLoop(
     formData,
@@ -139,12 +153,6 @@ const CustomDivForm = (props: CustomDivFormProp) => {
 
   const [eventDate, setEventDate] = useState<string>(initEventDate);
 
-  // 継承直後、データ入力判定を動かすためにsetFormDataする
-  if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
-    setFormData(formData);
-  }
-  copyProps.formData = formData;
-
   // eventdate不整合の場合、現在日時点で有効な最新スキーマを適応する
   if (loopCheck.isNotLoop && loopCheck.finalizedSchema) {
     // ループ検証時にスキーマが取得できていればそちらを採用
@@ -157,6 +165,17 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     if (newSchema) {
       schema = CustomSchema({ orgSchema: newSchema.document_schema, formData });
     }
+  }
+
+  // jesgo:getの値反映
+  if (thisDocument) {
+    adaptJesgoGetValueToFormData(
+      thisDocument,
+      formData,
+      formData,
+      schema,
+      documentId
+    );
   }
 
   // validationエラーの取得
@@ -208,6 +227,12 @@ const CustomDivForm = (props: CustomDivFormProp) => {
         }
       });
   }
+
+  // 継承直後、データ入力判定を動かすためにsetFormDataする
+  if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
+    setFormData(formData);
+  }
+  copyProps.formData = formData;
 
   // 描画の段階でstore側にフォームデータを保存しておく
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -302,7 +327,15 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     }
 
     // jesgo:getの値反映
-    adaptJesgoGetValueToFormData(data, schema, documentId);
+    if (thisDocument) {
+      adaptJesgoGetValueToFormData(
+        thisDocument,
+        data,
+        data,
+        schema,
+        documentId
+      );
+    }
 
     setFormData(data);
 

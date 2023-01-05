@@ -183,7 +183,8 @@ const CustomDivForm = (props: CustomDivFormProp) => {
           GetSchemaIdFromString(e.schema.$id!),
           e.schema,
           currentEventDate,
-          data
+          data,
+          true
         );
         if (newFormdata) {
           if (

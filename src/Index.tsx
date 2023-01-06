@@ -6,11 +6,14 @@ import { Login } from './views/Login';
 import Patients from './views/Patients';
 import Registration from './views/Registration';
 import store from './store/index';
-import Stafflist from './views/Stafflist';
+import { Stafflist } from './views/Stafflist';
 import Settings from './views/Settings';
 import './index.css';
 import './biz-udpgothic.css';
 import SchemaManager from './views/SchemaManager';
+import OutputView from './components/common/OutputView';
+
+const RedirectToLogin = () => <Navigate to="/Login" />;
 
 ReactDOM.render(
   <Provider store={store}>
@@ -23,14 +26,9 @@ ReactDOM.render(
         <Route path="/Stafflist" element={<Stafflist />} />
         <Route path="/Settings" element={<Settings />} />
         <Route path="/SchemaManager" element={<SchemaManager />} />
+        <Route path="/OutputView" element={<OutputView />} />
       </Routes>
     </BrowserRouter>
   </Provider>,
   document.getElementById('root')
 );
-
-function RedirectToLogin () {
-  return (
-    <Navigate to="/Login"/>
-  )
-}

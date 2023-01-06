@@ -52,6 +52,7 @@ export const Login = () => {
   }, []);
 
   const submit = async () => {
+    setIsLoading(true);
     const loginInfo = { name: username, password };
     // ログインAPIを呼ぶ
     const returnApiObject = await apiAccess(
@@ -98,19 +99,19 @@ export const Login = () => {
     } else if (returnApiObject.statusNum === RESULT.NETWORK_ERROR) {
       // eslint-disable-next-line no-alert
       alert(`【エラー】\nサーバーへの接続に失敗しました。`);
+      setIsLoading(false);
     } else {
       // eslint-disable-next-line no-alert
       alert(
         `【エラー】\nログインに失敗しました。ユーザ名かパスワードが間違っています。`
       );
+      setIsLoading(false);
     }
   };
 
   const onSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoading(true);
     await submit();
-    setIsLoading(false);
   };
 
   const onChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {

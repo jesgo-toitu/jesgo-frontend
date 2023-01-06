@@ -117,7 +117,7 @@ const DndSortableTable = (props: DndSortableTableProps) => {
                               className="show-flg-checkbox"
                               checked={row.valid}
                               disabled={isShowCheckDisabled}
-                              onChange={(e) =>
+                              onChange={() =>
                                 handleCheckClick(
                                   checkType[0],
                                   checkType[1],

@@ -17,6 +17,7 @@ import {
   Jumbotron,
 } from 'react-bootstrap';
 import { CSVLink } from 'react-csv';
+import { useDispatch } from 'react-redux';
 import UserTables, { userDataList } from '../components/Patients/UserTables';
 import './Patients.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
@@ -24,11 +25,17 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
-import { formatDate, formatTime } from '../common/DBUtility';
+import {
+  formatDate,
+  formatTime,
+  setTimeoutPromise,
+} from '../common/CommonUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
-import { useDispatch } from 'react-redux';
+import { GetPackagedDocument } from '../common/DBUtility';
+import { jesgoCaseDefine } from '../store/formDataReducer';
+import { OpenOutputView } from '../common/CaseRegistrationUtility';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -95,8 +102,7 @@ const Patients = () => {
   const [detailSearchOpen, setDetailSearchOpen] = useState('hidden');
   const [noSearch, setNoSearch] = useState('table-cell');
   const [search, setSearch] = useState('hidden');
-  const [progressAndRecurrenceColumn, setProgressAndRecurrenceColumn] =
-    useState('hidden');
+  const [, setProgressAndRecurrenceColumn] = useState('hidden');
   const [listMode, setListMode] = useState(['blue', '']);
   const [userListJson, setUserListJson] = useState('');
   const [tableMode, setTableMode] = useState('normal');
@@ -150,34 +156,36 @@ const Patients = () => {
       // eslint-disable-next-line no-plusplus
       for (let index = 0; index < decordedJson.data.length; index++) {
         const userData = decordedJson.data[index];
-        const patientCsv: patientListCsv = {
-          patientId: userData.patientId,
-          patinetName: userData.patientName,
-          age: userData.age.toString(),
-          startDate: userData.startDate!,
-          lastUpdate: userData.lastUpdate,
-          diagnosisMajor: userData.diagnosisMajor,
-          diagnosisMinor: userData.diagnosisMinor,
-          advancedStage: userData.advancedStage,
-          recurrence: userData.status.includes('recurrence') ? '有' : '無',
-          chemotherapy: userData.status.includes('chemo') ? '有' : '無',
-          operation: userData.status.includes('surgery') ? '有' : '無',
-          radiotherapy: userData.status.includes('radio') ? '有' : '無',
-          supportiveCare: userData.status.includes('surveillance')
-            ? '有'
-            : '無',
-          registration:
-            // eslint-disable-next-line no-nested-ternary
-            userData.registration.includes('decline')
-              ? '拒否'
-              : userData.registration.includes('not_completed')
-              ? '無'
-              : '有',
-          death: userData.status.includes('death') ? '有' : '無',
-          threeYearPrognosis: `無`,
-          fiveYearPrognosis: `無`,
-        };
-        newData.push(patientCsv);
+        if (userData.startDate) {
+          const patientCsv: patientListCsv = {
+            patientId: userData.patientId,
+            patinetName: userData.patientName,
+            age: userData.age.toString(),
+            startDate: userData.startDate,
+            lastUpdate: userData.lastUpdate,
+            diagnosisMajor: userData.diagnosisMajor,
+            diagnosisMinor: userData.diagnosisMinor,
+            advancedStage: userData.advancedStage,
+            recurrence: userData.status.includes('recurrence') ? '有' : '無',
+            chemotherapy: userData.status.includes('chemo') ? '有' : '無',
+            operation: userData.status.includes('surgery') ? '有' : '無',
+            radiotherapy: userData.status.includes('radio') ? '有' : '無',
+            supportiveCare: userData.status.includes('surveillance')
+              ? '有'
+              : '無',
+            registration:
+              // eslint-disable-next-line no-nested-ternary
+              userData.registration.includes('decline')
+                ? '拒否'
+                : userData.registration.includes('not_completed')
+                ? '無'
+                : '有',
+            death: userData.status.includes('death') ? '有' : '無',
+            threeYearPrognosis: `無`,
+            fiveYearPrognosis: `無`,
+          };
+          newData.push(patientCsv);
+        }
       }
 
       setCsvData(newData);
@@ -439,7 +447,6 @@ const Patients = () => {
             <Navbar.Brand>
               <img src="./image/logo.png" alt="JESGO" className="img" />
             </Navbar.Brand>
-            <Navbar.Toggle />
           </Navbar.Header>
           <Navbar.Collapse>
             <Nav>
@@ -460,16 +467,21 @@ const Patients = () => {
                 腫瘍登録管理表示
               </NavItem>
             </Nav>
+            <Navbar.Text pullRight>Ver.{Const.VERSION}</Navbar.Text>
+
             <Nav pullRight>
-              <Navbar.Text>{facilityName}</Navbar.Text>
-              <NavItem>
-                <UserMenu title={userName} i={0} isConfirm={null} />
-              </NavItem>
-              <NavItem>
-                <SystemMenu title="設定" i={0} isConfirm={null} />
-              </NavItem>
-              <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
+              <Navbar.Brand>
+                <div>
+                  <UserMenu title={userName} i={0} isConfirm={null} />
+                </div>
+              </Navbar.Brand>
+              <Navbar.Brand>
+                <div>
+                  <SystemMenu title="設定" i={0} isConfirm={null} />
+                </div>
+              </Navbar.Brand>
             </Nav>
+            <Navbar.Text pullRight>{facilityName}&nbsp;&nbsp;</Navbar.Text>
           </Navbar.Collapse>
         </Navbar>
         <div className="page-menu">
@@ -484,6 +496,58 @@ const Patients = () => {
                 </Button>
               </ButtonGroup>
             </ButtonToolbar>
+            {/* // ★TODO: 仮実装 */}
+            {process.env.DEV_MODE === '1' && (
+              <Button
+                bsStyle="danger"
+                className="normal-button"
+                onClick={() => {
+                  const decordedJson = JSON.parse(userListJson) as userDataList;
+                  const caseInfoList = decordedJson.data.map((item) => {
+                    const caseinfo: jesgoCaseDefine = {
+                      case_id: item.caseId.toString(),
+                      name: item.patientName,
+                      date_of_birth: '1900-01-01',
+                      date_of_death: '1900-01-01',
+                      sex: 'F',
+                      his_id: item.patientId,
+                      decline: false,
+                      registrant: -1,
+                      last_updated: '1900-01-01',
+                      is_new_case: false,
+                    };
+                    return caseinfo;
+                  });
+
+                  // TODO: ★仮実装
+
+                  const wrapperFunc = () =>
+                    GetPackagedDocument(
+                      caseInfoList,
+                      undefined,
+                      undefined,
+                      true
+                    );
+
+                  setIsLoading(true);
+
+                  setTimeoutPromise(wrapperFunc)
+                    .then((res) => {
+                      OpenOutputView(window, (res as any).anyValue);
+                    })
+                    .catch((err) => {
+                      if (err === 'timeout') {
+                        alert('操作がタイムアウトしました');
+                      }
+                    })
+                    .finally(() => {
+                      setIsLoading(false);
+                    });
+                }}
+              >
+                ドキュメント出力
+              </Button>
+            )}
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (
               <Button
@@ -498,8 +562,8 @@ const Patients = () => {
               data={csvData}
               headers={csvHeader}
               filename={csvFileName}
-              // eslint-disable-next-line
               onClick={() => {
+                // eslint-disable-next-line
                 if (confirm('CSVファイルをダウンロードしますか？')) {
                   setCsvFileName(
                     `jesgo_patients_list_${formatDate(new Date())}_${formatTime(
@@ -529,7 +593,10 @@ const Patients = () => {
                 <option value="all">すべて</option>
                 {makeSelectDate(UNIT_TYPE.YEAR, new Date(), 3).map(
                   (date: string) => (
-                    <option value={date}>{`${date}年`}</option>
+                    <option
+                      value={date}
+                      key={`treatmentStartYear_${date}`}
+                    >{`${date}年`}</option>
                   )
                 )}
               </FormControl>
@@ -543,7 +610,9 @@ const Patients = () => {
                 <option value="all">すべて</option>
                 {makeSelectDataFromStorage('cancer_type').map(
                   (value: string, index: number) => (
-                    <option value={index + 1}>{value}</option>
+                    <option value={index + 1} key={`cancer_type_${value}`}>
+                      {value}
+                    </option>
                   )
                 )}
               </FormControl>
@@ -605,7 +674,12 @@ const Patients = () => {
                 >
                   {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
                     (date: string) => (
-                      <option value={`${date}`}>{date}</option>
+                      <option
+                        value={`${date}`}
+                        key={`startOfDiagnosisDate_${date}`}
+                      >
+                        {date}
+                      </option>
                     )
                   )}
                 </FormControl>
@@ -617,7 +691,12 @@ const Patients = () => {
                 >
                   {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
                     (date: string) => (
-                      <option value={`${date}`}>{date}</option>
+                      <option
+                        value={`${date}`}
+                        key={`endOfDiagnosisDate_${date}`}
+                      >
+                        {date}
+                      </option>
                     )
                   )}
                 </FormControl>

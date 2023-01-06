@@ -48,3 +48,63 @@ export const calcAge = (birthday: string) => {
 
   return Math.floor((nowNum - birthNum) / 10000).toString();
 };
+
+// 日付の妥当性チェック
+export const isDate = (v: string) => !Number.isNaN(Date.parse(v));
+
+// 日付(Date形式)をyyyy/MM/ddなどの形式に変換
+export const formatDate = (dateObj: Date, separator = ''): string => {
+  try {
+    const y = dateObj.getFullYear();
+    const m = `00${dateObj.getMonth() + 1}`.slice(-2);
+    const d = `00${dateObj.getDate()}`.slice(-2);
+    return `${y}${separator}${m}${separator}${d}`;
+  } catch {
+    return '';
+  }
+};
+
+// 日付(Date形式)から時刻を取り出しhh:mm:ssなどの形式に変換
+export const formatTime = (dateObj: Date, separator = ''): string => {
+  try {
+    const h = `00${dateObj.getHours()}`.slice(-2);
+    const m = `00${dateObj.getMinutes()}`.slice(-2);
+    const s = `00${dateObj.getSeconds()}`.slice(-2);
+    return `${h}${separator}${m}${separator}${s}`;
+  } catch {
+    return '';
+  }
+};
+
+// 日付文字列をyyyy/MM/ddなどの形式に変換
+export const formatDateStr = (dtStr: string, separator: string): string => {
+  if (!dtStr) return '';
+  try {
+    const dateObj = new Date(dtStr);
+    const y = dateObj.getFullYear();
+    const m = `00${dateObj.getMonth() + 1}`.slice(-2);
+    const d = `00${dateObj.getDate()}`.slice(-2);
+    return `${y}${separator}${m}${separator}${d}`;
+  } catch {
+    return '';
+  }
+};
+
+const fTimeout = (timeoutSec: number) =>
+  new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // eslint-disable-next-line prefer-promise-reject-errors
+      reject('timeout');
+    }, timeoutSec * 1000);
+  });
+
+/**
+ * タイムアウト処理
+ * @param promiseFunc 実行するPromise
+ * @param timeoutSec タイムアウトの秒数
+ * @returns
+ */
+export const setTimeoutPromise = async (
+  promiseFunc: () => Promise<unknown>,
+  timeoutSec = 15 * 60 // デフォルト15分
+) => Promise.race([fTimeout(timeoutSec), promiseFunc()]);

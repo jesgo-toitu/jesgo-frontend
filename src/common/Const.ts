@@ -1,9 +1,9 @@
-import { formatDateStr } from './DBUtility';
+import { formatDateStr } from './CommonUtility';
 
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {
   // JESGO Webアプリバージョン
-  export const VERSION = '1.0.1';
+  export const VERSION = '1.0.2';
 
   // UiSchemaプロパティ
   export const UI_WIDGET = {

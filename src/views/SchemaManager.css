@@ -49,7 +49,7 @@ fieldset.schema-detail {
 }
 
 .relation-table {
-  width:70%;
+  width: 70%;
 }
 
 .sortable-table {
@@ -69,6 +69,14 @@ fieldset.schema-detail {
 .sortable-table-row-disabled,
 .sortable-table-row-dragging {
   height: 2rem;
+  width: auto;
+  border-bottom: 1px solid #a0a0a0;
+  border-right: 1px solid #a0a0a0;
+  background: white;
+}
+
+.version-table-row {
+  height: 2.5rem;
   width: auto;
   border-bottom: 1px solid #a0a0a0;
   border-right: 1px solid #a0a0a0;
@@ -113,6 +121,26 @@ fieldset.schema-detail {
   text-align: center;
 }
 
+.sortable-table-cell3 {
+  width: 6rem;
+  text-align: center;
+}
+
+.sortable-table-cell4 {
+  width: 12rem;
+  text-align: center;
+}
+
+.sortable-table-cell5 {
+  width: 2rem;
+  text-align: center;
+}
+
+.sortable-table-cell6 {
+  width: 4rem;
+  text-align: center;
+}
+
 .drag-icon-style {
   margin-right: 5px;
 }
@@ -123,8 +151,14 @@ fieldset.schema-detail {
   text-align: center;
 }
 
+.version-download {
+  padding:3px 6px;
+}
+
 div.caption-and-block {
   display: flex;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
 }
 div.caption-and-block > span:nth-child(1) {
   width: 9rem;

@@ -1,8 +1,9 @@
+/* eslint-disable camelcase */
 import lodash from 'lodash';
 import { Reducer } from 'redux';
 import React from 'react';
 import { JesgoDocumentSchema } from './schemaDataReducer';
-import { RegistrationErrors } from '../common/CaseRegistrationUtility';
+import { RegistrationErrors } from '../components/CaseRegistration/Definition';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -65,7 +66,7 @@ export interface formDataState {
     parentDocumentId: string;
     deletedChildDocuments: jesgoDocumentObjDefine[];
   }[];
-  processedDocumentIds: Set<string>;
+  processedDocumentIds: [string, string][];
   formDataInputStates: Map<string, boolean>;
 }
 
@@ -119,8 +120,10 @@ export interface formDataAction {
   isUpdateInput: boolean;
   isNotUniqueSubSchemaAdded: boolean;
   processedDocId: string;
+  processedNewDocId: string;
 
   hasFormDataInput: boolean;
+  eventDate: string;
 }
 
 // ユーザID取得
@@ -183,7 +186,7 @@ const initialState: formDataState = {
   tabSelectEvent: undefined,
   selectedTabKeyName: '',
   deletedDocuments: [],
-  processedDocumentIds: new Set(),
+  processedDocumentIds: [],
   formDataInputStates: new Map(),
 };
 
@@ -298,8 +301,6 @@ const formDataReducer: Reducer<
   const copyState = lodash.cloneDeep(state); // 現在の状態をコピー
 
   const { formDatas, saveData } = copyState;
-
-  console.log(`action.type=${action.type}`);
 
   if (isHeaderInfoAction(action)) {
     // ヘッダの患者情報入力
@@ -457,6 +458,17 @@ const formDataReducer: Reducer<
           action.setAddedDocumentCount(copyState.addedDocumentCount);
         }
 
+        // 継承時の処理済みdocumentIdと新規で振られたdocumentIdを紐づける
+        if (action.processedDocId) {
+          if (
+            !copyState.processedDocumentIds.find(
+              (p) => p[0] === action.processedDocId
+            )
+          ) {
+            copyState.processedDocumentIds.push([action.processedDocId, docId]);
+          }
+        }
+
         break;
       }
 
@@ -498,7 +510,7 @@ const formDataReducer: Reducer<
             if (deletedDocIds.length > 0) {
               // #region 継承後のデータ引継ぎ用に削除した子ドキュメントの情報を持っておく
               copyState.deletedDocuments = []; // 初期化
-              copyState.processedDocumentIds = new Set(); // 反映済みドキュメントID初期化
+              copyState.processedDocumentIds = []; // 反映済みドキュメントID初期化
               deletedDocIds.forEach((deleteDocId) => {
                 // 親ドキュメント
                 const pDoc = saveData.jesgo_document.find((p) =>
@@ -547,7 +559,16 @@ const formDataReducer: Reducer<
       // データ引継ぎ済みdocumentIdの更新
       case 'DATA_TRANSFER_PROCESSED': {
         if (action.processedDocId) {
-          copyState.processedDocumentIds.add(action.processedDocId);
+          if (
+            !copyState.processedDocumentIds.find(
+              (p) => p[0] === action.processedDocId
+            )
+          ) {
+            copyState.processedDocumentIds.push([
+              action.processedDocId,
+              action.processedNewDocId,
+            ]);
+          }
         }
         break;
       }
@@ -703,6 +724,34 @@ const formDataReducer: Reducer<
           action.documentId,
           action.hasFormDataInput
         );
+        break;
+      }
+
+      case 'EVENT_DATE': {
+        const doc = saveData.jesgo_document.find(
+          (p) => p.key === action.documentId
+        );
+        if (doc) {
+          doc.value.event_date = action.eventDate;
+        }
+        break;
+      }
+
+      // スキーマの切り替え発生
+      case 'CHANGED_SCHEMA': {
+        const doc = saveData.jesgo_document.find(
+          (p) => p.key === action.documentId
+        );
+        // スキーマ関連の情報を更新する
+        if (doc && action.schemaInfo) {
+          const { schema_id, schema_primary_id, version_major } =
+            action.schemaInfo;
+          doc.value.schema_id = schema_id;
+          doc.value.schema_primary_id = schema_primary_id;
+          doc.value.schema_major_version = version_major;
+          doc.value.last_updated = new Date().toLocaleString();
+          doc.value.registrant = getLoginUserId();
+        }
         break;
       }
 

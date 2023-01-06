@@ -22,6 +22,7 @@ import './SchemaManager.css';
 import SchemaTree, {
   SCHEMA_TYPE,
   treeSchema,
+  treeApiObject,
 } from '../components/Schemamanager/SchemaTree';
 
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
@@ -31,12 +32,17 @@ import {
   GetParentSchemas,
   schemaWithValid,
   storeSchemaInfo,
+  GetSchemaVersionedInfo,
 } from '../components/CaseRegistration/SchemaUtility';
 import DndSortableTable from '../components/Schemamanager/DndSortableTable';
 import {
   AddBeforeUnloadEvent,
+  isDate,
   RemoveBeforeUnloadEvent,
 } from '../common/CommonUtility';
+import SchemaVersionTable, {
+  makeInitValidDate,
+} from '../components/Schemamanager/SchemaVersionTable';
 
 type settings = {
   facility_name: string;
@@ -46,7 +52,7 @@ const SchemaManager = () => {
   const navigate = useNavigate();
   const userName = localStorage.getItem('display_name');
   const [facilityName, setFacilityName] = useState('');
-  const [settingJson, setSettingJson] = useState<settings>({
+  const [, setSettingJson] = useState<settings>({
     facility_name: '',
   });
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
@@ -67,6 +73,12 @@ const SchemaManager = () => {
     []
   );
 
+  const [versionedSchemaList, setVersionedSchemaList] = useState<
+    schemaWithValid[]
+  >([]);
+  const [validFrom, setValidFrom] = useState<string[]>([]);
+  const [validUntil, setValidUntil] = useState<string[]>([]);
+
   const [selectedBaseSchemaInfo, setSelectedBaseSchemaInfo] =
     useState<JesgoDocumentSchema>();
 
@@ -75,7 +87,7 @@ const SchemaManager = () => {
 
   // 選択中のスキーマと関係性のあるスキーマを更新する
   const upDateSchemaRelation = () => {
-    const schema = GetSchemaInfo(Number(selectedSchema));
+    const schema = GetSchemaInfo(Number(selectedSchema), null, false, true);
     if (schema !== undefined) {
       setSelectedSchemaInfo(schema);
 
@@ -90,10 +102,18 @@ const SchemaManager = () => {
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < tempSubSchemaList.length; i++) {
         // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
-        currentSubSchemaList.push({
-          valid: i <= schema.subschema.length,
-          schema: GetSchemaInfo(tempSubSchemaList[i])!,
-        });
+        const tempSchema = GetSchemaInfo(
+          tempSubSchemaList[i],
+          null,
+          false,
+          true
+        );
+        if (tempSchema) {
+          currentSubSchemaList.push({
+            valid: i <= schema.subschema.length,
+            schema: tempSchema,
+          });
+        }
       }
       setSubSchemaList(currentSubSchemaList);
 
@@ -107,10 +127,18 @@ const SchemaManager = () => {
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < tempChildSchemaList.length; i++) {
         // 元々の現在のサブスキーマリストに含まれていた部分は有効扱いにする
-        currentChildSchemaList.push({
-          valid: i + 1 <= schema.child_schema.length,
-          schema: GetSchemaInfo(tempChildSchemaList[i])!,
-        });
+        const tempSchema = GetSchemaInfo(
+          tempChildSchemaList[i],
+          null,
+          false,
+          true
+        );
+        if (tempSchema) {
+          currentChildSchemaList.push({
+            valid: i + 1 <= schema.child_schema.length,
+            schema: tempSchema,
+          });
+        }
       }
       setChildSchemaList(currentChildSchemaList);
 
@@ -123,9 +151,27 @@ const SchemaManager = () => {
 
       const tmpInheritSchemaList = unionInheritSchemaList.map((inhId, i) => ({
         valid: i + 1 <= schema.inherit_schema.length,
-        schema: GetSchemaInfo(inhId)!,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        schema: GetSchemaInfo(inhId, null, false, true)!,
       }));
       setInheritSchemaList(tmpInheritSchemaList);
+
+      // バージョン一覧
+      const tmpSchemaVersionList = GetSchemaVersionedInfo(
+        Number(selectedSchema)
+      );
+      const currentSchemaVersion: schemaWithValid[] = [];
+      // eslint-disable-next-line no-plusplus
+      for (let i = 0; i < tmpSchemaVersionList.length; i++) {
+        const tempSchema = tmpSchemaVersionList[i];
+        if (tempSchema) {
+          currentSchemaVersion.push({
+            valid: !tempSchema.hidden,
+            schema: tempSchema,
+          });
+        }
+      }
+      setVersionedSchemaList(currentSchemaVersion);
     }
 
     setSelectedSchemaParentInfo(GetParentSchemas(Number(selectedSchema)));
@@ -134,11 +180,16 @@ const SchemaManager = () => {
   // 表示に関係するスキーマの再取得を行う
   const schemaReload = async () => {
     // スキーマツリーを取得する
-    const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+    const treeApiReturnObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
 
-    if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-      const returned = treeApiObject.body as treeSchema[];
-      setTree(returned);
+    if (treeApiReturnObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      const returned = treeApiReturnObject.body as treeApiObject;
+      setTree(returned.treeSchema);
+      const newErrorMessages = lodash.cloneDeep(errorMessages);
+      for (let i = 0; i < returned.errorMessages.length; i++) {
+        newErrorMessages.push(returned.errorMessages[i]);
+      }
+      setErrorMessages(newErrorMessages);
     } else {
       RemoveBeforeUnloadEvent();
       navigate('/login');
@@ -146,7 +197,9 @@ const SchemaManager = () => {
 
     // スキーマ取得処理
     await storeSchemaInfo(dispatch);
-    setSelectedSchemaInfo(GetSchemaInfo(Number(selectedSchema)));
+    setSelectedSchemaInfo(
+      GetSchemaInfo(Number(selectedSchema), null, false, true)
+    );
     upDateSchemaRelation();
   };
 
@@ -171,11 +224,16 @@ const SchemaManager = () => {
       }
 
       // スキーマツリーを取得する
-      const treeApiObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
+      const treeApiReturnObject = await apiAccess(METHOD_TYPE.GET, `gettree`);
 
-      if (treeApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        const returned = treeApiObject.body as treeSchema[];
-        setTree(returned);
+      if (treeApiReturnObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        const returned = treeApiReturnObject.body as treeApiObject;
+        setTree(returned.treeSchema);
+        const newErrorMessages = lodash.cloneDeep(errorMessages);
+        for (let i = 0; i < returned.errorMessages.length; i++) {
+          newErrorMessages.push(returned.errorMessages[i]);
+        }
+        setErrorMessages(newErrorMessages);
       } else {
         RemoveBeforeUnloadEvent();
         navigate('/login');
@@ -293,10 +351,202 @@ const SchemaManager = () => {
     return isChange;
   };
 
+  const isNeedUpdateValidDate = (): boolean => {
+    let isChange = false;
+    const tmpSchemaVersionList = GetSchemaVersionedInfo(Number(selectedSchema));
+    const defaultSchemaVersion: schemaWithValid[] = [];
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < tmpSchemaVersionList.length; i++) {
+      const tempSchema = tmpSchemaVersionList[i];
+      if (tempSchema) {
+        defaultSchemaVersion.push({
+          valid: !tempSchema.hidden,
+          schema: tempSchema,
+        });
+      }
+    }
+    const valids = makeInitValidDate(defaultSchemaVersion);
+    // 有効無効の一致確認
+    if (!lodash.isEqual(defaultSchemaVersion, versionedSchemaList)) {
+      isChange = true;
+    }
+
+    // 開始日の一致確認
+    if (!lodash.isEqual(valids.validFrom, validFrom)) {
+      isChange = true;
+    }
+
+    // 終了日の一致確認
+    if (!lodash.isEqual(valids.validUntil, validUntil)) {
+      isChange = true;
+    }
+
+    return isChange;
+  };
+
+  /**
+   * 有効期限にエラーがあるかを確認する
+   * @returns エラーが1個以上あれば警告を出してtrueを返す
+   */
+  const isValidDateError = (alertable = false): boolean => {
+    type enableSchemas = {
+      schema: JesgoDocumentSchema;
+      validFrom: string;
+      validUntil: string;
+    };
+    const enabledSchemas: enableSchemas[] = [];
+    const tmpErrorMessages = [];
+    let firstEnableChecked = false;
+
+    const VALID_TYPE = { FROM: 0, UNTIL: 1 };
+
+    const getVersionText = (schema: JesgoDocumentSchema) =>
+      `${schema.version_major}.${schema.version_minor}`;
+
+    const makeErrorMessage = (
+      schema: JesgoDocumentSchema,
+      validType: number,
+      subMessage: string
+    ): string => {
+      const validMessage = validType === VALID_TYPE.FROM ? '開始日' : '終了日';
+      return `バージョン「${getVersionText(
+        schema
+      )}」の${validMessage}に誤りがあります。${subMessage}`;
+    };
+
+    // 各行について処理を行う、indexが若いものが一番最新のバージョン
+    for (let index = 0; index < versionedSchemaList.length; index++) {
+      const target = versionedSchemaList[index];
+      const targetValidFrom = validFrom[index];
+      const targetValidUntil = validUntil[index];
+
+      // 有効、無効問わず開始日は空文字不可
+      if (!isDate(targetValidFrom)) {
+        tmpErrorMessages.push(
+          makeErrorMessage(
+            target.schema,
+            VALID_TYPE.FROM,
+            '開始日を入力してください。'
+          )
+        );
+      }
+
+      // 有効無効振り分け
+      if (target.valid) {
+        // 有効スキーマに追加
+        enabledSchemas.push({
+          schema: target.schema,
+          validFrom: targetValidFrom,
+          validUntil: targetValidUntil,
+        });
+
+        // 終了日は最新のみ空文字可能
+        if (!firstEnableChecked) {
+          firstEnableChecked = true;
+          // 一番新しい有効スキーマの場合は終了日にも空文字を許可する
+          if (targetValidUntil !== '' && !isDate(targetValidUntil)) {
+            tmpErrorMessages.push(
+              makeErrorMessage(
+                target.schema,
+                VALID_TYPE.UNTIL,
+                '終了日を入力してください。'
+              )
+            );
+          }
+        } else {
+          // それ以外の場合は必ず日付であることを確認する
+          // eslint-disable-next-line no-lonely-if
+          if (!isDate(targetValidUntil)) {
+            tmpErrorMessages.push(
+              makeErrorMessage(
+                target.schema,
+                VALID_TYPE.UNTIL,
+                '終了日を入力してください。'
+              )
+            );
+          }
+        }
+      } else {
+        // 無効の場合、常に終了日は空文字も許可する
+        // eslint-disable-next-line no-lonely-if
+        if (targetValidUntil !== '' && !isDate(targetValidUntil)) {
+          // 日付形式以外の入力は不可なので、通常このルートは通らない
+          tmpErrorMessages.push(
+            makeErrorMessage(
+              target.schema,
+              VALID_TYPE.UNTIL,
+              '終了日を正しい日付形式で入力してください。'
+            )
+          );
+        }
+      }
+    }
+
+    // この時点でエラーが出ている場合比較が出来ないのでエラーを表示して終了する
+    if (tmpErrorMessages.length > 0) {
+      if (alertable) {
+        tmpErrorMessages.unshift('【エラー】保存に失敗しました。');
+        alert(tmpErrorMessages.join('\n'));
+      }
+      return true;
+    }
+
+    // 有効なものが一つもない場合はエラーとする
+    if (enabledSchemas.length === 0) {
+      tmpErrorMessages.push(
+        '最低でも一つ以上のバージョンを有効にする必要があります。'
+      );
+    }
+
+    // 有効な物に関して、期限が繋がっているか、開始日と終了日が矛盾していないかを確認する
+    for (let index = enabledSchemas.length - 1; index >= 0; index--) {
+      const target = enabledSchemas[index];
+      // 自身の中で開始日と終了日が矛盾していないかを確認、ただし最新スキーマで終了日が空文字の場合のみは比較しない
+      if (
+        !(index === 0 && target.validUntil === '') &&
+        new Date(target.validUntil).getTime() <
+          new Date(target.validFrom).getTime()
+      ) {
+        tmpErrorMessages.push(
+          `バージョン「${getVersionText(
+            target.schema
+          )}」の開始日と終了日に矛盾があります。`
+        );
+      }
+
+      // 自身が最新でない場合、自身の終了日と自身より新しいバージョンの開始日が1日違いかを確認する
+      if (!(index === 0)) {
+        const targetValidUntil = new Date(target.validUntil);
+        // 自身の終了日の翌日
+        targetValidUntil.setDate(targetValidUntil.getDate() + 1);
+        // 新しいバージョンの開始日
+        const nextVersionValidFrom = new Date(
+          enabledSchemas[index - 1].validFrom
+        );
+
+        if (targetValidUntil.getTime() !== nextVersionValidFrom.getTime()) {
+          tmpErrorMessages.push(
+            `バージョン「${getVersionText(
+              enabledSchemas[index - 1].schema
+            )}」の開始日はバージョン「${getVersionText(
+              target.schema
+            )}」の終了日の翌日にしてください。`
+          );
+        }
+      }
+    }
+    if (tmpErrorMessages.length > 0 && alertable) {
+      tmpErrorMessages.unshift('【エラー】保存に失敗しました。');
+      alert(tmpErrorMessages.join('\n'));
+    }
+
+    return tmpErrorMessages.length > 0;
+  };
+
   const leaveAlart = (): boolean => {
     const tempSchemaList = getNeedUpdateParents(true);
     const isChildEdited = isNeedUpdateSchema();
-    if (tempSchemaList.length > 0 || isChildEdited) {
+    if (tempSchemaList.length > 0 || isChildEdited || isNeedUpdateValidDate()) {
       // eslint-disable-next-line no-restricted-globals
       return confirm(
         'スキーマが編集中です。編集を破棄して移動してもよろしいですか？'
@@ -372,7 +622,12 @@ const SchemaManager = () => {
   // 基底スキーマ情報更新
   useEffect(() => {
     if (selectedSchemaInfo && selectedSchemaInfo.base_schema) {
-      const baseInfo = GetSchemaInfo(selectedSchemaInfo.base_schema);
+      const baseInfo = GetSchemaInfo(
+        selectedSchemaInfo.base_schema,
+        null,
+        false,
+        true
+      );
       setSelectedBaseSchemaInfo(baseInfo);
     } else {
       setSelectedBaseSchemaInfo(undefined);
@@ -383,9 +638,30 @@ const SchemaManager = () => {
     // 更新用スキーマリストの初期値として変更済親スキーマのリストを取得(変更がない場合は空配列)
     const updateSchemaList = getNeedUpdateParents(false);
 
+    const baseSchemaInfo = lodash.cloneDeep(selectedSchemaInfo);
+    // 有効期限に変更がある場合、エラーがなければ更新を行う
+    if (isNeedUpdateValidDate() && !isValidDateError(true)) {
+      // 一番最新のスキーマのみ、baseSchemaInfoに更新する
+      if (baseSchemaInfo !== undefined) {
+        baseSchemaInfo.hidden = !versionedSchemaList[0].valid;
+        baseSchemaInfo.valid_from = validFrom[0];
+        baseSchemaInfo.valid_until = validUntil[0];
+      }
+      // それ以降は別で処理して更新リストに追加
+      for (let index = 1; index < versionedSchemaList.length; index++) {
+        const target = versionedSchemaList[index];
+        target.schema.hidden = !target.valid;
+        target.schema.valid_from = validFrom[index];
+        target.schema.valid_until = validUntil[index];
+        updateSchemaList.push(target.schema);
+      }
+    } else if (isNeedUpdateValidDate()) {
+      // エラーがある場合は処理を中断する
+      return;
+    }
+
     // 自スキーマのサブスキーマ、子スキーマに更新があれば変更リストに追加する
     if (isNeedUpdateSchema()) {
-      const baseSchemaInfo = lodash.cloneDeep(selectedSchemaInfo);
       if (baseSchemaInfo !== undefined) {
         // サブスキーマ
         // 編集中のサブスキーマのうち有効であるもののみのリストを作る
@@ -415,9 +691,15 @@ const SchemaManager = () => {
           }
         }
         baseSchemaInfo.inherit_schema = tempInheritSchemaList;
-
-        updateSchemaList.push(baseSchemaInfo);
       }
+    }
+
+    // 有効期限かサブスキーマ、子スキーマ、継承スキーマに変更があれば更新対象とする
+    if (
+      (isNeedUpdateValidDate() || isNeedUpdateSchema()) &&
+      baseSchemaInfo !== undefined
+    ) {
+      updateSchemaList.push(baseSchemaInfo);
     }
 
     // POST処理
@@ -427,7 +709,7 @@ const SchemaManager = () => {
   // 初期設定の読込
   const loadDefault = () => {
     // eslint-disable-next-line no-restricted-globals
-    if (confirm('初期設定を読み込みますか？')) {
+    if (confirm('下位スキーマと継承スキーマの初期設定を読み込みますか？')) {
       const tempSubSchemaList: schemaWithValid[] = [];
       const tempChildSchemaList: schemaWithValid[] = [];
       const tempInheritSchemaList: schemaWithValid[] = [];
@@ -438,7 +720,7 @@ const SchemaManager = () => {
           tempSubSchemaList.push({
             valid: true,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            schema: GetSchemaInfo(schemaId)!,
+            schema: GetSchemaInfo(schemaId, null, false, true)!,
           });
         }
 
@@ -448,7 +730,7 @@ const SchemaManager = () => {
           tempChildSchemaList.push({
             valid: true,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            schema: GetSchemaInfo(schemaId)!,
+            schema: GetSchemaInfo(schemaId, null, false, true)!,
           });
         }
 
@@ -458,7 +740,7 @@ const SchemaManager = () => {
           tempInheritSchemaList.push({
             valid: true,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            schema: GetSchemaInfo(schemaId)!,
+            schema: GetSchemaInfo(schemaId, null, false, true)!,
           });
         }
 
@@ -493,10 +775,11 @@ const SchemaManager = () => {
     PARENT: 0,
     CHILD: 1,
     INHERIT: 2,
+    VERSION: 3,
   };
   // チェックボックス状態変更
   const handleCheckClick = (relation: number, type: number, v = ''): void => {
-    // 親スキーマか子スキーマのどっちかを分ける
+    // 親スキーマ、子スキーマ、継承スキーマ、バージョン一覧で処理を分ける
     if (relation === RELATION_TYPE.PARENT) {
       const copyParentInfo = lodash.cloneDeep(selectedSchemaParentInfo);
       // undefinedチェック
@@ -562,6 +845,11 @@ const SchemaManager = () => {
         }
       }
       setInheritSchemaList(copySchemaList);
+    } else if (relation === RELATION_TYPE.VERSION) {
+      // バージョン一覧の場合
+      const copySchemaList = lodash.cloneDeep(versionedSchemaList);
+      copySchemaList[Number(v)].valid = !copySchemaList[Number(v)].valid;
+      setVersionedSchemaList(copySchemaList);
     }
   };
 
@@ -580,6 +868,35 @@ const SchemaManager = () => {
     }
   }, [schemaUploadResponse]);
 
+  const downloadSchema = (
+    targetSchema: JesgoDocumentSchema | null,
+    version = ''
+  ) => {
+    if (targetSchema) {
+      const jsonStr = JSON.stringify(targetSchema.document_schema, null, 2);
+      const blob = new Blob([jsonStr], {
+        type: 'application/json',
+      });
+      let fileName = '';
+      if (targetSchema.schema_id_string) {
+        // ファイル名はスキーマIDの先頭と末尾から"/"を除き、残りの"/"は"_"へ変換する
+        fileName = targetSchema.schema_id_string
+          .replace(/^\/+|\/+$/g, '')
+          .replace(/\//g, '_');
+      }
+      if (fileName) {
+        if (version && version !== '') {
+          saveAs(blob, `${fileName}_${version}.json`);
+        } else {
+          saveAs(blob, `${fileName}.json`);
+        }
+
+        return;
+      }
+    }
+    alert('ダウンロード不可なスキーマです。');
+  };
+
   return (
     <div className="page-area">
       <Navbar collapseOnSelect fixedTop>
@@ -587,22 +904,25 @@ const SchemaManager = () => {
           <Navbar.Brand>
             <img src="./image/logo.png" alt="JESGO" className="img" />
           </Navbar.Brand>
-          <Navbar.Toggle />
         </Navbar.Header>
         <Navbar.Collapse>
           <Nav>
             <NavItem className="header-text">スキーマ管理</NavItem>
           </Nav>
+          <Navbar.Text pullRight>Ver.{Const.VERSION}</Navbar.Text>
           <Nav pullRight>
-            <Navbar.Text>{facilityName}</Navbar.Text>
-            <NavItem>
-              <UserMenu title={userName} i={0} isConfirm={leaveAlart} />
-            </NavItem>
-            <NavItem>
-              <SystemMenu title="設定" i={0} isConfirm={leaveAlart} />
-            </NavItem>
-            <Navbar.Text>Ver.{Const.VERSION}</Navbar.Text>
+            <Navbar.Brand>
+              <div>
+                <UserMenu title={userName} i={0} isConfirm={null} />
+              </div>
+            </Navbar.Brand>
+            <Navbar.Brand>
+              <div>
+                <SystemMenu title="設定" i={0} isConfirm={null} />
+              </div>
+            </Navbar.Brand>
           </Nav>
+          <Navbar.Text pullRight>{facilityName}&nbsp;&nbsp;</Navbar.Text>
         </Navbar.Collapse>
       </Navbar>
 
@@ -637,7 +957,7 @@ const SchemaManager = () => {
         {errorMessages.length > 0 && (
           <Panel className="error-msg-panel-sm">
             {errorMessages.map((error: string) => (
-              <p>{error}</p>
+              <p key={error}>{error}</p>
             ))}
           </Panel>
         )}
@@ -717,34 +1037,12 @@ const SchemaManager = () => {
                           {!selectedBaseSchemaInfo && '(なし)'}
                         </span>
                       </div>
-                      {/* TODO: スキーマダウンロードボタンサンプル */}
                       <div>
                         <Button
                           bsStyle="success"
                           className="normal-button nomargin"
                           title="スキーマファイルをダウンロードします"
-                          onClick={() => {
-                            const jsonStr = JSON.stringify(
-                              selectedSchemaInfo.document_schema,
-                              null,
-                              2
-                            );
-                            const blob = new Blob([jsonStr], {
-                              type: 'application/json',
-                            });
-                            let fileName = '';
-                            if (selectedSchemaInfo.schema_id_string) {
-                              // ファイル名はスキーマIDの先頭と末尾から"/"を除き、残りの"/"は"_"へ変換する
-                              fileName = selectedSchemaInfo.schema_id_string
-                                .replace(/^\/+|\/+$/g, '')
-                                .replace(/\//g, '_');
-                            }
-                            if (fileName) {
-                              saveAs(blob, `${fileName}.json`);
-                            } else {
-                              alert('ダウンロード不可なスキーマです。');
-                            }
-                          }}
+                          onClick={() => downloadSchema(selectedSchemaInfo)}
                         >
                           {' '}
                           スキーマダウンロード
@@ -754,90 +1052,96 @@ const SchemaManager = () => {
                     <fieldset className="schema-manager-legend">
                       <legend>上位スキーマ</legend>
                       <div>
-                        <p>
-                          <div className="caption-and-block">
-                            <span>必須スキーマ ： </span>
-                            <DndSortableTable
-                              checkType={[
-                                RELATION_TYPE.PARENT,
-                                CHECK_TYPE.SUBSCHEMA,
-                              ]}
-                              schemaList={
-                                selectedSchemaParentInfo?.fromSubSchema
-                              }
-                              handleCheckClick={handleCheckClick}
-                              isDragDisabled
-                              isShowCheckDisabled
-                            />
-                          </div>
-                        </p>
-                        <p>
-                          <div className="caption-and-block">
-                            <span>任意スキーマ ： </span>
-                            <DndSortableTable
-                              checkType={[
-                                RELATION_TYPE.PARENT,
-                                CHECK_TYPE.CHILDSCHEMA,
-                              ]}
-                              schemaList={
-                                selectedSchemaParentInfo?.fromChildSchema
-                              }
-                              handleCheckClick={handleCheckClick}
-                              isDragDisabled
-                            />
-                          </div>
-                        </p>
-                      </div>
-                    </fieldset>
-                    <fieldset className="schema-manager-legend">
-                      <legend>下位スキーマ</legend>
-                      <p>
                         <div className="caption-and-block">
                           <span>必須スキーマ ： </span>
                           <DndSortableTable
                             checkType={[
-                              RELATION_TYPE.CHILD,
+                              RELATION_TYPE.PARENT,
                               CHECK_TYPE.SUBSCHEMA,
                             ]}
-                            schemaList={subSchemaList}
-                            setSchemaList={setSubSchemaList}
+                            schemaList={selectedSchemaParentInfo?.fromSubSchema}
                             handleCheckClick={handleCheckClick}
+                            isDragDisabled
                             isShowCheckDisabled
                           />
                         </div>
-                      </p>
-                      <p>
                         <div className="caption-and-block">
                           <span>任意スキーマ ： </span>
                           <DndSortableTable
                             checkType={[
-                              RELATION_TYPE.CHILD,
+                              RELATION_TYPE.PARENT,
                               CHECK_TYPE.CHILDSCHEMA,
                             ]}
-                            schemaList={childSchemaList}
-                            setSchemaList={setChildSchemaList}
+                            schemaList={
+                              selectedSchemaParentInfo?.fromChildSchema
+                            }
                             handleCheckClick={handleCheckClick}
+                            isDragDisabled
                           />
                         </div>
-                      </p>
+                      </div>
+                    </fieldset>
+                    <fieldset className="schema-manager-legend">
+                      <legend>下位スキーマ</legend>
+                      <div className="caption-and-block">
+                        <span>必須スキーマ ： </span>
+                        <DndSortableTable
+                          checkType={[
+                            RELATION_TYPE.CHILD,
+                            CHECK_TYPE.SUBSCHEMA,
+                          ]}
+                          schemaList={subSchemaList}
+                          setSchemaList={setSubSchemaList}
+                          handleCheckClick={handleCheckClick}
+                          isShowCheckDisabled
+                        />
+                      </div>
+                      <div className="caption-and-block">
+                        <span>任意スキーマ ： </span>
+                        <DndSortableTable
+                          checkType={[
+                            RELATION_TYPE.CHILD,
+                            CHECK_TYPE.CHILDSCHEMA,
+                          ]}
+                          schemaList={childSchemaList}
+                          setSchemaList={setChildSchemaList}
+                          handleCheckClick={handleCheckClick}
+                        />
+                      </div>
                     </fieldset>
                     <fieldset className="schema-manager-legend">
                       <legend>継承スキーマ</legend>
                       <div>
-                        <p>
-                          <div className="caption-and-block">
-                            <span />
-                            <DndSortableTable
-                              checkType={[
-                                RELATION_TYPE.INHERIT,
-                                CHECK_TYPE.INHERITSCHEMA,
-                              ]}
-                              schemaList={inheritSchemaList}
-                              handleCheckClick={handleCheckClick}
-                              isDragDisabled
-                            />
-                          </div>
-                        </p>
+                        <div className="caption-and-block">
+                          <span />
+                          <DndSortableTable
+                            checkType={[
+                              RELATION_TYPE.INHERIT,
+                              CHECK_TYPE.INHERITSCHEMA,
+                            ]}
+                            schemaList={inheritSchemaList}
+                            handleCheckClick={handleCheckClick}
+                            isDragDisabled
+                          />
+                        </div>
+                      </div>
+                    </fieldset>
+                    <fieldset className="schema-manager-legend">
+                      <legend>スキーマバージョン</legend>
+                      <div>
+                        <div className="caption-and-block">
+                          <span />
+                          <SchemaVersionTable
+                            checkType={RELATION_TYPE.VERSION}
+                            schemaList={versionedSchemaList}
+                            handleDownloadClick={downloadSchema}
+                            handleCheckClick={handleCheckClick}
+                            validFrom={validFrom}
+                            setValidFrom={setValidFrom}
+                            validUntil={validUntil}
+                            setValidUntil={setValidUntil}
+                          />
+                        </div>
                       </div>
                     </fieldset>
                     <div className="SchemaManagerSaveButtonGroup">

@@ -9,7 +9,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
-import { formatDateStr } from '../../common/DBUtility';
+import { formatDateStr } from '../../common/CommonUtility';
 import IconList from './IconList';
 
 export interface userData {

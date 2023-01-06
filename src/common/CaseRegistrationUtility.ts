@@ -2,11 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import lodash from 'lodash';
-import {
-  JSONSchema7,
-  JSONSchema7Definition,
-  JSONSchema7TypeName,
-} from 'json-schema';
+import { JSONSchema7, JSONSchema7TypeName } from 'json-schema';
 import store from '../store';
 import {
   dispSchemaIdAndDocumentIdDefine,
@@ -18,46 +14,14 @@ import {
   getPropItemsAndNames,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
-import {} from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import { Const } from './Const';
-
-// validation種別
-export enum VALIDATE_TYPE {
-  Message, // メッセージ(エラーではない)
-  Required, // 必須入力エラー
-  MinimumItem, // array最小個数エラー
-  MaximumItem, // array最大個数エラー
-  MinimumNumber, // 数値最小値エラー
-  MaximumNumber, // 数値最大値エラー
-  Regex, // 正規表現エラー
-  Range, // 数値範囲外エラー
-  Constant, // 固定値エラー
-  Enum, // リスト外エラー
-  Number, // 非数値エラー
-  Integer, // 非整数エラー
-  Other, // その他エラー
-}
-
-export type ValidationItem = {
-  message: string;
-  validateType: VALIDATE_TYPE;
-};
-
-export type validationResult = {
-  schema: JSONSchema7;
-  messages: ValidationItem[];
-};
-
-/**
- * validationエラー
- */
-export type RegistrationErrors = {
-  validationResult: validationResult;
-  errDocTitle: string;
-  schemaId: number;
-  documentId: string;
-};
+import {
+  RegistrationErrors,
+  VALIDATE_TYPE,
+  ValidationItem,
+  validationResult,
+} from '../components/CaseRegistration/Definition';
 
 /**
  * 入力値のvalidation
@@ -240,12 +204,14 @@ const validateRequired = (
 /**
  * validationの結果によりschemaを書き換える
  * @param schema
+ * @param schemaId
  * @param formData
  * @param propName
  * @returns
  */
 const customSchemaValidation = (
   schema: JSONSchema7,
+  schemaId: number,
   formData: any,
   propName: string,
   required: string[]
@@ -264,6 +230,7 @@ const customSchemaValidation = (
       const targetItem = targetSchema.pItems[iname] as JSONSchema7;
       const res = customSchemaValidation(
         targetItem,
+        schemaId,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         formData[iname] ?? {},
         iname,
@@ -286,6 +253,7 @@ const customSchemaValidation = (
         if (formData.length < minItems) {
           errFlg = true;
           messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
             message: `　　[ ${displayName} ] ${minItems}件以上入力してください。`,
             validateType: VALIDATE_TYPE.MinimumItem,
           });
@@ -296,6 +264,7 @@ const customSchemaValidation = (
         if (formData.length > maxItems) {
           errFlg = true;
           messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
             message: `　　[ ${displayName} ] ${maxItems}件以下で入力してください。`,
             validateType: VALIDATE_TYPE.MaximumItem,
           });
@@ -306,6 +275,7 @@ const customSchemaValidation = (
       formData.forEach((data: any, index: number) => {
         const res = customSchemaValidation(
           targetSchema,
+          schemaId,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           data ?? {},
           propName,
@@ -315,11 +285,13 @@ const customSchemaValidation = (
         if (res.messages.length > 0) {
           errFlg = true;
           messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
             message: `　[ ${displayName}:${index + 1}行目 ]`,
             validateType: VALIDATE_TYPE.Message,
           });
           res.messages.forEach((item: ValidationItem) => {
             messages.push({
+              // eslint-disable-next-line no-irregular-whitespace
               message: `　　${item.message}`,
               validateType: item.validateType,
             });
@@ -340,6 +312,7 @@ const customSchemaValidation = (
     if (requiredMsg !== '') {
       errFlg = true;
       messages.push({
+        // eslint-disable-next-line no-irregular-whitespace
         message: `　[ ${displayName} ] ${requiredMsg}`,
         validateType: VALIDATE_TYPE.Required,
       });
@@ -369,6 +342,7 @@ const customSchemaValidation = (
       if (oneOfMatchCondition.length === 0) {
         errFlg = true;
         messages.push({
+          // eslint-disable-next-line no-irregular-whitespace
           message: `　[ ${displayName} ] ${subMessages.join('または、')}`,
           validateType: VALIDATE_TYPE.Other,
         });
@@ -390,6 +364,7 @@ const customSchemaValidation = (
     if (errMsgs.length > 0) {
       errFlg = true;
       messages.push({
+        // eslint-disable-next-line no-irregular-whitespace
         message: `　[ ${displayName} ] ${errMsgs
           .map((item) => item.message)
           .join('')}`,
@@ -473,7 +448,10 @@ const GetParentDocumentTitle = (saveData: SaveDataObjDefine, docId: string) => {
   if (!parentDoc) {
     return titleNames;
   }
-  const schemaInfo = GetSchemaInfo(parentDoc.value.schema_id);
+  const schemaInfo = GetSchemaInfo(
+    parentDoc.value.schema_id,
+    parentDoc.value.event_date
+  );
   if (!schemaInfo) {
     return titleNames;
   }
@@ -503,10 +481,14 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const formData = doc.value.document;
       const schemaId = doc.value.schema_id;
+      const eventDate = doc.value.event_date;
       const documentId = doc.key;
 
       // schemaの取得
-      const schemaInfo = GetSchemaInfo(schemaId) as JesgoDocumentSchema;
+      const schemaInfo = GetSchemaInfo(
+        schemaId,
+        eventDate
+      ) as JesgoDocumentSchema;
       const schema = schemaInfo.document_schema;
 
       // schemaのカスタマイズ
@@ -514,6 +496,7 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
       const customSchema = CustomSchema({ orgSchema: schema, formData });
       const validResult: validationResult = customSchemaValidation(
         customSchema,
+        schemaId,
         formData,
         '',
         []
@@ -559,8 +542,43 @@ export const getErrMsg = (errorList: RegistrationErrors[]) => {
   }
   return message;
 };
+
+// スキーマのタイトル取得
+export const GetSchemaTitle = (id: number) => {
+  const schemaInfo = GetSchemaInfo(id);
+  let title = schemaInfo?.title ?? '';
+  if (schemaInfo?.subtitle) {
+    title += ` ${schemaInfo.subtitle}`;
+  }
+  return title;
+};
+
+/**
+ * 無限ループの原因となっているスキーマかどうかを判定する
+ * 無限ループの原因である場合はその旨のアラートも出力する
+ * @param schemaId 調査対象のスキーマID
+ * @returns 無限ループの原因か否か
+ */
+export const isInfiniteLoopBlackList = (
+  schemaId: number,
+  showAlert = false
+): boolean => {
+  const blackList: number[] = store.getState().schemaDataReducer.blackList;
+  if (blackList.includes(schemaId)) {
+    const title = GetSchemaTitle(schemaId);
+    if (showAlert) {
+      // eslint-disable-next-line no-alert
+      alert(
+        `${title}にエラーがあるため一部のスキーマが作成できませんでした。スキーマ定義を見直してください`
+      );
+    }
+    return true;
+  }
+  return false;
+};
+
 // 指定スキーマのサブスキーマIDを孫スキーマ含めすべて取得
-export const GetAllSubSchemaIds = (id: number) => {
+export const GetAllSubSchemaIds = (id: number, showAlert = false) => {
   const schemaIds: number[] = [];
 
   const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
@@ -569,7 +587,7 @@ export const GetAllSubSchemaIds = (id: number) => {
     schemaIds.push(...schemaInfo[0].subschema);
 
     schemaInfo[0].subschema.forEach((schemaId) => {
-      schemaIds.push(...GetAllSubSchemaIds(schemaId)); // 再帰
+      schemaIds.push(...GetAllSubSchemaIds(schemaId, showAlert)); // 再帰
     });
   }
 
@@ -668,16 +686,6 @@ export const convertTabKey = (parentTabKey: string, tabKey: any) => {
   return convTabKey;
 };
 
-// スキーマのタイトル取得
-export const GetSchemaTitle = (id: number) => {
-  const schemaInfo = GetSchemaInfo(id);
-  let title = schemaInfo?.title ?? '';
-  if (schemaInfo?.subtitle) {
-    title += ` ${schemaInfo.subtitle}`;
-  }
-  return title;
-};
-
 // Schemaから非表示項目を取得
 export const GetHiddenPropertyNames = (schema: JSONSchema7) => {
   let hiddenItemNames: string[] = [];
@@ -773,7 +781,7 @@ export const IsNotUpdate = () => {
 export const isNotEmptyObject = (obj: any) => {
   let hasInput = false;
 
-  if (obj === undefined || obj === null) {
+  if (obj == null) {
     return hasInput;
   }
 
@@ -856,38 +864,19 @@ interface Obj {
   [prop: string]: any;
 }
 
-export const GetInheritFormData = (
-  baseSchemaId: number,
-  inheritSchemaId: number,
-  formData: any
+const GET_CHANGE_TYPE = {
+  INHERIT: 0,
+  VERSION: 1,
+};
+
+// フォームデータの引継ぎ
+const transferFormData = (
+  formData: any,
+  baseCustomSchema: JSONSchema7,
+  changedSchema: JSONSchema7,
+  isOnChange = false // formDataのonChangeかどうか
 ) => {
-  if (
-    !formData ||
-    Object.keys(formData).length === 0 ||
-    // スキーマIDが同じ場合はそのまま使用できるのでそのまま返す
-    baseSchemaId === inheritSchemaId
-  ) {
-    return formData;
-  }
-
-  const baseSchemaInfo = GetSchemaInfo(baseSchemaId);
-  const inheritSchemaInfo = GetSchemaInfo(inheritSchemaId);
-
-  if (!baseSchemaInfo || !inheritSchemaInfo) {
-    return formData;
-  }
-
-  // 継承元のスキーマ
-  const baseCustomSchema = CustomSchema({
-    orgSchema: baseSchemaInfo.document_schema,
-    formData,
-  });
-  // 継承先のスキーマ
-  const inheritSchema = CustomSchema({
-    orgSchema: inheritSchemaInfo.document_schema,
-    formData: {},
-  });
-
+  // TODO: 必ずオブジェクトではないので切り分けが必要
   const newFormData: Obj = {};
 
   Object.entries(formData).forEach((item) => {
@@ -900,13 +889,28 @@ export const GetInheritFormData = (
     if (baseCustomSchema.properties) {
       jsonSchema1 = baseCustomSchema.properties[propName] as JSONSchema7;
     }
-    if (inheritSchema.properties) {
-      jsonSchema2 = inheritSchema.properties[propName] as JSONSchema7;
+    if (changedSchema.properties) {
+      jsonSchema2 = changedSchema.properties[propName] as JSONSchema7;
+    }
+
+    // 継承先にデフォルト値設定ありの場合は引き継がない
+    // formDataのonChange時はデフォルト値設定されないので引き継ぐ
+    if (
+      !isOnChange &&
+      jsonSchema2 &&
+      jsonSchema2.default != null &&
+      jsonSchema2.default !== ''
+    ) {
+      return;
     }
 
     if (jsonSchema1 && !jsonSchema2) {
       // 継承先にプロパティがない → 引き継ぐ
-      if (typeof propValue === 'object' && propValue) {
+      if (
+        !Array.isArray(propValue) &&
+        typeof propValue === 'object' &&
+        propValue
+      ) {
         // undefinedなプロパティは引き継がない
         const omitValue = lodash.omit(
           propValue,
@@ -918,7 +922,8 @@ export const GetInheritFormData = (
         if (Object.keys(omitValue).length > 0) {
           newFormData[propName] = omitValue;
         }
-      } else {
+      } else if (!Array.isArray(propValue) || propValue.length > 0) {
+        // Array以外、またはArrayの場合は項目があれば引き継ぐ
         newFormData[propName] = propValue;
       }
     } else if (jsonSchema1 && jsonSchema2) {
@@ -938,11 +943,125 @@ export const GetInheritFormData = (
   return newFormData;
 };
 
+export const GetChangedFormData = (
+  changeType: number,
+  baseSchemaId: number,
+  inheritSchemaId: number,
+  oldSchemaInfo: JSONSchema7 | null,
+  eventDate: string,
+  formData: any,
+  isOnChange = false
+) => {
+  // 形式に関わらずformDataが存在しないか中身が空の場合はそのまま使いまわす
+  if (
+    !formData ||
+    typeof formData !== 'object' ||
+    Object.keys(formData).length === 0
+  ) {
+    return formData;
+  }
+
+  let baseCustomSchema: JSONSchema7;
+  let changedSchema: JSONSchema7;
+
+  // 継承の場合
+  if (changeType === GET_CHANGE_TYPE.INHERIT) {
+    // スキーマIDが同じ場合はそのまま使用できるのでそのまま返す
+    if (baseSchemaId === inheritSchemaId) {
+      return formData;
+    }
+
+    const baseSchemaInfo = GetSchemaInfo(baseSchemaId);
+    const changedSchemaInfo = GetSchemaInfo(inheritSchemaId);
+
+    if (!baseSchemaInfo || !changedSchemaInfo) {
+      return formData;
+    }
+
+    // 継承元のスキーマ
+    baseCustomSchema = CustomSchema({
+      orgSchema: baseSchemaInfo.document_schema,
+      formData,
+    });
+    // 継承先のスキーマ
+    changedSchema = CustomSchema({
+      orgSchema: changedSchemaInfo.document_schema,
+      formData,
+    });
+  }
+  // バージョン変更の場合
+  else {
+    const changedSchemaInfo = GetSchemaInfo(baseSchemaId, eventDate);
+    if (!oldSchemaInfo || !changedSchemaInfo) {
+      return formData;
+    }
+
+    // 継承元のスキーマ
+    baseCustomSchema = CustomSchema({
+      orgSchema: oldSchemaInfo,
+      formData,
+    });
+    // 継承先のスキーマ
+    changedSchema = CustomSchema({
+      orgSchema: changedSchemaInfo.document_schema,
+      formData,
+    });
+  }
+
+  // formDataが配列の場合は配列の中身を1つずつ処理
+  if (Array.isArray(formData)) {
+    return formData.map((fm) =>
+      transferFormData(fm, baseCustomSchema, changedSchema, isOnChange)
+    );
+  }
+
+  return transferFormData(
+    formData,
+    baseCustomSchema,
+    changedSchema,
+    isOnChange
+  );
+};
+
+export const GetInheritFormData = (
+  baseSchemaId: number,
+  inheritSchemaId: number,
+  formData: any,
+  isOnChange = false
+) =>
+  GetChangedFormData(
+    GET_CHANGE_TYPE.INHERIT,
+    baseSchemaId,
+    inheritSchemaId,
+    null,
+    '',
+    formData,
+    isOnChange
+  );
+
+export const GetVersionedFormData = (
+  schemaId: number,
+  oldSchemaInfo: JSONSchema7,
+  eventDate: string,
+  formData: any,
+  isOnChange = false
+) =>
+  GetChangedFormData(
+    GET_CHANGE_TYPE.VERSION,
+    schemaId,
+    schemaId,
+    oldSchemaInfo,
+    eventDate,
+    formData,
+    isOnChange
+  );
+
 export const GetBeforeInheritDocumentData = (
   parentDocId: string,
   schemaId: number
 ) => {
   let retDocs: jesgoDocumentObjDefine[] = [];
+  let searchDocId = parentDocId;
 
   const deletedDocuments = store.getState().formDataReducer.deletedDocuments;
 
@@ -950,12 +1069,21 @@ export const GetBeforeInheritDocumentData = (
   const processedDocumentIds =
     store.getState().formDataReducer.processedDocumentIds;
 
-  if (parentDocId === '') {
+  // 親のIDが仮番の場合、旧IDを取得
+  if (parentDocId.startsWith('K')) {
+    const item = processedDocumentIds.find((p) => p[1] === parentDocId);
+    if (item) {
+      searchDocId = item[0];
+    }
+  }
+
+  if (searchDocId === '') {
     // documentIdの指定がない場合は全検索
     deletedDocuments.forEach((item) => {
       const filter = item.deletedChildDocuments.filter(
         (p) =>
-          p.value.schema_id === schemaId && !processedDocumentIds.has(p.key)
+          p.value.schema_id === schemaId &&
+          !processedDocumentIds.find((q) => q[0] === p.key)
       );
       if (filter.length > 0) {
         retDocs = filter;
@@ -964,12 +1092,13 @@ export const GetBeforeInheritDocumentData = (
   } else {
     // documentIdの指定がある場合はそのdocumentIdに紐づくデータを取得
     const deletedItem = deletedDocuments.find(
-      (p) => p.parentDocumentId === parentDocId
+      (p) => p.parentDocumentId === searchDocId
     );
     if (deletedItem) {
       const baseDoc = deletedItem.deletedChildDocuments.filter(
         (p) =>
-          p.value.schema_id === schemaId && !processedDocumentIds.has(p.key)
+          p.value.schema_id === schemaId &&
+          !processedDocumentIds.find((q) => q[0] === p.key)
       );
       if (baseDoc.length > 0) {
         retDocs = baseDoc;
@@ -978,4 +1107,25 @@ export const GetBeforeInheritDocumentData = (
   }
 
   return retDocs;
+};
+
+/**
+ * データ出力用画面オープン
+ * @param win window
+ * @param srcData 出力するデータ
+ */
+export const OpenOutputView = (win: typeof window, srcData: any) => {
+  win.addEventListener(
+    'message',
+    (e) => {
+      // 画面の準備ができたらデータをポストする
+      if (e.origin === win.location.origin && e.data === 'output_ready') {
+        // ★TODO: 仮実装
+        e.source?.postMessage({ jsonData: srcData });
+      }
+    },
+    false
+  );
+
+  win.open('/OutputView', 'outputview');
 };

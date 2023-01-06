@@ -8,11 +8,11 @@ import {
 } from 'react-bootstrap';
 import { useLocation, useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
-import { staffData } from '../../views/Stafflist';
-import StaffEditModalDialog from './StaffEditModal';
+import { staffData } from './StaffData';
+import { StaffEditModalDialog } from './StaffEditModal';
 
-let insert: boolean = false;
-let srcData: staffData | undefined = undefined;
+let insert = false;
+let srcData: staffData | undefined;
 
 const makeTable = (props: {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -31,12 +31,6 @@ const makeTable = (props: {
   let staffDataListJson: staffDataList;
   const url: string = useLocation().search;
 
-  useEffect(() => {
-    console.log('makeTable');
-
-    ReadStaffData();
-  }, [update]);
-
   const ReadStaffData = () => {
     const f = async () => {
       setIsLoading(true);
@@ -46,12 +40,9 @@ const makeTable = (props: {
         `userlist${url}`
       );
       if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        console.log('userList API call');
-        console.log(returnApiObject.body);
         staffDataListJson = JSON.parse(
           JSON.stringify(returnApiObject.body)
         ) as staffDataList;
-        console.log(staffDataListJson.data.length);
         setStaffList([...staffDataListJson.data]);
       } else {
         navigate('/login');
@@ -61,6 +52,10 @@ const makeTable = (props: {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     f();
   };
+
+  useEffect(() => {
+    ReadStaffData();
+  }, [update]);
 
   const addStaff = () => {
     insert = true;
@@ -122,7 +117,7 @@ const makeTable = (props: {
   }, [setShow]);
 
   const convertRollName = (rollId: number) => {
-    var rollName = '';
+    let rollName = '';
     switch (rollId) {
       case 0:
         rollName = 'システム管理者';

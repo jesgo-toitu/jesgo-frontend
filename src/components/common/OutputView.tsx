@@ -89,8 +89,7 @@ const OutputView = () => {
 
   const saveClickCsv = useCallback(() => {
     if (resultTable) {
-      
-      fileDownload(resultStr, 'data.json');
+      // fileDownload(resultStr, 'data.json');
     } else {
       alert('ダウンロード可能なデータがありません');
     }

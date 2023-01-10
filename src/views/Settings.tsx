@@ -300,19 +300,6 @@ const Settings = () => {
             </Button>
           </div>
         </div>
-
-        <CsvTable
-          csv={[
-            ['No', '項目名', '内容'],
-            [
-              '1',
-              '項目1あああああああああああああああああああああああああああああああああああああああああああああああああああああ',
-              '内容だよ',
-            ],
-            ['2', '項目2', '122'],
-          ]}
-        />
-
         <div className="setting-list">
           <Table striped className="setting-table">
             <thead>

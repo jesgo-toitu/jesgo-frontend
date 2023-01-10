@@ -89,7 +89,26 @@ const OutputView = () => {
 
   const saveClickCsv = useCallback(() => {
     if (resultTable) {
-      // fileDownload(resultStr, 'data.json');
+      let csvText = '';
+      // eslint-disable-next-line no-plusplus
+      for (let index = 0; index < resultTable.length; index++) {
+        const row = resultTable[index];
+        let columnFirst = true;
+        // eslint-disable-next-line no-plusplus
+        for (let cIndex = 0; cIndex < row.length; cIndex++) {
+          const column = row[cIndex];
+          if (columnFirst) {
+            columnFirst = false;
+          } else {
+            csvText += ',';
+          }
+          csvText +=
+            typeof column === 'string' ? `"${column}"` : column.toString();
+        }
+        csvText += '\n';
+      }
+
+      fileDownload(csvText, 'data.csv');
     } else {
       alert('ダウンロード可能なデータがありません');
     }

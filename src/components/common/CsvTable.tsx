@@ -7,7 +7,7 @@ type CsvTableProps = {
 };
 
 const tableStyle: React.CSSProperties = {
-  margin: '5rem',
+  margin: '2rem',
   minWidth: '20rem',
   borderBottom: '1px solid #c0c0c0',
   display: 'table',

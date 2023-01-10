@@ -873,7 +873,8 @@ const GET_CHANGE_TYPE = {
 const transferFormData = (
   formData: any,
   baseCustomSchema: JSONSchema7,
-  changedSchema: JSONSchema7
+  changedSchema: JSONSchema7,
+  isOnChange = false // formDataのonChangeかどうか
 ) => {
   // TODO: 必ずオブジェクトではないので切り分けが必要
   const newFormData: Obj = {};
@@ -893,7 +894,9 @@ const transferFormData = (
     }
 
     // 継承先にデフォルト値設定ありの場合は引き継がない
+    // formDataのonChange時はデフォルト値設定されないので引き継ぐ
     if (
+      !isOnChange &&
       jsonSchema2 &&
       jsonSchema2.default != null &&
       jsonSchema2.default !== ''
@@ -946,7 +949,8 @@ export const GetChangedFormData = (
   inheritSchemaId: number,
   oldSchemaInfo: JSONSchema7 | null,
   eventDate: string,
-  formData: any
+  formData: any,
+  isOnChange = false
 ) => {
   // 形式に関わらずformDataが存在しないか中身が空の場合はそのまま使いまわす
   if (
@@ -982,7 +986,7 @@ export const GetChangedFormData = (
     // 継承先のスキーマ
     changedSchema = CustomSchema({
       orgSchema: changedSchemaInfo.document_schema,
-      formData: {},
+      formData,
     });
   }
   // バージョン変更の場合
@@ -1000,24 +1004,30 @@ export const GetChangedFormData = (
     // 継承先のスキーマ
     changedSchema = CustomSchema({
       orgSchema: changedSchemaInfo.document_schema,
-      formData: {},
+      formData,
     });
   }
 
   // formDataが配列の場合は配列の中身を1つずつ処理
   if (Array.isArray(formData)) {
     return formData.map((fm) =>
-      transferFormData(fm, baseCustomSchema, changedSchema)
+      transferFormData(fm, baseCustomSchema, changedSchema, isOnChange)
     );
   }
 
-  return transferFormData(formData, baseCustomSchema, changedSchema);
+  return transferFormData(
+    formData,
+    baseCustomSchema,
+    changedSchema,
+    isOnChange
+  );
 };
 
 export const GetInheritFormData = (
   baseSchemaId: number,
   inheritSchemaId: number,
-  formData: any
+  formData: any,
+  isOnChange = false
 ) =>
   GetChangedFormData(
     GET_CHANGE_TYPE.INHERIT,
@@ -1025,14 +1035,16 @@ export const GetInheritFormData = (
     inheritSchemaId,
     null,
     '',
-    formData
+    formData,
+    isOnChange
   );
 
 export const GetVersionedFormData = (
   schemaId: number,
   oldSchemaInfo: JSONSchema7,
   eventDate: string,
-  formData: any
+  formData: any,
+  isOnChange = false
 ) =>
   GetChangedFormData(
     GET_CHANGE_TYPE.VERSION,
@@ -1040,7 +1052,8 @@ export const GetVersionedFormData = (
     schemaId,
     oldSchemaInfo,
     eventDate,
-    formData
+    formData,
+    isOnChange
   );
 
 export const GetBeforeInheritDocumentData = (

@@ -8,6 +8,7 @@ import 'prismjs/components/prism-javascript.min';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.min.css';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.min';
 import 'prismjs/themes/prism-tomorrow.min.css';
+import CsvTable from './CsvTable';
 
 /**
  * データ出力用View
@@ -16,11 +17,13 @@ import 'prismjs/themes/prism-tomorrow.min.css';
 const OutputView = () => {
   // 表示する文字列
   const [resultStr, setResultStr] = useState<string | null>('');
+  const [resultTable, setResultTable] = useState<(string | number)[][]>([[]]);
 
   const CODE_TYPES = {
     NONE: '',
     JSON: 'language-json',
     JAVA_SCRIPT: 'language-js',
+    CSV: 'csv',
   };
   const [codeType, setCodeType] = useState<string>(CODE_TYPES.NONE);
 
@@ -58,6 +61,13 @@ const OutputView = () => {
         } else if (typeof e.data === 'string') {
           setCodeType(CODE_TYPES.JAVA_SCRIPT);
           setResultStr(e.data);
+        } else if (Array.isArray(e.data)) {
+          console.log('csv1');
+          if (e.data.length > 0 && Array.isArray(e.data[0])) {
+            console.log('csv2');
+            setCodeType(CODE_TYPES.CSV);
+            setResultTable(e.data);
+          }
         }
       }
     });
@@ -77,6 +87,15 @@ const OutputView = () => {
     }
   }, [resultStr]);
 
+  const saveClickCsv = useCallback(() => {
+    if (resultTable) {
+      
+      fileDownload(resultStr, 'data.json');
+    } else {
+      alert('ダウンロード可能なデータがありません');
+    }
+  }, [resultTable]);
+
   return (
     <div>
       <div>
@@ -89,12 +108,24 @@ const OutputView = () => {
             ダウンロード
           </Button>
         )}
+        {codeType === CODE_TYPES.CSV && (
+          <Button
+            bsStyle="success"
+            className="normal-button"
+            onClick={saveClickCsv}
+          >
+            ダウンロード
+          </Button>
+        )}
       </div>
-      <pre style={{ margin: '1rem ' }} className="line-numbers">
-        <code className={codeType}>
-          {resultStr || '表示可能なデータがありません'}
-        </code>
-      </pre>
+      {codeType !== CODE_TYPES.CSV && (
+        <pre style={{ margin: '1rem ' }} className="line-numbers">
+          <code className={codeType}>
+            {resultStr || '表示可能なデータがありません'}
+          </code>
+        </pre>
+      )}
+      {codeType === CODE_TYPES.CSV && <CsvTable csv={resultTable} />}
     </div>
   );
 };

@@ -418,7 +418,7 @@ const Patients = () => {
 
     setTimeoutPromise(wrapperFunc)
       .then((res) => {
-        OpenOutputView(window, (res as any).anyValue);
+        OpenOutputView(window, (res as any).anyValue ?? res);
       })
       .catch((err) => {
         if (err === 'timeout') {

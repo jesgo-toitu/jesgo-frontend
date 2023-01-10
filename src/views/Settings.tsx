@@ -7,6 +7,7 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
+import CsvTable from '../components/common/CsvTable';
 
 export type settingsFromApi = {
   hisid_alignment: string;
@@ -299,6 +300,18 @@ const Settings = () => {
             </Button>
           </div>
         </div>
+
+        <CsvTable
+          csv={[
+            ['No', '項目名', '内容'],
+            [
+              '1',
+              '項目1あああああああああああああああああああああああああああああああああああああああああああああああああああああ',
+              '内容だよ',
+            ],
+            ['2', '項目2', '122'],
+          ]}
+        />
 
         <div className="setting-list">
           <Table striped className="setting-table">

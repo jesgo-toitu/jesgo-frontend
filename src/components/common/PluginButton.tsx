@@ -56,7 +56,7 @@ const PluginButton = (props: {
     ])
       .then((res) => {
         // eslint-disable-next-line
-        OpenOutputView(window, (res as any).anyValue);
+        OpenOutputView(window, (res as any).anyValue ?? res);
       })
       .catch((err) => {
         if (err === 'timeout') {

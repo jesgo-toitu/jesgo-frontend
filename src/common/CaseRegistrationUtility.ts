@@ -1115,13 +1115,45 @@ export const GetBeforeInheritDocumentData = (
  * @param srcData 出力するデータ
  */
 export const OpenOutputView = (win: typeof window, srcData: any) => {
+
+  const postData = (e:MessageEvent<any>) => {
+
+    // 画面の準備ができたらデータをポストする
+    if (e.origin === win.location.origin && e.data === 'output_ready') {
+      if(Array.isArray(srcData) && srcData.length > 0){
+        if(Array.isArray(srcData[0])){
+          console.log("array");
+          e.source?.postMessage(srcData);
+        }else{
+          console.log("json");
+          e.source?.postMessage({ jsonData: srcData });
+        }
+      }
+      win.removeEventListener(
+        'message',
+        postData,
+        false
+      );
+    }
+  }
+
+  win.addEventListener(
+    'message',
+    postData,
+    false
+  );
+
+  win.open('/OutputView', 'outputview');
+};
+
+export const OpenOutputViewScript = (win: typeof window, srcData: string) => {
   win.addEventListener(
     'message',
     (e) => {
       // 画面の準備ができたらデータをポストする
       if (e.origin === win.location.origin && e.data === 'output_ready') {
         // ★TODO: 仮実装
-        e.source?.postMessage({ jsonData: srcData });
+        e.source?.postMessage(srcData);
       }
     },
     false

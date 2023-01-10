@@ -12,6 +12,7 @@ import './index.css';
 import './biz-udpgothic.css';
 import SchemaManager from './views/SchemaManager';
 import OutputView from './components/common/OutputView';
+import PluginManager from './views/PluginManager';
 
 const RedirectToLogin = () => <Navigate to="/Login" />;
 
@@ -27,6 +28,7 @@ ReactDOM.render(
         <Route path="/Settings" element={<Settings />} />
         <Route path="/SchemaManager" element={<SchemaManager />} />
         <Route path="/OutputView" element={<OutputView />} />
+        <Route path="/PluginManager" element={<PluginManager />} />
       </Routes>
     </BrowserRouter>
   </Provider>,

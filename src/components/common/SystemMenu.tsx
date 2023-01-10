@@ -49,6 +49,19 @@ export const SystemMenu = (props: {
     }
   }, []);
 
+  const handlPluginManager = useCallback(() => {
+    // TODO: プラグイン管理画面を開ける権限はまた別途あるので修正必要あり
+    if (isConfirm === null || isConfirm()) {
+      const auth = localStorage.getItem('is_system_manage_roll');
+      if (auth === 'true') {
+        RemoveBeforeUnloadEvent();
+        navigate('/PluginManager');
+      }
+      // eslint-disable-next-line no-alert
+      else alert('権限がありません');
+    }
+  }, []);
+
   return (
     <ButtonToolbar>
       <DropdownButton
@@ -60,6 +73,7 @@ export const SystemMenu = (props: {
       >
         <MenuItem onSelect={handlUserMaintenance}>利用者管理</MenuItem>
         <MenuItem onSelect={handlSchemaManager}>スキーマ管理</MenuItem>
+        <MenuItem onSelect={handlPluginManager}>プラグイン管理</MenuItem>
         <MenuItem onSelect={handlSystemSettings}>システム設定</MenuItem>
       </DropdownButton>
     </ButtonToolbar>

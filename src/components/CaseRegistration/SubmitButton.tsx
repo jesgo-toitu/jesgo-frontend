@@ -10,8 +10,9 @@ import SaveCommand, {
   GetPackagedDocument,
   responseResult,
 } from '../../common/DBUtility';
-import { RESULT } from '../../common/ApiAccess';
+import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import {
+  fTimeout,
   RemoveBeforeUnloadEvent,
   setTimeoutPromise,
 } from '../../common/CommonUtility';
@@ -20,6 +21,8 @@ import {
   OpenOutputView,
 } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
+import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
+import { TargetPatientPluginButton } from '../common/PluginButton';
 
 interface ButtonProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -37,6 +40,24 @@ const SubmitButton = (props: ButtonProps) => {
     setIsReload,
     setErrors,
   } = props;
+
+  const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
+    []
+  );
+
+  useEffect(() => {
+    const f = async () => {
+      // プラグイン全ロード処理
+      const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
+      if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+        const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+        setJesgoPluginList(pluginList);
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
+  }, []);
 
   // 保存時の応答
   const [saveResponse, setSaveResponse] = useState<responseResult>({
@@ -135,9 +156,18 @@ const SubmitButton = (props: ButtonProps) => {
     }
   };
 
+  const getPatient = () => [
+    store.getState().formDataReducer.saveData.jesgo_case,
+  ];
+
   return (
     <Col className="user-info-button-col">
       <div className="user-info-button-div">
+        <TargetPatientPluginButton
+          pluginList={jesgoPluginList}
+          getTargetFunction={getPatient}
+          setIsLoading={setIsLoading}
+        />
         {process.env.DEV_MODE === '1' && (
           <Button
             bsStyle="danger"
@@ -149,6 +179,7 @@ const SubmitButton = (props: ButtonProps) => {
                   [store.getState().formDataReducer.saveData.jesgo_case],
                   undefined,
                   undefined,
+                  undefined,
                   true
                 );
 
@@ -156,7 +187,7 @@ const SubmitButton = (props: ButtonProps) => {
 
               setTimeoutPromise(wrapperFunc)
                 .then((res) => {
-                  OpenOutputView(window, (res as any).anyValue);
+                  OpenOutputView(window, (res as any).anyValue ?? res);
                 })
                 .catch((err) => {
                   if (err === 'timeout') {

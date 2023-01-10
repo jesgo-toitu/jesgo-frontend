@@ -129,7 +129,7 @@ export const formatDateStr = (dtStr: string, separator: string): string => {
   }
 };
 
-const fTimeout = (timeoutSec: number) =>
+export const fTimeout = (timeoutSec: number) =>
   new Promise((resolve, reject) => {
     setTimeout(() => {
       // eslint-disable-next-line prefer-promise-reject-errors

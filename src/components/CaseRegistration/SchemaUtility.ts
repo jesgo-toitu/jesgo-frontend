@@ -11,6 +11,7 @@ import JSONPointer from 'jsonpointer';
 import lodash from 'lodash';
 import { Dispatch } from 'redux';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { isNotEmptyObject } from '../../common/CaseRegistrationUtility';
 import { formatDate, isDate } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import store from '../../store';
@@ -537,7 +538,11 @@ const GetSchemaFromPropItem = (val: any) => {
     schemaObj.type = 'object';
     schemaObj.properties = {};
     Object.entries(val).forEach((entryItem) => {
-      schemaObj.properties![entryItem[0]] = GetSchemaFromPropItem(entryItem[1]);
+      if (isNotEmptyObject(entryItem[1])) {
+        schemaObj.properties![entryItem[0]] = GetSchemaFromPropItem(
+          entryItem[1]
+        );
+      }
     });
   }
 
@@ -574,9 +579,17 @@ const customSchemaAppendFormDataProperty = (
     Object.entries(formData)
       .filter((p) => formKeys.includes(p[0]))
       .forEach((item) => {
+        // 空オブジェクトは除外
+        if (
+          !Array.isArray(item[1]) &&
+          typeof item[1] === 'object' &&
+          !isNotEmptyObject(item[1])
+        ) {
+          return;
+        }
+
         // formDataのプロパティからスキーマ生成
         const schemaObj = GetSchemaFromPropItem(item[1]);
-
         // 元スキーマのプロパティに追加
         copySchema.properties![item[0]] = schemaObj;
       });

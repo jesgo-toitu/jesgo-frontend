@@ -275,7 +275,8 @@ const CustomDivForm = (props: CustomDivFormProp) => {
           GetSchemaIdFromString(e.schema.$id!),
           e.schema,
           currentEventDate,
-          data
+          data,
+          true
         );
         if (newFormdata) {
           if (
@@ -324,6 +325,14 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     if (isFirstOnChange && hasDefault && !isFirstRederComplited) {
       // 作成直後のデフォルト値設定によるonChangeの場合は表示中のデータとデフォルト値をマージする
       data = lodash.merge(formData, e.formData);
+
+      dispatch({
+        type: 'INPUT',
+        schemaId,
+        formData: data,
+        documentId,
+        isUpdateInput: true,
+      });
     }
 
     // jesgo:getの値反映

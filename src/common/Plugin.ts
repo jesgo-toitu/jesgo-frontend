@@ -89,6 +89,9 @@ export const executePlugin = async (plugin:jesgoPluginColumns, patientList:(jesg
   if(plugin.update_db){
     // データ更新系
   }else{
+    if(plugin.attach_patient_info && !confirm("出力結果に患者情報が含まれています、実行しますか？")){
+      return undefined;
+    }
     // データ出力系)
     if(patientList){
       if(targetDocumentId) {

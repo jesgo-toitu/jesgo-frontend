@@ -6,22 +6,12 @@ import '../../views/Registration.css';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import store from '../../store/index';
-import SaveCommand, {
-  GetPackagedDocument,
-  responseResult,
-} from '../../common/DBUtility';
+import SaveCommand, { responseResult } from '../../common/DBUtility';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
-import {
-  fTimeout,
-  RemoveBeforeUnloadEvent,
-  setTimeoutPromise,
-} from '../../common/CommonUtility';
-import {
-  IsNotUpdate,
-  OpenOutputView,
-} from '../../common/CaseRegistrationUtility';
+import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
+import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
-import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
+import { jesgoPluginColumns } from '../../common/Plugin';
 import { TargetPatientPluginButton } from '../common/PluginButton';
 
 interface ButtonProps {
@@ -168,40 +158,6 @@ const SubmitButton = (props: ButtonProps) => {
           getTargetFunction={getPatient}
           setIsLoading={setIsLoading}
         />
-        {process.env.DEV_MODE === '1' && (
-          <Button
-            bsStyle="danger"
-            className="normal-button"
-            onClick={() => {
-              // ★TODO: 仮実装
-              const wrapperFunc = () =>
-                GetPackagedDocument(
-                  [store.getState().formDataReducer.saveData.jesgo_case],
-                  undefined,
-                  undefined,
-                  undefined,
-                  true
-                );
-
-              setIsLoading(true);
-
-              setTimeoutPromise(wrapperFunc)
-                .then((res) => {
-                  OpenOutputView(window, (res as any).anyValue ?? res);
-                })
-                .catch((err) => {
-                  if (err === 'timeout') {
-                    alert('操作がタイムアウトしました');
-                  }
-                })
-                .finally(() => {
-                  setIsLoading(false);
-                });
-            }}
-          >
-            ドキュメント出力
-          </Button>
-        )}
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
         <Button
           bsStyle="success"

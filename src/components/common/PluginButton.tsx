@@ -4,6 +4,7 @@ import DropdownButton from 'react-bootstrap/lib/DropdownButton';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
 import { OpenOutputView } from '../../common/CaseRegistrationUtility';
 import { fTimeout } from '../../common/CommonUtility';
+import { Const } from '../../common/Const';
 import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
 import { jesgoCaseDefine } from '../../store/formDataReducer';
 
@@ -51,7 +52,7 @@ const PluginButton = (props: {
 
     setIsLoading(true);
     await Promise.race([
-      fTimeout(2),
+      fTimeout(Const.PLUGIN_TIMEOUT_SEC),
       executePlugin(plugin, getTargetFunction()),
     ])
       .then((res) => {
@@ -69,7 +70,7 @@ const PluginButton = (props: {
   };
 
   return (
-    <ButtonToolbar>
+    <ButtonToolbar style={{ margin: '1rem' }}>
       <DropdownButton
         aria-hidden="true"
         bsSize="small"

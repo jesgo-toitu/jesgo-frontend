@@ -25,17 +25,11 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
-import {
-  formatDate,
-  formatTime,
-  setTimeoutPromise,
-} from '../common/CommonUtility';
+import { formatDate, formatTime } from '../common/CommonUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
-import { GetPackagedDocument } from '../common/DBUtility';
 import { jesgoCaseDefine } from '../store/formDataReducer';
-import { OpenOutputView } from '../common/CaseRegistrationUtility';
 import { jesgoPluginColumns } from '../common/Plugin';
 import { PatientListPluginButton } from '../components/common/PluginButton';
 
@@ -404,32 +398,6 @@ const Patients = () => {
     return caseInfoList;
   };
 
-  const createDocumentSample = () => {
-    const wrapperFunc = () =>
-      GetPackagedDocument(
-        getPatientList(),
-        undefined,
-        undefined,
-        undefined,
-        true
-      );
-
-    setIsLoading(true);
-
-    setTimeoutPromise(wrapperFunc)
-      .then((res) => {
-        OpenOutputView(window, (res as any).anyValue ?? res);
-      })
-      .catch((err) => {
-        if (err === 'timeout') {
-          alert('操作がタイムアウトしました');
-        }
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  };
-
   const submit = async (type: string) => {
     setIsLoading(true);
     const token = localStorage.getItem('token');
@@ -561,16 +529,6 @@ const Patients = () => {
               getTargetFunction={getPatientList}
               setIsLoading={setIsLoading}
             />
-            {/* // ★TODO: 仮実装 */}
-            {process.env.DEV_MODE === '1' && (
-              <Button
-                bsStyle="danger"
-                className="normal-button"
-                onClick={() => createDocumentSample()}
-              >
-                ドキュメント出力
-              </Button>
-            )}
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (
               <Button

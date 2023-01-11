@@ -290,9 +290,6 @@ const PluginManager = () => {
                 <td className="plugin-table-short">{plugin.plugin_version}</td>
                 <td className="plugin-table-short">
                   {plugin.update_db ? 'データ更新' : 'データ出力'}
-                  <Button onClick={() => moduleInit(plugin.script_text)}>
-                    init
-                  </Button>
                 </td>
                 <td>
                   {plugin.target_schema_id

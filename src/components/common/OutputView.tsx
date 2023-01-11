@@ -9,6 +9,7 @@ import 'prismjs/plugins/line-numbers/prism-line-numbers.min.css';
 import 'prismjs/plugins/line-numbers/prism-line-numbers.min';
 import 'prismjs/themes/prism-tomorrow.min.css';
 import CsvTable from './CsvTable';
+import { toShiftJIS } from '../../common/CommonUtility';
 
 /**
  * データ出力用View
@@ -108,7 +109,9 @@ const OutputView = () => {
         csvText += '\n';
       }
 
-      fileDownload(csvText, 'data.csv');
+      const sjisText = toShiftJIS(csvText);
+
+      fileDownload(sjisText, 'data.csv');
     } else {
       alert('ダウンロード可能なデータがありません');
     }

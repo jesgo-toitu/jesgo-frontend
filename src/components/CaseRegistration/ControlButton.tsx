@@ -15,8 +15,7 @@ import store from '../../store/index';
 import { ChildTabSelectedFuncObj } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
-import { GetPackagedDocument } from '../../common/DBUtility';
-import { fTimeout, setTimeoutPromise } from '../../common/CommonUtility';
+import { fTimeout } from '../../common/CommonUtility';
 import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 
@@ -312,40 +311,13 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             });
           }
           break;
-        // TODO: ★仮実装
-        case 'output': {
-          const wrapperFunc = () =>
-            GetPackagedDocument(
-              [store.getState().formDataReducer.saveData.jesgo_case],
-              undefined,
-              Number(documentId),
-              undefined,
-              true
-            );
 
-          setIsLoading(true);
-
-          setTimeoutPromise(wrapperFunc)
-            .then((res) => {
-              OpenOutputView(window, (res as any).anyValue ?? res);
-            })
-            .catch((err) => {
-              if (err === 'timeout') {
-                alert('操作がタイムアウトしました');
-              }
-            })
-            .finally(() => {
-              setIsLoading(false);
-            });
-
-          break;
-        }
         case eventKey.startsWith('plugin_') && eventKey: {
           setIsLoading(true);
           const f = async () => {
             if (plugin) {
               await Promise.race([
-                fTimeout(2),
+                fTimeout(Const.PLUGIN_TIMEOUT_SEC),
                 executePlugin(
                   plugin,
                   [store.getState().formDataReducer.saveData.jesgo_case],
@@ -644,10 +616,6 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           <Glyphicon glyph="th-list" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          {process.env.DEV_MODE === '1' && (
-            <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
-          )}
-
           {jesgoPluginList.map(
             (plugin: jesgoPluginColumns) =>
               !plugin.all_patient &&

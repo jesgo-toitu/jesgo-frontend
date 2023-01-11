@@ -43,6 +43,7 @@ interface CustomDivFormProp extends FormProps<any> {
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >;
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
+  setEventDateChanged: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // jesgo:getの項目を計算してformDataにセットする
@@ -98,9 +99,7 @@ const adaptJesgoGetValueToFormData = (
               break;
           }
 
-          if (setValue != null && setValue !== '') {
-            (targetFormData as Obj)[pName] = setValue;
-          }
+          (targetFormData as Obj)[pName] = setValue;
         }
       } else if (item.type === 'object') {
         if ((targetFormData as Obj)[pName] == null) {
@@ -126,8 +125,15 @@ const adaptJesgoGetValueToFormData = (
 // - onChangeでuseStateで保持しているformDataを更新する
 const CustomDivForm = (props: CustomDivFormProp) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { schemaId, dispatch, setFormData, documentId, isTabItem, setErrors } =
-    props;
+  const {
+    schemaId,
+    dispatch,
+    setFormData,
+    documentId,
+    isTabItem,
+    setErrors,
+    setEventDateChanged,
+  } = props;
   let { formData, schema } = props;
 
   const copyProps = { ...props };
@@ -297,6 +303,9 @@ const CustomDivForm = (props: CustomDivFormProp) => {
 
           data = newFormdata;
         }
+
+        // eventdate変更通知を親に投げる
+        setEventDateChanged(true);
       }
     }
 

@@ -88,6 +88,9 @@ const RootSchema = React.memo((props: Props) => {
   const [updateChildFormData, setUpdateChildFormData] =
     useState<boolean>(false);
 
+  // eventdate変更フラグ
+  const [, setEventDateChanged] = useState<boolean>(false);
+
   const dispatch = useDispatch();
 
   const saveDoc = store
@@ -541,6 +544,7 @@ const RootSchema = React.memo((props: Props) => {
           dispSchemaIds={[...dispSchemaIds]}
           setDispSchemaIds={setDispSchemaIds}
           setErrors={setErrors}
+          setEventDateChanged={setEventDateChanged}
         />
         <ControlButton
           tabId={tabId}

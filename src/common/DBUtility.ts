@@ -274,10 +274,17 @@ export const checkEventDateInfinityLoop = (
   return ret;
 };
 
-// event_date取得処理
+/**
+ * eventdate取得処理
+ * @param jesgoDoc
+ * @param formData
+ * @param findDirection 検索方向 up: 親ドキュメントに遡るって探索 down: 子ドキュメントを探索
+ * @returns
+ */
 export const getEventDate = (
   jesgoDoc: jesgoDocumentObjDefine,
-  formData: any
+  formData: any,
+  findDirection: 'up' | 'down' = 'up'
 ): string => {
   let eventDate = '';
 
@@ -337,15 +344,34 @@ export const getEventDate = (
   }
 
   if (!eventDate) {
-    // 親のeventDate取得処理
     const jesgoDocList =
       store.getState().formDataReducer.saveData.jesgo_document;
-    const parentDoc = jesgoDocList.find((p) =>
-      p.value.child_documents.includes(jesgoDoc.key)
-    );
-    if (parentDoc) {
-      // 見つかるまでルートまで探索
-      eventDate = getEventDate(parentDoc, parentDoc.value.document);
+
+    // 親のeventDate取得処理
+    if (findDirection === 'up') {
+      const parentDoc = jesgoDocList.find((p) =>
+        p.value.child_documents.includes(jesgoDoc.key)
+      );
+      if (parentDoc) {
+        // 見つかるまでルートまで探索
+        eventDate = getEventDate(
+          parentDoc,
+          parentDoc.value.document,
+          findDirection
+        );
+      }
+    } else if (jesgoDoc.value.child_documents.length > 0) {
+      // 子ドキュメントからeventdate取得
+      // eslint-disable-next-line no-restricted-syntax
+      for (const childDocId of jesgoDoc.value.child_documents) {
+        const cDoc = jesgoDocList.find((p) => p.key === childDocId);
+        if (cDoc) {
+          eventDate = getEventDate(cDoc, cDoc.value.document, findDirection);
+        }
+        if (eventDate) {
+          break;
+        }
+      }
     }
   }
 

@@ -1238,7 +1238,11 @@ export const GetInitialTreatmentDate = (
       );
       if (initialTreatmentDoc.length > 0) {
         // 初回治療スキーマがあればeventdate取得
-        initialDate = getEventDate(currentDoc, formData);
+        initialDate = getEventDate(currentDoc, formData, 'up');
+        // TODO: 親になければ子からeventdateを拾う処理は暫定。不要かも
+        if (!initialDate) {
+          initialDate = getEventDate(currentDoc, formData, 'down');
+        }
       }
     });
   }

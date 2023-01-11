@@ -18,7 +18,6 @@ import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import {
   dispSchemaIdAndDocumentIdDefine,
   jesgoDocumentObjDefine,
-  SaveDataObjDefine,
 } from '../../store/formDataReducer';
 import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
 import { createPanels, createTabs } from './FormCommonComponents';
@@ -95,6 +94,9 @@ const TabSchema = React.memo((props: Props) => {
   // 子ドキュメントの更新有無
   const [updateChildFormData, setUpdateChildFormData] =
     useState<boolean>(false);
+
+  // eventdate変更フラグ
+  const [eventDateChanged, setEventDateChanged] = useState<boolean>(false);
 
   const saveDoc = store
     .getState()
@@ -540,7 +542,11 @@ const TabSchema = React.memo((props: Props) => {
         break;
       }
     }
-    setUpdateChildFormData(false);
+    if (updateChildFormData) {
+      // 親タブに子タブの更新を伝える
+      setUpdateFormData(true);
+      setUpdateChildFormData(false);
+    }
 
     // 子ドキュメントに入力がなければ自身のドキュメントチェック
     if (!hasInput) {
@@ -570,7 +576,13 @@ const TabSchema = React.memo((props: Props) => {
     ) {
       dispatch({ type: 'CHANGED_SCHEMA', documentId, schemaInfo });
     }
-  }, [formData, updateChildFormData]);
+
+    // eventdateに変更あった場合も親に変更通知する
+    if (eventDateChanged) {
+      setUpdateFormData(true);
+      setEventDateChanged(false);
+    }
+  }, [formData, updateChildFormData, eventDateChanged]);
 
   return (
     <>
@@ -586,6 +598,7 @@ const TabSchema = React.memo((props: Props) => {
           dispSchemaIds={[...dispSchemaIds]}
           setDispSchemaIds={setDispSchemaIds}
           setErrors={setErrors}
+          setEventDateChanged={setEventDateChanged}
         />
         <ControlButton
           tabId={tabId}

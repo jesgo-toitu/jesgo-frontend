@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import lodash from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Form, { FormProps, IChangeEvent } from '@rjsf/core';
 import { Dispatch } from 'redux';
 import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/ValidationError';
@@ -59,15 +59,21 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     formData = thisDocument.value.document;
   }
 
+  const schemaData = store
+    .getState()
+    .schemaDataReducer.schemaDatas.get(schemaId);
   // 無限ループチェック
-  const loopCheck = checkEventDateInfinityLoop(
-    formData,
-    store.getState().schemaDataReducer.schemaDatas.get(schemaId)
+  const loopCheck = useMemo(
+    () => checkEventDateInfinityLoop(formData, schemaData),
+    [formData, schemaData]
   );
   // eventdateの初期値設定
   let initEventDate = '';
   if (thisDocument) {
-    initEventDate = getEventDate(thisDocument, formData);
+    initEventDate = useMemo(
+      () => getEventDate(thisDocument, formData),
+      [thisDocument, formData]
+    );
   }
 
   const [eventDate, setEventDate] = useState<string>(initEventDate);
@@ -107,7 +113,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   }
 
   // uiSchema作成
-  const uiSchema = CreateUISchema(schema);
+  const uiSchema = useMemo(() => CreateUISchema(schema), [schema]);
   if (isTabItem) {
     uiSchema['ui:ObjectFieldTemplate'] =
       JESGOFiledTemplete.TabItemFieldTemplate;

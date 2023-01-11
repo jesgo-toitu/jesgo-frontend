@@ -70,10 +70,16 @@ const PanelSchema = React.memo((props: Props) => {
   const saveDoc = store
     .getState()
     .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
-  const eventDate = saveDoc ? getEventDate(saveDoc, formData) : null;
+  const eventDate = useMemo(
+    () => (saveDoc ? getEventDate(saveDoc, formData) : null),
+    [saveDoc, formData]
+  );
 
   // schemaIdをもとに情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema;
+  const schemaInfo = useMemo(
+    () => GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema,
+    [schemaId, eventDate]
+  );
   if (schemaInfo == null) {
     return null;
   }
@@ -112,7 +118,10 @@ const PanelSchema = React.memo((props: Props) => {
     subschema,
     child_schema: childSchema,
   } = schemaInfo;
-  const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+  const customSchema = useMemo(
+    () => CustomSchema({ orgSchema: documentSchema, formData }),
+    [documentSchema, formData]
+  ); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
   const isTab = customSchema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'tab';
 
   // unique=falseの追加可能なサブスキーマまたは未作成サブスキーマ

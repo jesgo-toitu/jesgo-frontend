@@ -1,7 +1,8 @@
 /* eslint-disable no-lonely-if */
 import { Buffer } from 'buffer';
 import { jesgoCaseDefine } from '../store/formDataReducer';
-import { RESULT } from './ApiAccess';
+import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
+import { toUTF8 } from './CommonUtility';
 import { GetPackagedDocument } from './DBUtility';
 
 window.Buffer = Buffer;
@@ -77,8 +78,28 @@ const getTargetDocument = async (doc:argDoc) => {
   return undefined;
 }
 
+const updatePatientsDocument = async (doc:JSON|undefined) => {
+  const ret = await apiAccess(
+    METHOD_TYPE.POST_ZIP,
+    `plugin-update`,
+    doc
+  );
+  if(ret.statusNum === RESULT.NORMAL_TERMINATION){
+    return ret;
+  }
+  return undefined;
+}
+
 export const moduleMain = async (scriptText:string, func:(doc:any)=>Promise<any>, doc?:{caseList?:jesgoCaseDefine[], targetSchemas?:number[]}):Promise<unknown> => {
   // モジュール読み込みからのmain実行
+  const module = await GetModule(scriptText);
+  const retValue = await module.main(doc, func);
+
+  return retValue;
+}
+
+export const moduleMainUpdate = async (scriptText:string, func:(doc:any)=>Promise<any>, doc?:string):Promise<unknown> => {
+  // モジュール読み込みからのmain実行、引数にCSVファイルを利用することあり
   const module = await GetModule(scriptText);
   const retValue = await module.main(doc, func);
 
@@ -88,7 +109,36 @@ export const moduleMain = async (scriptText:string, func:(doc:any)=>Promise<any>
 export const executePlugin = async (plugin:jesgoPluginColumns, patientList:(jesgoCaseDefine[]|undefined), targetDocumentId:number|undefined = undefined) => {
   if(plugin.update_db){
     // データ更新系
+    if(plugin.show_upload_dialog){
+      // ファイルアップロードあり
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.onchange = () => {
+        const files = fileInput.files;
+        const file = files? files[0] : undefined;
+        let csvText = "";
+        if(file){
+          const reader = new FileReader();
+          reader.onload = async () => {
+            const data = reader.result;
+            if(typeof data === "string"){
+              csvText = new TextDecoder().decode(toUTF8(data));
+            }
+            const retValue = await moduleMainUpdate(plugin.script_text, updatePatientsDocument, csvText);
+            return retValue;
+          }
+          reader.readAsBinaryString(file)
+        }
+      }
+      fileInput.click();
+    } else {
+      // ファイルアップロードなし
+      const retValue = await moduleMainUpdate(plugin.script_text, updatePatientsDocument);
+      return retValue;
+    }
+    
   }else{
+    // eslint-disable-next-line
     if(plugin.attach_patient_info && !confirm("出力結果に患者情報が含まれています、実行しますか？")){
       return undefined;
     }

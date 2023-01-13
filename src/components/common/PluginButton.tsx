@@ -25,16 +25,12 @@ const PluginButton = (props: {
   useEffect(() => {
     switch (pageType) {
       case PAGE_TYPE.PATIENT_LIST: {
-        setTargetPlugins(
-          pluginList.filter((p) => p.all_patient && !p.update_db)
-        );
+        setTargetPlugins(pluginList.filter((p) => p.all_patient));
         break;
       }
       case PAGE_TYPE.TARGET_PATIENT: {
         setTargetPlugins(
-          pluginList.filter(
-            (p) => !p.all_patient && !p.target_schema_id && !p.update_db
-          )
+          pluginList.filter((p) => !p.all_patient && !p.target_schema_id)
         );
         break;
       }
@@ -43,8 +39,13 @@ const PluginButton = (props: {
   }, [pluginList]);
 
   const handlePluginSelect = async (plugin: jesgoPluginColumns) => {
-    const auth = localStorage.getItem('is_plugin_executable_select');
-    if (auth !== 'true') {
+    // 権限振り分け
+    const selectAuth = localStorage.getItem('is_plugin_executable_select');
+    const updateAuth = localStorage.getItem('is_plugin_executable_update');
+    if (
+      (plugin.update_db && updateAuth !== 'true') ||
+      (!plugin.update_db && selectAuth !== 'true')
+    ) {
       // eslint-disable-next-line no-alert
       alert('権限がありません');
       return;

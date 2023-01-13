@@ -1122,10 +1122,8 @@ export const OpenOutputView = (win: typeof window, srcData: any) => {
     if (e.origin === win.location.origin && e.data === 'output_ready') {
       if(Array.isArray(srcData) && srcData.length > 0){
         if(Array.isArray(srcData[0])){
-          console.log("array");
           e.source?.postMessage(srcData);
         }else{
-          console.log("json");
           e.source?.postMessage({ jsonData: srcData });
         }
       }

@@ -63,9 +63,7 @@ const OutputView = () => {
           setCodeType(CODE_TYPES.JAVA_SCRIPT);
           setResultStr(e.data);
         } else if (Array.isArray(e.data)) {
-          console.log('csv1');
           if (e.data.length > 0 && Array.isArray(e.data[0])) {
-            console.log('csv2');
             setCodeType(CODE_TYPES.CSV);
             setResultTable(e.data);
           }

@@ -129,3 +129,16 @@ export const toShiftJIS = (utf8String: string) => {
   });
   return new Uint8Array(sjisArray);
 };
+
+export const toUTF8 = (sjisString: string) => {
+  const unicodeList = [];
+
+  for (let i = 0; i < sjisString.length; i += 1) {
+    unicodeList.push(sjisString.charCodeAt(i));
+  }
+  const sjisArray = Encoding.convert(unicodeList, {
+    to: 'UTF8',
+    from: 'AUTO',
+  });
+  return new Uint8Array(sjisArray);
+};

@@ -44,6 +44,17 @@ const DndSortableTable = (props: DndSortableTableProps) => {
     const result = copySchemaList;
     const [removed] = result.splice(startIndex, 1);
     result.splice(endIndex, 0, removed);
+
+    // 継承スキーマの場合、最上位のスキーマは表示ON、非活性とする
+    if (checkType[0] === 2) {
+      result[0].validCheckDisabled = true;
+      result[0].valid = true;
+      // 最上位以外のスキーマは表示チェック活性
+      for (let i = 1; i < result.length; i += 1) {
+        result[i].validCheckDisabled = false;
+      }
+    }
+
     return result;
   };
 
@@ -116,7 +127,12 @@ const DndSortableTable = (props: DndSortableTableProps) => {
                             <Checkbox
                               className="show-flg-checkbox"
                               checked={row.valid}
-                              disabled={isShowCheckDisabled}
+                              disabled={
+                                // disabledの個別指定があればそちらを優先して適応
+                                row.validCheckDisabled !== undefined
+                                  ? row.validCheckDisabled
+                                  : isShowCheckDisabled
+                              }
                               onChange={() =>
                                 handleCheckClick(
                                   checkType[0],

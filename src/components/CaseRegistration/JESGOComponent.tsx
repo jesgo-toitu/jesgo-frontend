@@ -636,6 +636,7 @@ export namespace JESGOComp {
           disableListWrap
           disableClearable
           freeSolo
+          forcePopupIcon={comboItemList.length > 0}
           clearOnBlur={false}
           handleHomeEndKeys={false}
           disabled={readonly}

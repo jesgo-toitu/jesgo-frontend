@@ -80,7 +80,7 @@ const getTargetDocument = async (doc:argDoc) => {
 
 const updatePatientsDocument = async (doc:JSON|undefined) => {
   const ret = await apiAccess(
-    METHOD_TYPE.POST_ZIP,
+    METHOD_TYPE.POST,
     `plugin-update`,
     doc
   );

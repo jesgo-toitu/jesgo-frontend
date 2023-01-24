@@ -7,6 +7,7 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
+import CsvTable from '../components/common/CsvTable';
 
 export type settingsFromApi = {
   hisid_alignment: string;
@@ -299,7 +300,6 @@ const Settings = () => {
             </Button>
           </div>
         </div>
-
         <div className="setting-list">
           <Table striped className="setting-table">
             <thead>

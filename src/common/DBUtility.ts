@@ -645,14 +645,16 @@ export const UploadSchemaFile = async (
  */
 export const GetPackagedDocument = async (
   jesgoCaseList: jesgoCaseDefine[],
-  schema_id?: number,
+  schema_ids?: number[],
   document_id?: number,
+  filter_query?: string,
   attachPatientInfoDetail?: boolean
 ) => {
   const apiResult = await apiAccess(METHOD_TYPE.POST, `packaged-document/`, {
     jesgoCaseList,
-    schema_id,
+    schema_ids,
     document_id,
+    filter_query,
     attachPatientInfoDetail,
   });
 
@@ -665,6 +667,42 @@ export const GetPackagedDocument = async (
   res.anyValue = apiResult.body;
 
   return res;
+};
+
+/**
+ * プラグインファイル(zip)のアップロード処理
+ * @param zipFile
+ * @param
+ */
+export const UploadPluginFile = async (
+  zipFile: File,
+  setPluginUploadResponse: React.Dispatch<React.SetStateAction<responseResult>>,
+  setErrorMessages: React.Dispatch<React.SetStateAction<string[]>>
+) => {
+  type uploadApiBody = {
+    number: number;
+    message: string[];
+  };
+  const res: responseResult = { message: '' };
+  const apiResult = await apiAccess(
+    METHOD_TYPE.POST_ZIP,
+    `upload-plugin`,
+    zipFile
+  );
+  const apiBody = apiResult.body as uploadApiBody;
+  res.resCode = apiResult.statusNum;
+  if (apiBody && apiBody.number > 0) {
+    res.message = `${apiBody.number}件のプラグインを更新しました`;
+  } else {
+    res.message = '【エラー】\nプラグインの更新に失敗しました';
+  }
+
+  if (apiBody && apiBody.message && apiBody.message.length > 0) {
+    setErrorMessages(apiBody.message);
+  }
+
+  // 呼び元に返す
+  setPluginUploadResponse(res);
 };
 
 export default SaveCommand;

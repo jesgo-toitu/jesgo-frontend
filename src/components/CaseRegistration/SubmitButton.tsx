@@ -157,6 +157,7 @@ const SubmitButton = (props: ButtonProps) => {
           pluginList={jesgoPluginList}
           getTargetFunction={getPatient}
           setIsLoading={setIsLoading}
+          setReload={setIsReload}
         />
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
         <Button

@@ -29,6 +29,9 @@ type argDoc = {
   filterQuery:string|undefined;
 }
 
+let pluginData:jesgoPluginColumns;
+let targetCaseId:number;
+
 // モジュールのFunc定義インターフェース
 interface IPluginModule {
     init: () => Promise<string>;
@@ -55,8 +58,6 @@ export const moduleInit = (scriptText:string) => {
   GetModule(scriptText).then((module) => {
     // eslint-disable-next-line no-void
     void module.init().then((res) => {
-      console.log("init")
-      console.log(res)
     });
   });
 };
@@ -78,15 +79,43 @@ const getTargetDocument = async (doc:argDoc) => {
   return undefined;
 }
 
-const updatePatientsDocument = async (doc:JSON|undefined) => {
-  const ret = await apiAccess(
-    METHOD_TYPE.POST,
-    `plugin-update`,
-    doc
-  );
-  if(ret.statusNum === RESULT.NORMAL_TERMINATION){
-    return ret;
+const updatePatientsDocument = async (doc:any|any[]|undefined) => {
+  type UpdateObject = {
+    targetSchema?:number[];
+    updateTarget?:any|any[];
   }
+
+  if(pluginData){
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const localUpdateTarget = doc;
+    if(targetCaseId){
+      if(Array.isArray(localUpdateTarget)){
+        // eslint-disable-next-line no-plusplus
+        for (let index = 0; index < localUpdateTarget.length; index++) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          localUpdateTarget[index].case_id = targetCaseId;
+        }
+      }
+    }
+    const updateObject:UpdateObject = {
+      targetSchema: [],
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      updateTarget: doc
+    };
+    if(pluginData.target_schema_id){
+      updateObject.targetSchema = pluginData.target_schema_id;
+    }
+
+    const ret = await apiAccess(
+      METHOD_TYPE.POST,
+      `plugin-update`,
+      updateObject
+    );
+    if(ret.statusNum === RESULT.NORMAL_TERMINATION){
+      return ret;
+    }
+  }
+
   return undefined;
 }
 
@@ -106,9 +135,14 @@ export const moduleMainUpdate = async (scriptText:string, func:(doc:any)=>Promis
   return retValue;
 }
 
-export const executePlugin = async (plugin:jesgoPluginColumns, patientList:(jesgoCaseDefine[]|undefined), targetDocumentId:number|undefined = undefined) => {
+export const executePlugin = async (plugin:jesgoPluginColumns, patientList:(jesgoCaseDefine[]|undefined), targetDocumentId:number|undefined = undefined, setReload:((value: React.SetStateAction<boolean>) => void)|undefined = undefined) => {
+  pluginData = plugin;
   if(plugin.update_db){
     // データ更新系
+    if(patientList){
+      // 対象患者が指定されている場合
+      targetCaseId = Number(patientList[0].case_id)
+    }
     if(plugin.show_upload_dialog){
       // ファイルアップロードあり
       const fileInput = document.createElement('input');
@@ -125,6 +159,9 @@ export const executePlugin = async (plugin:jesgoPluginColumns, patientList:(jesg
               csvText = new TextDecoder().decode(toUTF8(data));
             }
             const retValue = await moduleMainUpdate(plugin.script_text, updatePatientsDocument, csvText);
+            if(setReload){
+              setReload(true);
+            }
             return retValue;
           }
           reader.readAsBinaryString(file)

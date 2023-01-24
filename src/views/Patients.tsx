@@ -109,7 +109,40 @@ const Patients = () => {
     []
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isReload, setIsReload] = useState(false);
   const dispatch = useDispatch();
+
+  const reloadPatient = async () => {
+    // 患者情報取得APIを呼ぶ
+    const returnApiObject = await apiAccess(
+      METHOD_TYPE.GET,
+      `patientlist${url}`
+    );
+
+    if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      setUserListJson(JSON.stringify(returnApiObject.body));
+    } else {
+      navigate('/login');
+    }
+  };
+
+  // 患者情報再読み込み
+  useEffect(() => {
+    const f = async () => {
+      setIsLoading(true);
+
+      // 患者情報の取得を行う
+      await reloadPatient();
+
+      setIsLoading(false);
+    };
+
+    if (isReload) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      f();
+      setIsReload(false);
+    }
+  }, [isReload]);
 
   useEffect(() => {
     const f = async () => {
@@ -127,17 +160,8 @@ const Patients = () => {
         setFacilityName(returned.facility_name);
       }
 
-      // 患者情報取得APIを呼ぶ
-      const returnApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        `patientlist${url}`
-      );
-
-      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        setUserListJson(JSON.stringify(returnApiObject.body));
-      } else {
-        navigate('/login');
-      }
+      // 患者情報の取得を行う
+      await reloadPatient();
 
       // プラグイン全ロード処理
       const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
@@ -528,6 +552,7 @@ const Patients = () => {
               pluginList={jesgoPluginList}
               getTargetFunction={getPatientList}
               setIsLoading={setIsLoading}
+              setReload={setIsReload}
             />
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (

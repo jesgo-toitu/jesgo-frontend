@@ -117,7 +117,7 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
       copyState.blackList = action.blackList;
 
       break;
-      
+
     default:
   }
   return copyState;

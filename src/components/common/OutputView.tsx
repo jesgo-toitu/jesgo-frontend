@@ -82,6 +82,7 @@ const OutputView = () => {
     if (resultStr) {
       fileDownload(resultStr, 'data.json');
     } else {
+      // eslint-disable-next-line no-alert
       alert('ダウンロード可能なデータがありません');
     }
   }, [resultStr]);
@@ -111,6 +112,7 @@ const OutputView = () => {
 
       fileDownload(sjisText, 'data.csv');
     } else {
+      // eslint-disable-next-line no-alert
       alert('ダウンロード可能なデータがありません');
     }
   }, [resultTable]);

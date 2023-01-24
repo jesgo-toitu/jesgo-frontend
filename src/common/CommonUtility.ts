@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 
-import Encoding from "encoding-japanese";
+import Encoding from 'encoding-japanese';
 
 /* ここには画面機能に依存しない共通関数などを記述する */
 

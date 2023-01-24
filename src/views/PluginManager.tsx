@@ -26,7 +26,7 @@ import {
   OpenOutputViewScript,
 } from '../common/CaseRegistrationUtility';
 import './PluginManager.css';
-import { jesgoPluginColumns, moduleInit, moduleMain } from '../common/Plugin';
+import { jesgoPluginColumns } from '../common/Plugin';
 
 type settings = {
   facility_name: string;
@@ -45,7 +45,7 @@ const PluginManager = () => {
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [, setErrorMessages] = useState<string[]>([]);
 
   const [pluginUploadResponse, setPluginUploadResponse] =
     useState<responseResult>({ message: '', resCode: undefined });

@@ -330,6 +330,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
                 })
                 .catch((err) => {
                   if (err === 'timeout') {
+                    // eslint-disable-next-line no-alert
                     alert('操作がタイムアウトしました');
                   }
                 })
@@ -337,6 +338,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
                   setIsLoading(false);
                 });
             } else {
+              // eslint-disable-next-line no-alert
               alert('不正な入力です。');
             }
           };

@@ -23,73 +23,91 @@ export type jesgoPluginColumns = {
 };
 
 type argDoc = {
-  caseList:jesgoCaseDefine[];
-  targetSchemas?:number[]|undefined;
-  targetDocument?:number|undefined
-  filterQuery:string|undefined;
-}
+  caseList: jesgoCaseDefine[];
+  targetSchemas?: number[] | undefined;
+  targetDocument?: number | undefined;
+  filterQuery: string | undefined;
+};
 
-let pluginData:jesgoPluginColumns;
-let targetCaseId:number;
+let pluginData: jesgoPluginColumns;
+let targetCaseId: number;
 
 // モジュールのFunc定義インターフェース
 interface IPluginModule {
-    init: () => Promise<string>;
-    main: ( doc:any, func:(args:any[])=>Promise<any> ) => Promise<unknown>;
+  init: () => Promise<string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  main: (doc: any, func: (args: any[]) => Promise<any>) => Promise<unknown>;
 }
 
-const GetModule: (scriptText:string) => Promise<IPluginModule> = async (scriptText:string) => {
-    // バックエンドから読み込み予定のスクリプト文字列
-    const readScriptText = Buffer.from(scriptText).toString('base64');
-    const script = `data:text/javascript;base64,${readScriptText}`;
+const GetModule: (scriptText: string) => Promise<IPluginModule> = async (
+  scriptText: string
+) => {
+  // バックエンドから読み込み予定のスクリプト文字列
+  const readScriptText = Buffer.from(scriptText).toString('base64');
+  const script = `data:text/javascript;base64,${readScriptText}`;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const pluginmodule: Promise<IPluginModule> = await import(
-      /* webpackIgnore: true */ script
-    ); // webpackIgnoreコメント必要
-    return pluginmodule;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const pluginmodule: Promise<IPluginModule> = await import(
+    /* webpackIgnore: true */ script
+  ); // webpackIgnoreコメント必要
+  return pluginmodule;
 };
 
-export const moduleInit = (scriptText:string) => {
-
+export const moduleInit = (scriptText: string) => {
   // モジュール読み込みからのinit実行
 
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   GetModule(scriptText).then((module) => {
     // eslint-disable-next-line no-void
-    void module.init().then((res) => {
-    });
+    void module.init().then();
   });
 };
 
-const getPatientsDocument = async (doc:argDoc) => {
-  const schemaIds = doc.targetSchemas && doc.targetSchemas.length > 0 ? doc.targetSchemas : undefined;
-  const ret = await GetPackagedDocument(doc.caseList, schemaIds, undefined, doc.filterQuery, true);
-  if(ret.resCode === RESULT.NORMAL_TERMINATION){
+const getPatientsDocument = async (doc: argDoc) => {
+  const schemaIds =
+    doc.targetSchemas && doc.targetSchemas.length > 0
+      ? doc.targetSchemas
+      : undefined;
+  const ret = await GetPackagedDocument(
+    doc.caseList,
+    schemaIds,
+    undefined,
+    doc.filterQuery,
+    true
+  );
+  if (ret.resCode === RESULT.NORMAL_TERMINATION) {
     return ret;
   }
   return undefined;
-}
+};
 
-const getTargetDocument = async (doc:argDoc) => {
-  const ret = await GetPackagedDocument(doc.caseList, undefined, doc.targetDocument, doc.filterQuery, true);
-  if(ret.resCode === RESULT.NORMAL_TERMINATION){
+const getTargetDocument = async (doc: argDoc) => {
+  const ret = await GetPackagedDocument(
+    doc.caseList,
+    undefined,
+    doc.targetDocument,
+    doc.filterQuery,
+    true
+  );
+  if (ret.resCode === RESULT.NORMAL_TERMINATION) {
     return ret;
   }
   return undefined;
-}
+};
 
-const updatePatientsDocument = async (doc:any|any[]|undefined) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const updatePatientsDocument = async (doc: any | any[] | undefined) => {
   type UpdateObject = {
-    targetSchema?:number[];
-    updateTarget?:any|any[];
-  }
+    targetSchema?: number[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    updateTarget?: any | any[];
+  };
 
-  if(pluginData){
+  if (pluginData) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const localUpdateTarget = doc;
-    if(targetCaseId){
-      if(Array.isArray(localUpdateTarget)){
+    if (targetCaseId) {
+      if (Array.isArray(localUpdateTarget)) {
         // eslint-disable-next-line no-plusplus
         for (let index = 0; index < localUpdateTarget.length; index++) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -97,12 +115,12 @@ const updatePatientsDocument = async (doc:any|any[]|undefined) => {
         }
       }
     }
-    const updateObject:UpdateObject = {
+    const updateObject: UpdateObject = {
       targetSchema: [],
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      updateTarget: doc
+      updateTarget: doc,
     };
-    if(pluginData.target_schema_id){
+    if (pluginData.target_schema_id) {
       updateObject.targetSchema = pluginData.target_schema_id;
     }
 
@@ -111,94 +129,145 @@ const updatePatientsDocument = async (doc:any|any[]|undefined) => {
       `plugin-update`,
       updateObject
     );
-    if(ret.statusNum === RESULT.NORMAL_TERMINATION){
+    if (ret.statusNum === RESULT.NORMAL_TERMINATION) {
       return ret;
     }
   }
 
   return undefined;
-}
+};
 
-export const moduleMain = async (scriptText:string, func:(doc:any)=>Promise<any>, doc?:{caseList?:jesgoCaseDefine[], targetSchemas?:number[]}):Promise<unknown> => {
+export const moduleMain = async (
+  scriptText: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  func: (doc: any) => Promise<any>,
+  doc?: { caseList?: jesgoCaseDefine[]; targetSchemas?: number[] }
+): Promise<unknown> => {
   // モジュール読み込みからのmain実行
   const module = await GetModule(scriptText);
   const retValue = await module.main(doc, func);
 
   return retValue;
-}
+};
 
-export const moduleMainUpdate = async (scriptText:string, func:(doc:any)=>Promise<any>, doc?:string):Promise<unknown> => {
+export const moduleMainUpdate = async (
+  scriptText: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  func: (doc: any) => Promise<any>,
+  doc?: string
+): Promise<unknown> => {
   // モジュール読み込みからのmain実行、引数にCSVファイルを利用することあり
   const module = await GetModule(scriptText);
   const retValue = await module.main(doc, func);
 
   return retValue;
-}
+};
 
-export const executePlugin = async (plugin:jesgoPluginColumns, patientList:(jesgoCaseDefine[]|undefined), targetDocumentId:number|undefined = undefined, setReload:((value: React.SetStateAction<boolean>) => void)|undefined = undefined) => {
+export const executePlugin = async (
+  plugin: jesgoPluginColumns,
+  patientList: jesgoCaseDefine[] | undefined,
+  targetDocumentId: number | undefined = undefined,
+  setReload:
+    | ((value: React.SetStateAction<boolean>) => void)
+    | undefined = undefined
+) => {
   pluginData = plugin;
-  if(plugin.update_db){
+  if (plugin.update_db) {
     // データ更新系
-    if(patientList){
+    if (patientList) {
       // 対象患者が指定されている場合
-      targetCaseId = Number(patientList[0].case_id)
+      targetCaseId = Number(patientList[0].case_id);
     }
-    if(plugin.show_upload_dialog){
+    if (plugin.show_upload_dialog) {
       // ファイルアップロードあり
       const fileInput = document.createElement('input');
       fileInput.type = 'file';
       fileInput.onchange = () => {
         const files = fileInput.files;
-        const file = files? files[0] : undefined;
-        let csvText = "";
-        if(file){
+        const file = files ? files[0] : undefined;
+        let csvText = '';
+        if (file) {
           const reader = new FileReader();
           reader.onload = async () => {
             const data = reader.result;
-            if(typeof data === "string"){
+            if (typeof data === 'string') {
               csvText = new TextDecoder().decode(toUTF8(data));
             }
-            const retValue = await moduleMainUpdate(plugin.script_text, updatePatientsDocument, csvText);
-            if(setReload){
+            const retValue = await moduleMainUpdate(
+              plugin.script_text,
+              updatePatientsDocument,
+              csvText
+            );
+            if (setReload) {
               setReload(true);
             }
             return retValue;
-          }
-          reader.readAsBinaryString(file)
+          };
+          reader.readAsBinaryString(file);
         }
-      }
+      };
       fileInput.click();
     } else {
       // ファイルアップロードなし
-      const retValue = await moduleMainUpdate(plugin.script_text, updatePatientsDocument);
+      const retValue = await moduleMainUpdate(
+        plugin.script_text,
+        updatePatientsDocument
+      );
       return retValue;
     }
-    
-  }else{
-    // eslint-disable-next-line
-    if(plugin.attach_patient_info && !confirm("出力結果に患者情報が含まれています、実行しますか？")){
+  } else {
+    if (
+      plugin.attach_patient_info &&
+      // eslint-disable-next-line no-restricted-globals, no-alert
+      !confirm('出力結果に患者情報が含まれています、実行しますか？')
+    ) {
       return undefined;
     }
     // データ出力系)
-    if(patientList){
-      if(targetDocumentId) {
+    if (patientList) {
+      if (targetDocumentId) {
         // ドキュメント指定あり
-        const doc:argDoc = {caseList:patientList, targetDocument:targetDocumentId, filterQuery:plugin.filter_schema_query};
-        const retValue = await moduleMain(plugin.script_text, getTargetDocument, doc);
+        const doc: argDoc = {
+          caseList: patientList,
+          targetDocument: targetDocumentId,
+          filterQuery: plugin.filter_schema_query,
+        };
+        const retValue = await moduleMain(
+          plugin.script_text,
+          getTargetDocument,
+          doc
+        );
         return retValue;
       }
-      if(plugin.target_schema_id && plugin.target_schema_id.length > 0){
+      if (plugin.target_schema_id && plugin.target_schema_id.length > 0) {
         // スキーマ指定あり
-        const doc:argDoc = {caseList:patientList, targetSchemas:plugin.target_schema_id, filterQuery:plugin.filter_schema_query};
-        const retValue = await moduleMain(plugin.script_text, getPatientsDocument, doc);
+        const doc: argDoc = {
+          caseList: patientList,
+          targetSchemas: plugin.target_schema_id,
+          filterQuery: plugin.filter_schema_query,
+        };
+        const retValue = await moduleMain(
+          plugin.script_text,
+          getPatientsDocument,
+          doc
+        );
         return retValue;
       }
-        // ドキュメント、スキーマ指定なし
-        const doc:argDoc = {caseList:patientList, targetSchemas:undefined, filterQuery:plugin.filter_schema_query};
-        const retValue = await moduleMain(plugin.script_text, getPatientsDocument, doc);
-        return retValue;
+      // ドキュメント、スキーマ指定なし
+      const doc: argDoc = {
+        caseList: patientList,
+        targetSchemas: undefined,
+        filterQuery: plugin.filter_schema_query,
+      };
+      const retValue = await moduleMain(
+        plugin.script_text,
+        getPatientsDocument,
+        doc
+      );
+      return retValue;
     }
+    // eslint-disable-next-line no-alert
     alert('対象患者がいません');
   }
   return undefined;
-}
+};

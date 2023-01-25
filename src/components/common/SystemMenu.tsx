@@ -50,9 +50,8 @@ export const SystemMenu = (props: {
   }, []);
 
   const handlPluginManager = useCallback(() => {
-    // TODO: プラグイン管理画面を開ける権限はまた別途あるので修正必要あり
     if (isConfirm === null || isConfirm()) {
-      const auth = localStorage.getItem('is_system_manage_roll');
+      const auth = localStorage.getItem('is_plugin_registerable');
       if (auth === 'true') {
         RemoveBeforeUnloadEvent();
         navigate('/PluginManager');

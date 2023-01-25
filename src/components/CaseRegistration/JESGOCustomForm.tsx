@@ -8,10 +8,12 @@ import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
 import {
+  GetSchemaTitle,
   GetVersionedFormData,
   isNotEmptyObject,
+  popJesgoError,
 } from '../../common/CaseRegistrationUtility';
-import { RegistrationErrors } from './Definition';
+import { RegistrationErrors, VALIDATE_TYPE } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
 import {
   CustomSchema,
@@ -105,6 +107,54 @@ const CustomDivForm = (props: CustomDivFormProp) => {
       schema = targetErrors.validationResult.schema;
     }
   }
+
+  // プラグインにて付与されたjesgo:errorがformDataにあればエラーとして表示する
+  const jesgoErrors = popJesgoError(formData);
+  if (jesgoErrors.length > 0) {
+    let tmpErr = errors.find((p) => p.documentId === documentId);
+    if (!tmpErr) {
+      tmpErr = {
+        errDocTitle: GetSchemaTitle(schemaId),
+        schemaId,
+        documentId,
+        validationResult: { schema, messages: [] },
+      };
+      errors.push(tmpErr);
+    }
+
+    const messages = tmpErr.validationResult.messages;
+
+    jesgoErrors.forEach((errorItem) => {
+      if (typeof errorItem === 'string') {
+        // 文字列の場合はそのまま表示
+        messages.push({
+          // eslint-disable-next-line no-irregular-whitespace
+          message: `　　${errorItem}`,
+          validateType: VALIDATE_TYPE.Message,
+        });
+      } else if (typeof errorItem === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        Object.entries(errorItem).forEach((item) => {
+          // objectの場合はKeyに項目名、valueにメッセージが格納されている想定
+          messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
+            message: `　　[ ${item[0]} ] ${item[1] as string}`,
+            validateType: VALIDATE_TYPE.Message,
+          });
+        });
+      }
+    });
+
+    setErrors([...errors]);
+    dispatch({ type: 'SET_ERROR', extraErrors: errors });
+  }
+
+  // 継承直後、データ入力判定を動かすためにsetFormDataする
+  if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
+    setFormData(formData);
+  }
+
+  copyProps.formData = formData;
 
   // uiSchema作成
   const uiSchema = CreateUISchema(schema);

@@ -48,6 +48,7 @@ interface IPluginModule {
   init: () => Promise<string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   main: (doc: any, func: (args: any[]) => Promise<any>) => Promise<unknown>;
+  finalize?: () => Promise<void>;
 }
 
 const GetModule: (scriptText: string) => Promise<IPluginModule> = async (
@@ -189,6 +190,9 @@ export const moduleMainUpdate = async (
   // モジュール読み込みからのmain実行、引数にCSVファイルを利用することあり
   const module = await GetModule(scriptText);
   const retValue = await module.main(doc, func);
+  if (module.finalize) {
+    await module.finalize();
+  }
 
   return retValue;
 };

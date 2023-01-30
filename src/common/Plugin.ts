@@ -278,6 +278,9 @@ export const executePlugin = async (
         updatePatientsDocument,
         JSON.stringify(documentList)
       );
+      if (setReload) {
+        setReload(true);
+      }
       return retValue;
     }
   } else {

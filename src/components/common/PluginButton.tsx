@@ -72,7 +72,7 @@ const PluginButton = (props: {
         .then((res) => {
           if (!plugin.update_db) {
             // eslint-disable-next-line
-            OpenOutputView(window, (res as any).anyValue ?? res);
+            OpenOutputView(window, res);
           }
         })
         .catch((err) => {

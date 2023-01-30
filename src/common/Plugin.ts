@@ -88,7 +88,7 @@ const getPatientsDocument = async (doc: argDoc) => {
     true
   );
   if (ret.resCode === RESULT.NORMAL_TERMINATION) {
-    return ret;
+    return ret.anyValue ? JSON.stringify(ret.anyValue) : undefined;
   }
   return undefined;
 };

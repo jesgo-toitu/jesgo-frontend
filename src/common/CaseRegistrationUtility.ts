@@ -1141,6 +1141,8 @@ export const OpenOutputView = (win: typeof window, srcData: any) => {
         } else {
           e.source?.postMessage({ jsonData: srcData });
         }
+      } else if (srcData) {
+        e.source?.postMessage(srcData);
       }
       win.removeEventListener('message', postData, false);
     }

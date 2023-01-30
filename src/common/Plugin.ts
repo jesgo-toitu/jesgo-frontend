@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-lonely-if */
 import { Buffer } from 'buffer';
+import { reject } from 'lodash';
 import { jesgoCaseDefine } from '../store/formDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { toUTF8 } from './CommonUtility';
@@ -285,7 +286,7 @@ export const executePlugin = async (
       // eslint-disable-next-line no-restricted-globals, no-alert
       !confirm('出力結果に患者情報が含まれています、実行しますか？')
     ) {
-      return undefined;
+       throw new Error('cancel');
     }
     // データ出力系)
     if (patientList) {

@@ -170,6 +170,9 @@ export const moduleMain = async (
   // モジュール読み込みからのmain実行
   const module = await GetModule(scriptText);
   const retValue = await module.main(doc, func);
+  if (module.finalize) {
+    await module.finalize();
+  }
 
   return retValue;
 };

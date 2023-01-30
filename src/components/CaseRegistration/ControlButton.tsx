@@ -326,7 +326,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               ])
                 .then((res) => {
                   // eslint-disable-next-line
-                  OpenOutputView(window, (res as any).anyValue ?? res);
+                  OpenOutputView(window, res);
                 })
                 .catch((err) => {
                   if (err === 'timeout') {

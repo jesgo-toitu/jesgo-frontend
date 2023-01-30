@@ -48,6 +48,7 @@ interface IPluginModule {
   init: () => Promise<string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   main: (doc: any, func: (args: any[]) => Promise<any>) => Promise<unknown>;
+  finalize?: () => Promise<void>;
 }
 
 const GetModule: (scriptText: string) => Promise<IPluginModule> = async (
@@ -87,7 +88,7 @@ const getPatientsDocument = async (doc: argDoc) => {
     true
   );
   if (ret.resCode === RESULT.NORMAL_TERMINATION) {
-    return ret;
+    return ret.anyValue ? JSON.stringify(ret.anyValue) : undefined;
   }
   return undefined;
 };
@@ -169,6 +170,9 @@ export const moduleMain = async (
   // モジュール読み込みからのmain実行
   const module = await GetModule(scriptText);
   const retValue = await module.main(doc, func);
+  if (module.finalize) {
+    await module.finalize();
+  }
 
   return retValue;
 };
@@ -189,6 +193,9 @@ export const moduleMainUpdate = async (
   // モジュール読み込みからのmain実行、引数にCSVファイルを利用することあり
   const module = await GetModule(scriptText);
   const retValue = await module.main(doc, func);
+  if (module.finalize) {
+    await module.finalize();
+  }
 
   return retValue;
 };

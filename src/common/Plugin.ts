@@ -41,7 +41,7 @@ type updateObject = {
 };
 
 let pluginData: jesgoPluginColumns;
-let targetCaseId: number;
+let targetCaseId: number|undefined;
 
 // モジュールのFunc定義インターフェース
 interface IPluginModule {
@@ -227,9 +227,11 @@ export const executePlugin = async (
   pluginData = plugin;
   if (plugin.update_db) {
     // データ更新系
-    if (patientList && patientList.length === 1) {
+    if (!plugin.all_patient && patientList && patientList.length === 1) {
       // 対象患者が指定されている場合
       targetCaseId = Number(patientList[0].case_id);
+    }else {
+      targetCaseId = undefined;
     }
     if (plugin.show_upload_dialog) {
       // ファイルアップロードあり
@@ -266,7 +268,7 @@ export const executePlugin = async (
       const retValue = await moduleMainUpdate(
         plugin.script_text,
         updatePatientsDocument,
-        documentList
+        JSON.stringify(documentList)
       );
       return retValue;
     }

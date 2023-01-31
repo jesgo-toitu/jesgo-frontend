@@ -125,6 +125,7 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
   if (pluginData) {
     // eslint-disable-next-line no-plusplus
     for (let index = 0; index < localUpdateTarget.length; index++) {
+      let tempSkip = false;
       if(targetCaseId){
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       localUpdateTarget[index].case_id = targetCaseId;
@@ -142,11 +143,15 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
         );
         if (ret.statusNum === RESULT.NORMAL_TERMINATION) {
           confirmMessage = ret.body as string[];
+        } else if(ret.statusNum === RESULT.PLUGIN_ALREADY_UPDATED) {
+          tempSkip = true;
         }
       }
 
-      // eslint-disable-next-line
-      if(isSkip || confirmMessage.length > 0 && confirm(confirmMessage.join("\n"))) {
+      if(isSkip || 
+        tempSkip ||
+        // eslint-disable-next-line
+        confirmMessage.length > 0 && confirm(confirmMessage.join("\n"))) {
         localUpdateTarget[index].isConfirmed = true;
         const ret = await apiAccess(
           METHOD_TYPE.POST,
@@ -276,7 +281,7 @@ export const executePlugin = async (
       const retValue = await moduleMainUpdate(
         plugin.script_text,
         updatePatientsDocument,
-        JSON.stringify(documentList)
+        documentList
       );
       if (setReload) {
         setReload(true);

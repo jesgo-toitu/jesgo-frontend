@@ -53,7 +53,7 @@ const schemaDataReducer: Reducer<schemaDataState, schemaDataAction> = (
   state = initialState,
   action: schemaDataAction
 ) => {
-  const copyState = lodash.cloneDeep(state); // 現在の状態をコピー
+  const copyState = state;
   switch (action.type) {
     case 'SCHEMA':
       // 一旦配列をクリアする

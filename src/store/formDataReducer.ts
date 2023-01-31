@@ -298,7 +298,7 @@ const formDataReducer: Reducer<
     return initialState;
   }
 
-  const copyState = lodash.cloneDeep(state); // 現在の状態をコピー
+  const copyState = state;
 
   const { formDatas, saveData } = copyState;
 

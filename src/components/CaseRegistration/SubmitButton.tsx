@@ -136,6 +136,7 @@ const SubmitButton = (props: ButtonProps) => {
   // 保存せずリストに戻る
   const clickCancel = () => {
     if (
+      localStorage.getItem('is_edit_roll') !== 'true' ||
       IsNotUpdate() ||
       confirm(
         '画面を閉じて患者リストに戻ります。保存してないデータは失われます。\nよろしいですか？'
@@ -160,24 +161,28 @@ const SubmitButton = (props: ButtonProps) => {
           setReload={setIsReload}
         />
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
-        <Button
-          bsStyle="success"
-          className="normal-button"
-          onClick={() => {
-            clickSubmit(false);
-          }}
-        >
-          保存
-        </Button>
-        <Button
-          onClick={() => {
-            clickSubmit(true);
-          }}
-          bsStyle="success"
-          className="normal-button"
-        >
-          保存してリストに戻る
-        </Button>
+        {localStorage.getItem('is_edit_roll') === 'true' && (
+          <>
+            <Button
+              bsStyle="success"
+              className="normal-button"
+              onClick={() => {
+                clickSubmit(false);
+              }}
+            >
+              保存
+            </Button>
+            <Button
+              onClick={() => {
+                clickSubmit(true);
+              }}
+              bsStyle="success"
+              className="normal-button"
+            >
+              保存してリストに戻る
+            </Button>
+          </>
+        )}
         <Button
           onClick={clickCancel}
           bsStyle="primary"

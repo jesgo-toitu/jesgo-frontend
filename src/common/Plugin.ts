@@ -2,6 +2,7 @@
 /* eslint-disable no-lonely-if */
 import { Buffer } from 'buffer';
 import { reject } from 'lodash';
+import React from 'react';
 import { jesgoCaseDefine } from '../store/formDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { toUTF8 } from './CommonUtility';
@@ -235,7 +236,8 @@ export const executePlugin = async (
   targetDocumentId: number | undefined = undefined,
   setReload:
     | ((value: React.SetStateAction<boolean>) => void)
-    | undefined = undefined
+    | undefined = undefined,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>> | undefined = undefined,
 ) => {
   pluginData = plugin;
   if (plugin.update_db) {
@@ -255,6 +257,9 @@ export const executePlugin = async (
         const file = files ? files[0] : undefined;
         let csvText = '';
         if (file) {
+          if (setIsLoading) {
+            setIsLoading(true);
+          }
           const reader = new FileReader();
           reader.onload = async () => {
             const data = reader.result;
@@ -266,6 +271,9 @@ export const executePlugin = async (
               updatePatientsDocument,
               csvText
             );
+            if (setIsLoading) {
+              setIsLoading(false);
+            }
             if (setReload) {
               setReload(true);
             }

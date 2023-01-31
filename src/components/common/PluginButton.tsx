@@ -67,7 +67,7 @@ const PluginButton = (props: {
       setIsLoading(true);
       await Promise.race([
         fTimeout(Const.PLUGIN_TIMEOUT_SEC),
-        executePlugin(plugin, getTargetFunction(), undefined, setReload),
+        executePlugin(plugin, getTargetFunction(), undefined, setReload, setIsLoading),
       ])
         .then((res) => {
           if (!plugin.update_db) {

@@ -147,6 +147,7 @@ export const GetRootSchema = () => {
 export type schemaWithValid = {
   valid: boolean;
   schema: JesgoDocumentSchema;
+  validCheckDisabled?: boolean;
 };
 
 export type parentSchemaList = {

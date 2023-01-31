@@ -118,7 +118,7 @@ export const Login = () => {
     } else {
       // eslint-disable-next-line no-alert
       alert(
-        `【エラー】\nログインに失敗しました。ユーザ名かパスワードが間違っています。`
+        `【エラー】\nログインに失敗しました。ユーザ名かパスワードが間違っています。\nまたはログイン権限がありません。`
       );
       setIsLoading(false);
     }

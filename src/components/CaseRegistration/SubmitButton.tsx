@@ -6,22 +6,12 @@ import '../../views/Registration.css';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import store from '../../store/index';
-import SaveCommand, {
-  GetPackagedDocument,
-  responseResult,
-} from '../../common/DBUtility';
+import SaveCommand, { responseResult } from '../../common/DBUtility';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
-import {
-  fTimeout,
-  RemoveBeforeUnloadEvent,
-  setTimeoutPromise,
-} from '../../common/CommonUtility';
-import {
-  IsNotUpdate,
-  OpenOutputView,
-} from '../../common/CaseRegistrationUtility';
+import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
+import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
-import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
+import { jesgoPluginColumns } from '../../common/Plugin';
 import { TargetPatientPluginButton } from '../common/PluginButton';
 
 interface ButtonProps {
@@ -146,6 +136,7 @@ const SubmitButton = (props: ButtonProps) => {
   // 保存せずリストに戻る
   const clickCancel = () => {
     if (
+      localStorage.getItem('is_edit_roll') !== 'true' ||
       IsNotUpdate() ||
       confirm(
         '画面を閉じて患者リストに戻ります。保存してないデータは失われます。\nよろしいですか？'
@@ -167,60 +158,31 @@ const SubmitButton = (props: ButtonProps) => {
           pluginList={jesgoPluginList}
           getTargetFunction={getPatient}
           setIsLoading={setIsLoading}
+          setReload={setIsReload}
         />
-        {process.env.DEV_MODE === '1' && (
-          <Button
-            bsStyle="danger"
-            className="normal-button"
-            onClick={() => {
-              // ★TODO: 仮実装
-              const wrapperFunc = () =>
-                GetPackagedDocument(
-                  [store.getState().formDataReducer.saveData.jesgo_case],
-                  undefined,
-                  undefined,
-                  undefined,
-                  true
-                );
-
-              setIsLoading(true);
-
-              setTimeoutPromise(wrapperFunc)
-                .then((res) => {
-                  OpenOutputView(window, (res as any).anyValue ?? res);
-                })
-                .catch((err) => {
-                  if (err === 'timeout') {
-                    alert('操作がタイムアウトしました');
-                  }
-                })
-                .finally(() => {
-                  setIsLoading(false);
-                });
-            }}
-          >
-            ドキュメント出力
-          </Button>
-        )}
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
-        <Button
-          bsStyle="success"
-          className="normal-button"
-          onClick={() => {
-            clickSubmit(false);
-          }}
-        >
-          保存
-        </Button>
-        <Button
-          onClick={() => {
-            clickSubmit(true);
-          }}
-          bsStyle="success"
-          className="normal-button"
-        >
-          保存してリストに戻る
-        </Button>
+        {localStorage.getItem('is_edit_roll') === 'true' && (
+          <>
+            <Button
+              bsStyle="success"
+              className="normal-button"
+              onClick={() => {
+                clickSubmit(false);
+              }}
+            >
+              保存
+            </Button>
+            <Button
+              onClick={() => {
+                clickSubmit(true);
+              }}
+              bsStyle="success"
+              className="normal-button"
+            >
+              保存してリストに戻る
+            </Button>
+          </>
+        )}
         <Button
           onClick={clickCancel}
           bsStyle="primary"

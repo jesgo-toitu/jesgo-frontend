@@ -33,7 +33,7 @@ const commonReducer: Reducer<commonState, commonAction> = (
   state = initialState,
   action: commonAction // eslint-disable-line @typescript-eslint/no-explicit-any
 ) => {
-  const copyState = lodash.cloneDeep(state); // 現在の状態をコピー
+  const copyState = state;
 
   switch (action.type) {
     // スクロール位置保存

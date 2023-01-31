@@ -369,8 +369,8 @@ const Registration = () => {
     // インデックスからタブ名に変換
     const convTabKey = convertTabKey('root-tab', eventKey);
 
-    // 変更ない場合はそのままタブ移動
-    if (IsNotUpdate()) {
+    // 変更ない場合はそのままタブ移動。編集権限ない場合も同様
+    if (IsNotUpdate() || localStorage.getItem('is_edit_roll') !== 'true') {
       setSelectedTabKey(convTabKey);
       return;
     }

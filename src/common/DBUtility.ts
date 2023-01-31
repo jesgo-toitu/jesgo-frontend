@@ -693,8 +693,14 @@ export const UploadPluginFile = async (
   res.resCode = apiResult.statusNum;
   if (apiBody && apiBody.number > 0) {
     res.message = `${apiBody.number}件のプラグインを更新しました`;
+    if(apiBody.message.length > 0) {
+      res.message += `\n${apiBody.message.join('\n')}`
+    }
   } else {
     res.message = '【エラー】\nプラグインの更新に失敗しました';
+    if(apiBody.message.length > 0) {
+      res.message += `\n${apiBody.message.join('\n')}`
+    }
   }
 
   if (apiBody && apiBody.message && apiBody.message.length > 0) {

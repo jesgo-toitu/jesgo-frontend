@@ -6,7 +6,7 @@
   overflow-y: scroll;
   height: calc(100vh - 12rem);
 }
-  
+
 .plugin-table thead {
   background-color: whitesmoke;
   position: sticky;
@@ -17,4 +17,3 @@
 .plugin-table-short {
   width: 10rem;
 }
-  

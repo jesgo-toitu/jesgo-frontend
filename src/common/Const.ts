@@ -80,4 +80,10 @@ export namespace Const {
    * 日付入力コントロールの最大値
    */
   export const INPUT_DATE_MAX = () => formatDateStr(new Date().toString(), '-'); // 現在日を最大とする
+
+  /**
+   * プラグイン実行時のタイムアウト秒
+   * 初期値：15(秒)*60(分/秒)=>15分(900秒)
+   */
+  export const PLUGIN_TIMEOUT_SEC = 900;
 }

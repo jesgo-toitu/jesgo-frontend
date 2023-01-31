@@ -1,5 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 
+import Encoding from 'encoding-japanese';
+
 /* ここには画面機能に依存しない共通関数などを記述する */
 
 /**
@@ -108,3 +110,35 @@ export const setTimeoutPromise = async (
   promiseFunc: () => Promise<unknown>,
   timeoutSec = 15 * 60 // デフォルト15分
 ) => Promise.race([fTimeout(timeoutSec), promiseFunc()]);
+
+/**
+ * Sjis変換処理
+ * @param utf8String UTF8(標準)形式のString
+ * @returns SJIS形式のString
+ */
+export const toShiftJIS = (utf8String: string) => {
+  const unicodeList = [];
+
+  for (let i = 0; i < utf8String.length; i += 1) {
+    unicodeList.push(utf8String.charCodeAt(i));
+  }
+
+  const sjisArray = Encoding.convert(unicodeList, {
+    to: 'SJIS',
+    from: 'AUTO',
+  });
+  return new Uint8Array(sjisArray);
+};
+
+export const toUTF8 = (sjisString: string) => {
+  const unicodeList = [];
+
+  for (let i = 0; i < sjisString.length; i += 1) {
+    unicodeList.push(sjisString.charCodeAt(i));
+  }
+  const sjisArray = Encoding.convert(unicodeList, {
+    to: 'UTF8',
+    from: 'AUTO',
+  });
+  return new Uint8Array(sjisArray);
+};

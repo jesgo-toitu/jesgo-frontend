@@ -2,8 +2,12 @@ import React, { useEffect, useState } from 'react';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 import DropdownButton from 'react-bootstrap/lib/DropdownButton';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
-import { OpenOutputView } from '../../common/CaseRegistrationUtility';
+import {
+  IsNotUpdate,
+  OpenOutputView,
+} from '../../common/CaseRegistrationUtility';
 import { fTimeout } from '../../common/CommonUtility';
+import { Const } from '../../common/Const';
 import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
 import { jesgoCaseDefine } from '../../store/formDataReducer';
 
@@ -17,22 +21,22 @@ const PluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
+  setReload: (value: React.SetStateAction<boolean>) => void;
 }) => {
-  const { pageType, pluginList, getTargetFunction, setIsLoading } = props;
+  const { pageType, pluginList, getTargetFunction, setIsLoading, setReload } =
+    props;
   const [targetPlugins, setTargetPlugins] = useState<jesgoPluginColumns[]>([]);
 
   useEffect(() => {
     switch (pageType) {
       case PAGE_TYPE.PATIENT_LIST: {
-        setTargetPlugins(
-          pluginList.filter((p) => p.all_patient && !p.update_db)
-        );
+        setTargetPlugins(pluginList.filter((p) => p.all_patient));
         break;
       }
       case PAGE_TYPE.TARGET_PATIENT: {
         setTargetPlugins(
           pluginList.filter(
-            (p) => !p.all_patient && !p.target_schema_id && !p.update_db
+            (p) => !p.all_patient && (!p.target_schema_id || p.update_db)
           )
         );
         break;
@@ -42,34 +46,48 @@ const PluginButton = (props: {
   }, [pluginList]);
 
   const handlePluginSelect = async (plugin: jesgoPluginColumns) => {
-    const auth = localStorage.getItem('is_plugin_executable_select');
-    if (auth !== 'true') {
+    // 権限振り分け
+    const selectAuth = localStorage.getItem('is_plugin_executable_select');
+    const updateAuth = localStorage.getItem('is_plugin_executable_update');
+    if (
+      (plugin.update_db && updateAuth !== 'true') ||
+      (!plugin.update_db && selectAuth !== 'true')
+    ) {
       // eslint-disable-next-line no-alert
       alert('権限がありません');
       return;
     }
 
-    setIsLoading(true);
-    await Promise.race([
-      fTimeout(2),
-      executePlugin(plugin, getTargetFunction()),
-    ])
-      .then((res) => {
-        // eslint-disable-next-line
-        OpenOutputView(window, (res as any).anyValue ?? res);
-      })
-      .catch((err) => {
-        if (err === 'timeout') {
-          alert('操作がタイムアウトしました');
-        }
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    if (
+      pageType === PAGE_TYPE.PATIENT_LIST ||
+      IsNotUpdate() ||
+      // eslint-disable-next-line no-restricted-globals
+      confirm('編集中のデータがありますが、破棄してプラグインを実行しますか？')
+    ) {
+      setIsLoading(true);
+      await Promise.race([
+        fTimeout(Const.PLUGIN_TIMEOUT_SEC),
+        executePlugin(plugin, getTargetFunction(), undefined, setReload, setIsLoading),
+      ])
+        .then((res) => {
+          if (!plugin.update_db) {
+            // eslint-disable-next-line
+            OpenOutputView(window, res);
+          }
+        })
+        .catch((err) => {
+          if (err === 'timeout') {
+            alert('操作がタイムアウトしました');
+          }
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
   };
 
   return (
-    <ButtonToolbar>
+    <ButtonToolbar style={{ margin: '1rem' }}>
       <DropdownButton
         aria-hidden="true"
         bsSize="small"
@@ -91,13 +109,15 @@ export const PatientListPluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
+  setReload: (value: React.SetStateAction<boolean>) => void;
 }) => {
-  const { pluginList, getTargetFunction, setIsLoading } = props;
+  const { pluginList, getTargetFunction, setIsLoading, setReload } = props;
   return PluginButton({
     pageType: PAGE_TYPE.PATIENT_LIST,
     pluginList,
     getTargetFunction,
     setIsLoading,
+    setReload,
   });
 };
 
@@ -105,12 +125,14 @@ export const TargetPatientPluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
+  setReload: (value: React.SetStateAction<boolean>) => void;
 }) => {
-  const { pluginList, getTargetFunction, setIsLoading } = props;
+  const { pluginList, getTargetFunction, setIsLoading, setReload } = props;
   return PluginButton({
     pageType: PAGE_TYPE.TARGET_PATIENT,
     pluginList,
     getTargetFunction,
     setIsLoading,
+    setReload,
   });
 };

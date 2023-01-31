@@ -67,16 +67,6 @@ const GetModule: (scriptText: string) => Promise<IPluginModule> = async (
   return pluginmodule;
 };
 
-export const moduleInit = (scriptText: string) => {
-  // モジュール読み込みからのinit実行
-
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  GetModule(scriptText).then((module) => {
-    // eslint-disable-next-line no-void
-    void module.init().then();
-  });
-};
-
 const getPatientsDocument = async (doc: argDoc) => {
   const schemaIds =
     doc.targetSchemas && doc.targetSchemas.length > 0
@@ -176,12 +166,18 @@ export const moduleMain = async (
 ): Promise<unknown> => {
   // モジュール読み込みからのmain実行
   const module = await GetModule(scriptText);
-  const retValue = await module.main(doc, func);
-  if (module.finalize) {
-    await module.finalize();
+  try{
+    const retValue = await module.main(doc, func);
+    return retValue;
+  }catch (e){
+    // eslint-disable-next-line no-alert
+    alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
+  }finally{
+    if (module.finalize) {
+      await module.finalize();
+    }
   }
-
-  return retValue;
+  return undefined;
 };
 
 type formDocument = {
@@ -199,12 +195,18 @@ export const moduleMainUpdate = async (
 ): Promise<unknown> => {
   // モジュール読み込みからのmain実行、引数にCSVファイルを利用することあり
   const module = await GetModule(scriptText);
-  const retValue = await module.main(doc, func);
-  if (module.finalize) {
-    await module.finalize();
+  try{
+    const retValue = await module.main(doc, func);
+    return retValue;
+  }catch (e){
+    // eslint-disable-next-line no-alert
+    alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
+  }finally{
+    if (module.finalize) {
+      await module.finalize();
+    }
   }
-
-  return retValue;
+  return undefined;
 };
 
 const getDocuments = async (caseId:number|undefined, schemaIds:number[]|undefined) => {

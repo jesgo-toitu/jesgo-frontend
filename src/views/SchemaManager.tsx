@@ -153,7 +153,16 @@ const SchemaManager = () => {
         valid: i + 1 <= schema.inherit_schema.length,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         schema: GetSchemaInfo(inhId, null, false, true)!,
+        validCheckDisabled: false,
       }));
+      // 継承スキーマがある場合、自身のスキーマも加える
+      if (tmpInheritSchemaList.length > 0) {
+        tmpInheritSchemaList.unshift({
+          valid: true,
+          schema,
+          validCheckDisabled: true,
+        });
+      }
       setInheritSchemaList(tmpInheritSchemaList);
 
       // バージョン一覧
@@ -341,10 +350,15 @@ const SchemaManager = () => {
           tempInheritSchemaList.push(inheritSchemaList[i].schema.schema_id);
         }
       }
+
+      // 継承スキーマがある場合、自身のスキーマをデフォルトスキーマとして追加
+      if (inheritSchemaList.length > 0) {
+        baseSchemaInfo.inherit_schema.unshift(baseSchemaInfo.schema_id);
+      }
+
       if (
         !lodash.isEqual(tempInheritSchemaList, baseSchemaInfo.inherit_schema)
       ) {
-        baseSchemaInfo.inherit_schema = tempInheritSchemaList;
         isChange = true;
       }
     }
@@ -691,12 +705,132 @@ const SchemaManager = () => {
 
         // 継承スキーマ
         const tempInheritSchemaList: number[] = [];
-        for (let i = 0; i < inheritSchemaList.length; i++) {
-          if (inheritSchemaList[i].valid) {
-            tempInheritSchemaList.push(inheritSchemaList[i].schema.schema_id);
+        if (
+          inheritSchemaList.length > 0 &&
+          inheritSchemaList[0].schema.schema_id !== baseSchemaInfo.schema_id
+        ) {
+          // #region [ 並び替えでデフォルトスキーマが変更されたケース ]
+          const newDefaultSchema = lodash.cloneDeep(inheritSchemaList[0]);
+          const oldDefaultSchema = lodash.cloneDeep(baseSchemaInfo);
+          // 新しいデフォルトスキーマの依存関係更新
+          newDefaultSchema.schema.base_schema = null;
+          newDefaultSchema.schema.inherit_schema = inheritSchemaList
+            .filter(
+              (p) =>
+                p.valid &&
+                p.schema.schema_id !== newDefaultSchema.schema.schema_id
+            )
+            .map((p) => p.schema.schema_id);
+          // デフォルト値も更新
+          newDefaultSchema.schema.inherit_schema_default = lodash.union(
+            newDefaultSchema.schema.inherit_schema,
+            // 非表示となった項目は残す
+            inheritSchemaList
+              .filter((p) => !p.valid)
+              .map((p) => p.schema.schema_id)
+          );
+          updateSchemaList.push(newDefaultSchema.schema);
+
+          // 依存関係更新処理関数化
+          const updateInheritDependency = (
+            targetSchema: JesgoDocumentSchema,
+            srcSchema?: schemaWithValid
+          ) => {
+            // 継承元は新デフォルトスキーマ
+            targetSchema.base_schema = newDefaultSchema.schema.schema_id;
+            // 継承先は現在の継承先から継承元が当該スキーマだったものを除いたものとする
+            targetSchema.inherit_schema = lodash.difference(
+              srcSchema?.schema.inherit_schema ?? targetSchema.inherit_schema,
+              inheritSchemaList
+                .filter(
+                  (p) =>
+                    p.schema.base_schema ===
+                    (srcSchema?.schema.schema_id ?? targetSchema.schema_id)
+                )
+                .map((p) => p.schema.schema_id)
+            );
+            // デフォルト値も更新
+            targetSchema.inherit_schema_default = targetSchema.inherit_schema;
+          };
+
+          // 継承先スキーマの依存関係更新
+          for (let i = 1; i < inheritSchemaList.length; i++) {
+            // 現在編集中のスキーマだった場合はbaseSchemaInfoの方を更新する
+            if (
+              inheritSchemaList[i].schema.schema_id === baseSchemaInfo.schema_id
+            ) {
+              updateInheritDependency(baseSchemaInfo);
+              // ※baseSchemaInfoはあとでupdateSchemaListに追加されるのでここではしない
+            } else {
+              // 編集中スキーマ以外の継承先更新
+              const tmpInheritSchema = lodash.cloneDeep(inheritSchemaList[i]);
+              updateInheritDependency(
+                tmpInheritSchema.schema,
+                inheritSchemaList[i]
+              );
+
+              updateSchemaList.push(tmpInheritSchema.schema);
+            }
           }
+
+          // 上位スキーマの依存関係更新
+          if (selectedSchemaParentInfo) {
+            // サブスキーマ
+            if (selectedSchemaParentInfo.fromSubSchema.length > 0) {
+              selectedSchemaParentInfo.fromSubSchema.forEach((item) => {
+                const copyItem = lodash.cloneDeep(item);
+                const idx = copyItem.schema.subschema.findIndex(
+                  (id) => id === oldDefaultSchema.schema_id
+                );
+                if (idx > -1) {
+                  copyItem.schema.subschema[idx] =
+                    newDefaultSchema.schema.schema_id;
+                  // デフォルト値も更新
+                  copyItem.schema.subschema_default = copyItem.schema.subschema;
+                  updateSchemaList.push(copyItem.schema);
+                }
+              });
+            }
+
+            // 子スキーマ
+            if (selectedSchemaParentInfo.fromChildSchema.length > 0) {
+              selectedSchemaParentInfo.fromChildSchema.forEach((item) => {
+                const copyItem = lodash.cloneDeep(item);
+                let idx = copyItem.schema.child_schema.findIndex(
+                  (id) => id === oldDefaultSchema.schema_id
+                );
+                if (idx > -1) {
+                  copyItem.schema.child_schema[idx] =
+                    newDefaultSchema.schema.schema_id;
+                  // デフォルト値も更新
+                  copyItem.schema.child_schema_default =
+                    copyItem.schema.child_schema;
+                  updateSchemaList.push(copyItem.schema);
+                } else {
+                  // 子スキーマの非表示も行われていた場合、child_schemaからは見つからないのでデフォルト値の方を書き換える
+                  idx = copyItem.schema.child_schema_default.findIndex(
+                    (id) => id === oldDefaultSchema.schema_id
+                  );
+                  if (idx > -1) {
+                    copyItem.schema.child_schema_default[idx] =
+                      newDefaultSchema.schema.schema_id;
+                    updateSchemaList.push(copyItem.schema);
+                  }
+                }
+              });
+            }
+          }
+          // #endregion
+        } else {
+          // #region [ デフォルトスキーマ未変更時の処理 ]
+          for (let i = 1; i < inheritSchemaList.length; i++) {
+            if (inheritSchemaList[i].valid) {
+              tempInheritSchemaList.push(inheritSchemaList[i].schema.schema_id);
+            }
+          }
+          baseSchemaInfo.inherit_schema = tempInheritSchemaList;
+          // #endregion
         }
-        baseSchemaInfo.inherit_schema = tempInheritSchemaList;
       }
     }
 
@@ -747,6 +881,14 @@ const SchemaManager = () => {
             valid: true,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             schema: GetSchemaInfo(schemaId, null, false, true)!,
+          });
+        }
+        // 継承スキーマがある場合、自身のスキーマを先頭に追加
+        if (tempInheritSchemaList.length > 0) {
+          tempInheritSchemaList.unshift({
+            valid: true,
+            schema: GetSchemaInfo(Number(selectedSchema), null, false, true)!,
+            validCheckDisabled: true,
           });
         }
 
@@ -1120,15 +1262,27 @@ const SchemaManager = () => {
                       <div>
                         <div className="caption-and-block">
                           <span />
-                          <DndSortableTable
-                            checkType={[
-                              RELATION_TYPE.INHERIT,
-                              CHECK_TYPE.INHERITSCHEMA,
-                            ]}
-                            schemaList={inheritSchemaList}
-                            handleCheckClick={handleCheckClick}
-                            isDragDisabled
-                          />
+                          <div
+                            style={{ display: 'flex', flexDirection: 'column' }}
+                          >
+                            {inheritSchemaList.length > 0 && (
+                              <div>
+                                ※デフォルトで使用するスキーマを最上位にしてください
+                              </div>
+                            )}
+                            <div>
+                              <DndSortableTable
+                                checkType={[
+                                  RELATION_TYPE.INHERIT,
+                                  CHECK_TYPE.INHERITSCHEMA,
+                                ]}
+                                schemaList={inheritSchemaList}
+                                setSchemaList={setInheritSchemaList}
+                                handleCheckClick={handleCheckClick}
+                                isDragDisabled={false}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </fieldset>

@@ -15,6 +15,7 @@ import {
   ButtonGroup,
   Glyphicon,
   Jumbotron,
+  Radio,
 } from 'react-bootstrap';
 import { CSVLink } from 'react-csv';
 import { useDispatch } from 'react-redux';
@@ -25,17 +26,17 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { settingsFromApi } from './Settings';
 import { csvHeader, patientListCsv } from '../common/MakeCsv';
-import {
-  formatDate,
-  formatTime,
-  setTimeoutPromise,
-} from '../common/CommonUtility';
+import { formatDate, formatTime } from '../common/CommonUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
-import { GetPackagedDocument } from '../common/DBUtility';
 import { jesgoCaseDefine } from '../store/formDataReducer';
-import { OpenOutputView } from '../common/CaseRegistrationUtility';
+import { jesgoPluginColumns } from '../common/Plugin';
+import { PatientListPluginButton } from '../components/common/PluginButton';
+import SearchDateComponent, {
+  convertSearchDate,
+  searchDateInfoDataSet,
+} from '../components/common/SearchDateComponent';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -109,9 +110,58 @@ const Patients = () => {
   const [facilityName, setFacilityName] = useState('');
   const [csvData, setCsvData] = useState<object[]>([]);
   const [csvFileName, setCsvFileName] = useState<string>('');
-
+  const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [isReload, setIsReload] = useState(false);
+
+  // 初回治療開始日検索条件
+  const [searchDateInfoInitialTreatment, setSearchDateInfoInitialTreatment] =
+    useState<searchDateInfoDataSet>();
+  // 診断日検索条件
+  const [searchDateInfoDiagnosis, setSearchDateInfoDiagnosis] =
+    useState<searchDateInfoDataSet>();
+  // イベント日検索条件
+  const [searchDateInfoEventDate, setSearchDateInfoEventDate] =
+    useState<searchDateInfoDataSet>();
+  // イベント日検索種別
+  const [searchDateEventDateType, setSearchDateEventDateType] =
+    useState<string>('最新');
+
   const dispatch = useDispatch();
+
+  const reloadPatient = async () => {
+    // 患者情報取得APIを呼ぶ
+    const returnApiObject = await apiAccess(
+      METHOD_TYPE.GET,
+      `patientlist${url}`
+    );
+
+    if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+      setUserListJson(JSON.stringify(returnApiObject.body));
+    } else {
+      navigate('/login');
+    }
+  };
+
+  // 患者情報再読み込み
+  useEffect(() => {
+    const f = async () => {
+      setIsLoading(true);
+
+      // 患者情報の取得を行う
+      await reloadPatient();
+
+      setIsLoading(false);
+    };
+
+    if (isReload) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      f();
+      setIsReload(false);
+    }
+  }, [isReload]);
 
   useEffect(() => {
     const f = async () => {
@@ -129,14 +179,14 @@ const Patients = () => {
         setFacilityName(returned.facility_name);
       }
 
-      // 患者情報取得APIを呼ぶ
-      const returnApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        `patientlist${url}`
-      );
+      // 患者情報の取得を行う
+      await reloadPatient();
 
-      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        setUserListJson(JSON.stringify(returnApiObject.body));
+      // プラグイン全ロード処理
+      const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
+      if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+        const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+        setJesgoPluginList(pluginList);
       } else {
         navigate('/login');
       }
@@ -193,12 +243,10 @@ const Patients = () => {
   }, [userListJson]);
 
   const [searchWord, setSearchWord] = useState({
-    treatmentStartYear: 'all',
     cancerType: 'all',
     showOnlyTumorRegistry: false,
-    startOfDiagnosisDate: makeSelectDate(UNIT_TYPE.MONTH, new Date(), 1)[0],
-    endOfDiagnosisDate: makeSelectDate(UNIT_TYPE.MONTH, new Date(), 1)[0],
     checkOfDiagnosisDate: false,
+    checkOfEventDate: false,
     checkOfBlankFields: false,
     blankFields: {
       advancedStage: false,
@@ -256,11 +304,8 @@ const Patients = () => {
       event.target as EventTarget & HTMLInputElement;
 
     let blankFields = searchWord.blankFields;
-    switch (eventTarget.name) {
-      case 'treatmentStartYear':
-        setSearchWord({ ...searchWord, treatmentStartYear: eventTarget.value });
-        break;
 
+    switch (eventTarget.name) {
       case 'cancerType':
         setSearchWord({ ...searchWord, cancerType: eventTarget.value });
         break;
@@ -279,17 +324,10 @@ const Patients = () => {
         });
         break;
 
-      case 'startOfDiagnosisDate':
+      case 'checkOfEventDate':
         setSearchWord({
           ...searchWord,
-          startOfDiagnosisDate: eventTarget.value,
-        });
-        break;
-
-      case 'endOfDiagnosisDate':
-        setSearchWord({
-          ...searchWord,
-          endOfDiagnosisDate: eventTarget.value,
+          checkOfEventDate: eventTarget.checked,
         });
         break;
 
@@ -314,7 +352,10 @@ const Patients = () => {
         break;
 
       case 'initialTreatment':
-        blankFields = { ...blankFields, initialTreatment: eventTarget.checked };
+        blankFields = {
+          ...blankFields,
+          initialTreatment: eventTarget.checked,
+        };
         setSearchWord({ ...searchWord, blankFields });
         break;
 
@@ -370,6 +411,92 @@ const Patients = () => {
     }
   };
 
+  // 現在表示されている患者リストの一覧をJesgoCaseDefineとして返す
+  const getPatientList = () => {
+    const decordedJson = JSON.parse(userListJson) as userDataList;
+    const caseInfoList = decordedJson.data.map((item) => {
+      const caseinfo: jesgoCaseDefine = {
+        case_id: item.caseId.toString(),
+        name: item.patientName,
+        date_of_birth: '1900-01-01',
+        date_of_death: '1900-01-01',
+        sex: 'F',
+        his_id: item.patientId,
+        decline: false,
+        registrant: -1,
+        last_updated: '1900-01-01',
+        is_new_case: false,
+      };
+      return caseinfo;
+    });
+    return caseInfoList;
+  };
+
+  /**
+   * 日付文字列 From～Toを生成
+   * @param srcDateInfo
+   * @returns
+   */
+  const generateSearchDateInfoStrings = (
+    srcDateInfo: searchDateInfoDataSet | undefined
+  ): (string | Error)[] => {
+    const ret: (string | Error)[] = [''];
+    if (srcDateInfo) {
+      // 範囲指定の場合は配列2つにする
+      if (srcDateInfo.isRange) {
+        ret.push('');
+      }
+
+      // fromの設定
+      const from = convertSearchDate(
+        srcDateInfo.fromInfo,
+        srcDateInfo.searchType
+      );
+
+      ret[0] = from;
+
+      // 範囲の場合はToを指定
+      if (srcDateInfo.isRange) {
+        const to = convertSearchDate(
+          srcDateInfo.toInfo,
+          srcDateInfo.searchType
+        );
+        ret[1] = to;
+      }
+    }
+    return ret;
+  };
+
+  // 日付検索条件のエラーチェック
+  const hasSearchDateError = (
+    title: string,
+    srcDateInfo: (string | Error)[]
+  ) => {
+    if (srcDateInfo.some((p) => p instanceof Error)) {
+      // エラーあり
+      let message = '';
+      srcDateInfo.forEach((err, i) => {
+        if (!(err instanceof Error)) {
+          return;
+        }
+        let prefix = '';
+        // 範囲指定の場合は開始日か終了日がわかるようにprefix付ける
+        if (srcDateInfo.length > 1) {
+          prefix = i === 0 ? '開始日：' : '終了日：';
+        }
+        if (message) message += '\n';
+        message += `・${prefix}${err.message}`;
+      });
+      // eslint-disable-next-line no-alert
+      alert(
+        `検索条件[${title}]の入力内容に誤りがあります。\n以下のエラーを解消後、再度検索してください\n[エラー]\n${message}`
+      );
+      return true;
+    }
+    // エラーなし
+    return false;
+  };
+
   const submit = async (type: string) => {
     setIsLoading(true);
     const token = localStorage.getItem('token');
@@ -378,26 +505,68 @@ const Patients = () => {
       return;
     }
 
+    // 入力チェック
+    // 初回治療開始日
+    const initialTreatment = generateSearchDateInfoStrings(
+      searchDateInfoInitialTreatment
+    );
+    if (hasSearchDateError('初回治療開始日', initialTreatment)) {
+      setIsLoading(false);
+      return;
+    }
+
+    // 診断日
+    const diagnosisDate = generateSearchDateInfoStrings(
+      searchDateInfoDiagnosis
+    );
+    if (searchWord.checkOfDiagnosisDate) {
+      if (hasSearchDateError('診断日', diagnosisDate)) {
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // イベント日
+    const eventDate = generateSearchDateInfoStrings(searchDateInfoEventDate);
+    if (searchWord.checkOfEventDate) {
+      if (hasSearchDateError('イベント日', eventDate)) {
+        setIsLoading(false);
+        return;
+      }
+    }
+
     const makeQueryString = () => {
       let query = `type=${type}`;
-      query += `&treatmentStartYear=${encodeURIComponent(
-        searchWord.treatmentStartYear
+      // 初回治療開始日
+      query += `&initialTreatmentDate=${encodeURIComponent(
+        JSON.stringify(initialTreatment)
       )}`;
+      // がん腫
       query += `&cancerType=${encodeURIComponent(searchWord.cancerType)}`;
+      // 腫瘍登録対象のみ表示
       query += `&showOnlyTumorRegistry=${encodeURIComponent(
         searchWord.showOnlyTumorRegistry
       )}`;
 
       if (type === 'detail') {
+        // 診断日
         if (searchWord.checkOfDiagnosisDate) {
-          query += `&startOfDiagnosisDate=${encodeURIComponent(
-            searchWord.startOfDiagnosisDate
-          )}`;
-          query += `&endOfDiagnosisDate=${encodeURIComponent(
-            searchWord.endOfDiagnosisDate
+          query += `&diagnosisDate=${encodeURIComponent(
+            JSON.stringify(diagnosisDate)
           )}`;
         }
 
+        // イベント日
+        if (searchWord.checkOfEventDate) {
+          query += `&eventDateType=${encodeURIComponent(
+            searchDateEventDateType === '最新' ? '0' : '1'
+          )}`;
+          query += `&eventDate=${encodeURIComponent(
+            JSON.stringify(eventDate)
+          )}`;
+        }
+
+        // 未入力項目で絞り込み
         if (searchWord.checkOfBlankFields) {
           query += `&advancedStage=${encodeURIComponent(
             searchWord.blankFields.advancedStage
@@ -437,6 +606,12 @@ const Patients = () => {
       navigate('/login');
     }
     setIsLoading(false);
+  };
+
+  // イベント日種別選択時のイベント
+  const onChangeEventDateType = (e: React.FormEvent<Radio>) => {
+    const selectedValue = (e.target as HTMLInputElement).value;
+    setSearchDateEventDateType(selectedValue);
   };
 
   return (
@@ -496,58 +671,12 @@ const Patients = () => {
                 </Button>
               </ButtonGroup>
             </ButtonToolbar>
-            {/* // ★TODO: 仮実装 */}
-            {process.env.DEV_MODE === '1' && (
-              <Button
-                bsStyle="danger"
-                className="normal-button"
-                onClick={() => {
-                  const decordedJson = JSON.parse(userListJson) as userDataList;
-                  const caseInfoList = decordedJson.data.map((item) => {
-                    const caseinfo: jesgoCaseDefine = {
-                      case_id: item.caseId.toString(),
-                      name: item.patientName,
-                      date_of_birth: '1900-01-01',
-                      date_of_death: '1900-01-01',
-                      sex: 'F',
-                      his_id: item.patientId,
-                      decline: false,
-                      registrant: -1,
-                      last_updated: '1900-01-01',
-                      is_new_case: false,
-                    };
-                    return caseinfo;
-                  });
-
-                  // TODO: ★仮実装
-
-                  const wrapperFunc = () =>
-                    GetPackagedDocument(
-                      caseInfoList,
-                      undefined,
-                      undefined,
-                      true
-                    );
-
-                  setIsLoading(true);
-
-                  setTimeoutPromise(wrapperFunc)
-                    .then((res) => {
-                      OpenOutputView(window, (res as any).anyValue);
-                    })
-                    .catch((err) => {
-                      if (err === 'timeout') {
-                        alert('操作がタイムアウトしました');
-                      }
-                    })
-                    .finally(() => {
-                      setIsLoading(false);
-                    });
-                }}
-              >
-                ドキュメント出力
-              </Button>
-            )}
+            <PatientListPluginButton
+              pluginList={jesgoPluginList}
+              getTargetFunction={getPatientList}
+              setIsLoading={setIsLoading}
+              setReload={setIsReload}
+            />
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (
               <Button
@@ -585,37 +714,28 @@ const Patients = () => {
           <Jumbotron className={searchFormOpen}>
             <div className="flex">
               初回治療開始日：
-              <FormControl
-                name="treatmentStartYear"
-                onChange={handleSearchCondition}
-                componentClass="select"
-              >
-                <option value="all">すべて</option>
-                {makeSelectDate(UNIT_TYPE.YEAR, new Date(), 3).map(
-                  (date: string) => (
-                    <option
-                      value={date}
-                      key={`treatmentStartYear_${date}`}
-                    >{`${date}年`}</option>
-                  )
-                )}
-              </FormControl>
+              <SearchDateComponent
+                ctrlId="initialTreatmentDate"
+                setSearchDateInfoDataSet={setSearchDateInfoInitialTreatment}
+              />
               <div className="spacer10" />
-              がん種：
-              <FormControl
-                name="cancerType"
-                onChange={handleSearchCondition}
-                componentClass="select"
-              >
-                <option value="all">すべて</option>
-                {makeSelectDataFromStorage('cancer_type').map(
-                  (value: string, index: number) => (
-                    <option value={index + 1} key={`cancer_type_${value}`}>
-                      {value}
-                    </option>
-                  )
-                )}
-              </FormControl>
+              <div className="flex-wrap">
+                がん種：
+                <FormControl
+                  name="cancerType"
+                  onChange={handleSearchCondition}
+                  componentClass="select"
+                >
+                  <option value="all">すべて</option>
+                  {makeSelectDataFromStorage('cancer_type').map(
+                    (value: string, index: number) => (
+                      <option value={index + 1} key={`cancer_type_${value}`}>
+                        {value}
+                      </option>
+                    )
+                  )}
+                </FormControl>
+              </div>
               <div className="spacer10" />
               <Checkbox
                 name="showOnlyTumorRegistry"
@@ -667,39 +787,45 @@ const Patients = () => {
                 >
                   <span className="detail-setting-content">診断日：</span>
                 </Checkbox>
-                <FormControl
-                  name="startOfDiagnosisDate"
+                <SearchDateComponent
+                  ctrlId="diagnosisDate"
+                  setSearchDateInfoDataSet={setSearchDateInfoDiagnosis}
+                />
+              </div>
+              <div className="detail-column">
+                <Checkbox
+                  name="checkOfEventDate"
                   onChange={handleSearchCondition}
-                  componentClass="select"
+                  inline
                 >
-                  {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
-                    (date: string) => (
-                      <option
-                        value={`${date}`}
-                        key={`startOfDiagnosisDate_${date}`}
-                      >
-                        {date}
-                      </option>
-                    )
-                  )}
-                </FormControl>
-                ～
-                <FormControl
-                  name="endOfDiagnosisDate"
-                  onChange={handleSearchCondition}
-                  componentClass="select"
+                  <span className="detail-setting-content">イベント日 </span>
+                </Checkbox>
+                【
+                <Radio
+                  name="searchEventdateType"
+                  className="searchdate-radio"
+                  style={{ marginLeft: '2px' }}
+                  value="最新"
+                  onChange={onChangeEventDateType}
+                  checked={searchDateEventDateType === '最新'}
                 >
-                  {makeSelectDate(UNIT_TYPE.MONTH, new Date(), 12).map(
-                    (date: string) => (
-                      <option
-                        value={`${date}`}
-                        key={`endOfDiagnosisDate_${date}`}
-                      >
-                        {date}
-                      </option>
-                    )
-                  )}
-                </FormControl>
+                  最新
+                </Radio>
+                <Radio
+                  name="searchEventdateType"
+                  className="searchdate-radio"
+                  style={{ marginRight: '2px' }}
+                  value="全て"
+                  onChange={onChangeEventDateType}
+                  checked={searchDateEventDateType === '全て'}
+                >
+                  全て
+                </Radio>
+                】：
+                <SearchDateComponent
+                  ctrlId="eventDate"
+                  setSearchDateInfoDataSet={setSearchDateInfoEventDate}
+                />
               </div>
               <div className="detail-column">
                 <Checkbox

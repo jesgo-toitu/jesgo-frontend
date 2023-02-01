@@ -26,6 +26,7 @@ export const RESULT = {
   TOO_LARGE_ERROR: -30,
   FAILED_USER_ALREADY_REGISTERED: -100,
   FAILED_USER_ERROR: -101,
+  PLUGIN_ALREADY_UPDATED: -201,
   UNAUTHORIZED_OPERATIONS: -900,
 };
 
@@ -40,7 +41,8 @@ const apiAccess = async (
   methodType: number,
   url: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  body: any = null
+  body: any = null,
+  uploadType = 'schemas'
 ): Promise<ApiReturnObject> => {
   let returnObj: ApiReturnObject = {
     statusNum: RESULT.ABNORMAL_TERMINATION,
@@ -65,14 +67,15 @@ const apiAccess = async (
   }
   // eslint-disable-next-line
   let payloadObj: AxiosRequestConfig<Record<string, any>> | undefined;
+
   if (body !== null) {
     // ZIPファイル送信時はファイル形式を替える
     if (methodType === METHOD_TYPE.POST_ZIP) {
       const data = new FormData();
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      data.append('schemas', body);
+      data.append('files', body);
       payloadObj = {
-        headers: { token, 'content-type': 'multipart/form-data' },
+        headers: { token, 'content-type': 'multipart/form-data', uploadType },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data,
       };

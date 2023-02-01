@@ -3,7 +3,7 @@ import { formatDateStr } from './CommonUtility';
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {
   // JESGO Webアプリバージョン
-  export const VERSION = '1.0.1';
+  export const VERSION = '1.0.2';
 
   // UiSchemaプロパティ
   export const UI_WIDGET = {
@@ -80,4 +80,10 @@ export namespace Const {
    * 日付入力コントロールの最大値
    */
   export const INPUT_DATE_MAX = () => formatDateStr(new Date().toString(), '-'); // 現在日を最大とする
+
+  /**
+   * プラグイン実行時のタイムアウト秒
+   * 初期値：15(秒)*60(分/秒)=>15分(900秒)
+   */
+  export const PLUGIN_TIMEOUT_SEC = 900;
 }

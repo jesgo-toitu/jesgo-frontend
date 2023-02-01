@@ -189,8 +189,8 @@ export const createTabs = (
     // インデックスからタブ名に変換
     const convTabKey = convertTabKey(id, eventKey);
 
-    // 変更ない場合は保存しないでタブ移動
-    if (IsNotUpdate()) {
+    // 変更ない場合は保存しないでタブ移動。編集権限ない場合も同様
+    if (IsNotUpdate() || localStorage.getItem('is_edit_roll') !== 'true') {
       setSelectedTabKey(convTabKey);
       return;
     }

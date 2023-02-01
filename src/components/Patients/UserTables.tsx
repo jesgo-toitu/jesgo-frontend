@@ -135,11 +135,21 @@ const makeTable = (props: {
           <th className={search}>3年予後</th>
           <th className={search}>5年予後</th>
           <th className={noSearch}>ステータス</th>
-          {(localStorage.getItem('is_edit_roll') === 'true' ||
+          {(localStorage.getItem('is_view_roll') === 'true' ||
+            localStorage.getItem('is_edit_roll') === 'true' ||
             localStorage.getItem('is_remove_roll') === 'true') && (
             <th>
-              {localStorage.getItem('is_edit_roll') === 'true' && '編集'}
-              {localStorage.getItem('is_edit_roll') === 'true' &&
+              {
+                // eslint-disable-next-line no-nested-ternary
+                localStorage.getItem('is_view_roll') === 'true' &&
+                localStorage.getItem('is_edit_roll') === 'true'
+                  ? '編集'
+                  : localStorage.getItem('is_view_roll') === 'true'
+                  ? '閲覧'
+                  : null
+              }
+              {(localStorage.getItem('is_edit_roll') === 'true' ||
+                localStorage.getItem('is_view_roll') === 'true') &&
                 localStorage.getItem('is_remove_roll') === 'true' &&
                 '/'}
               {localStorage.getItem('is_remove_roll') === 'true' && '削除'}
@@ -191,11 +201,13 @@ const makeTable = (props: {
               <IconList iconList={user.status} />
             </td>
             {(localStorage.getItem('is_edit_roll') === 'true' ||
+              localStorage.getItem('is_view_roll') === 'true' ||
               localStorage.getItem('is_remove_roll') === 'true') && (
               <td>
                 <ButtonToolbar>
                   <ButtonGroup>
-                    {localStorage.getItem('is_edit_roll') === 'true' && (
+                    {(localStorage.getItem('is_edit_roll') === 'true' ||
+                      localStorage.getItem('is_view_roll') === 'true') && (
                       <Button onClick={() => clickEdit(user.caseId)}>
                         <Glyphicon glyph="edit" />
                       </Button>

@@ -18,7 +18,6 @@ import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import {
   dispSchemaIdAndDocumentIdDefine,
   jesgoDocumentObjDefine,
-  SaveDataObjDefine,
 } from '../../store/formDataReducer';
 import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
 import { createPanels, createTabs } from './FormCommonComponents';
@@ -99,10 +98,16 @@ const TabSchema = React.memo((props: Props) => {
   const saveDoc = store
     .getState()
     .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
-  const eventDate = saveDoc ? getEventDate(saveDoc, formData) : null;
+  const eventDate = useMemo(
+    () => (saveDoc ? getEventDate(saveDoc, formData) : null),
+    [saveDoc, formData]
+  );
 
   // schemaIdをもとに情報を取得
-  const schemaInfo = GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema;
+  const schemaInfo = useMemo(
+    () => GetSchemaInfo(schemaId, eventDate) as JesgoDocumentSchema,
+    [schemaId, eventDate]
+  );
   const {
     document_schema: documentSchema,
     subschema,
@@ -133,7 +138,10 @@ const TabSchema = React.memo((props: Props) => {
 
   const dispatch = useDispatch();
 
-  const customSchema = CustomSchema({ orgSchema: documentSchema, formData }); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+  const customSchema = useMemo(
+    () => CustomSchema({ orgSchema: documentSchema, formData }),
+    [documentSchema, formData]
+  ); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
   const isTab = customSchema[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] === 'tab';
 
   const [childTabSelectedFunc, setChildTabSelectedFunc] =
@@ -551,8 +559,6 @@ const TabSchema = React.memo((props: Props) => {
     }
 
     if (beforeInputState !== hasInput) {
-      SetTabStyle(`${parentTabsId}-tabs-tab-${tabId}`, hasInput);
-
       dispatch({
         type: 'SET_FORMDATA_INPUT_STATE',
         documentId,
@@ -562,6 +568,8 @@ const TabSchema = React.memo((props: Props) => {
       // 親タブに子タブの更新を伝える
       setUpdateFormData(true);
     }
+
+    SetTabStyle(`${parentTabsId}-tabs-tab-${tabId}`, hasInput);
 
     // 適応するスキーマが変更された場合、バージョンなどの情報を更新する
     if (

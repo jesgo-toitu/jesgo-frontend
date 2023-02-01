@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import lodash from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Form, { FormProps, IChangeEvent } from '@rjsf/core';
 import { Dispatch } from 'redux';
 import { JSONSchema7 } from 'webpack/node_modules/schema-utils/declarations/ValidationError';
@@ -8,12 +8,18 @@ import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
 import {
+  GetSchemaTitle,
   GetVersionedFormData,
   isNotEmptyObject,
+  popJesgoError,
 } from '../../common/CaseRegistrationUtility';
-import { RegistrationErrors } from './Definition';
+import { RegistrationErrors, VALIDATE_TYPE } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
-import { GetSchemaIdFromString, GetSchemaInfo } from './SchemaUtility';
+import {
+  CustomSchema,
+  GetSchemaIdFromString,
+  GetSchemaInfo,
+} from './SchemaUtility';
 import {
   checkEventDateInfinityLoop,
   getEventDate,
@@ -55,15 +61,21 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     formData = thisDocument.value.document;
   }
 
+  const schemaData = store
+    .getState()
+    .schemaDataReducer.schemaDatas.get(schemaId);
   // 無限ループチェック
-  const isNotInfinityLoop = checkEventDateInfinityLoop(
-    formData,
-    store.getState().schemaDataReducer.schemaDatas.get(schemaId)
+  const loopCheck = useMemo(
+    () => checkEventDateInfinityLoop(formData, schemaData),
+    [formData, schemaData]
   );
   // eventdateの初期値設定
   let initEventDate = '';
   if (thisDocument) {
-    initEventDate = getEventDate(thisDocument, formData);
+    initEventDate = useMemo(
+      () => getEventDate(thisDocument, formData),
+      [thisDocument, formData]
+    );
   }
 
   const [eventDate, setEventDate] = useState<string>(initEventDate);
@@ -75,10 +87,16 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   copyProps.formData = formData;
 
   // eventdate不整合の場合、現在日時点で有効な最新スキーマを適応する
-  if (!isNotInfinityLoop) {
+  if (loopCheck.isNotLoop && loopCheck.finalizedSchema) {
+    // ループ検証時にスキーマが取得できていればそちらを採用
+    schema = CustomSchema({
+      orgSchema: loopCheck.finalizedSchema.document_schema,
+      formData,
+    });
+  } else if (!loopCheck.isNotLoop) {
     const newSchema = GetSchemaInfo(schemaId, null, true);
     if (newSchema) {
-      schema = newSchema.document_schema;
+      schema = CustomSchema({ orgSchema: newSchema.document_schema, formData });
     }
   }
 
@@ -96,8 +114,56 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     }
   }
 
+  // プラグインにて付与されたjesgo:errorがformDataにあればエラーとして表示する
+  const jesgoErrors = popJesgoError(formData);
+  if (jesgoErrors.length > 0) {
+    let tmpErr = errors.find((p) => p.documentId === documentId);
+    if (!tmpErr) {
+      tmpErr = {
+        errDocTitle: GetSchemaTitle(schemaId),
+        schemaId,
+        documentId,
+        validationResult: { schema, messages: [] },
+      };
+      errors.push(tmpErr);
+    }
+
+    const messages = tmpErr.validationResult.messages;
+
+    jesgoErrors.forEach((errorItem) => {
+      if (typeof errorItem === 'string') {
+        // 文字列の場合はそのまま表示
+        messages.push({
+          // eslint-disable-next-line no-irregular-whitespace
+          message: `　　${errorItem}`,
+          validateType: VALIDATE_TYPE.Message,
+        });
+      } else if (typeof errorItem === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        Object.entries(errorItem).forEach((item) => {
+          // objectの場合はKeyに項目名、valueにメッセージが格納されている想定
+          messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
+            message: `　　[ ${item[0]} ] ${item[1] as string}`,
+            validateType: VALIDATE_TYPE.Message,
+          });
+        });
+      }
+    });
+
+    setErrors([...errors]);
+    dispatch({ type: 'SET_ERROR', extraErrors: errors });
+  }
+
+  // 継承直後、データ入力判定を動かすためにsetFormDataする
+  if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
+    setFormData(formData);
+  }
+
+  copyProps.formData = formData;
+
   // uiSchema作成
-  const uiSchema = CreateUISchema(schema);
+  const uiSchema = useMemo(() => CreateUISchema(schema), [schema]);
   if (isTabItem) {
     uiSchema['ui:ObjectFieldTemplate'] =
       JESGOFiledTemplete.TabItemFieldTemplate;
@@ -173,14 +239,15 @@ const CustomDivForm = (props: CustomDivFormProp) => {
           GetSchemaIdFromString(e.schema.$id!),
           e.schema,
           currentEventDate,
-          data
+          data,
+          true
         );
         if (newFormdata) {
           if (
             checkEventDateInfinityLoop(
               newFormdata,
               store.getState().schemaDataReducer.schemaDatas.get(schemaId)
-            )
+            ).isNotLoop
           ) {
             // eventdate更新
             setEventDate(currentEventDate);
@@ -222,6 +289,14 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     if (isFirstOnChange && hasDefault && !isFirstRederComplited) {
       // 作成直後のデフォルト値設定によるonChangeの場合は表示中のデータとデフォルト値をマージする
       data = lodash.merge(formData, e.formData);
+
+      dispatch({
+        type: 'INPUT',
+        schemaId,
+        formData: data,
+        documentId,
+        isUpdateInput: true,
+      });
     }
 
     setFormData(data);

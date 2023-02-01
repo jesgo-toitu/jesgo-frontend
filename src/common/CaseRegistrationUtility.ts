@@ -23,6 +23,23 @@ import {
   validationResult,
 } from '../components/CaseRegistration/Definition';
 
+// formDataからjesgo:errorを取り出して削除
+export const popJesgoError = (formData: any) => {
+  let popValue: any[] = [];
+  if (formData && !Array.isArray(formData) && typeof formData === 'object') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (formData['jesgo:error']) {
+      // 取り出して元のformDataからは削除
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      popValue = formData['jesgo:error'];
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, no-param-reassign
+      delete formData['jesgo:error'];
+    }
+  }
+
+  return popValue;
+};
+
 /**
  * 入力値のvalidation
  * @param resultSchema
@@ -781,7 +798,7 @@ export const IsNotUpdate = () => {
 export const isNotEmptyObject = (obj: any) => {
   let hasInput = false;
 
-  if (obj === undefined || obj === null) {
+  if (obj == null) {
     return hasInput;
   }
 
@@ -873,7 +890,8 @@ const GET_CHANGE_TYPE = {
 const transferFormData = (
   formData: any,
   baseCustomSchema: JSONSchema7,
-  changedSchema: JSONSchema7
+  changedSchema: JSONSchema7,
+  isOnChange = false // formDataのonChangeかどうか
 ) => {
   // TODO: 必ずオブジェクトではないので切り分けが必要
   const newFormData: Obj = {};
@@ -892,9 +910,24 @@ const transferFormData = (
       jsonSchema2 = changedSchema.properties[propName] as JSONSchema7;
     }
 
+    // 継承先にデフォルト値設定ありの場合は引き継がない
+    // formDataのonChange時はデフォルト値設定されないので引き継ぐ
+    if (
+      !isOnChange &&
+      jsonSchema2 &&
+      jsonSchema2.default != null &&
+      jsonSchema2.default !== ''
+    ) {
+      return;
+    }
+
     if (jsonSchema1 && !jsonSchema2) {
       // 継承先にプロパティがない → 引き継ぐ
-      if (typeof propValue === 'object' && propValue) {
+      if (
+        !Array.isArray(propValue) &&
+        typeof propValue === 'object' &&
+        propValue
+      ) {
         // undefinedなプロパティは引き継がない
         const omitValue = lodash.omit(
           propValue,
@@ -906,7 +939,8 @@ const transferFormData = (
         if (Object.keys(omitValue).length > 0) {
           newFormData[propName] = omitValue;
         }
-      } else {
+      } else if (!Array.isArray(propValue) || propValue.length > 0) {
+        // Array以外、またはArrayの場合は項目があれば引き継ぐ
         newFormData[propName] = propValue;
       }
     } else if (jsonSchema1 && jsonSchema2) {
@@ -932,7 +966,8 @@ export const GetChangedFormData = (
   inheritSchemaId: number,
   oldSchemaInfo: JSONSchema7 | null,
   eventDate: string,
-  formData: any
+  formData: any,
+  isOnChange = false
 ) => {
   // 形式に関わらずformDataが存在しないか中身が空の場合はそのまま使いまわす
   if (
@@ -968,7 +1003,7 @@ export const GetChangedFormData = (
     // 継承先のスキーマ
     changedSchema = CustomSchema({
       orgSchema: changedSchemaInfo.document_schema,
-      formData: {},
+      formData,
     });
   }
   // バージョン変更の場合
@@ -986,24 +1021,30 @@ export const GetChangedFormData = (
     // 継承先のスキーマ
     changedSchema = CustomSchema({
       orgSchema: changedSchemaInfo.document_schema,
-      formData: {},
+      formData,
     });
   }
 
   // formDataが配列の場合は配列の中身を1つずつ処理
   if (Array.isArray(formData)) {
     return formData.map((fm) =>
-      transferFormData(fm, baseCustomSchema, changedSchema)
+      transferFormData(fm, baseCustomSchema, changedSchema, isOnChange)
     );
   }
 
-  return transferFormData(formData, baseCustomSchema, changedSchema);
+  return transferFormData(
+    formData,
+    baseCustomSchema,
+    changedSchema,
+    isOnChange
+  );
 };
 
 export const GetInheritFormData = (
   baseSchemaId: number,
   inheritSchemaId: number,
-  formData: any
+  formData: any,
+  isOnChange = false
 ) =>
   GetChangedFormData(
     GET_CHANGE_TYPE.INHERIT,
@@ -1011,14 +1052,16 @@ export const GetInheritFormData = (
     inheritSchemaId,
     null,
     '',
-    formData
+    formData,
+    isOnChange
   );
 
 export const GetVersionedFormData = (
   schemaId: number,
   oldSchemaInfo: JSONSchema7,
   eventDate: string,
-  formData: any
+  formData: any,
+  isOnChange = false
 ) =>
   GetChangedFormData(
     GET_CHANGE_TYPE.VERSION,
@@ -1026,7 +1069,8 @@ export const GetVersionedFormData = (
     schemaId,
     oldSchemaInfo,
     eventDate,
-    formData
+    formData,
+    isOnChange
   );
 
 export const GetBeforeInheritDocumentData = (
@@ -1088,13 +1132,35 @@ export const GetBeforeInheritDocumentData = (
  * @param srcData 出力するデータ
  */
 export const OpenOutputView = (win: typeof window, srcData: any) => {
+  const postData = (e: MessageEvent<any>) => {
+    // 画面の準備ができたらデータをポストする
+    if (e.origin === win.location.origin && e.data === 'output_ready') {
+      if (Array.isArray(srcData) && srcData.length > 0) {
+        if (Array.isArray(srcData[0])) {
+          e.source?.postMessage(srcData);
+        } else {
+          e.source?.postMessage({ jsonData: srcData });
+        }
+      } else if (srcData) {
+        e.source?.postMessage(srcData);
+      }
+      win.removeEventListener('message', postData, false);
+    }
+  };
+
+  win.addEventListener('message', postData, false);
+
+  win.open('/OutputView', 'outputview');
+};
+
+export const OpenOutputViewScript = (win: typeof window, srcData: string) => {
   win.addEventListener(
     'message',
     (e) => {
       // 画面の準備ができたらデータをポストする
       if (e.origin === win.location.origin && e.data === 'output_ready') {
         // ★TODO: 仮実装
-        e.source?.postMessage({ jsonData: srcData });
+        e.source?.postMessage(srcData);
       }
     },
     false

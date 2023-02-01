@@ -552,7 +552,7 @@ export namespace JESGOComp {
         document.body.appendChild(div); // bodyに追加して描画
 
         // divの幅を取得。マージンなどを考慮して補正かける
-        const tmpWidth = div.clientWidth + 60;
+        const tmpWidth = div.clientWidth + 100;
         if (tmpWidth > comboWidth) {
           comboWidth = tmpWidth;
         }
@@ -636,6 +636,7 @@ export namespace JESGOComp {
           disableListWrap
           disableClearable
           freeSolo
+          forcePopupIcon={comboItemList.length > 0}
           clearOnBlur={false}
           handleHomeEndKeys={false}
           disabled={readonly}

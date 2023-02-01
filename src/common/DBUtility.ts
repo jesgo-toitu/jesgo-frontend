@@ -557,6 +557,7 @@ export const hasJesgoCaseError = (
       schemaError.validationResult.messages.filter(
         (p) =>
           p.validateType !== VALIDATE_TYPE.Message &&
+          p.validateType !== VALIDATE_TYPE.JesgoError &&
           p.validateType !== VALIDATE_TYPE.Required
       ).length > 0
     ) {
@@ -693,13 +694,13 @@ export const UploadPluginFile = async (
   res.resCode = apiResult.statusNum;
   if (apiBody && apiBody.number > 0) {
     res.message = `${apiBody.number}件のプラグインを更新しました`;
-    if(apiBody.message.length > 0) {
-      res.message += `\n${apiBody.message.join('\n')}`
+    if (apiBody.message.length > 0) {
+      res.message += `\n${apiBody.message.join('\n')}`;
     }
   } else {
     res.message = '【エラー】\nプラグインの更新に失敗しました';
-    if(apiBody.message.length > 0) {
-      res.message += `\n${apiBody.message.join('\n')}`
+    if (apiBody.message.length > 0) {
+      res.message += `\n${apiBody.message.join('\n')}`;
     }
   }
 

@@ -326,15 +326,8 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               SchemaInfoMap: store.getState().schemaDataReducer.schemaDatas,
             });
 
-            if (Type === COMP_TYPE.ROOT_TAB) {
-              if (tabSelectEvents && tabSelectEvents.fnSchemaChange) {
-                tabSelectEvents.fnSchemaChange(
-                  isTab,
-                  store.getState().formDataReducer.selectedTabKeyName
-                );
-              }
-            } else if (tabSelectEvents && tabSelectEvents.fnAddDocument) {
-              tabSelectEvents.fnAddDocument(
+            if (tabSelectEvents && tabSelectEvents.fnSchemaChange) {
+              tabSelectEvents.fnSchemaChange(
                 isTab,
                 store.getState().formDataReducer.selectedTabKeyName
               );

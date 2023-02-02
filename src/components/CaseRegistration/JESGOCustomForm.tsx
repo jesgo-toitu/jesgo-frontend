@@ -126,6 +126,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
 
     let tmpErr = errors.find((p) => p.documentId === documentId);
     if (!tmpErr) {
+      schema = CustomSchema({ orgSchema: schema, formData });
       tmpErr = {
         errDocTitle: GetSchemaTitle(schemaId),
         schemaId,

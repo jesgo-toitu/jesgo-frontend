@@ -80,6 +80,23 @@ const makeSelectDate = (
   return dateList;
 };
 
+const initialSearchWord = {
+  cancerType: 'all',
+  showOnlyTumorRegistry: false,
+  checkOfDiagnosisDate: false,
+  checkOfEventDate: false,
+  checkOfBlankFields: false,
+  blankFields: {
+    advancedStage: false,
+    pathlogicalDiagnosis: false,
+    initialTreatment: false,
+    copilacations: false,
+    threeYearPrognosis: false,
+    fiveYearPrognosis: false,
+  },
+  showProgressAndRecurrence: false,
+};
+
 const makeSelectDataFromStorage = (columnType: string): string[] => {
   const localStorageItem = localStorage.getItem(columnType);
   const dataList = localStorageItem
@@ -242,22 +259,7 @@ const Patients = () => {
     }
   }, [userListJson]);
 
-  const [searchWord, setSearchWord] = useState({
-    cancerType: 'all',
-    showOnlyTumorRegistry: false,
-    checkOfDiagnosisDate: false,
-    checkOfEventDate: false,
-    checkOfBlankFields: false,
-    blankFields: {
-      advancedStage: false,
-      pathlogicalDiagnosis: false,
-      initialTreatment: false,
-      copilacations: false,
-      threeYearPrognosis: false,
-      fiveYearPrognosis: false,
-    },
-    showProgressAndRecurrence: false,
-  });
+  const [searchWord, setSearchWord] = useState(initialSearchWord);
 
   const setShowProgressAndRecurrence = (
     check: boolean,
@@ -614,6 +616,15 @@ const Patients = () => {
     setSearchDateEventDateType(selectedValue);
   };
 
+  // 検索条件のリセット
+  const ResetSearchCondition = () => {
+    setSearchWord({ ...initialSearchWord });
+    setSearchDateInfoInitialTreatment(undefined);
+    setSearchDateInfoDiagnosis(undefined);
+    setSearchDateInfoEventDate(undefined);
+    setSearchDateEventDateType('最新');
+  };
+
   return (
     <>
       <div className="relative">
@@ -716,6 +727,7 @@ const Patients = () => {
               初回治療開始日：
               <SearchDateComponent
                 ctrlId="initialTreatmentDate"
+                searchValue={searchDateInfoInitialTreatment}
                 setSearchDateInfoDataSet={setSearchDateInfoInitialTreatment}
               />
               <div className="spacer10" />
@@ -725,6 +737,7 @@ const Patients = () => {
                   name="cancerType"
                   onChange={handleSearchCondition}
                   componentClass="select"
+                  value={searchWord.cancerType}
                 >
                   <option value="all">すべて</option>
                   {makeSelectDataFromStorage('cancer_type').map(
@@ -741,6 +754,7 @@ const Patients = () => {
                 name="showOnlyTumorRegistry"
                 onChange={handleSearchCondition}
                 inline
+                checked={searchWord.showOnlyTumorRegistry}
               >
                 腫瘍登録対象のみ表示
               </Checkbox>
@@ -760,6 +774,15 @@ const Patients = () => {
                   aria-hidden="true"
                 />
                 詳細表示設定
+              </a>
+              <div className="spacer10" />
+              <div className="spacer10" />
+              <a href="#" onClick={ResetSearchCondition}>
+                <span
+                  className="glyphicon glyphicon-refresh"
+                  aria-hidden="true"
+                />
+                条件リセット
               </a>
               <div className="spacer10" />
               <div className="spacer10" />
@@ -784,11 +807,13 @@ const Patients = () => {
                   name="checkOfDiagnosisDate"
                   onChange={handleSearchCondition}
                   inline
+                  checked={searchWord.checkOfDiagnosisDate}
                 >
                   <span className="detail-setting-content">診断日：</span>
                 </Checkbox>
                 <SearchDateComponent
                   ctrlId="diagnosisDate"
+                  searchValue={searchDateInfoDiagnosis}
                   setSearchDateInfoDataSet={setSearchDateInfoDiagnosis}
                 />
               </div>
@@ -797,6 +822,7 @@ const Patients = () => {
                   name="checkOfEventDate"
                   onChange={handleSearchCondition}
                   inline
+                  checked={searchWord.checkOfEventDate}
                 >
                   <span className="detail-setting-content">イベント日 </span>
                 </Checkbox>
@@ -824,6 +850,7 @@ const Patients = () => {
                 】：
                 <SearchDateComponent
                   ctrlId="eventDate"
+                  searchValue={searchDateInfoEventDate}
                   setSearchDateInfoDataSet={setSearchDateInfoEventDate}
                 />
               </div>
@@ -832,6 +859,7 @@ const Patients = () => {
                   name="checkOfBlankFields"
                   onChange={handleSearchCondition}
                   inline
+                  checked={searchWord.checkOfBlankFields}
                 >
                   <span className="detail-setting-content">
                     未入力項目で絞り込み：
@@ -841,6 +869,7 @@ const Patients = () => {
                   name="advancedStage"
                   onChange={handleSearchCondition}
                   inline
+                  checked={searchWord.blankFields.advancedStage}
                 >
                   進行期
                 </Checkbox>
@@ -848,6 +877,7 @@ const Patients = () => {
                   name="pathlogicalDiagnosis"
                   onChange={handleSearchCondition}
                   inline
+                  checked={searchWord.blankFields.pathlogicalDiagnosis}
                 >
                   診断
                 </Checkbox>
@@ -855,6 +885,7 @@ const Patients = () => {
                   name="initialTreatment"
                   onChange={handleSearchCondition}
                   inline
+                  checked={searchWord.blankFields.initialTreatment}
                 >
                   初回治療
                 </Checkbox>
@@ -863,6 +894,7 @@ const Patients = () => {
                   onChange={handleSearchCondition}
                   inline
                   disabled
+                  checked={searchWord.blankFields.copilacations}
                 >
                   合併症
                 </Checkbox>
@@ -871,6 +903,7 @@ const Patients = () => {
                   onChange={handleSearchCondition}
                   inline
                   disabled
+                  checked={searchWord.blankFields.threeYearPrognosis}
                 >
                   3年予後
                 </Checkbox>
@@ -879,12 +912,24 @@ const Patients = () => {
                   onChange={handleSearchCondition}
                   inline
                   disabled
+                  checked={searchWord.blankFields.fiveYearPrognosis}
                 >
                   5年予後
                 </Checkbox>
               </div>
-              <div className="detail-column flex">
-                <Button bsStyle="primary" onClick={() => submit('detail')}>
+              <div className="detail-column flex-right">
+                <Button
+                  bsStyle="default"
+                  className="detail-footer-button"
+                  onClick={ResetSearchCondition}
+                >
+                  条件リセット
+                </Button>
+                <Button
+                  bsStyle="primary"
+                  className="detail-footer-button"
+                  onClick={() => submit('detail')}
+                >
                   表示更新
                 </Button>
               </div>

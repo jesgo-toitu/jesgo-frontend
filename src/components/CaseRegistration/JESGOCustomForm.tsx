@@ -126,7 +126,6 @@ const CustomDivForm = (props: CustomDivFormProp) => {
 
     let tmpErr = errors.find((p) => p.documentId === documentId);
     if (!tmpErr) {
-      schema = CustomSchema({ orgSchema: schema, formData });
       tmpErr = {
         errDocTitle: GetSchemaTitle(schemaId),
         schemaId,
@@ -171,7 +170,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   copyProps.formData = formData;
 
   // uiSchema作成
-  const uiSchema = useMemo(() => CreateUISchema(schema), [schema]);
+  const uiSchema = CreateUISchema(schema);
   if (isTabItem) {
     uiSchema['ui:ObjectFieldTemplate'] =
       JESGOFiledTemplete.TabItemFieldTemplate;

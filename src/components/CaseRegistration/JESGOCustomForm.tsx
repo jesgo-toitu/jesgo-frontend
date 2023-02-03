@@ -170,7 +170,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   copyProps.formData = formData;
 
   // uiSchema作成
-  const uiSchema = useMemo(() => CreateUISchema(schema), [schema]);
+  const uiSchema = CreateUISchema(schema);
   if (isTabItem) {
     uiSchema['ui:ObjectFieldTemplate'] =
       JESGOFiledTemplete.TabItemFieldTemplate;

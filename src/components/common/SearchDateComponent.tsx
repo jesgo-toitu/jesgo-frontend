@@ -27,17 +27,21 @@ export type searchDateInfoDataSet = {
 const MIN_DATE: Date = new Date(Const.INPUT_DATE_MIN); // 1900/01/01
 const MAX_DATE: Date = new Date(9999, 11, 31); // 9999/12/31
 
+const radioDefaultValue = '年次';
+const dateInfoDefaultValue: searchDateInfo = { year: '', month: '', day: '' };
+
 /**
  * 日付検索コンポーネント
  */
 const SearchDateComponent = React.memo(
   (props: {
     ctrlId: string;
+    searchValue: searchDateInfoDataSet | undefined;
     setSearchDateInfoDataSet: React.Dispatch<
       React.SetStateAction<searchDateInfoDataSet | undefined>
     >;
   }) => {
-    const { ctrlId, setSearchDateInfoDataSet } = props;
+    const { ctrlId, searchValue, setSearchDateInfoDataSet } = props;
 
     const radioGroupName = useMemo(
       () => `${ctrlId}-${Math.random().toString()}`,
@@ -46,19 +50,14 @@ const SearchDateComponent = React.memo(
 
     const [isHiddenMonth, setisHiddenMonth] = useState(true);
     const [isHiddenDay, setisHiddenDay] = useState(true);
-    const [radioSelectedValue, setRadioSelectedValue] = useState('年次');
+    const [radioSelectedValue, setRadioSelectedValue] =
+      useState(radioDefaultValue);
 
-    const [dateFromInfo, setDateFromInfo] = useState<searchDateInfo>({
-      year: '',
-      month: '',
-      day: '',
-    });
+    const [dateFromInfo, setDateFromInfo] =
+      useState<searchDateInfo>(dateInfoDefaultValue);
 
-    const [dateToInfo, setDateToInfo] = useState<searchDateInfo>({
-      year: '',
-      month: '',
-      day: '',
-    });
+    const [dateToInfo, setDateToInfo] =
+      useState<searchDateInfo>(dateInfoDefaultValue);
 
     const [isRangeSearch, setIsRangeSearch] = useState(false);
 
@@ -173,6 +172,18 @@ const SearchDateComponent = React.memo(
       });
     }, [dateFromInfo, dateToInfo, isRangeSearch, radioSelectedValue]);
 
+    useEffect(() => {
+      // 検索条件リセット
+      if (!searchValue) {
+        setRadioSelectedValue(radioDefaultValue);
+        setIsRangeSearch(false);
+        setisHiddenMonth(true);
+        setisHiddenDay(true);
+        setDateFromInfo(dateInfoDefaultValue);
+        setDateToInfo(dateInfoDefaultValue);
+      }
+    }, [searchValue]);
+
     // 検索条件に現在日セット
     const setToday = (mode: 'from' | 'to') => {
       const today = new Date();
@@ -221,7 +232,7 @@ const SearchDateComponent = React.memo(
           dateInfo.day = today.getDate().toString();
 
         let currentDate = new Date(
-          1900,
+          Number(dateInfo.year),
           Number(dateInfo.month) - 1,
           radioSelectedValue === '月次' ? 1 : Number(dateInfo.day)
         );

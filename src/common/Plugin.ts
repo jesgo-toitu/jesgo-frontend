@@ -1,7 +1,7 @@
+/* eslint-disable no-plusplus */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-lonely-if */
 import { Buffer } from 'buffer';
-import { reject } from 'lodash';
 import React from 'react';
 import { jesgoCaseDefine } from '../store/formDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
@@ -113,18 +113,80 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
 
   // 引数を配列でなければ配列にする
   const localUpdateTarget = Array.isArray(doc)? doc : [doc];
+  
   if (pluginData) {
+    // 最初に症例IDとドキュメントIDの組み合わせリストを取得する
+    const caseIdAndDocIdListRet = await apiAccess(
+      METHOD_TYPE.GET,
+      `getCaseIdAndDocIdList`
+    );
+    
+    // ハッシュと症例IDの組み合わせリストも取得する
+    const caseIdAndHashListRet = await apiAccess(
+      METHOD_TYPE.GET,
+      `getCaseIdAndHashList`
+    );
+
+    const caseIdAndDocIdList = caseIdAndDocIdListRet.body as {case_id: number; document_id: number;}[];
+    const caseIdAndHashList = caseIdAndHashListRet.body as {case_id: number; hash: string;}[];
+
+    const updateObjByCase:Map<number, updateObject[]> = new Map();
+    
+
     // eslint-disable-next-line no-plusplus
     for (let index = 0; index < localUpdateTarget.length; index++) {
-      let tempSkip = false;
+      let tempCaseId:number|undefined;
       if(targetCaseId){
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      localUpdateTarget[index].case_id = targetCaseId;
-      }
-      if(!localUpdateTarget[index].schema_id && pluginData.target_schema_id_string){
-        localUpdateTarget[index].schema_id = pluginData.target_schema_id_string;
+        tempCaseId = targetCaseId;
+      } 
+      else if(localUpdateTarget[index].case_id) {
+        tempCaseId = localUpdateTarget[index].case_id;
+      } 
+      else if(localUpdateTarget[index].hash) {
+        tempCaseId = caseIdAndHashList.find(p => p.hash === localUpdateTarget[index].hash)?.case_id;
+      } 
+      else if(localUpdateTarget[index].document_id) {
+        tempCaseId = caseIdAndDocIdList.find(p => p.document_id === localUpdateTarget[index].document_id)?.case_id;
       }
 
+      if(tempCaseId){
+        if(!updateObjByCase.get(tempCaseId)){
+          updateObjByCase.set(tempCaseId, []);
+        }
+        const oldObj = updateObjByCase.get(tempCaseId);
+        if(Array.isArray(oldObj))
+        updateObjByCase.set(tempCaseId, oldObj.concat(localUpdateTarget[index]));
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    updateObjByCase.forEach(async (value, key) => {
+      // 症例毎の処理
+      // targetが複数あるものをバラしたものを入れるための配列
+      const updateApiObjects:updateObject[] = [];
+
+      for (let index = 0; index < value.length; index++) {
+        const obj = value[index];
+        // eslint-disable-next-line
+        for(const targetKey in obj.target) {
+          const newObj:updateObject = {
+            document_id: obj.document_id,
+            case_id: obj.case_id,
+            hash: obj.hash,
+            case_no: obj.case_no,
+            schema_id: obj.schema_id,
+            target: {[targetKey]:obj.target[targetKey]},
+          }
+          updateApiObjects.push(newObj);
+        }
+      }
+      // 全てのアップデート用オブジェクトを分解し終えたら症例毎にAPIに送る
+      const ret = await apiAccess(
+        METHOD_TYPE.POST,
+        `plugin-update`,
+        {case_id:key, objects:updateApiObjects}
+      );
+        /*
       let confirmMessage:string[] = [];
       if(!isSkip) {
         const ret = await apiAccess(
@@ -154,7 +216,8 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
           alert('更新に失敗しました');
         }
       }
-    }
+      */
+    });
   }
 };
 

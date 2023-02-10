@@ -66,16 +66,19 @@ export const GetSchemaIdFromString = (id: string): number => {
  * @param eventDate イベント日(基準日)
  * @param validSchemaOnly
  * @param forceGetLatestSchema true:有効期限に関わらず最新取得 false:有効期限考慮
+ * @param argSchemaInfos store.getState()が使えない場合に外から渡すスキーマ情報
  * @returns
  */
 export const GetSchemaInfo = (
   id: number,
   eventDate: string | null = null,
   validSchemaOnly = false,
-  forceGetLatestSchema = false
+  forceGetLatestSchema = false,
+  argSchemaInfos: Map<number, JesgoDocumentSchema[]> | null = null
 ) => {
+  // 外から与えられたSchemaInfosがあればそちらを使う
   const schemaInfos: Map<number, JesgoDocumentSchema[]> =
-    store.getState().schemaDataReducer.schemaDatas;
+    argSchemaInfos ?? store.getState().schemaDataReducer.schemaDatas;
   const schemaList = schemaInfos.get(id);
   if (schemaList) {
     // ルート、もしくは強制取得のフラグがあれば最新取得

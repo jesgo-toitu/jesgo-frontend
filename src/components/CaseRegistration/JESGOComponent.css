@@ -9,6 +9,17 @@
   margin-bottom: 2px;
 }
 
+/* arrayの追加ボタン */
+.btn-add {
+  min-width: 40px;
+  margin-top: 5px;
+}
+
+/* arrayの大項目タイトル */
+.field-array > legend {
+  margin-bottom: 0px;
+}
+
 /* 横並び type=object */
 .subschemastyle-column > fieldset {
   display: flex;
@@ -16,8 +27,7 @@
 }
 
 /* flexを無効化する */
-.subschemastyle-column > fieldset > .field-array,
-.field-object {
+.subschemastyle-column > fieldset > .field-array {
   width: 100%;
 }
 
@@ -64,10 +74,10 @@
   margin-bottom: 5px;
 }
 
-/* flexを無効化する */
+/* flexを有効化する */
 .subschemastyle-inline > fieldset > .field-array,
-.field-object {
-  width: 100%;
+.subschemastyle-inline > fieldset > .field-object {
+  width: auto;
 }
 /** subschemastyle:inline end*/
 

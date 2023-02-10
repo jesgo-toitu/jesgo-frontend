@@ -101,7 +101,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   }
 
   // validationエラーの取得
-  const errors = store.getState().formDataReducer.extraErrors;
+  let errors = store.getState().formDataReducer.extraErrors;
   if (errors) {
     const targetErrors = errors.find(
       (x: RegistrationErrors) => x.documentId === documentId
@@ -117,6 +117,13 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   // プラグインにて付与されたjesgo:errorがformDataにあればエラーとして表示する
   const jesgoErrors = popJesgoError(formData);
   if (jesgoErrors.length > 0) {
+    // 元々あったjesgo:errorのエラーはクリアする
+    errors = errors.filter((p) =>
+      p.validationResult.messages.some(
+        (q) => q.validateType !== VALIDATE_TYPE.JesgoError
+      )
+    );
+
     let tmpErr = errors.find((p) => p.documentId === documentId);
     if (!tmpErr) {
       tmpErr = {
@@ -136,7 +143,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
         messages.push({
           // eslint-disable-next-line no-irregular-whitespace
           message: `　　${errorItem}`,
-          validateType: VALIDATE_TYPE.Message,
+          validateType: VALIDATE_TYPE.JesgoError,
         });
       } else if (typeof errorItem === 'object') {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -145,7 +152,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
           messages.push({
             // eslint-disable-next-line no-irregular-whitespace
             message: `　　[ ${item[0]} ] ${item[1] as string}`,
-            validateType: VALIDATE_TYPE.Message,
+            validateType: VALIDATE_TYPE.JesgoError,
           });
         });
       }
@@ -163,7 +170,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   copyProps.formData = formData;
 
   // uiSchema作成
-  const uiSchema = useMemo(() => CreateUISchema(schema), [schema]);
+  const uiSchema = CreateUISchema(schema);
   if (isTabItem) {
     uiSchema['ui:ObjectFieldTemplate'] =
       JESGOFiledTemplete.TabItemFieldTemplate;

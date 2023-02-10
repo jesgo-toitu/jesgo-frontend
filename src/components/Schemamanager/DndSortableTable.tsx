@@ -9,7 +9,7 @@ import {
   DropResult,
 } from 'react-beautiful-dnd';
 import lodash from 'lodash';
-import { schemaWithValid } from '../CaseRegistration/SchemaUtility';
+import { schemaWithValid } from '../CaseRegistration/Definition';
 
 type DndSortableTableProps = {
   schemaList: schemaWithValid[] | undefined;

@@ -21,16 +21,11 @@ import { Const } from '../common/Const';
 import './SchemaManager.css';
 import SchemaTree, {
   SCHEMA_TYPE,
-  treeSchema,
-  treeApiObject,
 } from '../components/Schemamanager/SchemaTree';
 
-import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import {
-  parentSchemaList,
   GetSchemaInfo,
   GetParentSchemas,
-  schemaWithValid,
   storeSchemaInfo,
   GetSchemaVersionedInfo,
 } from '../components/CaseRegistration/SchemaUtility';
@@ -43,6 +38,12 @@ import {
 import SchemaVersionTable, {
   makeInitValidDate,
 } from '../components/Schemamanager/SchemaVersionTable';
+import { JesgoDocumentSchema } from '../@types/store';
+import {
+  parentSchemaList,
+  schemaWithValid,
+} from '../components/CaseRegistration/Definition';
+import { treeApiObject, treeSchema } from '../@types/SchemaManager';
 
 type settings = {
   facility_name: string;

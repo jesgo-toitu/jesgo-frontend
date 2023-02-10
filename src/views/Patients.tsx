@@ -30,14 +30,14 @@ import { formatDate, formatTime } from '../common/CommonUtility';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
-import { jesgoCaseDefine } from '../store/formDataReducer';
-import { jesgoPluginColumns } from '../common/Plugin';
 import { PatientListPluginButton } from '../components/common/PluginButton';
 import SearchDateComponent, {
   convertSearchDate,
-  searchDateInfoDataSet,
 } from '../components/common/SearchDateComponent';
-import { reloadState } from './Registration';
+import { reloadState } from '../@types/Registration';
+import { jesgoPluginColumns } from '../@types/common';
+import { searchDateInfoDataSet } from '../components/CaseRegistration/Definition';
+import { jesgoCaseDefine } from '../@types/store';
 
 const UNIT_TYPE = {
   DAY: 0,

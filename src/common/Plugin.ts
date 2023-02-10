@@ -3,28 +3,14 @@
 import { Buffer } from 'buffer';
 import { reject } from 'lodash';
 import React from 'react';
-import { jesgoCaseDefine } from '../store/formDataReducer';
-import { reloadState } from '../views/Registration';
+import { jesgoPluginColumns } from '../@types/common';
+import { reloadState } from '../@types/Registration';
+import { jesgoCaseDefine } from '../@types/store';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { toUTF8 } from './CommonUtility';
 import { GetPackagedDocument } from './DBUtility';
 
 window.Buffer = Buffer;
-
-export type jesgoPluginColumns = {
-  plugin_id: number;
-  plugin_name: string;
-  plugin_version?: string;
-  script_text: string;
-  target_schema_id?: number[];
-  target_schema_id_string?: string;
-  all_patient: boolean;
-  update_db: boolean;
-  attach_patient_info: boolean;
-  show_upload_dialog: boolean;
-  filter_schema_query?: string;
-  explain?: string;
-};
 
 type argDoc = {
   caseList: jesgoCaseDefine[];

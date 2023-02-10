@@ -10,12 +10,17 @@ import {
 import JSONPointer from 'jsonpointer';
 import lodash from 'lodash';
 import { Dispatch } from 'redux';
+import { JesgoDocumentSchema } from '../../@types/store';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import { isNotEmptyObject } from '../../common/CaseRegistrationUtility';
 import { formatDate, isDate } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import store from '../../store';
-import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
+import {
+  parentSchemaList,
+  schemaWithValid,
+  searchColumnsFromApi,
+} from './Definition';
 
 /** Schema加工用Utility */
 type schemaItem = {
@@ -144,17 +149,6 @@ export const GetRootSchema = () => {
   return roots.filter((id) => GetSchemaInfo(id, null, true));
 };
 
-export type schemaWithValid = {
-  valid: boolean;
-  schema: JesgoDocumentSchema;
-  validCheckDisabled?: boolean;
-};
-
-export type parentSchemaList = {
-  fromSubSchema: schemaWithValid[];
-  fromChildSchema: schemaWithValid[];
-};
-
 // 指定したスキーマIDをサブスキーマ、子スキーマに持つスキーマ情報のリストを取得
 export const GetParentSchemas = (childId: number) => {
   const schemaInfos = store.getState().schemaDataReducer.schemaDatas;
@@ -190,10 +184,6 @@ export const GetParentSchemas = (childId: number) => {
   };
 
   return parentList;
-};
-
-export type searchColumnsFromApi = {
-  cancerTypes: string[];
 };
 
 export const storeSchemaInfo = async (dispatch: Dispatch<any>) => {

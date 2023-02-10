@@ -37,7 +37,6 @@ import {
   headerInfoAction,
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
-  jesgoDocumentObjDefine,
 } from '../store/formDataReducer';
 import SaveCommand, {
   hasJesgoCaseError,
@@ -62,11 +61,8 @@ import {
   ShowSaveDialogState,
   RegistrationErrors,
 } from '../components/CaseRegistration/Definition';
-
-export type reloadState = {
-  isReload: boolean;
-  caller: string;
-};
+import { reloadState } from '../@types/Registration';
+import { jesgoDocumentObjDefine } from '../@types/store';
 
 // 症例入力のおおもとの画面
 const Registration = () => {

@@ -4,17 +4,13 @@
 /* eslint-disable import/prefer-default-export */
 import React, { Dispatch } from 'react';
 import lodash from 'lodash';
+import { JSONSchema7 } from 'json-schema';
 import {
   CustomSchema,
   getJesgoSchemaPropValue,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
-import {
-  jesgoCaseDefine,
-  jesgoDocumentObjDefine,
-  SaveDataObjDefine,
-} from '../store/formDataReducer';
-import { JesgoDocumentSchema } from '../store/schemaDataReducer';
+import { SaveDataObjDefine } from '../store/formDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { validateJesgoDocument } from './CaseRegistrationUtility';
 import {
@@ -24,7 +20,12 @@ import {
 import { Const } from './Const';
 import { formatDate, formatDateStr } from './CommonUtility';
 import store from '../store';
-import { JSONSchema7 } from 'json-schema';
+import { schemaValueSet } from '../@types/common';
+import {
+  jesgoCaseDefine,
+  jesgoDocumentObjDefine,
+  JesgoDocumentSchema,
+} from '../@types/store';
 
 export interface responseResult {
   resCode?: number;
@@ -128,17 +129,6 @@ export const loadJesgoCaseAndDocument = async (
 
   // 呼び元に返す
   setJesgoCaseData(res);
-};
-
-export type schemaValueSet = {
-  schema_id: number;
-  primary_id: number;
-  valid_from: string;
-  valid_until: string | null;
-  eventPropName: string;
-  eventDate: string | undefined;
-  majorVersion: number;
-  minorVersion: number;
 };
 
 /**

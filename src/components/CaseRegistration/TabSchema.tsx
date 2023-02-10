@@ -14,11 +14,7 @@ import {
   isInfiniteLoopBlackList,
 } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
-import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
-import {
-  dispSchemaIdAndDocumentIdDefine,
-  jesgoDocumentObjDefine,
-} from '../../store/formDataReducer';
+import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
 import { createPanels, createTabs } from './FormCommonComponents';
 import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
@@ -26,6 +22,10 @@ import { Const } from '../../common/Const';
 import { getEventDate, responseResult } from '../../common/DBUtility';
 import '../../views/Registration.css';
 import store from '../../store';
+import {
+  jesgoDocumentObjDefine,
+  JesgoDocumentSchema,
+} from '../../@types/store';
 
 // ルートディレクトリ直下の子スキーマ
 type Props = {

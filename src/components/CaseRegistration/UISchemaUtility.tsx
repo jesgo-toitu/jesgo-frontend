@@ -13,10 +13,6 @@ import { getPropItemsAndNames, getSchemaType } from './SchemaUtility';
 
 // uiSchema作成用Utility
 
-export type UiSchemaProp = {
-  schema: JSONSchema7;
-};
-
 /**
  * 各プロパティに合ったuiSchemaを追加
  * @param schema 定義スキーマ

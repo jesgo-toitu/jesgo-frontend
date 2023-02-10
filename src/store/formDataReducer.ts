@@ -2,48 +2,13 @@
 import lodash from 'lodash';
 import { Reducer } from 'redux';
 import React from 'react';
-import { JesgoDocumentSchema } from './schemaDataReducer';
 import { RegistrationErrors } from '../components/CaseRegistration/Definition';
-
-// 症例情報の定義
-export type jesgoCaseDefine = {
-  case_id: string;
-  name: string;
-  date_of_birth: string;
-  date_of_death: string;
-  sex: string;
-  his_id: string;
-  decline: boolean;
-  registrant: number;
-  last_updated: string;
-  is_new_case: boolean;
-};
-
-// valueの定義
-export type jesgoDocumentValueItem = {
-  case_id: string;
-  event_date: string;
-  document: any;
-  child_documents: string[];
-  schema_id: number;
-  schema_primary_id: number;
-  schema_major_version: number;
-  registrant: number;
-  last_updated: string;
-  readonly: boolean;
-  deleted: boolean;
-};
-
-export type jesgoDocumentObjDefine = {
-  key: string;
-  value: jesgoDocumentValueItem;
-  root_order: number;
-  event_date_prop_name: string;
-  death_data_prop_name: string;
-  // TODO: 削除したキーは必要？
-  delete_document_keys: string[];
-  compId: string;
-};
+import {
+  jesgoDocumentObjDefine,
+  jesgoCaseDefine,
+  JesgoDocumentSchema,
+  jesgoDocumentValueItem,
+} from '../@types/store';
 
 export interface SaveDataObjDefine {
   jesgo_case: jesgoCaseDefine;

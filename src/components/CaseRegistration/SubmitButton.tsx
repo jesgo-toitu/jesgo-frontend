@@ -11,9 +11,9 @@ import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
 import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
-import { jesgoPluginColumns } from '../../common/Plugin';
 import { TargetPatientPluginButton } from '../common/PluginButton';
-import { reloadState } from '../../views/Registration';
+import { reloadState } from '../../@types/Registration';
+import { jesgoPluginColumns } from '../../@types/common';
 
 interface ButtonProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;

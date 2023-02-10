@@ -15,17 +15,16 @@ import {
 } from '../../common/CaseRegistrationUtility';
 import { ControlButton, COMP_TYPE } from './ControlButton';
 import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
-import {
-  dispSchemaIdAndDocumentIdDefine,
-  jesgoDocumentObjDefine,
-  SaveDataObjDefine,
-} from '../../store/formDataReducer';
+import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import { createTabs } from './FormCommonComponents';
 import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { getEventDate, responseResult } from '../../common/DBUtility';
-import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import store from '../../store';
 import { Const } from '../../common/Const';
+import {
+  jesgoDocumentObjDefine,
+  JesgoDocumentSchema,
+} from '../../@types/store';
 
 type Props = {
   tabId: string;

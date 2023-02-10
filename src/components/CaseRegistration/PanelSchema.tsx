@@ -17,15 +17,17 @@ import { ControlButton, COMP_TYPE } from './ControlButton';
 import { CustomSchema, GetSchemaInfo } from './SchemaUtility';
 import {
   dispSchemaIdAndDocumentIdDefine,
-  jesgoDocumentObjDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
 import { createPanels, createTabs } from './FormCommonComponents';
 import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
-import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import { getEventDate, responseResult } from '../../common/DBUtility';
 import store from '../../store';
+import {
+  jesgoDocumentObjDefine,
+  JesgoDocumentSchema,
+} from '../../@types/store';
 
 // 孫スキーマ以降
 type Props = {

@@ -1,4 +1,5 @@
 import { JSONSchema7 } from 'json-schema';
+import { JesgoDocumentSchema } from '../../@types/store';
 
 export interface ShowSaveDialogState {
   showFlg: boolean;
@@ -46,4 +47,36 @@ export type RegistrationErrors = {
   errDocTitle: string;
   schemaId: number;
   documentId: string;
+};
+
+export type schemaWithValid = {
+  valid: boolean;
+  schema: JesgoDocumentSchema;
+  validCheckDisabled?: boolean;
+};
+
+export type parentSchemaList = {
+  fromSubSchema: schemaWithValid[];
+  fromChildSchema: schemaWithValid[];
+};
+
+export type UiSchemaProp = {
+  schema: JSONSchema7;
+};
+
+export type searchColumnsFromApi = {
+  cancerTypes: string[];
+};
+
+export type searchDateInfo = {
+  year: string;
+  month: string;
+  day: string;
+};
+
+export type searchDateInfoDataSet = {
+  fromInfo: searchDateInfo;
+  toInfo: searchDateInfo;
+  isRange: boolean;
+  searchType: string;
 };

@@ -4,6 +4,7 @@ import { Buffer } from 'buffer';
 import { reject } from 'lodash';
 import React from 'react';
 import { jesgoCaseDefine } from '../store/formDataReducer';
+import { reloadState } from '../views/Registration';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { toUTF8 } from './CommonUtility';
 import { GetPackagedDocument } from './DBUtility';
@@ -43,7 +44,7 @@ type updateObject = {
 };
 
 let pluginData: jesgoPluginColumns;
-let targetCaseId: number|undefined;
+let targetCaseId: number | undefined;
 
 // モジュールのFunc定義インターフェース
 interface IPluginModule {
@@ -100,8 +101,10 @@ const getTargetDocument = async (doc: argDoc) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const updatePatientsDocument = async (doc: updateObject | updateObject[] | undefined) => {
-  if(!doc){
+const updatePatientsDocument = async (
+  doc: updateObject | updateObject[] | undefined
+) => {
+  if (!doc) {
     // 処理を中止
     // eslint-disable-next-line no-alert
     alert('更新用オブジェクトが不足しています');
@@ -112,21 +115,24 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
   const isSkip = false;
 
   // 引数を配列でなければ配列にする
-  const localUpdateTarget = Array.isArray(doc)? doc : [doc];
+  const localUpdateTarget = Array.isArray(doc) ? doc : [doc];
   if (pluginData) {
     // eslint-disable-next-line no-plusplus
     for (let index = 0; index < localUpdateTarget.length; index++) {
       let tempSkip = false;
-      if(targetCaseId){
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      localUpdateTarget[index].case_id = targetCaseId;
+      if (targetCaseId) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        localUpdateTarget[index].case_id = targetCaseId;
       }
-      if(!localUpdateTarget[index].schema_id && pluginData.target_schema_id_string){
+      if (
+        !localUpdateTarget[index].schema_id &&
+        pluginData.target_schema_id_string
+      ) {
         localUpdateTarget[index].schema_id = pluginData.target_schema_id_string;
       }
 
-      let confirmMessage:string[] = [];
-      if(!isSkip) {
+      let confirmMessage: string[] = [];
+      if (!isSkip) {
         const ret = await apiAccess(
           METHOD_TYPE.POST,
           `plugin-update`,
@@ -134,15 +140,17 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
         );
         if (ret.statusNum === RESULT.NORMAL_TERMINATION) {
           confirmMessage = ret.body as string[];
-        } else if(ret.statusNum === RESULT.PLUGIN_ALREADY_UPDATED) {
+        } else if (ret.statusNum === RESULT.PLUGIN_ALREADY_UPDATED) {
           tempSkip = true;
         }
       }
 
-      if(isSkip || 
+      if (
+        isSkip ||
         tempSkip ||
         // eslint-disable-next-line
-        confirmMessage.length > 0 && confirm(confirmMessage.join("\n"))) {
+        (confirmMessage.length > 0 && confirm(confirmMessage.join('\n')))
+      ) {
         localUpdateTarget[index].isConfirmed = true;
         const ret = await apiAccess(
           METHOD_TYPE.POST,
@@ -166,13 +174,13 @@ export const moduleMain = async (
 ): Promise<unknown> => {
   // モジュール読み込みからのmain実行
   const module = await GetModule(scriptText);
-  try{
+  try {
     const retValue = await module.main(doc, func);
     return retValue;
-  }catch (e){
+  } catch (e) {
     // eslint-disable-next-line no-alert
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
-  }finally{
+  } finally {
     if (module.finalize) {
       await module.finalize();
     }
@@ -181,11 +189,11 @@ export const moduleMain = async (
 };
 
 type formDocument = {
-  document_id?: number,
-  case_id?: number,
-  schema_id?: string,
-  document: JSON,
-}
+  document_id?: number;
+  case_id?: number;
+  schema_id?: string;
+  document: JSON;
+};
 
 export const moduleMainUpdate = async (
   scriptText: string,
@@ -195,13 +203,13 @@ export const moduleMainUpdate = async (
 ): Promise<unknown> => {
   // モジュール読み込みからのmain実行、引数にCSVファイルを利用することあり
   const module = await GetModule(scriptText);
-  try{
+  try {
     const retValue = await module.main(doc, func);
     return retValue;
-  }catch (e){
+  } catch (e) {
     // eslint-disable-next-line no-alert
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
-  }finally{
+  } finally {
     if (module.finalize) {
       await module.finalize();
     }
@@ -209,37 +217,39 @@ export const moduleMainUpdate = async (
   return undefined;
 };
 
-const getDocuments = async (caseId:number|undefined, schemaIds:number[]|undefined) => {
+const getDocuments = async (
+  caseId: number | undefined,
+  schemaIds: number[] | undefined
+) => {
   let param = '';
-  if(caseId){
+  if (caseId) {
     param += `?caseId=${caseId}`;
   }
-  if(schemaIds){
-    if(param.length > 0){
+  if (schemaIds) {
+    if (param.length > 0) {
       param += '&';
-    }else{
+    } else {
       param += '?';
     }
     param += `schemaIds=${schemaIds.join(',')}`;
   }
-  const ret = await apiAccess(
-    METHOD_TYPE.GET,
-    `getPatientDocuments${param}`
-  );
+  const ret = await apiAccess(METHOD_TYPE.GET, `getPatientDocuments${param}`);
   if (ret.statusNum === RESULT.NORMAL_TERMINATION) {
     return ret.body as formDocument[];
   }
   return [];
-}
+};
 
 export const executePlugin = async (
   plugin: jesgoPluginColumns,
   patientList: jesgoCaseDefine[] | undefined,
   targetDocumentId: number | undefined = undefined,
   setReload:
-    | ((value: React.SetStateAction<boolean>) => void)
+    | ((value: React.SetStateAction<reloadState>) => void)
     | undefined = undefined,
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>> | undefined = undefined,
+  setIsLoading:
+    | React.Dispatch<React.SetStateAction<boolean>>
+    | undefined = undefined
 ) => {
   pluginData = plugin;
   if (plugin.update_db) {
@@ -247,7 +257,7 @@ export const executePlugin = async (
     if (!plugin.all_patient && patientList && patientList.length === 1) {
       // 対象患者が指定されている場合
       targetCaseId = Number(patientList[0].case_id);
-    }else {
+    } else {
       targetCaseId = undefined;
     }
     if (plugin.show_upload_dialog) {
@@ -277,7 +287,7 @@ export const executePlugin = async (
               setIsLoading(false);
             }
             if (setReload) {
-              setReload(true);
+              setReload({ isReload: true, caller: 'update_plugin' });
             }
             return retValue;
           };
@@ -287,14 +297,17 @@ export const executePlugin = async (
       fileInput.click();
     } else {
       // ファイルアップロードなし
-      const documentList:formDocument[] = await getDocuments(targetCaseId, pluginData.target_schema_id);
+      const documentList: formDocument[] = await getDocuments(
+        targetCaseId,
+        pluginData.target_schema_id
+      );
       const retValue = await moduleMainUpdate(
         plugin.script_text,
         updatePatientsDocument,
         documentList
       );
       if (setReload) {
-        setReload(true);
+        setReload({ isReload: true, caller: 'update_plugin' });
       }
       return retValue;
     }
@@ -304,7 +317,7 @@ export const executePlugin = async (
       // eslint-disable-next-line no-restricted-globals, no-alert
       !confirm('出力結果に患者情報が含まれています、実行しますか？')
     ) {
-       throw new Error('cancel');
+      throw new Error('cancel');
     }
     // データ出力系)
     if (patientList) {

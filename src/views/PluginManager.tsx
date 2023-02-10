@@ -26,7 +26,7 @@ import {
   OpenOutputViewScript,
 } from '../common/CaseRegistrationUtility';
 import './PluginManager.css';
-import { jesgoPluginColumns } from '../common/Plugin';
+import { jesgoPluginColumns } from '../@types/common';
 
 type settings = {
   facility_name: string;

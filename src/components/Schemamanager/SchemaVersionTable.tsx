@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { Button, Checkbox } from 'react-bootstrap';
 import { FaDownload } from '@react-icons/all-files/fa/FaDownload';
 import { cloneDeep } from 'lodash';
-import { schemaWithValid } from '../CaseRegistration/SchemaUtility';
 import { formatDateStr } from '../../common/CommonUtility';
-import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
+import { schemaWithValid } from '../CaseRegistration/Definition';
+import { JesgoDocumentSchema } from '../../@types/store';
 
 type SchemaVersionTableProps = {
   schemaList: schemaWithValid[];

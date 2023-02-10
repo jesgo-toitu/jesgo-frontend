@@ -1,30 +1,7 @@
 import lodash from 'lodash';
 import { Reducer } from 'redux';
 import { JSONSchema7 } from 'json-schema';
-
-// 症例情報の定義
-// バックエンドのSchemas.tsと同じものを使用するため
-// どちらかに更新が入ったらもう片方も更新すること
-export type JesgoDocumentSchema = {
-  schema_id: number;
-  schema_id_string: string;
-  title: string;
-  subtitle: string;
-  document_schema: JSONSchema7;
-  subschema: number[];
-  child_schema: number[];
-  inherit_schema: number[];
-  base_schema: number | null;
-  version_major: number;
-  version_minor: number;
-  schema_primary_id: number;
-  subschema_default: number[];
-  child_schema_default: number[];
-  inherit_schema_default: number[];
-  valid_from: string;
-  valid_until: string | null;
-  hidden: boolean;
-};
+import { JesgoDocumentSchema } from '../@types/store';
 
 export interface schemaDataState {
   schemaDatas: Map<number, JesgoDocumentSchema[]>;

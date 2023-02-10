@@ -10,19 +10,10 @@ import {
 } from 'react-bootstrap';
 import './SearchDateComponent.css';
 import { Const } from '../../common/Const';
-
-export type searchDateInfo = {
-  year: string;
-  month: string;
-  day: string;
-};
-
-export type searchDateInfoDataSet = {
-  fromInfo: searchDateInfo;
-  toInfo: searchDateInfo;
-  isRange: boolean;
-  searchType: string;
-};
+import {
+  searchDateInfo,
+  searchDateInfoDataSet,
+} from '../CaseRegistration/Definition';
 
 const MIN_DATE: Date = new Date(Const.INPUT_DATE_MIN); // 1900/01/01
 const MAX_DATE: Date = new Date(9999, 11, 31); // 9999/12/31

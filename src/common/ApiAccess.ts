@@ -1,14 +1,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import { Config } from '../@types/ApiAccess';
 
 const CONFIG_PATH = './config.json' as string;
-
-export type EndPointCOnfig = {
-  endPointUrl: string;
-};
-
-export type Config = {
-  config: EndPointCOnfig;
-};
 
 let config: Config;
 export interface ApiReturnObject {

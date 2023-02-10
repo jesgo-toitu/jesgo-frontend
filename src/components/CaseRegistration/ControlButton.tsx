@@ -8,7 +8,6 @@ import {
   GetSchemaTitle,
   OpenOutputView,
 } from '../../common/CaseRegistrationUtility';
-import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import store from '../../store/index';
@@ -16,8 +15,10 @@ import { ChildTabSelectedFuncObj } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
 import { fTimeout } from '../../common/CommonUtility';
-import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
+import { executePlugin } from '../../common/Plugin';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { jesgoPluginColumns } from '../../@types/common';
+import { JesgoDocumentSchema } from '../../@types/store';
 
 export const COMP_TYPE = {
   ROOT: 'root',

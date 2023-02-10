@@ -5,19 +5,7 @@ import React from 'react';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 import CustomTreeItem from './CustomTreeItem';
-
-export type treeSchema = {
-  schema_id: number;
-  schema_title: string;
-  subschema: treeSchema[];
-  childschema: treeSchema[];
-  inheritschema: treeSchema[];
-};
-
-export type treeApiObject = {
-  treeSchema: treeSchema[];
-  errorMessages: string[];
-};
+import { treeSchema } from '../../@types/SchemaManager';
 
 export const SCHEMA_TYPE = {
   SUBSCHEMA: 0,

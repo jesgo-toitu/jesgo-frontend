@@ -37,9 +37,9 @@ import {
   headerInfoAction,
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
-  jesgoDocumentObjDefine,
 } from '../store/formDataReducer';
 import SaveCommand, {
+  hasJesgoCaseError,
   loadJesgoCaseAndDocument,
   responseResult,
 } from '../common/DBUtility';
@@ -61,6 +61,8 @@ import {
   ShowSaveDialogState,
   RegistrationErrors,
 } from '../components/CaseRegistration/Definition';
+import { reloadState } from '../@types/Registration';
+import { jesgoDocumentObjDefine } from '../@types/store';
 
 // 症例入力のおおもとの画面
 const Registration = () => {
@@ -84,7 +86,10 @@ const Registration = () => {
   // 症例ID
   const [caseId, setCaseId] = useState<number>();
   // リロードフラグ
-  const [isReload, setIsReload] = useState<boolean>(false);
+  const [reload, setReload] = useState<reloadState>({
+    isReload: false,
+    caller: '',
+  });
 
   // 読み込み中フラグ
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -232,7 +237,10 @@ const Registration = () => {
       paramCaseId = query.get('id') ?? '';
     }
 
-    if (paramCaseId && (loadedJesgoCase.resCode === undefined || isReload)) {
+    if (
+      paramCaseId &&
+      (loadedJesgoCase.resCode === undefined || reload.isReload)
+    ) {
       // DBからデータ読み込み
       loadJesgoCaseAndDocument(parseInt(paramCaseId, 10), setLoadedJesgoCase);
     } else {
@@ -251,11 +259,11 @@ const Registration = () => {
   }, []);
 
   useEffect(() => {
-    if (isReload) {
+    if (reload.isReload) {
       setIsLoading(true);
       LoadDataFromDB();
     }
-  }, [isReload]);
+  }, [reload]);
 
   // データ読み込み後のコールバック
   useEffect(() => {
@@ -321,7 +329,12 @@ const Registration = () => {
         }
       }
 
-      setIsReload(false);
+      if (reload.isReload && reload.caller === 'update_plugin') {
+        // プラグインのデータ更新後のリロード時はエラー再設定
+        hasJesgoCaseError(loadData, setErrors, dispatch);
+      }
+
+      setReload({ isReload: false, caller: '' });
 
       // 患者情報しか入力されてない場合はローディング画面解除されないのでここで解除する
       if (jesgoDocument.length === 0) {
@@ -538,7 +551,7 @@ const Registration = () => {
           loadedSaveData: undefined,
         });
         setCaseId(saveResponse.caseId);
-        setIsReload(true);
+        setReload({ isReload: true, caller: '' });
       } else {
         // 読み込み失敗
         setIsLoading(false);
@@ -677,7 +690,7 @@ const Registration = () => {
             setIsLoading={setIsLoading}
             setLoadedJesgoCase={setLoadedJesgoCase}
             setCaseId={setCaseId}
-            setIsReload={setIsReload}
+            setReload={setReload}
             setErrors={setErrors}
           />
         </Panel>

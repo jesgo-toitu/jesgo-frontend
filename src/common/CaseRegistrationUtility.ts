@@ -6,7 +6,6 @@ import { JSONSchema7, JSONSchema7TypeName } from 'json-schema';
 import store from '../store';
 import {
   dispSchemaIdAndDocumentIdDefine,
-  jesgoDocumentObjDefine,
   SaveDataObjDefine,
 } from '../store/formDataReducer';
 import {
@@ -14,7 +13,6 @@ import {
   getPropItemsAndNames,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
-import { JesgoDocumentSchema } from '../store/schemaDataReducer';
 import { Const } from './Const';
 import {
   RegistrationErrors,
@@ -22,6 +20,7 @@ import {
   ValidationItem,
   validationResult,
 } from '../components/CaseRegistration/Definition';
+import { jesgoDocumentObjDefine, JesgoDocumentSchema } from '../@types/store';
 
 // formDataからjesgo:errorを取り出して削除
 export const popJesgoError = (formData: any) => {

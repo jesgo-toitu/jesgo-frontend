@@ -77,7 +77,7 @@ const getPatientsDocument = async (doc: argDoc) => {
     schemaIds,
     undefined,
     doc.filterQuery,
-    true
+    pluginData.attach_patient_info
   );
   if (ret.resCode === RESULT.NORMAL_TERMINATION) {
     return ret.anyValue ? JSON.stringify(ret.anyValue) : undefined;
@@ -91,7 +91,7 @@ const getTargetDocument = async (doc: argDoc) => {
     undefined,
     doc.targetDocument,
     doc.filterQuery,
-    true
+    pluginData.attach_patient_info
   );
   if (ret.resCode === RESULT.NORMAL_TERMINATION) {
     return ret;

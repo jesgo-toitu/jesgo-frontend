@@ -1,11 +1,15 @@
+/* eslint-disable no-loop-func */
+/* eslint-disable array-callback-return */
 /* eslint-disable no-plusplus */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-lonely-if */
 import { Buffer } from 'buffer';
 import React from 'react';
+import { OverwriteDialogPlop, overwriteInfo, overWriteSchemaInfo } from '../components/common/PluginOverwriteConfirm';
 import { jesgoCaseDefine } from '../store/formDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
-import { toUTF8 } from './CommonUtility';
+import { OpenOutputView } from './CaseRegistrationUtility';
+import { generateUuid, getPointerTrimmed, isPointerWithArray, toUTF8 } from './CommonUtility';
 import { GetPackagedDocument } from './DBUtility';
 
 window.Buffer = Buffer;
@@ -44,6 +48,8 @@ type updateObject = {
 
 let pluginData: jesgoPluginColumns;
 let targetCaseId: number|undefined;
+let setOverwriteDialogPlopGlobal: React.Dispatch<React.SetStateAction<OverwriteDialogPlop | undefined>> | undefined;
+let setIsLoadingGlobal: React.Dispatch<React.SetStateAction<boolean>> | undefined;
 
 // モジュールのFunc定義インターフェース
 interface IPluginModule {
@@ -101,15 +107,47 @@ const getTargetDocument = async (doc: argDoc) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updatePatientsDocument = async (doc: updateObject | updateObject[] | undefined) => {
+  
+  type updateCheckObject = {
+    uuid?: string;
+    pointer: string;
+    record: string | number | any[] | undefined;
+    document_id: number;
+    schema_title?: string;
+    current_value?: string | number | any[] | undefined;
+    updated_value?: string | number | any[] | undefined;
+  };
+  
+  type checkApiReturnObject = {
+    his_id?:string;
+    patient_name?:string;
+    checkList:updateCheckObject[];
+    updateList:updateCheckObject[];
+  };
+  
+  type overwroteObject = {
+    his_id: string, 
+    patient_name: string;
+    schema_title:string;
+    pointer: string;
+    current_value?: string | number | any[] | undefined;
+    updated_value?: string | number | any[] | undefined;
+    isArray: boolean;
+    overwrote: boolean;
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  const modalHide = () => {}
+
   if(!doc){
     // 処理を中止
     // eslint-disable-next-line no-alert
     alert('更新用オブジェクトが不足しています');
     return;
-  }
+  }  
 
-  // 改修用スキップフラグ
-  const isSkip = false;
+  // スキップフラグ
+  let isSkip = false;
 
   // 引数を配列でなければ配列にする
   const localUpdateTarget = Array.isArray(doc)? doc : [doc];
@@ -131,6 +169,7 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
     const caseIdAndHashList = caseIdAndHashListRet.body as {case_id: number; hash: string;}[];
 
     const updateObjByCase:Map<number, updateObject[]> = new Map();
+    const overwroteList: overwroteObject[] = [];
     
 
     // eslint-disable-next-line no-plusplus
@@ -159,8 +198,8 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    updateObjByCase.forEach(async (value, key) => {
+    // eslint-disable-next-line no-restricted-syntax
+    for await (const [key, value] of updateObjByCase.entries()) {
       // 症例毎の処理
       // targetが複数あるものをバラしたものを入れるための配列
       const updateApiObjects:updateObject[] = [];
@@ -181,44 +220,199 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
         }
       }
       // 全てのアップデート用オブジェクトを分解し終えたら症例毎にAPIに送る
+
       const ret = await apiAccess(
         METHOD_TYPE.POST,
         `plugin-update`,
         {case_id:key, objects:updateApiObjects}
       );
-        /*
-      let confirmMessage:string[] = [];
-      if(!isSkip) {
-        const ret = await apiAccess(
-          METHOD_TYPE.POST,
-          `plugin-update`,
-          localUpdateTarget[index]
-        );
-        if (ret.statusNum === RESULT.NORMAL_TERMINATION) {
-          confirmMessage = ret.body as string[];
-        } else if(ret.statusNum === RESULT.PLUGIN_ALREADY_UPDATED) {
-          tempSkip = true;
+
+      // 上書き結果表示用オブジェクト変換用関数
+      const getOverwroteObject = (target:updateCheckObject, hisId:string, patientName:string, isOverwrote:boolean) => {
+        let tmpPointer = target.pointer.slice(1);
+        let isArray = false;
+        // 配列用のポインターかをチェックし、そうならポインター末尾を切り取り
+        if(isPointerWithArray(tmpPointer)) {
+          tmpPointer = getPointerTrimmed(tmpPointer);
+          isArray = true;
         }
+
+        const overwrote:overwroteObject = {
+          his_id: hisId,
+          patient_name: patientName,
+          pointer: tmpPointer,
+          schema_title: target.schema_title??"",
+          current_value: target.current_value,
+          updated_value: target.updated_value,
+          isArray,
+          overwrote: isOverwrote,
+        }
+        
+        return overwrote;
       }
 
-      if(isSkip || 
-        tempSkip ||
-        // eslint-disable-next-line
-        confirmMessage.length > 0 && confirm(confirmMessage.join("\n"))) {
-        localUpdateTarget[index].isConfirmed = true;
-        const ret = await apiAccess(
+      // 返ってきたオブジェクトのうちチェック用オブジェクトを処理する
+      if(ret.statusNum === RESULT.NORMAL_TERMINATION){
+        const retData = ret.body as checkApiReturnObject;
+        const data: overwriteInfo = {
+          his_id: retData.his_id ?? "",
+          patient_name: retData.patient_name ?? "",
+          schemaList: [],
+        };
+
+        if(isSkip) {
+          retData.updateList = retData.updateList.concat(retData.checkList);
+          for (let index = 0; index < retData.checkList.length; index++) {
+            const target = retData.checkList[index];
+            overwroteList.push(getOverwroteObject(target, data.his_id, data.patient_name, true));
+          }
+        } else {
+          for (let index = 0; index < retData.checkList.length; index++) {
+            const checkData = retData.checkList[index];
+            const existIndex = data.schemaList?.findIndex(p => p.schema_title === checkData.schema_title);
+            
+            if(existIndex && existIndex !== -1){
+              checkData.uuid = generateUuid();
+              const itemData = {
+                isOverwrite: true,
+                uuid: checkData.uuid,
+                item_name: checkData.pointer.slice(1),
+                current_value: checkData.current_value,
+                updated_value: checkData.updated_value,
+              }
+              data.schemaList?.[existIndex].itemList.push(itemData);
+            }else{
+              checkData.uuid = generateUuid();
+              const schemaData = {
+                schema_title: checkData.schema_title ?? "",
+                itemList: [
+                  {
+                    isOverwrite: true,
+                    uuid: checkData.uuid,
+                    item_name: checkData.pointer.slice(1),
+                    current_value: checkData.current_value,
+                    updated_value: checkData.updated_value,
+                  }
+                ],
+              }
+              data.schemaList?.push(schemaData);
+            }
+          }
+        }
+
+        // チェック用ダイアログ表示処理
+        if(setOverwriteDialogPlopGlobal && setIsLoadingGlobal && data.schemaList && data.schemaList.length > 0){
+          setIsLoadingGlobal(false);
+          const modalRet = await new Promise<{result:boolean, skip:boolean, body:overWriteSchemaInfo[]}>((resolve) => {
+            setOverwriteDialogPlopGlobal?.({
+              show: true,
+              onHide: () => modalHide,
+              onClose: resolve,
+              title:"JESGO",
+              type:"Confirm",
+              data,
+            });
+          });
+          setOverwriteDialogPlopGlobal?.(undefined);
+          setIsLoadingGlobal(true)
+          // OKボタンが押されたときのみ処理
+          if(modalRet.result) {
+            // 以降スキップがONならフラグを立てる
+            isSkip = modalRet.skip;
+
+            // 上書きフラグがtrueの物のみアップデートリストに追加する
+            modalRet.body.map(schema => {
+              schema.itemList.map(item => {
+                const processedItem = retData.checkList.find(c => c.uuid === item.uuid);
+                if(processedItem){
+                  if(item.isOverwrite){
+                    retData.updateList.push(processedItem);
+                  }
+                  overwroteList.push(getOverwroteObject(processedItem, data.his_id, data.patient_name, item.isOverwrite));
+                }
+              })
+            })
+          }
+        }
+
+        // チェックの有無に関わらず更新リストに書いてある内容をすべて更新する
+        await apiAccess(
           METHOD_TYPE.POST,
-          `plugin-update`,
-          localUpdateTarget[index]
+          `executeUpdate`,
+          retData.updateList
         );
-        if (ret.statusNum !== RESULT.NORMAL_TERMINATION) {
-          // eslint-disable-next-line no-alert
-          alert('更新に失敗しました');
+      }
+    };
+
+    // 全ての症例の処理が終わったあとに上書きリストを出力する
+    if(overwroteList.length > 0){
+      const csv:string[][] = [
+        ["患者ID","患者氏名","スキーマ","項目","順番","変更前","変更後","上書き",]
+      ];
+
+      const getCsvRow = (target:overwroteObject, arrayNum:number|undefined = undefined) => {
+        let currentValue:string;
+        let updatedValue:string;
+        if(typeof target.current_value === "string") {
+          currentValue = target.current_value;
+        }else if(typeof target.current_value === "number" || typeof target.current_value === "boolean"){
+          currentValue = target.current_value.toString();
+        }else {
+          currentValue = JSON.stringify(target.current_value);
+        }
+
+        if(typeof target.updated_value === "string") {
+          updatedValue = target.updated_value;
+        }else if(typeof target.updated_value === "number" || typeof target.updated_value === "boolean"){
+          updatedValue = target.updated_value.toString();
+        }else {
+          updatedValue = JSON.stringify(target.updated_value);
+        }
+        const csvText = [
+          target.his_id,
+          target.patient_name,
+          target.schema_title,
+          target.pointer,
+          arrayNum?.toString()??"",
+          currentValue,
+          updatedValue,
+          target.overwrote ? "済" : "スキップ"
+        ]
+        return csvText;
+      };
+
+      for (let index = 0; index < overwroteList.length; index++) {
+        const element = overwroteList[index];
+        if(element.isArray){
+          const rowCount = Math.max(
+            ((element.current_value ?? []) as any[]).length,
+            ((element.updated_value ?? []) as any[]).length
+          );
+          for (let arrayIndex = 0; arrayIndex < rowCount; arrayIndex++) {
+            const tmpObj:overwroteObject = {
+              his_id:element.his_id,
+              patient_name: element.patient_name,
+              pointer: element.pointer,
+              schema_title: element.schema_title,
+              // eslint-disable-next-line
+              current_value: (element.current_value as any[])[arrayIndex],
+              // eslint-disable-next-line
+              updated_value: (element.updated_value as any[])[arrayIndex],
+              isArray: false,
+              overwrote: element.overwrote,
+            }
+            csv.push(getCsvRow(tmpObj, arrayIndex+1))
+          }
+        } else {
+          csv.push(getCsvRow(element));
         }
       }
-      */
-    });
+      
+      OpenOutputView(window, csv, "overwritelog");
+    }
+    
   }
+  
 };
 
 export const moduleMain = async (
@@ -303,8 +497,12 @@ export const executePlugin = async (
     | ((value: React.SetStateAction<boolean>) => void)
     | undefined = undefined,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>> | undefined = undefined,
+  setOverwriteDialogPlop: React.Dispatch<React.SetStateAction<OverwriteDialogPlop | undefined>> | undefined = undefined,
 ) => {
   pluginData = plugin;
+  setOverwriteDialogPlopGlobal = setOverwriteDialogPlop;
+  setIsLoadingGlobal = setIsLoading;
+
   if (plugin.update_db) {
     // データ更新系
     if (!plugin.all_patient && patientList && patientList.length === 1) {

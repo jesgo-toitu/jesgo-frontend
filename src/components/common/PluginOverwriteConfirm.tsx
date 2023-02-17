@@ -1,100 +1,116 @@
-import React, { MouseEventHandler, useState } from 'react';
+/* eslint-disable no-param-reassign */
+/* eslint-disable array-callback-return */
+import { cloneDeep } from 'lodash';
+import React, { useEffect, useState } from 'react';
 import { Modal, Button, Checkbox } from 'react-bootstrap';
+import {
+  generateUuid,
+  getPointerTrimmed,
+  isPointerWithArray,
+} from '../../common/CommonUtility';
 import './PluginOverwriteConfirm.css';
 
-export const PluginOverwriteConfirm = (props: {
+export type overWriteSchemaInfo = {
+  schema_title: string;
+  isOverwrite?: boolean;
+  uuid?: string;
+  itemList: {
+    uuid?: string;
+    isOverwrite: boolean;
+    item_name: string;
+    current_value: string | number | any[] | undefined;
+    updated_value: string | number | any[] | undefined;
+  }[];
+};
+
+export type overwriteInfo = {
+  his_id: string;
+  patient_name: string;
+  schemaList?: overWriteSchemaInfo[];
+};
+
+export type OverwriteDialogPlop = {
   onHide: () => void;
-  onOk: () => void;
-  onCancel: MouseEventHandler<Button>;
+  onClose: (value: {
+    result: boolean;
+    skip: boolean;
+    body: overWriteSchemaInfo[];
+  }) => void;
   show: boolean;
   title: string;
   type: string;
-}) => {
-  const { title, onOk, onCancel, type, onHide, show } = props;
+  data: overwriteInfo;
+};
+
+export const PluginOverwriteConfirm = (props: OverwriteDialogPlop) => {
+  const { title, onClose, onHide, show, data } = props;
+  const [schemas, setSchemas] = useState<overWriteSchemaInfo[]>();
+  const [isSkip, setIsSkip] = useState(false);
+
+  const handleOk = () => {
+    onClose({ result: true, skip: isSkip, body: schemas ?? [] });
+  };
+
+  const handleCancel = () => {
+    onClose({ result: false, skip: false, body: [] });
+  };
+
+  useEffect(() => {
+    data.schemaList?.map((schemaLists) => {
+      schemaLists.uuid = generateUuid();
+      schemaLists.isOverwrite = true;
+    });
+    setSchemas(data.schemaList);
+  }, [data]);
+
+  const setOverWriteCheck = (uuid: string, isChecked: boolean) => {
+    const tmpSchema = cloneDeep(schemas);
+    tmpSchema?.map((schemaLists) => {
+      const targetItem = schemaLists.itemList.find(
+        (schema) => schema.uuid === uuid
+      );
+      if (targetItem) {
+        targetItem.isOverwrite = isChecked;
+      }
+      let allChecked = true;
+      schemaLists.itemList.map((item) => {
+        if (!item.isOverwrite) {
+          allChecked = false;
+        }
+      });
+      schemaLists.isOverwrite = allChecked;
+    });
+    setSchemas(tmpSchema);
+  };
+
+  const setAllCheck = (uuid: string, isChecked: boolean) => {
+    const tmpSchema = cloneDeep(schemas);
+    const targetSchema = tmpSchema?.find(
+      (schemaLists) => schemaLists.uuid === uuid
+    );
+    if (targetSchema) {
+      targetSchema.isOverwrite = isChecked;
+      targetSchema.itemList.map((item) => {
+        item.isOverwrite = isChecked;
+      });
+    }
+    setSchemas(tmpSchema);
+  };
 
   const buttonControl = () => (
     <>
-      <Button bsStyle="default" onClick={onCancel}>
+      <Button bsStyle="default" onClick={handleCancel}>
         キャンセル
       </Button>
-      <Button bsStyle="primary" onClick={onOk}>
+      <Button bsStyle="primary" onClick={handleOk}>
         更新
       </Button>
     </>
   );
 
-  type overwriteInfo = {
-    his_id: string;
-    patient_name: string;
-    schemaList?: {
-      schema_title: string;
-      itemList: {
-        isOverwrite: boolean;
-        item_name: string;
-        current_value: string | number | any[] | undefined;
-        updated_value: string | number | any[] | undefined;
-      }[];
-    }[];
-  };
-
-  // TODO: テストデータ。あとで消すこと
-  const data: overwriteInfo = {
-    his_id: '1234567890',
-    patient_name: 'テスト患者',
-  };
-  data.schemaList = [
-    {
-      schema_title: '患者台帳 子宮頸がん > 病期診断',
-      // パターン1：string
-      itemList: [
-        {
-          isOverwrite: true,
-          item_name: '治療施行状況',
-          current_value: '治療施行せず',
-          updated_value: '初回手術施行',
-        },
-        {
-          isOverwrite: true,
-          item_name: 'ypTNM/N/RP',
-          current_value: 'センチネルリンパ節生検',
-          updated_value:
-            '骨盤リンパ節を摘出しなかった(病理学的索が行われなかった)',
-        },
-      ],
-    },
-    {
-      schema_title: '患者台帳 子宮頸がん > 初回治療 > 手術療法 詳細',
-      // パターン2：objectのarray
-      itemList: [
-        {
-          isOverwrite: true,
-          item_name: '術者',
-          current_value: [
-            { 名前: 'テスト医師A', 役割: '術者', 資格: '婦人科腫瘍専門' },
-          ],
-          updated_value: [
-            { 名前: 'テスト医師B', 役割: '術者', 資格: '婦人科腫瘍専門' },
-          ],
-        },
-      ],
-    },
-    {
-      schema_title: '再発',
-      // パターン3：stringのarray
-      itemList: [
-        {
-          isOverwrite: true,
-          item_name: '再発評価/腹腔内の再発箇所',
-          current_value: [`骨盤内`, '腟断端', 'AAAA'],
-          updated_value: [`肝転移`, '骨盤外', 'AAAA', '追加1'],
-        },
-      ],
-    },
-  ];
-
   return (
     <Modal show={show} onHide={onHide} dialogClassName="modal-size">
-      <Modal.Header closeButton>
+      <Modal.Header>
         <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
       <Modal.Body className="modal-body-cr">
@@ -108,10 +124,9 @@ export const PluginOverwriteConfirm = (props: {
           </span>
         </p>
         <div className="modal-inner-element">
-          {data.schemaList &&
-            data.schemaList.length > 0 &&
-            data.schemaList.map((schema) => (
-              // TODO: この部分をコンポーネント化してチェック状態をuseStateで管理できればベター
+          {schemas &&
+            schemas.length > 0 &&
+            schemas.map((schema) => (
               <>
                 <p />
                 <p className="overwrite-schema-title">
@@ -120,7 +135,13 @@ export const PluginOverwriteConfirm = (props: {
                 <table className="confirm-table">
                   <tr className="confirm-tr">
                     <th className="confirm-th">
-                      <Checkbox className="overwrite-checkbox" checked={true}>
+                      <Checkbox
+                        className="overwrite-checkbox"
+                        checked={schema.isOverwrite}
+                        onChange={() =>
+                          setAllCheck(schema.uuid ?? '', !schema.isOverwrite)
+                        }
+                      >
                         上書きする
                       </Checkbox>
                     </th>
@@ -168,12 +189,21 @@ export const PluginOverwriteConfirm = (props: {
                                   <Checkbox
                                     className="overwrite-checkbox"
                                     checked={schemaItem.isOverwrite}
+                                    onChange={() =>
+                                      setOverWriteCheck(
+                                        schemaItem.uuid ?? '',
+                                        !schemaItem.isOverwrite
+                                      )
+                                    }
                                   />
                                 )}
                               </td>
                               {/* 項目名 最初の項目以外は非表示 */}
                               <td className="confirm-td">
-                                {i === 0 && schemaItem.item_name}
+                                {i === 0 &&
+                                  (isPointerWithArray(schemaItem.item_name)
+                                    ? getPointerTrimmed(schemaItem.item_name)
+                                    : schemaItem.item_name)}
                               </td>
                               {/* 順番 */}
                               <td className="confirm-td aligh-center">
@@ -201,19 +231,33 @@ export const PluginOverwriteConfirm = (props: {
                             <Checkbox
                               className="overwrite-checkbox"
                               checked={schemaItem.isOverwrite}
+                              onChange={() =>
+                                setOverWriteCheck(
+                                  schemaItem.uuid ?? '',
+                                  !schemaItem.isOverwrite
+                                )
+                              }
                             />
                           </td>
                           {/* 項目名 */}
-                          <td className="confirm-td">{schemaItem.item_name}</td>
+                          <td className="confirm-td">
+                            {isPointerWithArray(schemaItem.item_name)
+                              ? getPointerTrimmed(schemaItem.item_name)
+                              : schemaItem.item_name}
+                          </td>
                           {/* 順番 */}
                           <td className="confirm-td aligh-center"> </td>
                           {/* 変更前 */}
                           <td className="confirm-td">
-                            {schemaItem.current_value}
+                            {typeof schemaItem.current_value === 'string'
+                              ? schemaItem.current_value
+                              : JSON.stringify(schemaItem.current_value)}
                           </td>
                           {/* 変更後 */}
                           <td className="confirm-td">
-                            {schemaItem.updated_value}
+                            {typeof schemaItem.updated_value === 'string'
+                              ? schemaItem.updated_value
+                              : JSON.stringify(schemaItem.updated_value)}
                           </td>
                         </tr>
                       );
@@ -223,7 +267,11 @@ export const PluginOverwriteConfirm = (props: {
             ))}
         </div>
         <div>
-          <Checkbox>
+          <Checkbox
+            className="overwrite-checkbox"
+            checked={isSkip}
+            onChange={() => setIsSkip(!isSkip)}
+          >
             以降、すべての項目を上書きし確認ダイアログを表示しない
           </Checkbox>
         </div>

@@ -19,12 +19,14 @@ const OutputView = () => {
   // 表示する文字列
   const [resultStr, setResultStr] = useState<string | null>('');
   const [resultTable, setResultTable] = useState<(string | number)[][]>([[]]);
+  const [header, setHeader] = useState<string | undefined>();
 
   const CODE_TYPES = {
     NONE: '',
     JSON: 'language-json',
     JAVA_SCRIPT: 'language-js',
     CSV: 'csv',
+    LOG: 'log',
   };
   const [codeType, setCodeType] = useState<string>(CODE_TYPES.NONE);
 
@@ -46,10 +48,18 @@ const OutputView = () => {
     window.addEventListener('message', (e) => {
       setCodeType(CODE_TYPES.NONE);
       if (e.origin === window.location.origin && e.data) {
-        // TODO: 本実装時はここで渡されたデータの種類を判別し、テーブル形式ならテーブルで表示する
-
         // eslint-disable-next-line no-prototype-builtins
-        if ((e.data as object)?.hasOwnProperty('jsonData')) {
+        if ((e.data as object)?.hasOwnProperty('viewerType')) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          if (e.data.viewerType === CODE_TYPES.LOG) {
+            setHeader('ドキュメント上書き結果');
+            setCodeType(CODE_TYPES.CSV);
+            // eslint-disable-next-line
+            setResultTable(e.data.csvData as any[]);
+          }
+        }
+        // eslint-disable-next-line no-prototype-builtins
+        else if ((e.data as object)?.hasOwnProperty('jsonData')) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           if (e.data.jsonData) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -103,7 +113,9 @@ const OutputView = () => {
             csvText += ',';
           }
           csvText +=
-            typeof column === 'string' ? `"${column.replace(/"/g, '""')}"` : column.toString();
+            typeof column === 'string'
+              ? `"${column.replace(/"/g, '""')}"`
+              : column.toString();
         }
         csvText += '\n';
       }
@@ -116,22 +128,6 @@ const OutputView = () => {
       alert('ダウンロード可能なデータがありません');
     }
   }, [resultTable]);
-
-  const testTableData = [
-    ['患者ID', '患者氏名', 'スキーマ', '項目', '順番', '変更前', '変更後', '上書き'],
-    ['1234567890', 'テスト患者', '患者台帳 子宮頸がん > 病期診断', '治療施行状況', '', '治療施行せず', '初回手術施行', '済'],
-    ['1234567890', 'テスト患者', '患者台帳 子宮頸がん > 病期診断', 'ypTNM/N/RP', '', 'センチネルリンパ節生検を行った', '骨盤リンパ節を摘出しなかった(病理学的索が行われなかった)', '済'],
-    ['1234567890', 'テスト患者', '患者台帳 子宮頸がん > 病期診断', 'ypTNM/N/RPX', '', 'RP1: 骨盤リンパ節の病理学的検索が行われなかったが、明らかな腫大を認めない', 'RP2: 骨盤リンパ節の病理学的検索が行われなかったが、明らかな腫大を認める', 'スキップ'],
-    ['20001', 'テスト患者2', '患者台帳 子宮頸がん > 初回治療 > 手術療法 詳細', '術者', '1', `{"名前": "テスト医師", "役割": "術者", "資格": "婦人科腫瘍専門医"}`, `{"名前": "テスト医師2", "役割": "術者", "資格": "婦人科腫瘍専門医"}`, '済'],
-    ['20001', 'テスト患者2', '再発', '再発評価/腹腔内の再発箇所', '1', `骨盤内`, `肝転移`, 'スキップ'],
-    ['20001', 'テスト患者2', '再発', '再発評価/腹腔内の再発箇所', '2', `腟断端`, `骨盤外`, 'スキップ'],
-    ['20001', 'テスト患者2', '再発', '再発評価/腹腔内の再発箇所', '3', `あああ\nいいい`, `あああ\nううう`, 'スキップ'],
-  ]
-
-  useEffect(() => {
-    setResultTable(testTableData);
-    setCodeType(CODE_TYPES.CSV)
-  }, [])
 
   return (
     <div>
@@ -154,6 +150,7 @@ const OutputView = () => {
             ダウンロード
           </Button>
         )}
+        {header && <h1>{header}</h1>}
       </div>
       {codeType !== CODE_TYPES.CSV && (
         <pre style={{ margin: '1rem ' }} className="line-numbers">

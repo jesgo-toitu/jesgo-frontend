@@ -142,3 +142,56 @@ export const toUTF8 = (sjisString: string) => {
   });
   return new Uint8Array(sjisArray);
 };
+
+// UUID作成
+export const generateUuid = () => {
+  // https://github.com/GoogleChrome/chrome-platform-analytics/blob/master/src/internal/identifier.js
+  // const FORMAT: string = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+  const chars = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".split("");
+  // eslint-disable-next-line no-plusplus
+  for (let i = 0, len = chars.length; i < len; i++) {
+      switch (chars[i]) {
+          case "x":
+              chars[i] = Math.floor(Math.random() * 16).toString(16);
+              break;
+          case "y":
+              chars[i] = (Math.floor(Math.random() * 4) + 8).toString(16);
+              break;
+          default :
+      }
+  }
+  return chars.join("");
+};
+
+// Jsonpointerの末尾に配列指定系の文字列が含まれているかを返す
+export const isPointerWithArray = (pointer:string) => {
+  if(pointer.endsWith("/-")){
+    return true;
+  }
+  const match = pointer.match(/\/(\d+)$/);
+  if(match) {
+    return true;
+  }
+  return false;
+};
+
+// Jsonpointerの末尾から配列位置指定を取得する
+export const getPointerArrayNum = (pointer:string) => {
+  const match = pointer.match(/\/(\d+)$/);
+  if(match) {
+    return Number(match.slice(1));
+  }
+  return -1;
+};
+
+// Jsonpointerの末尾から配列位置指定を削除する
+export const getPointerTrimmed = (pointer:string) => {
+  if(pointer.endsWith("/-")){
+    return pointer.slice(0, -2);
+  }
+  const match = pointer.match(/\/(\d+)$/);
+  if(match) {
+    return pointer.slice(0, -(match.length))
+  }
+  return pointer;
+};

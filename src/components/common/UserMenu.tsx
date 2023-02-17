@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
 import { StaffPasswordChangeModalDialog } from '../Staff/StaffPasswordChangeModal';
 import ModalDialog from './ModalDialog';
-import PluginOverwriteConfirm from './PluginOverwriteConfirm';
 
 export const UserMenu = (props: {
   title: string | null;
@@ -70,7 +69,7 @@ export const UserMenu = (props: {
         onCancel={() => modalCancelPasswoedChange()}
         title="JESGO パスワード変更"
       />
-      {/* <ModalDialog
+      <ModalDialog
         show={show}
         onHide={() => modalHide()}
         onOk={() => modalOk()}
@@ -78,14 +77,6 @@ export const UserMenu = (props: {
         title="JESGO"
         type="Confirm"
         message="ログアウトしますか？"
-      /> */}
-      <PluginOverwriteConfirm
-        show={show}
-        onHide={() => modalHide()}
-        onOk={() => modalOk()}
-        onCancel={() => modalCancel()}
-        title="JESGO"
-        type="Confirm"
       />
     </div>
   );

@@ -271,7 +271,7 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
             const checkData = retData.checkList[index];
             const existIndex = data.schemaList?.findIndex(p => p.schema_title === checkData.schema_title);
             
-            if(existIndex && existIndex !== -1){
+            if(existIndex != null && existIndex !== -1){
               checkData.uuid = generateUuid();
               const itemData = {
                 isOverwrite: true,

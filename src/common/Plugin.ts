@@ -43,6 +43,7 @@ type updateObject = {
   hash?: string;
   case_no?: string;
   schema_id?: string;
+  schema_ids?: number[]
   target: Record<string, string | number>;
 };
 
@@ -210,10 +211,11 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
         for(const targetKey in obj.target) {
           const newObj:updateObject = {
             document_id: obj.document_id,
-            case_id: obj.case_id,
+            case_id: targetCaseId,
             hash: obj.hash,
             case_no: obj.case_no,
             schema_id: obj.schema_id,
+            schema_ids: pluginData.target_schema_id,
             target: {[targetKey]:obj.target[targetKey]},
           }
           updateApiObjects.push(newObj);

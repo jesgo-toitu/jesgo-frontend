@@ -195,3 +195,15 @@ export const getPointerTrimmed = (pointer:string) => {
   }
   return pointer;
 };
+
+export const getArrayWithSafe = (array:any|undefined, index:number):any|undefined => {
+  // 値が空、配列じゃない場合は無条件でundefined
+  if(array === null || array === undefined || !Array.isArray(array)) {
+    return undefined;
+  }
+  // 値が配列の場合、添え字の数が配列の長さを超えてないかを見る
+  if(array.length <= index) {
+    return undefined;
+  }
+  return array[index];
+}

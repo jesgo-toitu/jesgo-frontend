@@ -9,7 +9,7 @@ import { OverwriteDialogPlop, overwriteInfo, overWriteSchemaInfo } from '../comp
 import { jesgoCaseDefine } from '../store/formDataReducer';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { OpenOutputView } from './CaseRegistrationUtility';
-import { generateUuid, getPointerTrimmed, isPointerWithArray, toUTF8 } from './CommonUtility';
+import { generateUuid, getArrayWithSafe, getPointerTrimmed, isPointerWithArray, toUTF8 } from './CommonUtility';
 import { GetPackagedDocument } from './DBUtility';
 
 window.Buffer = Buffer;
@@ -235,6 +235,9 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
         if(isPointerWithArray(tmpPointer)) {
           tmpPointer = getPointerTrimmed(tmpPointer);
           isArray = true;
+        } else if(Array.isArray(target.current_value) || Array.isArray(target.updated_value)){
+          // 配列用のポインターで無くても中が配列なら配列として処理する
+          isArray = true;
         }
 
         const overwrote:overwroteObject = {
@@ -395,9 +398,9 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
               pointer: element.pointer,
               schema_title: element.schema_title,
               // eslint-disable-next-line
-              current_value: (element.current_value as any[])[arrayIndex],
+              current_value: getArrayWithSafe(element.current_value, arrayIndex)??"",
               // eslint-disable-next-line
-              updated_value: (element.updated_value as any[])[arrayIndex],
+              updated_value: getArrayWithSafe(element.updated_value, arrayIndex)??"",
               isArray: false,
               overwrote: element.overwrote,
             }

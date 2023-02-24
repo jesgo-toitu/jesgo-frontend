@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Button, Checkbox } from 'react-bootstrap';
 import {
   generateUuid,
+  getArrayWithSafe,
   getPointerTrimmed,
   isPointerWithArray,
 } from '../../common/CommonUtility';
@@ -167,16 +168,16 @@ export const PluginOverwriteConfirm = (props: OverwriteDialogPlop) => {
                         for (let i = 0; i < rowCount; i += 1) {
                           // 変更前と変更後の値がオブジェクトの場合はJSON.stringifyして文字列にする
                           // 変更前の値
-                          let currentValue = (
-                            schemaItem.current_value as unknown[]
-                          )[i];
+                          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                          let currentValue =
+                            getArrayWithSafe(schemaItem.current_value, i) ?? '';
                           if (typeof currentValue === 'object') {
                             currentValue = JSON.stringify(currentValue);
                           }
                           // 変更後の値
-                          let updatedValue = (
-                            schemaItem.updated_value as unknown[]
-                          )[i];
+                          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                          let updatedValue =
+                            getArrayWithSafe(schemaItem.updated_value, i) ?? '';
                           if (typeof updatedValue === 'object') {
                             updatedValue = JSON.stringify(updatedValue);
                           }

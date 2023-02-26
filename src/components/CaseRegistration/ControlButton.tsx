@@ -311,6 +311,30 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             });
           }
           break;
+        case 'copy': {
+          // アラート表示用のタイトル
+          let title = '';
+          if (findItem) {
+            title = findItem.title;
+          }
+          if (confirm(`[${title}]を複製します。よろしいですか？`)) {
+            dispatch({
+              type: 'COPY',
+              documentId,
+              parentSubSchemaIds: copyIds,
+              setParentSubSchemaIds: setDispSchemaIds,
+              SchemaInfoMap: store.getState().schemaDataReducer.schemaDatas,
+            });
+
+            if (tabSelectEvents && tabSelectEvents.fnSchemaChange) {
+              tabSelectEvents.fnSchemaChange(
+                isTab,
+                store.getState().formDataReducer.selectedTabKeyName
+              );
+            }
+          }
+          break;
+        }
 
         case eventKey.startsWith('plugin_') && eventKey: {
           setIsLoading(true);
@@ -604,6 +628,12 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
   const canClear = !canDelete && Type !== COMP_TYPE.ROOT;
   const horizontalMoveType: CompType[] = [COMP_TYPE.TAB, COMP_TYPE.ROOT_TAB];
 
+  // 複製可否
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const canCopy =
+    (schemaDocument?.['jesgo:copy'] ?? false) &&
+    (schemaDocument?.[Const.EX_VOCABULARY.UNIQUE] ?? false) === false;
+
   return (
     <div className="control-button-area">
       <Dropdown
@@ -639,6 +669,11 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           {canMove && (
             <MenuItem eventKey="down">
               {horizontalMoveType.includes(Type) ? '右' : '下'}に移動
+            </MenuItem>
+          )}
+          {canCopy && (
+            <MenuItem key="menu-copy" eventKey="copy">
+              ドキュメントの複製
             </MenuItem>
           )}
           {/* 自身の削除 */}

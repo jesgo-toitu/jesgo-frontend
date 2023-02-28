@@ -201,7 +201,7 @@ a.has-input {
 /* jesgo:ui:visibleWhen
 ※条件に当てはまらない場合このスタイルが付与される
 */
-.visiblewhen-hidden .visiblewhen {
+.visiblewhen-hidden .visiblewhen, .visiblewhen-item {
   display: none;
 }
 

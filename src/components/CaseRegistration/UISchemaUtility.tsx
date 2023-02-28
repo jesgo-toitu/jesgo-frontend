@@ -72,7 +72,7 @@ const AddUiSchema = (
   }
 
   // "jesgo:ui:visiblewhen"
-  if (schema[Const.EX_VOCABULARY.UI_VISIBLE_WHWN]) {
+  if (schema[Const.EX_VOCABULARY.UI_VISIBLE_WHEN]) {
     classNames.push('visiblewhen');
   }
 

@@ -5,11 +5,22 @@
 /* eslint-disable no-lonely-if */
 import { Buffer } from 'buffer';
 import React from 'react';
-import { OverwriteDialogPlop, overwriteInfo, overWriteSchemaInfo } from '../components/common/PluginOverwriteConfirm';
+import {
+  OverwriteDialogPlop,
+  overwriteInfo,
+  overWriteSchemaInfo,
+} from '../components/common/PluginOverwriteConfirm';
 import { jesgoCaseDefine } from '../store/formDataReducer';
+import { reloadState } from '../views/Registration';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { OpenOutputView } from './CaseRegistrationUtility';
-import { generateUuid, getArrayWithSafe, getPointerTrimmed, isPointerWithArray, toUTF8 } from './CommonUtility';
+import {
+  generateUuid,
+  getArrayWithSafe,
+  getPointerTrimmed,
+  isPointerWithArray,
+  toUTF8,
+} from './CommonUtility';
 import { GetPackagedDocument } from './DBUtility';
 
 window.Buffer = Buffer;
@@ -43,14 +54,18 @@ type updateObject = {
   hash?: string;
   case_no?: string;
   schema_id?: string;
-  schema_ids?: number[]
+  schema_ids?: number[];
   target: Record<string, string | number>;
 };
 
 let pluginData: jesgoPluginColumns;
-let targetCaseId: number|undefined;
-let setOverwriteDialogPlopGlobal: React.Dispatch<React.SetStateAction<OverwriteDialogPlop | undefined>> | undefined;
-let setIsLoadingGlobal: React.Dispatch<React.SetStateAction<boolean>> | undefined;
+let targetCaseId: number | undefined;
+let setOverwriteDialogPlopGlobal:
+  | React.Dispatch<React.SetStateAction<OverwriteDialogPlop | undefined>>
+  | undefined;
+let setIsLoadingGlobal:
+  | React.Dispatch<React.SetStateAction<boolean>>
+  | undefined;
 
 // モジュールのFunc定義インターフェース
 interface IPluginModule {
@@ -107,8 +122,9 @@ const getTargetDocument = async (doc: argDoc) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const updatePatientsDocument = async (doc: updateObject | updateObject[] | undefined) => {
-  
+const updatePatientsDocument = async (
+  doc: updateObject | updateObject[] | undefined
+) => {
   type updateCheckObject = {
     uuid?: string;
     pointer: string;
@@ -118,18 +134,18 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
     current_value?: string | number | any[] | undefined;
     updated_value?: string | number | any[] | undefined;
   };
-  
+
   type checkApiReturnObject = {
-    his_id?:string;
-    patient_name?:string;
-    checkList:updateCheckObject[];
-    updateList:updateCheckObject[];
+    his_id?: string;
+    patient_name?: string;
+    checkList: updateCheckObject[];
+    updateList: updateCheckObject[];
   };
-  
+
   type overwroteObject = {
-    his_id: string, 
+    his_id: string;
     patient_name: string;
-    schema_title:string;
+    schema_title: string;
     pointer: string;
     current_value?: string | number | any[] | undefined;
     updated_value?: string | number | any[] | undefined;
@@ -138,28 +154,28 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
   };
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  const modalHide = () => {}
+  const modalHide = () => {};
 
-  if(!doc){
+  if (!doc) {
     // 処理を中止
     // eslint-disable-next-line no-alert
     alert('更新用オブジェクトが不足しています');
     return;
-  }  
+  }
 
   // スキップフラグ
   let isSkip = false;
 
   // 引数を配列でなければ配列にする
-  const localUpdateTarget = Array.isArray(doc)? doc : [doc];
-  
+  const localUpdateTarget = Array.isArray(doc) ? doc : [doc];
+
   if (pluginData) {
     // 最初に症例IDとドキュメントIDの組み合わせリストを取得する
     const caseIdAndDocIdListRet = await apiAccess(
       METHOD_TYPE.GET,
       `getCaseIdAndDocIdList`
     );
-    
+
     // ハッシュと症例IDの組み合わせリストも取得する
     const caseIdAndHashListRet = await apiAccess(
       METHOD_TYPE.GET,
@@ -171,41 +187,54 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
       METHOD_TYPE.GET,
       `getCaseIdAndCaseNoList`
     );
-  
-    const caseIdAndDocIdList = caseIdAndDocIdListRet.body as {case_id: number; document_id: number;}[];
-    const caseIdAndHashList = caseIdAndHashListRet.body as {case_id: number; hash: string;}[];
-    const caseIdAndCaseNoList = caseIdAndCaseNoListRet.body as {case_id: number; caseNo: string;}[];
 
-    const updateObjByCase:Map<number, updateObject[]> = new Map();
+    const caseIdAndDocIdList = caseIdAndDocIdListRet.body as {
+      case_id: number;
+      document_id: number;
+    }[];
+    const caseIdAndHashList = caseIdAndHashListRet.body as {
+      case_id: number;
+      hash: string;
+    }[];
+    const caseIdAndCaseNoList = caseIdAndCaseNoListRet.body as {
+      case_id: number;
+      caseNo: string;
+    }[];
+
+    const updateObjByCase: Map<number, updateObject[]> = new Map();
     const overwroteList: overwroteObject[] = [];
-    
 
     // eslint-disable-next-line no-plusplus
     for (let index = 0; index < localUpdateTarget.length; index++) {
-      let tempCaseId:number|undefined;
-      if(targetCaseId){
+      let tempCaseId: number | undefined;
+      if (targetCaseId) {
         tempCaseId = targetCaseId;
-      } 
-      else if(localUpdateTarget[index].case_id) {
+      } else if (localUpdateTarget[index].case_id) {
         tempCaseId = localUpdateTarget[index].case_id;
-      } 
-      else if(localUpdateTarget[index].hash) {
-        tempCaseId = caseIdAndHashList.find(p => p.hash === localUpdateTarget[index].hash)?.case_id;
-      } 
-      else if(localUpdateTarget[index].case_no) {
-        tempCaseId = caseIdAndCaseNoList.find(p => p.caseNo === localUpdateTarget[index].case_no)?.case_id;
-      } 
-      else if(localUpdateTarget[index].document_id) {
-        tempCaseId = caseIdAndDocIdList.find(p => p.document_id === localUpdateTarget[index].document_id)?.case_id;
+      } else if (localUpdateTarget[index].hash) {
+        tempCaseId = caseIdAndHashList.find(
+          (p) => p.hash === localUpdateTarget[index].hash
+        )?.case_id;
+      } else if (localUpdateTarget[index].case_no) {
+        tempCaseId = caseIdAndCaseNoList.find(
+          (p) => p.caseNo === localUpdateTarget[index].case_no
+        )?.case_id;
+      } else if (localUpdateTarget[index].document_id) {
+        tempCaseId = caseIdAndDocIdList.find(
+          (p) => p.document_id === localUpdateTarget[index].document_id
+        )?.case_id;
       }
 
-      if(tempCaseId){
-        if(!updateObjByCase.get(tempCaseId)){
+      if (tempCaseId) {
+        if (!updateObjByCase.get(tempCaseId)) {
           updateObjByCase.set(tempCaseId, []);
         }
         const oldObj = updateObjByCase.get(tempCaseId);
-        if(Array.isArray(oldObj))
-        updateObjByCase.set(tempCaseId, oldObj.concat(localUpdateTarget[index]));
+        if (Array.isArray(oldObj))
+          updateObjByCase.set(
+            tempCaseId,
+            oldObj.concat(localUpdateTarget[index])
+          );
       }
     }
 
@@ -213,80 +242,91 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
     for await (const [key, value] of updateObjByCase.entries()) {
       // 症例毎の処理
       // targetが複数あるものをバラしたものを入れるための配列
-      const updateApiObjects:updateObject[] = [];
+      const updateApiObjects: updateObject[] = [];
 
       for (let index = 0; index < value.length; index++) {
         const obj = value[index];
         // eslint-disable-next-line
-        for(const targetKey in obj.target) {
-          const newObj:updateObject = {
+        for (const targetKey in obj.target) {
+          const newObj: updateObject = {
             document_id: obj.document_id,
             case_id: targetCaseId,
             hash: obj.hash,
             case_no: obj.case_no,
             schema_id: obj.schema_id,
             schema_ids: pluginData.target_schema_id,
-            target: {[targetKey]:obj.target[targetKey]},
-          }
+            target: { [targetKey]: obj.target[targetKey] },
+          };
           updateApiObjects.push(newObj);
         }
       }
       // 全てのアップデート用オブジェクトを分解し終えたら症例毎にAPIに送る
 
-      const ret = await apiAccess(
-        METHOD_TYPE.POST,
-        `plugin-update`,
-        {case_id:key, objects:updateApiObjects}
-      );
+      const ret = await apiAccess(METHOD_TYPE.POST, `plugin-update`, {
+        case_id: key,
+        objects: updateApiObjects,
+      });
 
       // 上書き結果表示用オブジェクト変換用関数
-      const getOverwroteObject = (target:updateCheckObject, hisId:string, patientName:string, isOverwrote:boolean) => {
+      const getOverwroteObject = (
+        target: updateCheckObject,
+        hisId: string,
+        patientName: string,
+        isOverwrote: boolean
+      ) => {
         let tmpPointer = target.pointer.slice(1);
         let isArray = false;
         // 配列用のポインターかをチェックし、そうならポインター末尾を切り取り
-        if(isPointerWithArray(tmpPointer)) {
+        if (isPointerWithArray(tmpPointer)) {
           tmpPointer = getPointerTrimmed(tmpPointer);
           isArray = true;
-        } else if(Array.isArray(target.current_value) || Array.isArray(target.updated_value)){
+        } else if (
+          Array.isArray(target.current_value) ||
+          Array.isArray(target.updated_value)
+        ) {
           // 配列用のポインターで無くても中が配列なら配列として処理する
           isArray = true;
         }
 
-        const overwrote:overwroteObject = {
+        const overwrote: overwroteObject = {
           his_id: hisId,
           patient_name: patientName,
           pointer: tmpPointer,
-          schema_title: target.schema_title??"",
+          schema_title: target.schema_title ?? '',
           current_value: target.current_value,
           updated_value: target.updated_value,
           isArray,
           overwrote: isOverwrote,
-        }
-        
+        };
+
         return overwrote;
-      }
+      };
 
       // 返ってきたオブジェクトのうちチェック用オブジェクトを処理する
-      if(ret.statusNum === RESULT.NORMAL_TERMINATION){
+      if (ret.statusNum === RESULT.NORMAL_TERMINATION) {
         const retData = ret.body as checkApiReturnObject;
         const data: overwriteInfo = {
-          his_id: retData.his_id ?? "",
-          patient_name: retData.patient_name ?? "",
+          his_id: retData.his_id ?? '',
+          patient_name: retData.patient_name ?? '',
           schemaList: [],
         };
 
-        if(isSkip) {
+        if (isSkip) {
           retData.updateList = retData.updateList.concat(retData.checkList);
           for (let index = 0; index < retData.checkList.length; index++) {
             const target = retData.checkList[index];
-            overwroteList.push(getOverwroteObject(target, data.his_id, data.patient_name, true));
+            overwroteList.push(
+              getOverwroteObject(target, data.his_id, data.patient_name, true)
+            );
           }
         } else {
           for (let index = 0; index < retData.checkList.length; index++) {
             const checkData = retData.checkList[index];
-            const existIndex = data.schemaList?.findIndex(p => p.schema_title === checkData.schema_title);
-            
-            if(existIndex != null && existIndex !== -1){
+            const existIndex = data.schemaList?.findIndex(
+              (p) => p.schema_title === checkData.schema_title
+            );
+
+            if (existIndex != null && existIndex !== -1) {
               checkData.uuid = generateUuid();
               const itemData = {
                 isOverwrite: true,
@@ -294,12 +334,12 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
                 item_name: checkData.pointer.slice(1),
                 current_value: checkData.current_value,
                 updated_value: checkData.updated_value,
-              }
+              };
               data.schemaList?.[existIndex].itemList.push(itemData);
-            }else{
+            } else {
               checkData.uuid = generateUuid();
               const schemaData = {
-                schema_title: checkData.schema_title ?? "",
+                schema_title: checkData.schema_title ?? '',
                 itemList: [
                   {
                     isOverwrite: true,
@@ -307,80 +347,112 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
                     item_name: checkData.pointer.slice(1),
                     current_value: checkData.current_value,
                     updated_value: checkData.updated_value,
-                  }
+                  },
                 ],
-              }
+              };
               data.schemaList?.push(schemaData);
             }
           }
         }
 
         // チェック用ダイアログ表示処理
-        if(setOverwriteDialogPlopGlobal && setIsLoadingGlobal && data.schemaList && data.schemaList.length > 0){
+        if (
+          setOverwriteDialogPlopGlobal &&
+          setIsLoadingGlobal &&
+          data.schemaList &&
+          data.schemaList.length > 0
+        ) {
           setIsLoadingGlobal(false);
-          const modalRet = await new Promise<{result:boolean, skip:boolean, body:overWriteSchemaInfo[]}>((resolve) => {
+          const modalRet = await new Promise<{
+            result: boolean;
+            skip: boolean;
+            body: overWriteSchemaInfo[];
+          }>((resolve) => {
             setOverwriteDialogPlopGlobal?.({
               show: true,
               onHide: () => modalHide,
               onClose: resolve,
-              title:"JESGO",
-              type:"Confirm",
+              title: 'JESGO',
+              type: 'Confirm',
               data,
             });
           });
           setOverwriteDialogPlopGlobal?.(undefined);
-          setIsLoadingGlobal(true)
+          setIsLoadingGlobal(true);
           // OKボタンが押されたときのみ処理
-          if(modalRet.result) {
+          if (modalRet.result) {
             // 以降スキップがONならフラグを立てる
             isSkip = modalRet.skip;
 
             // 上書きフラグがtrueの物のみアップデートリストに追加する
-            modalRet.body.map(schema => {
-              schema.itemList.map(item => {
-                const processedItem = retData.checkList.find(c => c.uuid === item.uuid);
-                if(processedItem){
-                  if(item.isOverwrite){
+            modalRet.body.map((schema) => {
+              schema.itemList.map((item) => {
+                const processedItem = retData.checkList.find(
+                  (c) => c.uuid === item.uuid
+                );
+                if (processedItem) {
+                  if (item.isOverwrite) {
                     retData.updateList.push(processedItem);
                   }
-                  overwroteList.push(getOverwroteObject(processedItem, data.his_id, data.patient_name, item.isOverwrite));
+                  overwroteList.push(
+                    getOverwroteObject(
+                      processedItem,
+                      data.his_id,
+                      data.patient_name,
+                      item.isOverwrite
+                    )
+                  );
                 }
-              })
-            })
+              });
+            });
           }
         }
 
         // チェックの有無に関わらず更新リストに書いてある内容をすべて更新する
-        await apiAccess(
-          METHOD_TYPE.POST,
-          `executeUpdate`,
-          retData.updateList
-        );
+        await apiAccess(METHOD_TYPE.POST, `executeUpdate`, retData.updateList);
       }
-    };
+    }
 
     // 全ての症例の処理が終わったあとに上書きリストを出力する
-    if(overwroteList.length > 0){
-      const csv:string[][] = [
-        ["患者ID","患者氏名","スキーマ","項目","順番","変更前","変更後","上書き",]
+    if (overwroteList.length > 0) {
+      const csv: string[][] = [
+        [
+          '患者ID',
+          '患者氏名',
+          'スキーマ',
+          '項目',
+          '順番',
+          '変更前',
+          '変更後',
+          '上書き',
+        ],
       ];
 
-      const getCsvRow = (target:overwroteObject, arrayNum:number|undefined = undefined) => {
-        let currentValue:string;
-        let updatedValue:string;
-        if(typeof target.current_value === "string") {
+      const getCsvRow = (
+        target: overwroteObject,
+        arrayNum: number | undefined = undefined
+      ) => {
+        let currentValue: string;
+        let updatedValue: string;
+        if (typeof target.current_value === 'string') {
           currentValue = target.current_value;
-        }else if(typeof target.current_value === "number" || typeof target.current_value === "boolean"){
+        } else if (
+          typeof target.current_value === 'number' ||
+          typeof target.current_value === 'boolean'
+        ) {
           currentValue = target.current_value.toString();
-        }else {
+        } else {
           currentValue = JSON.stringify(target.current_value);
         }
 
-        if(typeof target.updated_value === "string") {
+        if (typeof target.updated_value === 'string') {
           updatedValue = target.updated_value;
-        }else if(typeof target.updated_value === "number" || typeof target.updated_value === "boolean"){
+        } else if (
+          typeof target.updated_value === 'number' ||
+          typeof target.updated_value === 'boolean'
+        ) {
           updatedValue = target.updated_value.toString();
-        }else {
+        } else {
           updatedValue = JSON.stringify(target.updated_value);
         }
         const csvText = [
@@ -388,46 +460,46 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
           target.patient_name,
           target.schema_title,
           target.pointer,
-          arrayNum?.toString()??"",
+          arrayNum?.toString() ?? '',
           currentValue,
           updatedValue,
-          target.overwrote ? "済" : "スキップ"
-        ]
+          target.overwrote ? '済' : 'スキップ',
+        ];
         return csvText;
       };
 
       for (let index = 0; index < overwroteList.length; index++) {
         const element = overwroteList[index];
-        if(element.isArray){
+        if (element.isArray) {
           const rowCount = Math.max(
             ((element.current_value ?? []) as any[]).length,
             ((element.updated_value ?? []) as any[]).length
           );
           for (let arrayIndex = 0; arrayIndex < rowCount; arrayIndex++) {
-            const tmpObj:overwroteObject = {
-              his_id:element.his_id,
+            const tmpObj: overwroteObject = {
+              his_id: element.his_id,
               patient_name: element.patient_name,
               pointer: element.pointer,
               schema_title: element.schema_title,
               // eslint-disable-next-line
-              current_value: getArrayWithSafe(element.current_value, arrayIndex)??"",
+              current_value:
+                getArrayWithSafe(element.current_value, arrayIndex) ?? '',
               // eslint-disable-next-line
-              updated_value: getArrayWithSafe(element.updated_value, arrayIndex)??"",
+              updated_value:
+                getArrayWithSafe(element.updated_value, arrayIndex) ?? '',
               isArray: false,
               overwrote: element.overwrote,
-            }
-            csv.push(getCsvRow(tmpObj, arrayIndex+1))
+            };
+            csv.push(getCsvRow(tmpObj, arrayIndex + 1));
           }
         } else {
           csv.push(getCsvRow(element));
         }
       }
-      
-      OpenOutputView(window, csv, "overwritelog");
+
+      OpenOutputView(window, csv, 'overwritelog');
     }
-    
   }
-  
 };
 
 export const moduleMain = async (
@@ -438,13 +510,13 @@ export const moduleMain = async (
 ): Promise<unknown> => {
   // モジュール読み込みからのmain実行
   const module = await GetModule(scriptText);
-  try{
+  try {
     const retValue = await module.main(doc, func);
     return retValue;
-  }catch (e){
+  } catch (e) {
     // eslint-disable-next-line no-alert
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
-  }finally{
+  } finally {
     if (module.finalize) {
       await module.finalize();
     }
@@ -453,11 +525,11 @@ export const moduleMain = async (
 };
 
 type formDocument = {
-  document_id?: number,
-  case_id?: number,
-  schema_id?: string,
-  document: JSON,
-}
+  document_id?: number;
+  case_id?: number;
+  schema_id?: string;
+  document: JSON;
+};
 
 export const moduleMainUpdate = async (
   scriptText: string,
@@ -467,13 +539,13 @@ export const moduleMainUpdate = async (
 ): Promise<unknown> => {
   // モジュール読み込みからのmain実行、引数にCSVファイルを利用することあり
   const module = await GetModule(scriptText);
-  try{
+  try {
     const retValue = await module.main(doc, func);
     return retValue;
-  }catch (e){
+  } catch (e) {
     // eslint-disable-next-line no-alert
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
-  }finally{
+  } finally {
     if (module.finalize) {
       await module.finalize();
     }
@@ -481,38 +553,42 @@ export const moduleMainUpdate = async (
   return undefined;
 };
 
-const getDocuments = async (caseId:number|undefined, schemaIds:number[]|undefined) => {
+const getDocuments = async (
+  caseId: number | undefined,
+  schemaIds: number[] | undefined
+) => {
   let param = '';
-  if(caseId){
+  if (caseId) {
     param += `?caseId=${caseId}`;
   }
-  if(schemaIds){
-    if(param.length > 0){
+  if (schemaIds) {
+    if (param.length > 0) {
       param += '&';
-    }else{
+    } else {
       param += '?';
     }
     param += `schemaIds=${schemaIds.join(',')}`;
   }
-  const ret = await apiAccess(
-    METHOD_TYPE.GET,
-    `getPatientDocuments${param}`
-  );
+  const ret = await apiAccess(METHOD_TYPE.GET, `getPatientDocuments${param}`);
   if (ret.statusNum === RESULT.NORMAL_TERMINATION) {
     return ret.body as formDocument[];
   }
   return [];
-}
+};
 
 export const executePlugin = async (
   plugin: jesgoPluginColumns,
   patientList: jesgoCaseDefine[] | undefined,
   targetDocumentId: number | undefined = undefined,
   setReload:
-    | ((value: React.SetStateAction<boolean>) => void)
+    | ((value: React.SetStateAction<reloadState>) => void)
     | undefined = undefined,
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>> | undefined = undefined,
-  setOverwriteDialogPlop: React.Dispatch<React.SetStateAction<OverwriteDialogPlop | undefined>> | undefined = undefined,
+  setIsLoading:
+    | React.Dispatch<React.SetStateAction<boolean>>
+    | undefined = undefined,
+  setOverwriteDialogPlop:
+    | React.Dispatch<React.SetStateAction<OverwriteDialogPlop | undefined>>
+    | undefined = undefined
 ) => {
   pluginData = plugin;
   setOverwriteDialogPlopGlobal = setOverwriteDialogPlop;
@@ -523,7 +599,7 @@ export const executePlugin = async (
     if (!plugin.all_patient && patientList && patientList.length === 1) {
       // 対象患者が指定されている場合
       targetCaseId = Number(patientList[0].case_id);
-    }else {
+    } else {
       targetCaseId = undefined;
     }
     if (plugin.show_upload_dialog) {
@@ -553,7 +629,7 @@ export const executePlugin = async (
               setIsLoading(false);
             }
             if (setReload) {
-              setReload(true);
+              setReload({ isReload: true, caller: 'update_plugin' });
             }
             return retValue;
           };
@@ -563,14 +639,17 @@ export const executePlugin = async (
       fileInput.click();
     } else {
       // ファイルアップロードなし
-      const documentList:formDocument[] = await getDocuments(targetCaseId, pluginData.target_schema_id);
+      const documentList: formDocument[] = await getDocuments(
+        targetCaseId,
+        pluginData.target_schema_id
+      );
       const retValue = await moduleMainUpdate(
         plugin.script_text,
         updatePatientsDocument,
         documentList
       );
       if (setReload) {
-        setReload(true);
+        setReload({ isReload: true, caller: 'update_plugin' });
       }
       return retValue;
     }
@@ -580,7 +659,7 @@ export const executePlugin = async (
       // eslint-disable-next-line no-restricted-globals, no-alert
       !confirm('出力結果に患者情報が含まれています、実行しますか？')
     ) {
-       throw new Error('cancel');
+      throw new Error('cancel');
     }
     // データ出力系)
     if (patientList) {

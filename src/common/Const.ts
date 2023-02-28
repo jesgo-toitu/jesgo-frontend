@@ -3,7 +3,7 @@ import { formatDateStr } from './CommonUtility';
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {
   // JESGO Webアプリバージョン
-  export const VERSION = '1.0.2';
+  export const VERSION = '1.0.3';
 
   // UiSchemaプロパティ
   export const UI_WIDGET = {
@@ -24,7 +24,7 @@ export namespace Const {
     UI_TEXTAREA: 'jesgo:ui:textarea',
     UI_LISTTYPE: 'jesgo:ui:listtype',
     UI_SUBSCHEMA_STYLE: 'jesgo:ui:subschemastyle',
-    UI_VISIBLE_WHWN: 'jesgo:ui:visibleWhen',
+    UI_VISIBLE_WHEN: 'jesgo:ui:visibleWhen',
     UI_HIDDEN: 'jesgo:ui:hidden',
   } as const;
 

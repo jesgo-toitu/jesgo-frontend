@@ -13,6 +13,7 @@ import { jesgoCaseDefine } from '../../store/formDataReducer';
 import PluginOverwriteConfirm, {
   OverwriteDialogPlop,
 } from './PluginOverwriteConfirm';
+import { reloadState } from '../../views/Registration';
 
 const PAGE_TYPE = {
   PATIENT_LIST: 0,
@@ -24,7 +25,7 @@ const PluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
-  setReload: (value: React.SetStateAction<boolean>) => void;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
 }) => {
   const { pageType, pluginList, getTargetFunction, setIsLoading, setReload } =
     props;
@@ -131,7 +132,7 @@ export const PatientListPluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
-  setReload: (value: React.SetStateAction<boolean>) => void;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
 }) => {
   const { pluginList, getTargetFunction, setIsLoading, setReload } = props;
   return PluginButton({
@@ -147,7 +148,7 @@ export const TargetPatientPluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
-  setReload: (value: React.SetStateAction<boolean>) => void;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
 }) => {
   const { pluginList, getTargetFunction, setIsLoading, setReload } = props;
   return PluginButton({

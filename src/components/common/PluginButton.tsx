@@ -10,6 +10,7 @@ import { fTimeout } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
 import { jesgoCaseDefine } from '../../store/formDataReducer';
+import { reloadState } from '../../views/Registration';
 
 const PAGE_TYPE = {
   PATIENT_LIST: 0,
@@ -21,7 +22,9 @@ const PluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
-  setReload: (value: React.SetStateAction<boolean>) => void;
+  setReload: (
+    value: React.SetStateAction<reloadState>
+  ) => void;
 }) => {
   const { pageType, pluginList, getTargetFunction, setIsLoading, setReload } =
     props;
@@ -67,7 +70,13 @@ const PluginButton = (props: {
       setIsLoading(true);
       await Promise.race([
         fTimeout(Const.PLUGIN_TIMEOUT_SEC),
-        executePlugin(plugin, getTargetFunction(), undefined, setReload, setIsLoading),
+        executePlugin(
+          plugin,
+          getTargetFunction(),
+          undefined,
+          setReload,
+          setIsLoading
+        ),
       ])
         .then((res) => {
           if (!plugin.update_db) {
@@ -109,7 +118,9 @@ export const PatientListPluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
-  setReload: (value: React.SetStateAction<boolean>) => void;
+  setReload: (
+    value: React.SetStateAction<reloadState>
+  ) => void;
 }) => {
   const { pluginList, getTargetFunction, setIsLoading, setReload } = props;
   return PluginButton({
@@ -125,7 +136,9 @@ export const TargetPatientPluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
-  setReload: (value: React.SetStateAction<boolean>) => void;
+  setReload: (
+    value: React.SetStateAction<reloadState>
+  ) => void;
 }) => {
   const { pluginList, getTargetFunction, setIsLoading, setReload } = props;
   return PluginButton({

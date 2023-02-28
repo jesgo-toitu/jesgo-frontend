@@ -166,8 +166,15 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
       `getCaseIdAndHashList`
     );
 
+    // 腫瘍登録番号と症例IDの組み合わせリストも取得する
+    const caseIdAndCaseNoListRet = await apiAccess(
+      METHOD_TYPE.GET,
+      `getCaseIdAndCaseNoList`
+    );
+  
     const caseIdAndDocIdList = caseIdAndDocIdListRet.body as {case_id: number; document_id: number;}[];
     const caseIdAndHashList = caseIdAndHashListRet.body as {case_id: number; hash: string;}[];
+    const caseIdAndCaseNoList = caseIdAndCaseNoListRet.body as {case_id: number; caseNo: string;}[];
 
     const updateObjByCase:Map<number, updateObject[]> = new Map();
     const overwroteList: overwroteObject[] = [];
@@ -184,6 +191,9 @@ const updatePatientsDocument = async (doc: updateObject | updateObject[] | undef
       } 
       else if(localUpdateTarget[index].hash) {
         tempCaseId = caseIdAndHashList.find(p => p.hash === localUpdateTarget[index].hash)?.case_id;
+      } 
+      else if(localUpdateTarget[index].case_no) {
+        tempCaseId = caseIdAndCaseNoList.find(p => p.caseNo === localUpdateTarget[index].case_no)?.case_id;
       } 
       else if(localUpdateTarget[index].document_id) {
         tempCaseId = caseIdAndDocIdList.find(p => p.document_id === localUpdateTarget[index].document_id)?.case_id;

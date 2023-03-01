@@ -268,11 +268,7 @@ export const PluginOverwriteConfirm = (props: OverwriteDialogPlop) => {
             ))}
         </div>
         <div>
-          <Checkbox
-            className="overwrite-checkbox"
-            checked={isSkip}
-            onChange={() => setIsSkip(!isSkip)}
-          >
+          <Checkbox checked={isSkip} onChange={() => setIsSkip(!isSkip)}>
             以降、すべての項目を上書きし確認ダイアログを表示しない
           </Checkbox>
         </div>

@@ -150,7 +150,7 @@ const OutputView = () => {
             ダウンロード
           </Button>
         )}
-        {header && <h1>{header}</h1>}
+        {header && <h1 style={{ marginLeft: '10px' }}>{header}</h1>}
       </div>
       {codeType !== CODE_TYPES.CSV && (
         <pre style={{ margin: '1rem ' }} className="line-numbers">

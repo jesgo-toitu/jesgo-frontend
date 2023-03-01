@@ -143,6 +143,7 @@ const updatePatientsDocument = async (
   };
 
   type overwroteObject = {
+    uuid?: string;
     his_id: string;
     patient_name: string;
     schema_title: string;
@@ -150,8 +151,14 @@ const updatePatientsDocument = async (
     current_value?: string | number | any[] | undefined;
     updated_value?: string | number | any[] | undefined;
     isArray: boolean;
-    overwrote: boolean;
+    overwrote: number;
   };
+
+  const OVERWROTE_STATUS = {
+    OVERWROTE: 1,
+    SKIP: 2,
+    FAILED: 3,
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   const modalHide = () => {};
@@ -272,7 +279,7 @@ const updatePatientsDocument = async (
         target: updateCheckObject,
         hisId: string,
         patientName: string,
-        isOverwrote: boolean
+        isOverwrote: number
       ) => {
         let tmpPointer = target.pointer.slice(1);
         let isArray = false;
@@ -289,6 +296,7 @@ const updatePatientsDocument = async (
         }
 
         const overwrote: overwroteObject = {
+          uuid: target.uuid,
           his_id: hisId,
           patient_name: patientName,
           pointer: tmpPointer,
@@ -316,7 +324,7 @@ const updatePatientsDocument = async (
           for (let index = 0; index < retData.checkList.length; index++) {
             const target = retData.checkList[index];
             overwroteList.push(
-              getOverwroteObject(target, data.his_id, data.patient_name, true)
+              getOverwroteObject(target, data.his_id, data.patient_name, OVERWROTE_STATUS.OVERWROTE)
             );
           }
         } else {
@@ -399,7 +407,7 @@ const updatePatientsDocument = async (
                       processedItem,
                       data.his_id,
                       data.patient_name,
-                      item.isOverwrite
+                      item.isOverwrite ? OVERWROTE_STATUS.OVERWROTE : OVERWROTE_STATUS.SKIP
                     )
                   );
                 }
@@ -409,7 +417,20 @@ const updatePatientsDocument = async (
         }
 
         // チェックの有無に関わらず更新リストに書いてある内容をすべて更新する
-        await apiAccess(METHOD_TYPE.POST, `executeUpdate`, retData.updateList);
+        const executeRet = await apiAccess(METHOD_TYPE.POST, `executeUpdate`, retData.updateList);
+
+        if(executeRet.statusNum !== RESULT.NORMAL_TERMINATION) {
+          for (let index = 0; index < retData.updateList.length; index++) {
+            // 更新に失敗したものはステータスを変更する
+            const failedData = retData.updateList[index];
+            const target = overwroteList.find(p => p.uuid === failedData.uuid);
+            if(target){
+              target.overwrote = OVERWROTE_STATUS.FAILED;
+            }
+          }
+          // eslint-disable-next-line no-alert
+          alert(`患者番号:${retData.his_id ?? ''} 患者名:${retData.patient_name ?? ''} の症例データの更新に失敗しました。`);
+        }
       }
     }
 
@@ -455,6 +476,22 @@ const updatePatientsDocument = async (
         } else {
           updatedValue = JSON.stringify(target.updated_value);
         }
+        let overwroteStatus = '';
+        switch(target.overwrote) {
+          case OVERWROTE_STATUS.OVERWROTE: 
+            overwroteStatus = '済';
+            break;
+
+          case OVERWROTE_STATUS.SKIP: 
+            overwroteStatus = 'スキップ';
+            break;
+
+          case OVERWROTE_STATUS.FAILED: 
+            overwroteStatus = '更新失敗';
+            break;
+
+          default: 
+        }
         const csvText = [
           target.his_id,
           target.patient_name,
@@ -463,7 +500,7 @@ const updatePatientsDocument = async (
           arrayNum?.toString() ?? '',
           currentValue,
           updatedValue,
-          target.overwrote ? '済' : 'スキップ',
+          overwroteStatus,
         ];
         return csvText;
       };
@@ -496,7 +533,6 @@ const updatePatientsDocument = async (
           csv.push(getCsvRow(element));
         }
       }
-
       OpenOutputView(window, csv, 'overwritelog');
     }
   }

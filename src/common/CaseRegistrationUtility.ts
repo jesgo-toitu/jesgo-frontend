@@ -1131,12 +1131,16 @@ export const GetBeforeInheritDocumentData = (
  * @param win window
  * @param srcData 出力するデータ
  */
-export const OpenOutputView = (win: typeof window, srcData: any, type: string|undefined = undefined) => {
+export const OpenOutputView = (
+  win: typeof window,
+  srcData: any,
+  type: string | undefined = undefined
+) => {
   const postData = (e: MessageEvent<any>) => {
     // 画面の準備ができたらデータをポストする
     if (e.origin === win.location.origin && e.data === 'output_ready') {
-      if (type && type === "overwritelog"){
-        e.source?.postMessage({ viewerType: "log",  csvData: srcData });
+      if (type && type === 'overwritelog') {
+        e.source?.postMessage({ viewerType: 'log', csvData: srcData });
       } else if (Array.isArray(srcData) && srcData.length > 0) {
         if (Array.isArray(srcData[0])) {
           e.source?.postMessage(srcData);

@@ -19,12 +19,14 @@ const OutputView = () => {
   // 表示する文字列
   const [resultStr, setResultStr] = useState<string | null>('');
   const [resultTable, setResultTable] = useState<(string | number)[][]>([[]]);
+  const [header, setHeader] = useState<string | undefined>();
 
   const CODE_TYPES = {
     NONE: '',
     JSON: 'language-json',
     JAVA_SCRIPT: 'language-js',
     CSV: 'csv',
+    LOG: 'log',
   };
   const [codeType, setCodeType] = useState<string>(CODE_TYPES.NONE);
 
@@ -46,10 +48,18 @@ const OutputView = () => {
     window.addEventListener('message', (e) => {
       setCodeType(CODE_TYPES.NONE);
       if (e.origin === window.location.origin && e.data) {
-        // TODO: 本実装時はここで渡されたデータの種類を判別し、テーブル形式ならテーブルで表示する
-
         // eslint-disable-next-line no-prototype-builtins
-        if ((e.data as object)?.hasOwnProperty('jsonData')) {
+        if ((e.data as object)?.hasOwnProperty('viewerType')) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          if (e.data.viewerType === CODE_TYPES.LOG) {
+            setHeader('ドキュメント上書き結果');
+            setCodeType(CODE_TYPES.CSV);
+            // eslint-disable-next-line
+            setResultTable(e.data.csvData as any[]);
+          }
+        }
+        // eslint-disable-next-line no-prototype-builtins
+        else if ((e.data as object)?.hasOwnProperty('jsonData')) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           if (e.data.jsonData) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -103,7 +113,9 @@ const OutputView = () => {
             csvText += ',';
           }
           csvText +=
-            typeof column === 'string' ? `"${column}"` : column.toString();
+            typeof column === 'string'
+              ? `"${column.replace(/"/g, '""')}"`
+              : column.toString();
         }
         csvText += '\n';
       }
@@ -138,6 +150,7 @@ const OutputView = () => {
             ダウンロード
           </Button>
         )}
+        {header && <h1 style={{ marginLeft: '10px' }}>{header}</h1>}
       </div>
       {codeType !== CODE_TYPES.CSV && (
         <pre style={{ margin: '1rem ' }} className="line-numbers">

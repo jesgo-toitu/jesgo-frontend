@@ -118,6 +118,7 @@ export namespace JESGOFiledTemplete {
 
   // jesgo:ui:visibleWhenの条件
   type VisibleWhenItem = {
+    parentItemName: string;
     name: string;
     values?: JSONSchema7Type[];
     pattern?: RegExp;
@@ -143,7 +144,7 @@ export namespace JESGOFiledTemplete {
     propertiesItem.pNames.forEach((name: string) => {
       const item = propertiesItem.pItems[name] as JSONSchema7;
       const visiblewhenItem = item[
-        Const.EX_VOCABULARY.UI_VISIBLE_WHWN
+        Const.EX_VOCABULARY.UI_VISIBLE_WHEN
       ] as JSONSchema7;
       if (visiblewhenItem) {
         const vPropItem = getPropItemsAndNames(visiblewhenItem);
@@ -158,10 +159,63 @@ export namespace JESGOFiledTemplete {
           } else if (vItem.pattern) {
             pattern = new RegExp(vItem.pattern);
           }
-          visibleWhenCondition.push({ name: vName, values, pattern });
+          visibleWhenCondition.push({
+            parentItemName: name,
+            name: vName,
+            values,
+            pattern,
+          });
         });
       }
     });
+
+    // jesgo:ui:visibleWhenによる項目表示/非表示制御
+    // eslint-disable-next-line react/destructuring-assignment
+    if (props.items) {
+      //  eslint-disable-next-line react/destructuring-assignment
+      props.items.forEach((item, index) => {
+        const editItem = item;
+
+        // visiblewhen
+        visibleWhenCondition.forEach((condition: VisibleWhenItem) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          const inputData = formData[index][condition.name] as JSONSchema7Type;
+
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          const itemId = editItem.children.props.idSchema[
+            condition.parentItemName
+          ].$id as string;
+          const element = document.getElementById(itemId);
+          if (element) {
+            const parentClass = element.parentElement?.className;
+            if (parentClass && parentClass.includes('visiblewhen')) {
+              if (
+                !(
+                  (condition.values && condition.values.includes(inputData)) ||
+                  (condition.pattern &&
+                    typeof inputData === 'string' &&
+                    inputData.match(condition.pattern))
+                )
+              ) {
+                // 条件に【当てはまらなければ】非表示にするCSSを追加
+                if (
+                  !element.parentElement.className.includes('visiblewhen-item')
+                ) {
+                  element.parentElement.className += ' visiblewhen-item';
+                }
+              } else {
+                // 当てはまる場合は非表示用のCSSをクリア
+                element.parentElement.className =
+                  element.parentElement.className
+                    .replace(/visiblewhen-item/g, '')
+                    .trim();
+              }
+            }
+          }
+        });
+      });
+    }
+
     return (
       <div>
         {/* eslint-disable-next-line react/destructuring-assignment */}
@@ -199,25 +253,6 @@ export namespace JESGOFiledTemplete {
                 } else if (subschemastyle === 'column') {
                   editItem.className += ' array-subschemastyle-column';
                 }
-                // visiblewhen
-                visibleWhenCondition.forEach((condition: VisibleWhenItem) => {
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                  const inputData = formData[index][
-                    condition.name
-                  ] as JSONSchema7Type;
-                  if (
-                    !(
-                      (condition.values &&
-                        condition.values.includes(inputData)) ||
-                      (condition.pattern &&
-                        typeof inputData === 'string' &&
-                        inputData.match(condition.pattern))
-                    )
-                  ) {
-                    // 条件に【当てはまらなければ】非表示にするCSSを追加
-                    editItem.className += ' visiblewhen-hidden';
-                  }
-                });
                 return JESGOComp.DefaultArrayItem(editItem);
               })}
           </div>

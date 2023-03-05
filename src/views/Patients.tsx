@@ -37,6 +37,7 @@ import SearchDateComponent, {
   convertSearchDate,
   searchDateInfoDataSet,
 } from '../components/common/SearchDateComponent';
+import { reloadState } from './Registration';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -131,7 +132,10 @@ const Patients = () => {
     []
   );
   const [isLoading, setIsLoading] = useState(false);
-  const [isReload, setIsReload] = useState(false);
+  const [reload, setReload] = useState<reloadState>({
+    isReload: false,
+    caller: '',
+  });
 
   // 初回治療開始日検索条件
   const [searchDateInfoInitialTreatment, setSearchDateInfoInitialTreatment] =
@@ -173,12 +177,12 @@ const Patients = () => {
       setIsLoading(false);
     };
 
-    if (isReload) {
+    if (reload.isReload) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       f();
-      setIsReload(false);
+      setReload({ isReload: false, caller: '' });
     }
-  }, [isReload]);
+  }, [reload]);
 
   useEffect(() => {
     const f = async () => {
@@ -686,7 +690,7 @@ const Patients = () => {
               pluginList={jesgoPluginList}
               getTargetFunction={getPatientList}
               setIsLoading={setIsLoading}
-              setReload={setIsReload}
+              setReload={setReload}
             />
             <div className="spacer10" />
             {localStorage.getItem('is_add_roll') === 'true' && (

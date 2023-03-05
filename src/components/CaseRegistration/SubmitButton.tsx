@@ -13,23 +13,19 @@ import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
 import { jesgoPluginColumns } from '../../common/Plugin';
 import { TargetPatientPluginButton } from '../common/PluginButton';
+import { reloadState } from '../../views/Registration';
 
 interface ButtonProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setLoadedJesgoCase: React.Dispatch<React.SetStateAction<responseResult>>;
   setCaseId: React.Dispatch<React.SetStateAction<number | undefined>>;
-  setIsReload: React.Dispatch<React.SetStateAction<boolean>>;
+  setReload: React.Dispatch<React.SetStateAction<reloadState>>;
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
 }
 
 const SubmitButton = (props: ButtonProps) => {
-  const {
-    setIsLoading,
-    setLoadedJesgoCase,
-    setCaseId,
-    setIsReload,
-    setErrors,
-  } = props;
+  const { setIsLoading, setLoadedJesgoCase, setCaseId, setReload, setErrors } =
+    props;
 
   const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
     []
@@ -92,7 +88,7 @@ const SubmitButton = (props: ButtonProps) => {
           loadedSaveData: undefined,
         });
         setCaseId(saveResponse.caseId);
-        setIsReload(true);
+        setReload({ isReload: true, caller: '' });
       } else {
         // 読み込み失敗
         setIsLoading(false);
@@ -158,7 +154,7 @@ const SubmitButton = (props: ButtonProps) => {
           pluginList={jesgoPluginList}
           getTargetFunction={getPatient}
           setIsLoading={setIsLoading}
-          setReload={setIsReload}
+          setReload={setReload}
         />
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
         {localStorage.getItem('is_edit_roll') === 'true' && (

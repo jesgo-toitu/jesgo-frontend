@@ -10,6 +10,10 @@ import { fTimeout } from '../../common/CommonUtility';
 import { Const } from '../../common/Const';
 import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
 import { jesgoCaseDefine } from '../../store/formDataReducer';
+import PluginOverwriteConfirm, {
+  OverwriteDialogPlop,
+} from './PluginOverwriteConfirm';
+import { reloadState } from '../../views/Registration';
 
 const PAGE_TYPE = {
   PATIENT_LIST: 0,
@@ -21,11 +25,15 @@ const PluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
-  setReload: (value: React.SetStateAction<boolean>) => void;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
 }) => {
   const { pageType, pluginList, getTargetFunction, setIsLoading, setReload } =
     props;
   const [targetPlugins, setTargetPlugins] = useState<jesgoPluginColumns[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const [overwriteDialogPlop, setOverwriteDialogPlop] = useState<
+    OverwriteDialogPlop | undefined
+  >();
 
   useEffect(() => {
     switch (pageType) {
@@ -67,7 +75,14 @@ const PluginButton = (props: {
       setIsLoading(true);
       await Promise.race([
         fTimeout(Const.PLUGIN_TIMEOUT_SEC),
-        executePlugin(plugin, getTargetFunction(), undefined, setReload, setIsLoading),
+        executePlugin(
+          plugin,
+          getTargetFunction(),
+          undefined,
+          setReload,
+          setIsLoading,
+          setOverwriteDialogPlop
+        ),
       ])
         .then((res) => {
           if (!plugin.update_db) {
@@ -87,21 +102,29 @@ const PluginButton = (props: {
   };
 
   return (
-    <ButtonToolbar style={{ margin: '1rem' }}>
-      <DropdownButton
-        aria-hidden="true"
-        bsSize="small"
-        title="プラグイン選択"
-        key="plugin-select"
-        id="dropdown-basic-plugin-select"
-      >
-        {targetPlugins.map((p) => (
-          <MenuItem onSelect={() => handlePluginSelect(p)}>
-            {p.plugin_name}
-          </MenuItem>
-        ))}
-      </DropdownButton>
-    </ButtonToolbar>
+    <>
+      {overwriteDialogPlop && (
+        <PluginOverwriteConfirm
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...overwriteDialogPlop}
+        />
+      )}
+      <ButtonToolbar style={{ margin: '1rem' }}>
+        <DropdownButton
+          aria-hidden="true"
+          bsSize="small"
+          title="プラグイン選択"
+          key="plugin-select"
+          id="dropdown-basic-plugin-select"
+        >
+          {targetPlugins.map((p) => (
+            <MenuItem onSelect={() => handlePluginSelect(p)}>
+              {p.plugin_name}
+            </MenuItem>
+          ))}
+        </DropdownButton>
+      </ButtonToolbar>
+    </>
   );
 };
 
@@ -109,7 +132,7 @@ export const PatientListPluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
-  setReload: (value: React.SetStateAction<boolean>) => void;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
 }) => {
   const { pluginList, getTargetFunction, setIsLoading, setReload } = props;
   return PluginButton({
@@ -125,7 +148,7 @@ export const TargetPatientPluginButton = (props: {
   pluginList: jesgoPluginColumns[];
   getTargetFunction: () => jesgoCaseDefine[];
   setIsLoading: (value: React.SetStateAction<boolean>) => void;
-  setReload: (value: React.SetStateAction<boolean>) => void;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
 }) => {
   const { pluginList, getTargetFunction, setIsLoading, setReload } = props;
   return PluginButton({

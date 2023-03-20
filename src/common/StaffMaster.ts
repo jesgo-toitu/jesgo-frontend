@@ -12,6 +12,11 @@ export const StaffErrorMessage = {
   ROLL_ERROR: '権限を選択してください。',
 } as const;
 
+export type RollMaster = {
+  roll_id: number;
+  title: string;
+};
+
 export const Roll = {
   ROLL_ID_SYSTEM: 0,
 } as const;
@@ -21,8 +26,6 @@ export const LOGINID_PATTERN = /^([a-zA-Z0-9]{6,8})$/;
 // 半角英数字を含む6文字以上10文字以内
 export const PASSWORD_PATTERN = /^(?=.*?[a-z])(?=.*?\d)[a-z\d]{6,20}$/i;
 export const DISPLAYNAME_MAX_LENGTH = 20;
-
-export const rollList = [0, 1, 100, 101, 1000];
 
 export const loginIdCheck = (value: string): boolean => {
   const regex = new RegExp(LOGINID_PATTERN);

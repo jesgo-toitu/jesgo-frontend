@@ -8,3 +8,8 @@
   overflow-y: auto;
   height: calc(100vh - 17.2rem);
 }
+
+.staff-table2 tbody {
+  overflow-y: auto;
+  height: calc(100vh - 18.2rem);
+}

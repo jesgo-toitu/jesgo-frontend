@@ -263,7 +263,7 @@ const UserRollSetting = forwardRef(
     };
 
     // マスタからユーザ権限読み込み
-    const LoadUserRoll = () => {
+    const LoadUserRoll = (isReload: boolean) => {
       const f = async () => {
         setIsLoading(true);
         // jesgo_user list
@@ -277,6 +277,37 @@ const UserRollSetting = forwardRef(
             ?.data as JesgoUserRoll[];
           setRollList([...readData]);
           setLoadedRollList([...readData]);
+
+          const rollInfo = readData.find(
+            (p) => p.roll_id.toString() === localStorage.getItem('roll_id')
+          );
+          // リロード時はlocalStrageの権限を更新する
+          if (isReload && rollInfo) {
+            localStorage.setItem('is_view_roll', rollInfo.view.toString());
+            localStorage.setItem('is_add_roll', rollInfo.add.toString());
+            localStorage.setItem('is_edit_roll', rollInfo.edit.toString());
+            localStorage.setItem('is_remove_roll', rollInfo.remove.toString());
+            localStorage.setItem(
+              'is_plugin_registerable',
+              rollInfo.plugin_registerable.toString()
+            );
+            localStorage.setItem(
+              'is_plugin_executable_select',
+              rollInfo.plugin_executable_select.toString()
+            );
+            localStorage.setItem(
+              'is_plugin_executable_update',
+              rollInfo.plugin_executable_update.toString()
+            );
+            localStorage.setItem(
+              'is_data_manage_roll',
+              rollInfo.data_manage.toString()
+            );
+            localStorage.setItem(
+              'is_system_manage_roll',
+              rollInfo.system_manage.toString()
+            );
+          }
         } else {
           navigate('/login');
         }
@@ -291,7 +322,7 @@ const UserRollSetting = forwardRef(
       AddBeforeUnloadEvent();
 
       LoadStaffData();
-      LoadUserRoll();
+      LoadUserRoll(false);
     }, []);
 
     // 各行から変更通知が上がってきたら対象のレコードを更新する
@@ -356,7 +387,7 @@ const UserRollSetting = forwardRef(
           if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
             alert('保存しました');
             // 読み直し
-            LoadUserRoll();
+            LoadUserRoll(true);
           } else {
             // navigate('/login');
             alert('【エラー】\n保存に失敗しました');

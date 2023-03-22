@@ -4,6 +4,7 @@
 
 import lodash from 'lodash';
 import { Reducer } from 'redux';
+import { jesgoPluginColumns } from '../common/Plugin';
 
 export interface commonState {
   scrollTop?: number; // スクロール位置(Y軸)
@@ -11,6 +12,8 @@ export interface commonState {
   isSaveAfterTabbing?: boolean; // タブ移動時の保存有無
   isShownSaveMessage?: boolean; // 保存確認ダイアログ表示中フラグ
   subSchemaCount?: number; // 自動生成されるサブスキーマの個数
+
+  pluginList?: jesgoPluginColumns[];
 }
 
 export interface commonAction {
@@ -19,6 +22,8 @@ export interface commonAction {
   isHiddenSaveMassage?: boolean;
   isSaveAfterTabbing?: boolean;
   isShownSaveMessage?: boolean;
+
+  pluginList?: jesgoPluginColumns[];
 }
 
 const createInitialState = (): commonState => ({
@@ -26,6 +31,7 @@ const createInitialState = (): commonState => ({
   isHiddenSaveMassage: false,
   isSaveAfterTabbing: false,
   isShownSaveMessage: false,
+  pluginList: undefined,
 });
 
 const initialState: commonState = createInitialState();
@@ -62,9 +68,16 @@ const commonReducer: Reducer<commonState, commonAction> = (
       break;
     }
 
+    // プラグイン一覧キャッシュ
+    case 'PLUGIN_LIST': {
+      copyState.pluginList = action.pluginList;
+      break;
+    }
+
     // 初期化
     case 'INIT_STORE': {
-      return createInitialState();
+      // プラグイン一覧はここでは初期化しない
+      return { ...createInitialState(), pluginList: copyState.pluginList };
     }
     default:
       break;

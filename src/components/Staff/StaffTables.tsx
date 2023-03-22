@@ -8,6 +8,7 @@ import {
 } from 'react-bootstrap';
 import { useLocation, useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { ReadStaffList } from '../../common/DBUtility';
 import { staffData } from './StaffData';
 import { StaffEditModalDialog } from './StaffEditModal';
 
@@ -17,9 +18,6 @@ let srcData: staffData | undefined;
 const makeTable = (props: {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  interface staffDataList {
-    data: staffData[];
-  }
   const { setIsLoading } = props;
 
   const navigate = useNavigate();
@@ -27,34 +25,16 @@ const makeTable = (props: {
   const [staffList, setStaffList] = useState<staffData[]>([]);
   const [update, setUpdate] = useState(false);
 
-  //  const { staffListJson } = props;
-  let staffDataListJson: staffDataList;
-  const url: string = useLocation().search;
-
-  const ReadStaffData = () => {
-    const f = async () => {
-      setIsLoading(true);
-      // jesgo_user list
-      const returnApiObject = await apiAccess(
-        METHOD_TYPE.GET,
-        `userlist${url}`
-      );
-      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
-        staffDataListJson = JSON.parse(
-          JSON.stringify(returnApiObject.body)
-        ) as staffDataList;
-        setStaffList([...staffDataListJson.data]);
+  useEffect(() => {
+    // 利用者一覧読み込み
+    // eslint-disable-next-line no-void
+    void ReadStaffList(setIsLoading).then((returnObj) => {
+      if (returnObj.statusNum === RESULT.NORMAL_TERMINATION) {
+        setStaffList([...returnObj.data]);
       } else {
         navigate('/login');
       }
-      setIsLoading(false);
-    };
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    f();
-  };
-
-  useEffect(() => {
-    ReadStaffData();
+    });
   }, [update]);
 
   const addStaff = () => {
@@ -116,31 +96,6 @@ const makeTable = (props: {
     setShow(false);
   }, [setShow]);
 
-  const convertRollName = (rollId: number) => {
-    let rollName = '';
-    switch (rollId) {
-      case 0:
-        rollName = 'システム管理者';
-        break;
-      case 1:
-        rollName = 'システムオペレーター';
-        break;
-      case 100:
-        rollName = '上級ユーザー';
-        break;
-      case 101:
-        rollName = '一般ユーザー';
-        break;
-      case 1000:
-        rollName = '退職者';
-        break;
-      default:
-        rollName = '';
-        break;
-    }
-    return rollName;
-  };
-
   return (
     <>
       <div className="page-menu">
@@ -168,7 +123,7 @@ const makeTable = (props: {
             <tr key={staff.user_id.toString()}>
               <td>{staff.name}</td>
               <td>{staff.display_name}</td>
-              <td>{convertRollName(staff.roll_id)}</td>
+              <td>{staff.rolltitle}</td>
               <td>
                 <ButtonToolbar>
                   <ButtonGroup>

@@ -21,12 +21,14 @@ export interface commonAction {
   isShownSaveMessage?: boolean;
 }
 
-const initialState: commonState = {
+const createInitialState = (): commonState => ({
   scrollTop: 0,
   isHiddenSaveMassage: false,
   isSaveAfterTabbing: false,
   isShownSaveMessage: false,
-};
+});
+
+const initialState: commonState = createInitialState();
 
 const commonReducer: Reducer<commonState, commonAction> = (
   // eslint-disable-next-line default-param-last
@@ -62,7 +64,7 @@ const commonReducer: Reducer<commonState, commonAction> = (
 
     // 初期化
     case 'INIT_STORE': {
-      return initialState;
+      return createInitialState();
     }
     default:
       break;

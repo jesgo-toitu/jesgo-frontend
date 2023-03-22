@@ -72,10 +72,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   // eventdateの初期値設定
   let initEventDate = '';
   if (thisDocument) {
-    initEventDate = useMemo(
-      () => getEventDate(thisDocument, formData),
-      [thisDocument, formData]
-    );
+    initEventDate = getEventDate(thisDocument, formData);
   }
 
   const [eventDate, setEventDate] = useState<string>(initEventDate);

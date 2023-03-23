@@ -116,7 +116,7 @@ const getTargetDocument = async (doc: argDoc) => {
     pluginData.attach_patient_info
   );
   if (ret.resCode === RESULT.NORMAL_TERMINATION) {
-    return ret;
+    return ret.anyValue ? JSON.stringify(ret.anyValue) : undefined;
   }
   return undefined;
 };

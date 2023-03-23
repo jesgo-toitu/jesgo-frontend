@@ -70,7 +70,7 @@ export const Stafflist = () => {
 
   const clickCancel = useCallback(() => {
     if (selectedTab === 1) {
-      // 
+      //
       navigate('/Patients');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     } else if (isTransitionOkWrapper()) {

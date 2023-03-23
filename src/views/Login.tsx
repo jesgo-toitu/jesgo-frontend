@@ -8,6 +8,8 @@ import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { settingsFromApi } from './Settings';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
+import { LoadPluginList } from '../common/DBUtility';
+import { jesgoPluginColumns } from '../common/Plugin';
 
 export interface localStorageObject {
   user_id: number;
@@ -109,6 +111,19 @@ export const Login = () => {
 
       // スキーマ取得処理
       await storeSchemaInfo(dispatch);
+
+      // プラグイン全ロード処理
+      const pluginListReturn = await LoadPluginList(true);
+      if (
+        pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION ||
+        pluginListReturn.statusNum === RESULT.PLUGIN_CACHE
+      ) {
+        const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+
+        if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+          dispatch({ type: 'PLUGIN_LIST', pluginList });
+        }
+      }
 
       navigate('/Patients');
     } else if (returnApiObject.statusNum === RESULT.NETWORK_ERROR) {

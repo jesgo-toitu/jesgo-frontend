@@ -6,7 +6,10 @@ import '../../views/Registration.css';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import store from '../../store/index';
-import SaveCommand, { responseResult } from '../../common/DBUtility';
+import SaveCommand, {
+  LoadPluginList,
+  responseResult,
+} from '../../common/DBUtility';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
 import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
@@ -31,12 +34,22 @@ const SubmitButton = (props: ButtonProps) => {
     []
   );
 
+  const dispatch = useDispatch();
+
   useEffect(() => {
     const f = async () => {
       // プラグイン全ロード処理
-      const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
-      if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+      const pluginListReturn = await LoadPluginList();
+      if (
+        pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION ||
+        pluginListReturn.statusNum === RESULT.PLUGIN_CACHE
+      ) {
         const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+
+        if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+          dispatch({ type: 'PLUGIN_LIST', pluginList });
+        }
+
         setJesgoPluginList(pluginList);
       }
     };
@@ -49,8 +62,6 @@ const SubmitButton = (props: ButtonProps) => {
   const [saveResponse, setSaveResponse] = useState<responseResult>({
     message: '',
   });
-
-  const dispatch = useDispatch();
 
   const navigate = useNavigate();
 

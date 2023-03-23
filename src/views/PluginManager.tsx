@@ -13,6 +13,7 @@ import {
 } from 'react-bootstrap';
 import { saveAs } from 'file-saver';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import Loading from '../components/CaseRegistration/Loading';
@@ -20,7 +21,11 @@ import { Const } from '../common/Const';
 import './SchemaManager.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { settingsFromApi } from './Settings';
-import { responseResult, UploadPluginFile } from '../common/DBUtility';
+import {
+  LoadPluginList,
+  responseResult,
+  UploadPluginFile,
+} from '../common/DBUtility';
 import {
   GetSchemaTitle,
   OpenOutputViewScript,
@@ -34,6 +39,8 @@ type settings = {
 
 const PluginManager = () => {
   const navigate = useNavigate();
+
+  const dispatch = useDispatch();
 
   const userName = localStorage.getItem('display_name');
   const [facilityName, setFacilityName] = useState('');
@@ -73,9 +80,17 @@ const PluginManager = () => {
 
   // プラグイン全ロード処理
   const loadPluginList = async () => {
-    const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
-    if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+    const pluginListReturn = await LoadPluginList(true);
+    if (
+      pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION ||
+      pluginListReturn.statusNum === RESULT.PLUGIN_CACHE
+    ) {
       const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+
+      if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+        dispatch({ type: 'PLUGIN_LIST', pluginList });
+      }
+
       setJesgoPluginList(pluginList);
     } else {
       navigate('/login');

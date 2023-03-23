@@ -15,7 +15,7 @@ import {
   SaveDataObjDefine,
 } from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
-import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
+import apiAccess, { ApiReturnObject, METHOD_TYPE, RESULT } from './ApiAccess';
 import { validateJesgoDocument } from './CaseRegistrationUtility';
 import {
   RegistrationErrors,
@@ -25,6 +25,7 @@ import { Const } from './Const';
 import { formatDate, formatDateStr } from './CommonUtility';
 import store from '../store';
 import { JSONSchema7 } from 'json-schema';
+import { jesgoPluginColumns } from './Plugin';
 import staffData from '../components/Staff/StaffData';
 
 export interface responseResult {
@@ -730,6 +731,29 @@ export const ReadStaffList = async (
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     data: (returnApiObject.body as any)?.data as staffData[],
   };
+};
+
+/**
+ * プラグイン一覧取得
+ * @param forceLoad 強制ロードフラグ
+ * @returns
+ */
+export const LoadPluginList = async (
+  forceLoad = false
+): Promise<ApiReturnObject> => {
+  // すでに読み込み済みの場合はstoreから取得する
+  const pluginList = store.getState().commonReducer.pluginList;
+  if (pluginList && !forceLoad) {
+    return { statusNum: RESULT.PLUGIN_CACHE, body: pluginList };
+  }
+
+  // 未読み込みの場合はAPIから取得
+  const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
+  if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+    return pluginListReturn;
+  }
+  const newPlugins: jesgoPluginColumns[] = [];
+  return { statusNum: pluginListReturn.statusNum, body: newPlugins };
 };
 
 export default SaveCommand;

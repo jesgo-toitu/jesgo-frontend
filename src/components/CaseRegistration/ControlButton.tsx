@@ -18,6 +18,7 @@ import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
 import { fTimeout } from '../../common/CommonUtility';
 import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { LoadPluginList } from '../../common/DBUtility';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -99,9 +100,17 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
   useEffect(() => {
     const f = async () => {
       // プラグイン全ロード処理
-      const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
-      if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+      const pluginListReturn = await LoadPluginList();
+      if (
+        pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION ||
+        pluginListReturn.statusNum === RESULT.PLUGIN_CACHE
+      ) {
         const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+
+        if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+          dispatch({ type: 'PLUGIN_LIST', pluginList });
+        }
+
         setJesgoPluginList(pluginList);
       }
     };

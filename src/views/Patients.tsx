@@ -38,6 +38,7 @@ import SearchDateComponent, {
   searchDateInfoDataSet,
 } from '../components/common/SearchDateComponent';
 import { reloadState } from './Registration';
+import { LoadPluginList } from '../common/DBUtility';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -204,9 +205,17 @@ const Patients = () => {
       await reloadPatient();
 
       // プラグイン全ロード処理
-      const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
-      if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+      const pluginListReturn = await LoadPluginList();
+      if (
+        pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION ||
+        pluginListReturn.statusNum === RESULT.PLUGIN_CACHE
+      ) {
         const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+
+        if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+          dispatch({ type: 'PLUGIN_LIST', pluginList });
+        }
+
         setJesgoPluginList(pluginList);
       } else {
         navigate('/login');

@@ -592,9 +592,9 @@ const SchemaManager = () => {
     const fileList = e.target.files;
     if (fileList) {
       const file = fileList[0];
-      if (file.size > 153600) {
+      if (file.size > 1048576) { // 1024×1024
         alert(
-          '一度にアップロードするファイルのサイズは150KBまでにしてください'
+          '一度にアップロードするファイルのサイズは1MBまでにしてください'
         );
         return;
       }

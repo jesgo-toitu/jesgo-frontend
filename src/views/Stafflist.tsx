@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button, Nav, Navbar, NavItem } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
@@ -7,6 +7,7 @@ import Loading from '../components/CaseRegistration/Loading';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { UserMenu } from '../components/common/UserMenu';
 import StaffTables from '../components/Staff/StaffTables';
+import UserRollSetting from '../components/Staff/UserRollSetting';
 import { settingsFromApi } from './Settings';
 import './Stafflist.css';
 
@@ -16,6 +17,14 @@ export const Stafflist = () => {
   const [facilityName, setFacilityName] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [selectedTab, setSelectedTab] = useState(1);
+  const [selectTabClassList, setSelectTabClassList] = useState<string[]>([
+    'blue',
+    '',
+  ]);
+
+  const refUserRollSetting = useRef();
 
   useEffect(() => {
     const f = async () => {
@@ -39,9 +48,36 @@ export const Stafflist = () => {
     f();
   }, []);
 
+  // 画面遷移前のチェック(権限設定画面用)
+  const isTransitionOkWrapper = (): boolean => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const func = (refUserRollSetting.current as any)
+      ?.isTransitionOk as () => boolean;
+    if (func) {
+      return func();
+    }
+    return true;
+  };
+
+  // 選択中画面のタイトル色設定
+  useEffect(() => {
+    const classList: string[] = [];
+    for (let i = 1; i <= selectTabClassList.length; i += 1) {
+      classList.push(selectedTab === i ? 'blue' : '');
+    }
+    setSelectTabClassList(classList);
+  }, [selectedTab]);
+
   const clickCancel = useCallback(() => {
-    navigate('/Patients');
-  }, []);
+    if (selectedTab === 1) {
+      // 
+      navigate('/Patients');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    } else if (isTransitionOkWrapper()) {
+      // 権限管理の場合、確認ダイアログを表示する
+      navigate('/Patients');
+    }
+  }, [selectedTab]);
 
   return (
     <>
@@ -53,8 +89,29 @@ export const Stafflist = () => {
             </Navbar.Brand>
           </Navbar.Header>
           <Navbar.Collapse>
-            <Nav>
-              <NavItem className="header-text">利用者管理</NavItem>
+            <Nav
+              onSelect={(eventKey: any) => {
+                if (selectedTab === 2) {
+                  // 権限管理→利用者管理への切り替え時は変更チェックする
+                  if (!isTransitionOkWrapper()) {
+                    return;
+                  }
+                }
+                setSelectedTab(eventKey as unknown as number);
+              }}
+            >
+              <NavItem
+                className={`header-text ${selectTabClassList[0]}`}
+                eventKey={1}
+              >
+                利用者管理
+              </NavItem>
+              <NavItem
+                className={`header-text ${selectTabClassList[1]}`}
+                eventKey={2}
+              >
+                権限管理
+              </NavItem>
             </Nav>
             <Navbar.Text pullRight>Ver.{Const.VERSION}</Navbar.Text>
             <Nav pullRight>
@@ -65,7 +122,12 @@ export const Stafflist = () => {
               </Navbar.Brand>
               <Navbar.Brand>
                 <div>
-                  <SystemMenu title="設定" i={0} isConfirm={null} />
+                  <SystemMenu
+                    title="設定"
+                    i={0}
+                    isConfirm={null}
+                    isTransitionOk={isTransitionOkWrapper}
+                  />
                 </div>
               </Navbar.Brand>
               <NavItem>
@@ -78,7 +140,13 @@ export const Stafflist = () => {
           </Navbar.Collapse>
         </Navbar>
         <div className="search-result-staff">
-          <StaffTables setIsLoading={setIsLoading} />
+          {selectedTab === 1 && <StaffTables setIsLoading={setIsLoading} />}
+          {selectedTab === 2 && (
+            <UserRollSetting
+              ref={refUserRollSetting}
+              setIsLoading={setIsLoading}
+            />
+          )}
         </div>
       </div>
       {isLoading && <Loading />}

@@ -25,6 +25,7 @@ import { Const } from './Const';
 import { formatDate, formatDateStr } from './CommonUtility';
 import store from '../store';
 import { JSONSchema7 } from 'json-schema';
+import staffData from '../components/Staff/StaffData';
 
 export interface responseResult {
   resCode?: number;
@@ -710,6 +711,25 @@ export const UploadPluginFile = async (
 
   // 呼び元に返す
   setPluginUploadResponse(res);
+};
+
+/**
+ * 利用者一覧取得
+ * @param setIsLoading
+ * @returns
+ */
+export const ReadStaffList = async (
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
+) => {
+  setIsLoading(true);
+  // jesgo_user list
+  const returnApiObject = await apiAccess(METHOD_TYPE.GET, `userlist`);
+  setIsLoading(false);
+  return {
+    statusNum: returnApiObject.statusNum,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    data: (returnApiObject.body as any)?.data as staffData[],
+  };
 };
 
 export default SaveCommand;

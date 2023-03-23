@@ -315,13 +315,13 @@ const PluginManager = () => {
                 <td className="plugin-table-short">
                   <ButtonToolbar>
                     <ButtonGroup>
-                      <Button onClick={() => openSyntax(plugin.plugin_id)}>
+                      <Button title="内容の表示" onClick={() => openSyntax(plugin.plugin_id)}>
                         <Glyphicon glyph="list-alt" />
                       </Button>
-                      <Button onClick={() => downloadPlugin(plugin)}>
+                      <Button title="ダウンロード" onClick={() => downloadPlugin(plugin)}>
                         <Glyphicon glyph="download-alt" />
                       </Button>
-                      <Button onClick={() => deletePlugin(plugin)}>
+                      <Button title="削除" onClick={() => deletePlugin(plugin)}>
                         <Glyphicon glyph="trash" />
                       </Button>
                     </ButtonGroup>

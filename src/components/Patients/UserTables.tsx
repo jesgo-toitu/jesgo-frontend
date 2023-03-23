@@ -208,12 +208,13 @@ const makeTable = (props: {
                   <ButtonGroup>
                     {(localStorage.getItem('is_edit_roll') === 'true' ||
                       localStorage.getItem('is_view_roll') === 'true') && (
-                      <Button onClick={() => clickEdit(user.caseId)}>
+                      <Button title="編集" onClick={() => clickEdit(user.caseId)}>
                         <Glyphicon glyph="edit" />
                       </Button>
                     )}
                     {localStorage.getItem('is_remove_roll') === 'true' && (
                       <Button
+                        title="削除"
                         onClick={() =>
                           deletePatient(
                             user.caseId,

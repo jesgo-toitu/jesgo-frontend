@@ -210,7 +210,7 @@ const UserRollRow = React.memo(
           />
         </td>
         <td className="text-center">
-          <Button onClick={deleteRoll}>
+          <Button title="削除" onClick={deleteRoll}>
             <Glyphicon glyph="trash" />
           </Button>
         </td>

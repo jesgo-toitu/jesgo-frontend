@@ -569,7 +569,8 @@ export const moduleMain = async (
   } catch (e) {
     // eslint-disable-next-line no-alert
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
-  } finally {
+    console.error(e as Error)
+  }finally{
     if (module.finalize) {
       await module.finalize();
     }

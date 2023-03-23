@@ -687,10 +687,10 @@ const Patients = () => {
           <div className="search-form-closed flex">
             <ButtonToolbar style={{ marginTop: '14px', marginBottom: '14px' }}>
               <ButtonGroup>
-                <Button onClick={() => changeView('simpleSearch')}>
+                <Button title="検索" onClick={() => changeView('simpleSearch')}>
                   <Glyphicon glyph="search" />
                 </Button>
-                <Button onClick={() => changeView('detailSearch')}>
+                <Button title="表示設定" onClick={() => changeView('detailSearch')}>
                   <Glyphicon glyph="eye-open" />
                 </Button>
               </ButtonGroup>

@@ -151,7 +151,7 @@ export interface headerInfoAction {
   value: string | boolean;
 }
 
-const initialState: formDataState = {
+const createInitialState = (): formDataState => ({
   formDatas: new Map(),
   saveData: {
     jesgo_case: {
@@ -195,7 +195,9 @@ const initialState: formDataState = {
   deletedDocuments: [],
   processedDocumentIds: [],
   formDataInputStates: new Map(),
-};
+});
+
+const initialState: formDataState = createInitialState();
 
 // 保存用オブジェクト作成(1スキーマ1オブジェクト)
 const createJesgoDocumentValueItem = (
@@ -302,7 +304,7 @@ const formDataReducer: Reducer<
 ) => {
   // 初期化の場合は常に初期値返す
   if (action.type === 'INIT_STORE') {
-    return initialState;
+    return createInitialState();
   }
 
   const copyState = state;

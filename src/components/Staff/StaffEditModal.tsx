@@ -16,13 +16,14 @@ import {
   DISPLAYNAME_MAX_LENGTH,
   loginIdCheck,
   passwordCheck,
-  rollList,
+  RollMaster,
   StaffErrorMessage,
 } from '../../common/StaffMaster';
 import Loading from '../CaseRegistration/Loading';
 import ModalDialog from '../common/ModalDialog';
 import './StaffEditModal.css';
 import { staffData } from './StaffData';
+import { useNavigate } from 'react-router-dom';
 
 export const StaffEditModalDialog = (props: {
   onHide: () => void;
@@ -46,6 +47,26 @@ export const StaffEditModalDialog = (props: {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const [rollMaster, setRollMaster] = useState<RollMaster[]>([]);
+
+  const navigate = useNavigate();
+
+  // 権限マスタ取得
+  const ReadRollMaster = async () => {
+    setIsLoading(true);
+    // jesgo_user list
+    const returnApiObject = await apiAccess(
+      METHOD_TYPE.GET,
+      `getUserRollItemMaster`
+    );
+    setIsLoading(false);
+    return {
+      statusNum: returnApiObject.statusNum,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      data: (returnApiObject.body as any)?.data as RollMaster[],
+    };
+  };
+
   useEffect(() => {
     if (data !== undefined) {
       setUserId(data.user_id);
@@ -61,6 +82,19 @@ export const StaffEditModalDialog = (props: {
     setPassword('');
     setPasswordConfilm('');
   }, [show]);
+
+  useEffect(() => {
+    // eslint-disable-next-line no-void
+    void ReadRollMaster().then((result) => {
+      if (result.statusNum === RESULT.NORMAL_TERMINATION) {
+        if (result.data) {
+          setRollMaster([{ roll_id: -1, title: '' }, ...result.data]);
+        }
+      } else {
+        navigate('/login');
+      }
+    });
+  }, []);
 
   const onChangeItem = (event: React.FormEvent<FormControl>) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -132,9 +166,10 @@ export const StaffEditModalDialog = (props: {
           errorMessage.push(StaffErrorMessage.PASSWORD_COMPARE_ERROR);
         }
       }
-      if (rollList.indexOf(roll) === -1) {
-        errorMessage.push(StaffErrorMessage.ROLL_ERROR);
-      }
+    }
+
+    if (roll === -1) {
+      errorMessage.push(StaffErrorMessage.ROLL_ERROR);
     }
 
     if (errorMessage.length > 0) {
@@ -260,12 +295,11 @@ export const StaffEditModalDialog = (props: {
               onChange={onChangeItem}
               componentClass="select"
             >
-              <option value={-1}> </option>
-              {/* <option value={0}>システム管理者</option> */}
-              <option value={1}>システムオペレーター</option>
-              <option value={100}>上級ユーザー</option>
-              <option value={101}>一般ユーザー</option>
-              <option value={1000}>退職者</option>
+              {rollMaster &&
+                rollMaster.length > 0 &&
+                rollMaster.map((item) => (
+                  <option value={item.roll_id}>{item.title}</option>
+                ))}
             </FormControl>
           </FormGroup>
           <FormGroup controlId="password">

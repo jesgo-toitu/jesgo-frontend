@@ -30,22 +30,21 @@ const OutputView = () => {
   };
   const [codeType, setCodeType] = useState<string>(CODE_TYPES.NONE);
 
-  // メッセージ受信準備が完了したら呼び元に通知する
-  useEffect(() => {
-    window.addEventListener(
-      'DOMContentLoaded',
-      (e) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        (e.currentTarget as Window).opener.postMessage(
-          'output_ready',
-          window.origin
-        );
-      },
-      false
+  const readyNotificate = (e: Event) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    (e.currentTarget as Window).opener.postMessage(
+      'output_ready',
+      window.origin
     );
 
-    // データ受信時の処理
-    window.addEventListener('message', (e) => {
+    window.removeEventListener('DOMContentLoaded', readyNotificate);
+  };
+
+  // メッセージ受信準備が完了したら呼び元に通知する
+  useEffect(() => {
+    window.addEventListener('DOMContentLoaded', readyNotificate, false);
+
+    const receiveMessage = (e: MessageEvent) => {
       setCodeType(CODE_TYPES.NONE);
       if (e.origin === window.location.origin && e.data) {
         // eslint-disable-next-line no-prototype-builtins
@@ -79,7 +78,12 @@ const OutputView = () => {
           }
         }
       }
-    });
+
+      window.removeEventListener('message', receiveMessage);
+    };
+
+    // データ受信時の処理
+    window.addEventListener('message', receiveMessage);
   }, []);
 
   useEffect(() => {

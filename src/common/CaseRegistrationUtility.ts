@@ -1160,17 +1160,16 @@ export const OpenOutputView = (
 };
 
 export const OpenOutputViewScript = (win: typeof window, srcData: string) => {
-  win.addEventListener(
-    'message',
-    (e) => {
-      // 画面の準備ができたらデータをポストする
-      if (e.origin === win.location.origin && e.data === 'output_ready') {
-        // ★TODO: 仮実装
-        e.source?.postMessage(srcData);
-      }
-    },
-    false
-  );
+  const postFunc = (e: MessageEvent) => {
+    // 画面の準備ができたらデータをポストする
+    if (e.origin === win.location.origin && e.data === 'output_ready') {
+      e.source?.postMessage(srcData);
+    }
+
+    win.removeEventListener('message', postFunc);
+  };
+
+  win.addEventListener('message', postFunc, false);
 
   win.open('/OutputView', 'outputview');
 };

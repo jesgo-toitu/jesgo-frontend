@@ -127,10 +127,11 @@ const makeTable = (props: {
               <td>
                 <ButtonToolbar>
                   <ButtonGroup>
-                    <Button onClick={() => editStaff(staff)}>
+                    <Button title="編集" onClick={() => editStaff(staff)}>
                       <Glyphicon glyph="edit" />
                     </Button>
                     <Button
+                      title="削除"
                       onClick={() =>
                         deleteStaff(
                           staff.user_id,

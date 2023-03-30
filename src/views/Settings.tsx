@@ -299,7 +299,6 @@ const Settings = () => {
             </Button>
           </div>
         </div>
-
         <div className="setting-list">
           <Table striped className="setting-table">
             <thead>

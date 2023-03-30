@@ -25,6 +25,7 @@ export enum VALIDATE_TYPE {
   Number, // 非数値エラー
   Integer, // 非整数エラー
   Other, // その他エラー
+  JesgoError, // jesgo:error
 }
 
 export type ValidationItem = {

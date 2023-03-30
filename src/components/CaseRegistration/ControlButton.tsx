@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dispatch } from 'redux';
 import { Dropdown, Glyphicon, MenuItem, SelectCallback } from 'react-bootstrap';
 import {
@@ -15,8 +15,10 @@ import store from '../../store/index';
 import { ChildTabSelectedFuncObj } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
-import { GetPackagedDocument } from '../../common/DBUtility';
-import { setTimeoutPromise } from '../../common/CommonUtility';
+import { fTimeout } from '../../common/CommonUtility';
+import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
+import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { LoadPluginList } from '../../common/DBUtility';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -90,6 +92,32 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     disabled,
     setIsLoading,
   } = props;
+
+  const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
+    []
+  );
+
+  useEffect(() => {
+    const f = async () => {
+      // プラグイン全ロード処理
+      const pluginListReturn = await LoadPluginList();
+      if (
+        pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION ||
+        pluginListReturn.statusNum === RESULT.PLUGIN_CACHE
+      ) {
+        const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+
+        if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+          dispatch({ type: 'PLUGIN_LIST', pluginList });
+        }
+
+        setJesgoPluginList(pluginList);
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
+  }, []);
 
   // 追加可能判定
   const canAddSchema = (
@@ -196,6 +224,11 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
 
       const index = copyIds.findIndex((p) => p.documentId === documentId);
       const findItem = copyIds.find((p) => p.documentId === documentId);
+      let plugin: jesgoPluginColumns | undefined;
+      if (eventKey.startsWith('plugin_')) {
+        const pluginId = eventKey.replace('plugin_', '');
+        plugin = jesgoPluginList.find((p) => p.plugin_id === Number(pluginId));
+      }
 
       switch (eventKey) {
         case 'up':
@@ -287,31 +320,64 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
             });
           }
           break;
-        // TODO: ★仮実装
-        case 'output': {
-          const wrapperFunc = () =>
-            GetPackagedDocument(
-              [store.getState().formDataReducer.saveData.jesgo_case],
-              undefined,
-              Number(documentId),
-              true
-            );
-
-          setIsLoading(true);
-
-          setTimeoutPromise(wrapperFunc)
-            .then((res) => {
-              OpenOutputView(window, (res as any).anyValue);
-            })
-            .catch((err) => {
-              if (err === 'timeout') {
-                alert('操作がタイムアウトしました');
-              }
-            })
-            .finally(() => {
-              setIsLoading(false);
+        case 'copy': {
+          // アラート表示用のタイトル
+          let title = '';
+          if (findItem) {
+            title = findItem.title;
+          }
+          if (confirm(`[${title}]を複製します。よろしいですか？`)) {
+            dispatch({
+              type: 'COPY',
+              documentId,
+              parentSubSchemaIds: copyIds,
+              setParentSubSchemaIds: setDispSchemaIds,
+              SchemaInfoMap: store.getState().schemaDataReducer.schemaDatas,
             });
 
+            if (tabSelectEvents && tabSelectEvents.fnSchemaChange) {
+              tabSelectEvents.fnSchemaChange(
+                isTab,
+                store.getState().formDataReducer.selectedTabKeyName
+              );
+            }
+          }
+          break;
+        }
+
+        case eventKey.startsWith('plugin_') && eventKey: {
+          setIsLoading(true);
+          const f = async () => {
+            if (plugin) {
+              await Promise.race([
+                fTimeout(Const.PLUGIN_TIMEOUT_SEC),
+                executePlugin(
+                  plugin,
+                  [store.getState().formDataReducer.saveData.jesgo_case],
+                  Number(documentId)
+                ),
+              ])
+                .then((res) => {
+                  // eslint-disable-next-line
+                  OpenOutputView(window, res);
+                })
+                .catch((err) => {
+                  if (err === 'timeout') {
+                    // eslint-disable-next-line no-alert
+                    alert('操作がタイムアウトしました');
+                  }
+                })
+                .finally(() => {
+                  setIsLoading(false);
+                });
+            } else {
+              // eslint-disable-next-line no-alert
+              alert('不正な入力です。');
+            }
+          };
+
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          f();
           break;
         }
         default:
@@ -571,6 +637,12 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
   const canClear = !canDelete && Type !== COMP_TYPE.ROOT;
   const horizontalMoveType: CompType[] = [COMP_TYPE.TAB, COMP_TYPE.ROOT_TAB];
 
+  // 複製可否
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const canCopy =
+    (schemaDocument?.['jesgo:copy'] ?? false) &&
+    (schemaDocument?.[Const.EX_VOCABULARY.UNIQUE] ?? false) === false;
+
   return (
     <div className="control-button-area">
       <Dropdown
@@ -585,9 +657,18 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           <Glyphicon glyph="th-list" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          {process.env.DEV_MODE === '1' && (
-            <MenuItem eventKey="output">ドキュメントの出力</MenuItem>
+          {jesgoPluginList.map(
+            (plugin: jesgoPluginColumns) =>
+              !plugin.all_patient &&
+              !plugin.update_db &&
+              plugin.target_schema_id &&
+              plugin.target_schema_id.includes(schemaId) && (
+                <MenuItem eventKey={`plugin_${plugin.plugin_id}`}>
+                  プラグイン:{plugin.plugin_name}
+                </MenuItem>
+              )
           )}
+
           {/* 自身の移動 */}
           {canMove && (
             <MenuItem eventKey="up">
@@ -597,6 +678,11 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           {canMove && (
             <MenuItem eventKey="down">
               {horizontalMoveType.includes(Type) ? '右' : '下'}に移動
+            </MenuItem>
+          )}
+          {canCopy && (
+            <MenuItem key="menu-copy" eventKey="copy">
+              ドキュメントの複製
             </MenuItem>
           )}
           {/* 自身の削除 */}

@@ -54,7 +54,10 @@ module.exports = {
           }
         ]
       }
-    ]
+    ],
+    parser: {
+      javascript: { commonjsMagicComments: true },
+    },
   },
   plugins: [
     new Dotenv({

@@ -9,43 +9,54 @@ export const SystemMenu = (props: {
   title: string;
   i: number;
   isConfirm: (() => boolean) | null;
+  isTransitionOk?: () => boolean; // eslint-disable-line react/require-default-props
 }) => {
-  const { title, i, isConfirm = null } = props;
+  const { title, i, isConfirm = null, isTransitionOk } = props;
   const navigate = useNavigate();
+
+  const checkAuth = (authName: string, navigateURL: string) => {
+    const auth = localStorage.getItem(authName);
+    if (auth !== 'true') {
+      // eslint-disable-next-line no-alert
+      alert('権限がありません');
+      return;
+    }
+
+    // 権限管理から他の画面に遷移する場合は権限管理の変更チェックをする
+    // 権限管理→利用者管理の場合は画面遷移がないので、スキップする
+    if (
+      isTransitionOk &&
+      !navigateURL.includes('Stafflist') &&
+      !isTransitionOk()
+    ) {
+      return;
+    }
+
+    RemoveBeforeUnloadEvent();
+    navigate(navigateURL);
+  };
 
   const handlUserMaintenance = () => {
     if (isConfirm === null || isConfirm()) {
-      const auth = localStorage.getItem('is_system_manage_roll');
-      if (auth === 'true') {
-        RemoveBeforeUnloadEvent();
-        navigate('/Stafflist');
-      }
-      // eslint-disable-next-line no-alert
-      else alert('権限がありません');
+      checkAuth('is_system_manage_roll', '/Stafflist');
     }
   };
 
   const handlSystemSettings = () => {
     if (isConfirm === null || isConfirm()) {
-      const auth = localStorage.getItem('is_system_manage_roll');
-      if (auth === 'true') {
-        RemoveBeforeUnloadEvent();
-        navigate('/Settings');
-      }
-      // eslint-disable-next-line no-alert
-      else alert('権限がありません');
+      checkAuth('is_system_manage_roll', '/Settings');
     }
   };
 
   const handlSchemaManager = useCallback(() => {
     if (isConfirm === null || isConfirm()) {
-      const auth = localStorage.getItem('is_system_manage_roll');
-      if (auth === 'true') {
-        RemoveBeforeUnloadEvent();
-        navigate('/SchemaManager');
-      }
-      // eslint-disable-next-line no-alert
-      else alert('権限がありません');
+      checkAuth('is_system_manage_roll', '/SchemaManager');
+    }
+  }, []);
+
+  const handlPluginManager = useCallback(() => {
+    if (isConfirm === null || isConfirm()) {
+      checkAuth('is_plugin_registerable', '/PluginManager');
     }
   }, []);
 
@@ -60,6 +71,7 @@ export const SystemMenu = (props: {
       >
         <MenuItem onSelect={handlUserMaintenance}>利用者管理</MenuItem>
         <MenuItem onSelect={handlSchemaManager}>スキーマ管理</MenuItem>
+        <MenuItem onSelect={handlPluginManager}>プラグイン管理</MenuItem>
         <MenuItem onSelect={handlSystemSettings}>システム設定</MenuItem>
       </DropdownButton>
     </ButtonToolbar>

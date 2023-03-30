@@ -15,7 +15,7 @@ import {
   SaveDataObjDefine,
 } from '../store/formDataReducer';
 import { JesgoDocumentSchema } from '../store/schemaDataReducer';
-import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
+import apiAccess, { ApiReturnObject, METHOD_TYPE, RESULT } from './ApiAccess';
 import { validateJesgoDocument } from './CaseRegistrationUtility';
 import {
   RegistrationErrors,
@@ -25,6 +25,8 @@ import { Const } from './Const';
 import { formatDate, formatDateStr } from './CommonUtility';
 import store from '../store';
 import { JSONSchema7 } from 'json-schema';
+import { jesgoPluginColumns } from './Plugin';
+import staffData from '../components/Staff/StaffData';
 
 export interface responseResult {
   resCode?: number;
@@ -557,6 +559,7 @@ export const hasJesgoCaseError = (
       schemaError.validationResult.messages.filter(
         (p) =>
           p.validateType !== VALIDATE_TYPE.Message &&
+          p.validateType !== VALIDATE_TYPE.JesgoError &&
           p.validateType !== VALIDATE_TYPE.Required
       ).length > 0
     ) {
@@ -645,14 +648,16 @@ export const UploadSchemaFile = async (
  */
 export const GetPackagedDocument = async (
   jesgoCaseList: jesgoCaseDefine[],
-  schema_id?: number,
+  schema_ids?: number[],
   document_id?: number,
+  filter_query?: string,
   attachPatientInfoDetail?: boolean
 ) => {
   const apiResult = await apiAccess(METHOD_TYPE.POST, `packaged-document/`, {
     jesgoCaseList,
-    schema_id,
+    schema_ids,
     document_id,
+    filter_query,
     attachPatientInfoDetail,
   });
 
@@ -665,6 +670,90 @@ export const GetPackagedDocument = async (
   res.anyValue = apiResult.body;
 
   return res;
+};
+
+/**
+ * プラグインファイル(zip)のアップロード処理
+ * @param zipFile
+ * @param
+ */
+export const UploadPluginFile = async (
+  zipFile: File,
+  setPluginUploadResponse: React.Dispatch<React.SetStateAction<responseResult>>,
+  setErrorMessages: React.Dispatch<React.SetStateAction<string[]>>
+) => {
+  type uploadApiBody = {
+    number: number;
+    message: string[];
+  };
+  const res: responseResult = { message: '' };
+  const apiResult = await apiAccess(
+    METHOD_TYPE.POST_ZIP,
+    `upload-plugin`,
+    zipFile
+  );
+  const apiBody = apiResult.body as uploadApiBody;
+  res.resCode = apiResult.statusNum;
+  if (apiBody && apiBody.number > 0) {
+    res.message = `${apiBody.number}件のプラグインを更新しました`;
+    if (apiBody.message.length > 0) {
+      res.message += `\n${apiBody.message.join('\n')}`;
+    }
+  } else {
+    res.message = '【エラー】\nプラグインの更新に失敗しました';
+    if (apiBody.message.length > 0) {
+      res.message += `\n${apiBody.message.join('\n')}`;
+    }
+  }
+
+  if (apiBody && apiBody.message && apiBody.message.length > 0) {
+    setErrorMessages(apiBody.message);
+  }
+
+  // 呼び元に返す
+  setPluginUploadResponse(res);
+};
+
+/**
+ * 利用者一覧取得
+ * @param setIsLoading
+ * @returns
+ */
+export const ReadStaffList = async (
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
+) => {
+  setIsLoading(true);
+  // jesgo_user list
+  const returnApiObject = await apiAccess(METHOD_TYPE.GET, `userlist`);
+  setIsLoading(false);
+  return {
+    statusNum: returnApiObject.statusNum,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    data: (returnApiObject.body as any)?.data as staffData[],
+  };
+};
+
+/**
+ * プラグイン一覧取得
+ * @param forceLoad 強制ロードフラグ
+ * @returns
+ */
+export const LoadPluginList = async (
+  forceLoad = false
+): Promise<ApiReturnObject> => {
+  // すでに読み込み済みの場合はstoreから取得する
+  const pluginList = store.getState().commonReducer.pluginList;
+  if (pluginList && !forceLoad) {
+    return { statusNum: RESULT.PLUGIN_CACHE, body: pluginList };
+  }
+
+  // 未読み込みの場合はAPIから取得
+  const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
+  if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+    return pluginListReturn;
+  }
+  const newPlugins: jesgoPluginColumns[] = [];
+  return { statusNum: pluginListReturn.statusNum, body: newPlugins };
 };
 
 export default SaveCommand;

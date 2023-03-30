@@ -7,43 +7,61 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import store from '../../store/index';
 import SaveCommand, {
-  GetPackagedDocument,
+  LoadPluginList,
   responseResult,
 } from '../../common/DBUtility';
-import { RESULT } from '../../common/ApiAccess';
-import {
-  RemoveBeforeUnloadEvent,
-  setTimeoutPromise,
-} from '../../common/CommonUtility';
-import {
-  IsNotUpdate,
-  OpenOutputView,
-} from '../../common/CaseRegistrationUtility';
+import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
+import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
+import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
+import { jesgoPluginColumns } from '../../common/Plugin';
+import { TargetPatientPluginButton } from '../common/PluginButton';
+import { reloadState } from '../../views/Registration';
 
 interface ButtonProps {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setLoadedJesgoCase: React.Dispatch<React.SetStateAction<responseResult>>;
   setCaseId: React.Dispatch<React.SetStateAction<number | undefined>>;
-  setIsReload: React.Dispatch<React.SetStateAction<boolean>>;
+  setReload: React.Dispatch<React.SetStateAction<reloadState>>;
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
 }
 
 const SubmitButton = (props: ButtonProps) => {
-  const {
-    setIsLoading,
-    setLoadedJesgoCase,
-    setCaseId,
-    setIsReload,
-    setErrors,
-  } = props;
+  const { setIsLoading, setLoadedJesgoCase, setCaseId, setReload, setErrors } =
+    props;
+
+  const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
+    []
+  );
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const f = async () => {
+      // プラグイン全ロード処理
+      const pluginListReturn = await LoadPluginList();
+      if (
+        pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION ||
+        pluginListReturn.statusNum === RESULT.PLUGIN_CACHE
+      ) {
+        const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+
+        if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+          dispatch({ type: 'PLUGIN_LIST', pluginList });
+        }
+
+        setJesgoPluginList(pluginList);
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    f();
+  }, []);
 
   // 保存時の応答
   const [saveResponse, setSaveResponse] = useState<responseResult>({
     message: '',
   });
-
-  const dispatch = useDispatch();
 
   const navigate = useNavigate();
 
@@ -81,7 +99,7 @@ const SubmitButton = (props: ButtonProps) => {
           loadedSaveData: undefined,
         });
         setCaseId(saveResponse.caseId);
-        setIsReload(true);
+        setReload({ isReload: true, caller: '' });
       } else {
         // 読み込み失敗
         setIsLoading(false);
@@ -125,6 +143,7 @@ const SubmitButton = (props: ButtonProps) => {
   // 保存せずリストに戻る
   const clickCancel = () => {
     if (
+      localStorage.getItem('is_edit_roll') !== 'true' ||
       IsNotUpdate() ||
       confirm(
         '画面を閉じて患者リストに戻ります。保存してないデータは失われます。\nよろしいですか？'
@@ -135,61 +154,42 @@ const SubmitButton = (props: ButtonProps) => {
     }
   };
 
+  const getPatient = () => [
+    store.getState().formDataReducer.saveData.jesgo_case,
+  ];
+
   return (
     <Col className="user-info-button-col">
       <div className="user-info-button-div">
-        {process.env.DEV_MODE === '1' && (
-          <Button
-            bsStyle="danger"
-            className="normal-button"
-            onClick={() => {
-              // ★TODO: 仮実装
-              const wrapperFunc = () =>
-                GetPackagedDocument(
-                  [store.getState().formDataReducer.saveData.jesgo_case],
-                  undefined,
-                  undefined,
-                  true
-                );
-
-              setIsLoading(true);
-
-              setTimeoutPromise(wrapperFunc)
-                .then((res) => {
-                  OpenOutputView(window, (res as any).anyValue);
-                })
-                .catch((err) => {
-                  if (err === 'timeout') {
-                    alert('操作がタイムアウトしました');
-                  }
-                })
-                .finally(() => {
-                  setIsLoading(false);
-                });
-            }}
-          >
-            ドキュメント出力
-          </Button>
-        )}
+        <TargetPatientPluginButton
+          pluginList={jesgoPluginList}
+          getTargetFunction={getPatient}
+          setIsLoading={setIsLoading}
+          setReload={setReload}
+        />
         {/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */}
-        <Button
-          bsStyle="success"
-          className="normal-button"
-          onClick={() => {
-            clickSubmit(false);
-          }}
-        >
-          保存
-        </Button>
-        <Button
-          onClick={() => {
-            clickSubmit(true);
-          }}
-          bsStyle="success"
-          className="normal-button"
-        >
-          保存してリストに戻る
-        </Button>
+        {localStorage.getItem('is_edit_roll') === 'true' && (
+          <>
+            <Button
+              bsStyle="success"
+              className="normal-button"
+              onClick={() => {
+                clickSubmit(false);
+              }}
+            >
+              保存
+            </Button>
+            <Button
+              onClick={() => {
+                clickSubmit(true);
+              }}
+              bsStyle="success"
+              className="normal-button"
+            >
+              保存してリストに戻る
+            </Button>
+          </>
+        )}
         <Button
           onClick={clickCancel}
           bsStyle="primary"

@@ -8,6 +8,8 @@ import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { settingsFromApi } from './Settings';
 import Loading from '../components/CaseRegistration/Loading';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
+import { LoadPluginList } from '../common/DBUtility';
+import { jesgoPluginColumns } from '../common/Plugin';
 
 export interface localStorageObject {
   user_id: number;
@@ -19,6 +21,9 @@ export interface localStorageObject {
   is_add_roll: boolean;
   is_edit_roll: boolean;
   is_remove_roll: boolean;
+  is_plugin_registerable: boolean;
+  is_plugin_executable_select: boolean;
+  is_plugin_executable_update: boolean;
   is_data_manage_roll: boolean;
   is_system_manage_roll: boolean;
 }
@@ -84,6 +89,18 @@ export const Login = () => {
         localStorageObj.is_remove_roll.toString()
       );
       localStorage.setItem(
+        'is_plugin_registerable',
+        localStorageObj.is_plugin_registerable.toString()
+      );
+      localStorage.setItem(
+        'is_plugin_executable_select',
+        localStorageObj.is_plugin_executable_select.toString()
+      );
+      localStorage.setItem(
+        'is_plugin_executable_update',
+        localStorageObj.is_plugin_executable_update.toString()
+      );
+      localStorage.setItem(
         'is_data_manage_roll',
         localStorageObj.is_data_manage_roll.toString()
       );
@@ -95,6 +112,19 @@ export const Login = () => {
       // スキーマ取得処理
       await storeSchemaInfo(dispatch);
 
+      // プラグイン全ロード処理
+      const pluginListReturn = await LoadPluginList(true);
+      if (
+        pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION ||
+        pluginListReturn.statusNum === RESULT.PLUGIN_CACHE
+      ) {
+        const pluginList = pluginListReturn.body as jesgoPluginColumns[];
+
+        if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+          dispatch({ type: 'PLUGIN_LIST', pluginList });
+        }
+      }
+
       navigate('/Patients');
     } else if (returnApiObject.statusNum === RESULT.NETWORK_ERROR) {
       // eslint-disable-next-line no-alert
@@ -103,7 +133,7 @@ export const Login = () => {
     } else {
       // eslint-disable-next-line no-alert
       alert(
-        `【エラー】\nログインに失敗しました。ユーザ名かパスワードが間違っています。`
+        `【エラー】\nログインに失敗しました。ユーザ名かパスワードが間違っています。\nまたはログイン権限がありません。`
       );
       setIsLoading(false);
     }

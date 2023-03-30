@@ -1,5 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 
+import Encoding from 'encoding-japanese';
+
 /* ここには画面機能に依存しない共通関数などを記述する */
 
 /**
@@ -90,7 +92,7 @@ export const formatDateStr = (dtStr: string, separator: string): string => {
   }
 };
 
-const fTimeout = (timeoutSec: number) =>
+export const fTimeout = (timeoutSec: number) =>
   new Promise((resolve, reject) => {
     setTimeout(() => {
       // eslint-disable-next-line prefer-promise-reject-errors
@@ -108,3 +110,103 @@ export const setTimeoutPromise = async (
   promiseFunc: () => Promise<unknown>,
   timeoutSec = 15 * 60 // デフォルト15分
 ) => Promise.race([fTimeout(timeoutSec), promiseFunc()]);
+
+/**
+ * Sjis変換処理
+ * @param utf8String UTF8(標準)形式のString
+ * @returns SJIS形式のString
+ */
+export const toShiftJIS = (utf8String: string) => {
+  const unicodeList = [];
+
+  for (let i = 0; i < utf8String.length; i += 1) {
+    unicodeList.push(utf8String.charCodeAt(i));
+  }
+
+  const sjisArray = Encoding.convert(unicodeList, {
+    to: 'SJIS',
+    from: 'AUTO',
+  });
+  return new Uint8Array(sjisArray);
+};
+
+export const toUTF8 = (sjisString: string) => {
+  const unicodeList = [];
+
+  for (let i = 0; i < sjisString.length; i += 1) {
+    unicodeList.push(sjisString.charCodeAt(i));
+  }
+  const sjisArray = Encoding.convert(unicodeList, {
+    to: 'UTF8',
+    from: 'AUTO',
+  });
+  return new Uint8Array(sjisArray);
+};
+
+// UUID作成
+export const generateUuid = () => {
+  // https://github.com/GoogleChrome/chrome-platform-analytics/blob/master/src/internal/identifier.js
+  // const FORMAT: string = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+  const chars = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.split('');
+  // eslint-disable-next-line no-plusplus
+  for (let i = 0, len = chars.length; i < len; i++) {
+    switch (chars[i]) {
+      case 'x':
+        chars[i] = Math.floor(Math.random() * 16).toString(16);
+        break;
+      case 'y':
+        chars[i] = (Math.floor(Math.random() * 4) + 8).toString(16);
+        break;
+      default:
+    }
+  }
+  return chars.join('');
+};
+
+// Jsonpointerの末尾に配列指定系の文字列が含まれているかを返す
+export const isPointerWithArray = (pointer: string) => {
+  if (pointer.endsWith('/-')) {
+    return true;
+  }
+  const match = pointer.match(/\/(\d+)$/);
+  if (match) {
+    return true;
+  }
+  return false;
+};
+
+// Jsonpointerの末尾から配列位置指定を取得する
+export const getPointerArrayNum = (pointer: string) => {
+  const match = pointer.match(/\/(\d+)$/);
+  if (match) {
+    return Number(match.slice(1));
+  }
+  return -1;
+};
+
+// Jsonpointerの末尾から配列位置指定を削除する
+export const getPointerTrimmed = (pointer: string) => {
+  if (pointer.endsWith('/-')) {
+    return pointer.slice(0, -2);
+  }
+  const match = pointer.match(/\/(\d+)$/);
+  if (match) {
+    return pointer.slice(0, -match.length);
+  }
+  return pointer;
+};
+
+export const getArrayWithSafe = (
+  array: any | undefined,
+  index: number
+): any | undefined => {
+  // 値が空、配列じゃない場合は無条件でundefined
+  if (array === null || array === undefined || !Array.isArray(array)) {
+    return undefined;
+  }
+  // 値が配列の場合、添え字の数が配列の長さを超えてないかを見る
+  if (array.length <= index) {
+    return undefined;
+  }
+  return array[index];
+};

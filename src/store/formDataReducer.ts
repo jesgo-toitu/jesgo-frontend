@@ -4,6 +4,11 @@ import { Reducer } from 'redux';
 import React from 'react';
 import { JesgoDocumentSchema } from './schemaDataReducer';
 import { RegistrationErrors } from '../components/CaseRegistration/Definition';
+import {
+  CustomSchema,
+  getJesgoSchemaPropValue,
+  GetSchemaInfo,
+} from '../components/CaseRegistration/SchemaUtility';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -124,6 +129,8 @@ export interface formDataAction {
 
   hasFormDataInput: boolean;
   eventDate: string;
+
+  SchemaInfoMap: Map<number, JesgoDocumentSchema[]>;
 }
 
 // ユーザID取得
@@ -144,7 +151,7 @@ export interface headerInfoAction {
   value: string | boolean;
 }
 
-const initialState: formDataState = {
+const createInitialState = (): formDataState => ({
   formDatas: new Map(),
   saveData: {
     jesgo_case: {
@@ -188,7 +195,9 @@ const initialState: formDataState = {
   deletedDocuments: [],
   processedDocumentIds: [],
   formDataInputStates: new Map(),
-};
+});
+
+const initialState: formDataState = createInitialState();
 
 // 保存用オブジェクト作成(1スキーマ1オブジェクト)
 const createJesgoDocumentValueItem = (
@@ -295,10 +304,10 @@ const formDataReducer: Reducer<
 ) => {
   // 初期化の場合は常に初期値返す
   if (action.type === 'INIT_STORE') {
-    return initialState;
+    return createInitialState();
   }
 
-  const copyState = lodash.cloneDeep(state); // 現在の状態をコピー
+  const copyState = state;
 
   const { formDatas, saveData } = copyState;
 
@@ -751,6 +760,160 @@ const formDataReducer: Reducer<
           doc.value.schema_major_version = version_major;
           doc.value.last_updated = new Date().toLocaleString();
           doc.value.registrant = getLoginUserId();
+        }
+        break;
+      }
+
+      case 'COPY': {
+        const { documentId, parentSubSchemaIds, setParentSubSchemaIds } =
+          action;
+        // 元のドキュメントをコピーする
+        const baseDocument = saveData.jesgo_document.find(
+          (p) => p.key === documentId
+        );
+        if (baseDocument) {
+          // 再帰用コピーFunction
+          const copyFunc = (
+            baseDoc: jesgoDocumentObjDefine,
+            parentDocId: string
+          ) => {
+            const copyDoc = lodash.cloneDeep(baseDoc);
+
+            // ドキュメントIDの発行
+            const newDocId = getTmpSeq(copyState.nextSeqNo);
+            copyState.nextSeqNo += 1;
+
+            // コンポーネントIDの発行
+            const compId = getCompId(copyState);
+
+            // キー情報振り直し
+            copyDoc.key = newDocId;
+            copyDoc.compId = compId;
+            if (copyDoc.root_order > -1) {
+              copyDoc.root_order =
+                (saveData.jesgo_document
+                  .filter((p) => p.root_order > -1 && !p.value.deleted)
+                  .sort((f, s) => f.root_order - s.root_order)
+                  .at(-1)?.root_order ?? 0) + 1;
+            }
+
+            // eventdateに該当する項目はコピー対象外のためクリアする
+            const scInfo = GetSchemaInfo(
+              copyDoc.value.schema_id,
+              copyDoc.value.event_date,
+              true,
+              false,
+              action.SchemaInfoMap
+            );
+            if (
+              scInfo &&
+              copyDoc.value.document &&
+              !Array.isArray(copyDoc.value.document) &&
+              typeof copyDoc.value.document === 'object' &&
+              Object.entries(copyDoc.value.document).length > 0
+            ) {
+              const customSchema = CustomSchema({
+                orgSchema: scInfo.document_schema,
+                formData: copyDoc.value.document,
+              });
+
+              const eventDatePropName = getJesgoSchemaPropValue(
+                customSchema,
+                'jesgo:set',
+                'eventdate'
+              );
+
+              if (eventDatePropName) {
+                // formDataからeventdateに指定されているプロパティを削除する
+                const func = (targetObj: any) => {
+                  delete targetObj[eventDatePropName];
+                  Object.entries(targetObj)
+                    .filter(
+                      (p) => !Array.isArray(p[1]) && typeof p[1] === 'object'
+                    )
+                    .forEach((item) => {
+                      func(item[1]);
+                    });
+                };
+                func(copyDoc.value.document);
+              }
+            }
+
+            const newChildDocIds: string[] = [];
+
+            // 子ドキュメントのコピー
+            copyDoc.value.child_documents.forEach((id) => {
+              const childDoc = saveData.jesgo_document.find(
+                (p) => p.key === id
+              );
+              if (childDoc) {
+                const newChildDocId = copyFunc(childDoc, newDocId);
+                newChildDocIds.push(newChildDocId);
+              }
+            });
+            copyDoc.value.child_documents = newChildDocIds;
+            saveData.jesgo_document.push(copyDoc);
+            copyState.formDatas.set(newDocId, copyDoc.value.document);
+
+            // 親ドキュメントのchild_documentsを更新
+            const parentDoc = saveData.jesgo_document.find((p) =>
+              p.value.child_documents.includes(parentDocId)
+            );
+
+            if (parentDoc) {
+              // 同じスキーマIDのドキュメントが既にあればその後ろに追加する
+              const sameSchemaIdx = lodash.findLastIndex(
+                parentDoc.value.child_documents,
+                (id) =>
+                  saveData.jesgo_document.find(
+                    (p) =>
+                      p.key === id &&
+                      p.value.schema_id === copyDoc.value.schema_id &&
+                      !p.value.deleted
+                  ) != null
+              );
+              if (sameSchemaIdx > -1) {
+                parentDoc.value.child_documents.splice(
+                  sameSchemaIdx + 1,
+                  0,
+                  newDocId
+                );
+              } else {
+                parentDoc.value.child_documents.push(newDocId);
+              }
+            }
+
+            return newDocId;
+          };
+
+          const newDocId = copyFunc(baseDocument, baseDocument.key);
+
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const newCopiedDoc = saveData.jesgo_document.find(
+            (p) => p.key === newDocId
+          )!;
+
+          const newDoc: dispSchemaIdAndDocumentIdDefine = {
+            documentId: newDocId,
+            schemaId: newCopiedDoc.value.schema_id,
+            deleted: false,
+            compId: newCopiedDoc.compId,
+            title: '', // タイトルは描画後に振りなおされるので空でOK
+          };
+
+          let insertIdx = lodash.findLastIndex(
+            parentSubSchemaIds,
+            (p) => p.schemaId === newCopiedDoc.value.schema_id && !p.deleted
+          );
+          if (insertIdx > -1) {
+            insertIdx += 1; // 同スキーマの隣に配置するため+1
+            parentSubSchemaIds.splice(insertIdx, 0, newDoc);
+          } else {
+            parentSubSchemaIds.push(newDoc);
+          }
+          setParentSubSchemaIds([...parentSubSchemaIds]);
+
+          copyState.selectedTabKeyName = insertIdx.toString();
         }
         break;
       }

@@ -23,6 +23,23 @@ import {
   validationResult,
 } from '../components/CaseRegistration/Definition';
 
+// formDataからjesgo:errorを取り出して削除
+export const popJesgoError = (formData: any) => {
+  let popValue: any[] = [];
+  if (formData && !Array.isArray(formData) && typeof formData === 'object') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (formData['jesgo:error']) {
+      // 取り出して元のformDataからは削除
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      popValue = formData['jesgo:error'];
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, no-param-reassign
+      delete formData['jesgo:error'];
+    }
+  }
+
+  return popValue;
+};
+
 /**
  * 入力値のvalidation
  * @param resultSchema
@@ -1114,18 +1131,45 @@ export const GetBeforeInheritDocumentData = (
  * @param win window
  * @param srcData 出力するデータ
  */
-export const OpenOutputView = (win: typeof window, srcData: any) => {
-  win.addEventListener(
-    'message',
-    (e) => {
-      // 画面の準備ができたらデータをポストする
-      if (e.origin === win.location.origin && e.data === 'output_ready') {
-        // ★TODO: 仮実装
-        e.source?.postMessage({ jsonData: srcData });
+export const OpenOutputView = (
+  win: typeof window,
+  srcData: any,
+  type: string | undefined = undefined
+) => {
+  const postData = (e: MessageEvent<any>) => {
+    // 画面の準備ができたらデータをポストする
+    if (e.origin === win.location.origin && e.data === 'output_ready') {
+      if (type && type === 'overwritelog') {
+        e.source?.postMessage({ viewerType: 'log', csvData: srcData });
+      } else if (Array.isArray(srcData) && srcData.length > 0) {
+        if (Array.isArray(srcData[0])) {
+          e.source?.postMessage(srcData);
+        } else {
+          e.source?.postMessage({ jsonData: srcData });
+        }
+      } else if (srcData) {
+        e.source?.postMessage(srcData);
       }
-    },
-    false
-  );
+      win.removeEventListener('message', postData, false);
+    }
+  };
+
+  win.addEventListener('message', postData, false);
+
+  win.open('/OutputView', 'outputview');
+};
+
+export const OpenOutputViewScript = (win: typeof window, srcData: string) => {
+  const postFunc = (e: MessageEvent) => {
+    // 画面の準備ができたらデータをポストする
+    if (e.origin === win.location.origin && e.data === 'output_ready') {
+      e.source?.postMessage(srcData);
+    }
+
+    win.removeEventListener('message', postFunc);
+  };
+
+  win.addEventListener('message', postFunc, false);
 
   win.open('/OutputView', 'outputview');
 };

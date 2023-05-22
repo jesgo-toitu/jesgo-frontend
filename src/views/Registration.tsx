@@ -62,6 +62,10 @@ import {
   ShowSaveDialogState,
   RegistrationErrors,
 } from '../components/CaseRegistration/Definition';
+import {
+  PluginOverwriteConfirm,
+  OverwriteDialogPlop,
+} from '../components/common/PluginOverwriteConfirm';
 
 export type reloadState = {
   isReload: boolean;
@@ -115,6 +119,11 @@ const Registration = () => {
   const [decline, setDecline] = useState<boolean>(false);
 
   const [isSaved, setIsSaved] = useState(false); // 保存済みフラグ
+
+  // プラグイン用上書き確認ダイアログ
+  const [overwriteDialogPlop, setOverwriteDialogPlop] = useState<
+    OverwriteDialogPlop | undefined
+  >();
 
   let age = ''; // 年齢
 
@@ -624,175 +633,187 @@ const Registration = () => {
   }, [hasSchema]);
 
   return (
-    <div className="page-area">
-      {/* 患者情報入力 */}
-      <div className="patient-area">
-        <Panel className="panel-style patient-area-panel">
-          <Row className="patientInfo user-info-row">
-            <Col className="user-info-col">
-              <FormGroup controlId="patientId">
-                <ControlLabel>患者ID：</ControlLabel>
-                <FormControl
-                  type="text"
-                  onChange={onChangeItem}
-                  value={patientId}
-                  readOnly={isSaved}
-                  autoComplete="off"
-                />
-              </FormGroup>
-            </Col>
-            <Col className="user-info-col">
-              <FormGroup controlId="patientName">
-                <ControlLabel>患者氏名：</ControlLabel>
-                <FormControl
-                  type="text"
-                  onChange={onChangeItem}
-                  value={patientName}
-                  autoComplete="off"
-                />
-              </FormGroup>
-            </Col>
-            <Col className="user-info-col">
-              <FormGroup controlId="birthday">
-                <ControlLabel>生年月日</ControlLabel>
-                <FormControl
-                  type="date"
-                  min={Const.INPUT_DATE_MIN}
-                  max={Const.INPUT_DATE_MAX()}
-                  onChange={onChangeItem}
-                  value={birthday}
-                />
-              </FormGroup>
-            </Col>
-            <Col className="user-info-age">
-              <FormGroup>
-                <ControlLabel>年齢</ControlLabel>
-                <div>
-                  <FormControl.Static className="user-info-age">
-                    {age}歳
-                  </FormControl.Static>
-                </div>
-              </FormGroup>
-            </Col>
-            <Col>
-              <FormGroup>
-                <ControlLabel />
-                <div>
-                  <Checkbox
-                    className="user-info-checkbox"
-                    id="decline"
-                    onChange={onChangeItem}
-                    checked={decline}
-                  >
-                    登録拒否
-                  </Checkbox>
-                </div>
-              </FormGroup>
-            </Col>
-          </Row>
-          <SubmitButton
-            setIsLoading={setIsLoading}
-            setLoadedJesgoCase={setLoadedJesgoCase}
-            setCaseId={setCaseId}
-            setReload={setReload}
-            setErrors={setErrors}
-          />
-        </Panel>
-      </div>
-      {!isLoading && hasSchema && (
-        <>
-          {message.length > 0 && (
-            <Panel className="error-msg-panel">
-              {message.map((error: string) => (
-                <p key={error}>
-                  {error.split('\n').map((item, index) => (
-                    <>
-                      {index > 0 && <br />}
-                      {item}
-                    </>
-                  ))}
-                </p>
-              ))}
-            </Panel>
-          )}
-          <div className="content-area">
-            <div className="input-form">
-              {dispRootSchemaIdsNotDeleted.length > 0 && (
-                <Tabs
-                  id="root-tabs"
-                  activeKey={selectedTabKey} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                  onSelect={(eventKey) => onTabSelectEvent(true, eventKey)}
-                >
-                  {dispRootSchemaIdsNotDeleted.map(
-                    (info: dispSchemaIdAndDocumentIdDefine) => {
-                      const title =
-                        info.title + (info.titleNum?.toString() ?? '');
-
-                      // TODO TabSchemaにTabを置くとうまく動作しなくなる
-                      return (
-                        <Tab
-                          key={`root-tab-${info.compId}`}
-                          className="panel-style"
-                          eventKey={`root-tab-${info.compId}`}
-                          title={<span>{title}</span>}
-                        >
-                          <RootSchema
-                            key={`root-${info.compId}`}
-                            tabId={`root-tab-${info.compId}`}
-                            parentTabsId="root-tab"
-                            schemaId={info.schemaId}
-                            documentId={info.documentId}
-                            dispSchemaIds={[...dispRootSchemaIds]}
-                            setDispSchemaIds={setDispRootSchemaIds}
-                            setSelectedTabKey={setSelectedTabKey}
-                            setIsLoading={setIsLoading}
-                            setSaveResponse={setSaveResponse}
-                            isSchemaChange={info.isSchemaChange}
-                            setErrors={setErrors}
-                            selectedTabKey={selectedTabKey}
-                            schemaAddModFunc={onTabSelectEvent}
-                          />
-                        </Tab>
-                      );
-                    }
-                  )}
-                </Tabs>
-              )}
-            </div>
-            <ControlButton
-              tabId="root-tab"
-              parentTabsId=""
-              Type={COMP_TYPE.ROOT}
-              isChildSchema={false} // eslint-disable-line react/jsx-boolean-value
-              schemaId={0}
-              dispSubSchemaIds={[]}
-              dispChildSchemaIds={[...dispRootSchemaIds]}
-              setDispSubSchemaIds={undefined}
-              setDispChildSchemaIds={setDispRootSchemaIds}
-              dispatch={dispatch}
-              documentId=""
-              subSchemaCount={0}
-              tabSelectEvents={{
-                fnAddDocument: onTabSelectEvent,
-                fnSchemaChange: undefined,
-              }}
-              disabled={!isSaved}
-              setIsLoading={setIsLoading}
-            />
-          </div>
-        </>
+    <>
+      {overwriteDialogPlop && (
+        <PluginOverwriteConfirm
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...overwriteDialogPlop}
+        />
       )}
-      {/* ローディング画面表示 */}
-      {(isLoading || !hasSchema) && <Loading />}
-      {/* 保存確認ダイアログ */}
-      <SaveConfirmDialog
-        show={showSaveDialog}
-        onOk={() => saveDialogOk(showSaveDialog.eventKey)}
-        onCancel={() => saveDialogCancel(showSaveDialog.eventKey)}
-        title="JESGO"
-        message="保存します。よろしいですか？"
-      />
-    </div>
+      <div className="page-area">
+        {/* 患者情報入力 */}
+        <div className="patient-area">
+          <Panel className="panel-style patient-area-panel">
+            <Row className="patientInfo user-info-row">
+              <Col className="user-info-col">
+                <FormGroup controlId="patientId">
+                  <ControlLabel>患者ID：</ControlLabel>
+                  <FormControl
+                    type="text"
+                    onChange={onChangeItem}
+                    value={patientId}
+                    readOnly={isSaved}
+                    autoComplete="off"
+                  />
+                </FormGroup>
+              </Col>
+              <Col className="user-info-col">
+                <FormGroup controlId="patientName">
+                  <ControlLabel>患者氏名：</ControlLabel>
+                  <FormControl
+                    type="text"
+                    onChange={onChangeItem}
+                    value={patientName}
+                    autoComplete="off"
+                  />
+                </FormGroup>
+              </Col>
+              <Col className="user-info-col">
+                <FormGroup controlId="birthday">
+                  <ControlLabel>生年月日</ControlLabel>
+                  <FormControl
+                    type="date"
+                    min={Const.INPUT_DATE_MIN}
+                    max={Const.INPUT_DATE_MAX()}
+                    onChange={onChangeItem}
+                    value={birthday}
+                  />
+                </FormGroup>
+              </Col>
+              <Col className="user-info-age">
+                <FormGroup>
+                  <ControlLabel>年齢</ControlLabel>
+                  <div>
+                    <FormControl.Static className="user-info-age">
+                      {age}歳
+                    </FormControl.Static>
+                  </div>
+                </FormGroup>
+              </Col>
+              <Col>
+                <FormGroup>
+                  <ControlLabel />
+                  <div>
+                    <Checkbox
+                      className="user-info-checkbox"
+                      id="decline"
+                      onChange={onChangeItem}
+                      checked={decline}
+                    >
+                      登録拒否
+                    </Checkbox>
+                  </div>
+                </FormGroup>
+              </Col>
+            </Row>
+            <SubmitButton
+              setIsLoading={setIsLoading}
+              setLoadedJesgoCase={setLoadedJesgoCase}
+              setCaseId={setCaseId}
+              setReload={setReload}
+              setErrors={setErrors}
+            />
+          </Panel>
+        </div>
+        {!isLoading && hasSchema && (
+          <>
+            {message.length > 0 && (
+              <Panel className="error-msg-panel">
+                {message.map((error: string) => (
+                  <p key={error}>
+                    {error.split('\n').map((item, index) => (
+                      <>
+                        {index > 0 && <br />}
+                        {item}
+                      </>
+                    ))}
+                  </p>
+                ))}
+              </Panel>
+            )}
+            <div className="content-area">
+              <div className="input-form">
+                {dispRootSchemaIdsNotDeleted.length > 0 && (
+                  <Tabs
+                    id="root-tabs"
+                    activeKey={selectedTabKey} // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                    onSelect={(eventKey) => onTabSelectEvent(true, eventKey)}
+                  >
+                    {dispRootSchemaIdsNotDeleted.map(
+                      (info: dispSchemaIdAndDocumentIdDefine) => {
+                        const title =
+                          info.title + (info.titleNum?.toString() ?? '');
+
+                        // TODO TabSchemaにTabを置くとうまく動作しなくなる
+                        return (
+                          <Tab
+                            key={`root-tab-${info.compId}`}
+                            className="panel-style"
+                            eventKey={`root-tab-${info.compId}`}
+                            title={<span>{title}</span>}
+                          >
+                            <RootSchema
+                              key={`root-${info.compId}`}
+                              tabId={`root-tab-${info.compId}`}
+                              parentTabsId="root-tab"
+                              schemaId={info.schemaId}
+                              documentId={info.documentId}
+                              dispSchemaIds={[...dispRootSchemaIds]}
+                              setDispSchemaIds={setDispRootSchemaIds}
+                              setSelectedTabKey={setSelectedTabKey}
+                              setIsLoading={setIsLoading}
+                              setSaveResponse={setSaveResponse}
+                              isSchemaChange={info.isSchemaChange}
+                              setErrors={setErrors}
+                              selectedTabKey={selectedTabKey}
+                              schemaAddModFunc={onTabSelectEvent}
+                              setReload={setReload}
+                              setOverwriteDialogPlop={setOverwriteDialogPlop}
+                            />
+                          </Tab>
+                        );
+                      }
+                    )}
+                  </Tabs>
+                )}
+              </div>
+              <ControlButton
+                tabId="root-tab"
+                parentTabsId=""
+                Type={COMP_TYPE.ROOT}
+                isChildSchema={false} // eslint-disable-line react/jsx-boolean-value
+                schemaId={0}
+                dispSubSchemaIds={[]}
+                dispChildSchemaIds={[...dispRootSchemaIds]}
+                setDispSubSchemaIds={undefined}
+                setDispChildSchemaIds={setDispRootSchemaIds}
+                dispatch={dispatch}
+                documentId=""
+                subSchemaCount={0}
+                tabSelectEvents={{
+                  fnAddDocument: onTabSelectEvent,
+                  fnSchemaChange: undefined,
+                }}
+                disabled={!isSaved}
+                setIsLoading={setIsLoading}
+                setReload={setReload}
+                setOverwriteDialogPlop={setOverwriteDialogPlop}
+              />
+            </div>
+          </>
+        )}
+        {/* ローディング画面表示 */}
+        {(isLoading || !hasSchema) && <Loading />}
+        {/* 保存確認ダイアログ */}
+        <SaveConfirmDialog
+          show={showSaveDialog}
+          onOk={() => saveDialogOk(showSaveDialog.eventKey)}
+          onCancel={() => saveDialogCancel(showSaveDialog.eventKey)}
+          title="JESGO"
+          message="保存します。よろしいですか？"
+        />
+      </div>
+    </>
   );
 };
 

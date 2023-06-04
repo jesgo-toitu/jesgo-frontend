@@ -82,11 +82,19 @@ const GetModule: (scriptText: string) => Promise<IPluginModule> = async (
   const readScriptText = Buffer.from(scriptText).toString('base64');
   const script = `data:text/javascript;base64,${readScriptText}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const pluginmodule: Promise<IPluginModule> = await import(
-    /* webpackIgnore: true */ script
-  ); // webpackIgnoreコメント必要
-  return pluginmodule;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const pluginmodule: Promise<IPluginModule> = await import(
+      /* webpackIgnore: true */ script
+    ); // webpackIgnoreコメント必要
+    return pluginmodule;
+
+  } catch (e) {
+    // eslint-disable-next-line no-alert
+    alert(`【pluginの実行処理中にエラーが発生しました】\n${(e as Error).message}`);
+    console.error(e as Error)
+    return undefined as unknown as IPluginModule
+  }
 };
 
 const getPatientsDocument = async (doc: argDoc) => {
@@ -571,7 +579,7 @@ export const moduleMain = async (
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
     console.error(e as Error)
   }finally{
-    if (module.finalize) {
+    if (module?.finalize) {
       await module.finalize();
     }
   }
@@ -600,7 +608,7 @@ export const moduleMainUpdate = async (
     // eslint-disable-next-line no-alert
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
   } finally {
-    if (module.finalize) {
+    if (module?.finalize) {
       await module.finalize();
     }
   }

@@ -735,6 +735,17 @@ export const executePlugin = async (
     ) {
       throw new Error('cancel');
     }
+    // 不要な患者属性をプラグインに渡さないように削除
+    if (patientList && !plugin.attach_patient_info) {
+      for(const argPatient of patientList) {
+        // anyにキャストして無理矢理削除
+        delete((argPatient as any).his_id)
+        delete((argPatient as any).name)
+        delete((argPatient as any).date_of_birth)
+        delete((argPatient as any).date_of_death)
+        delete((argPatient as any).sex)
+      }
+    }
     // データ出力系)
     if (patientList) {
       if (targetDocumentId) {

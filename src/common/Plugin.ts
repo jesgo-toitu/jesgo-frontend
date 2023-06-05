@@ -666,39 +666,47 @@ export const executePlugin = async (
     }
     if (plugin.show_upload_dialog) {
       // ファイルアップロードあり
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.onchange = () => {
-        const files = fileInput.files;
-        const file = files ? files[0] : undefined;
-        let csvText = '';
-        if (file) {
-          if (setIsLoading) {
-            setIsLoading(true);
+      try {
+        const csvText: string = await new Promise((resolve, reject) => {
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.onchange = () => {
+            const files = fileInput.files;
+            const file = files ? files[0] : undefined;
+            if (file) {
+              if (setIsLoading) {
+                setIsLoading(true);
+              }
+              const reader = new FileReader();
+              reader.onload = async () => {
+                if (setIsLoading) {
+                  setIsLoading(false);
+                }
+                const data = reader.result;
+                if (typeof data === 'string') {
+                  resolve(new TextDecoder().decode(toUTF8(data)))
+                }
+              }
+              reader.readAsBinaryString(file);
+            } else {
+              reject()
+            }
           }
-          const reader = new FileReader();
-          reader.onload = async () => {
-            const data = reader.result;
-            if (typeof data === 'string') {
-              csvText = new TextDecoder().decode(toUTF8(data));
-            }
-            const retValue = await moduleMainUpdate(
-              plugin.script_text,
-              updatePatientsDocument,
-              csvText
-            );
-            if (setIsLoading) {
-              setIsLoading(false);
-            }
-            if (setReload) {
-              setReload({ isReload: true, caller: 'update_plugin' });
-            }
-            return retValue;
-          };
-          reader.readAsBinaryString(file);
+          fileInput.click();
+        })      
+        const retValue = await moduleMainUpdate(
+          plugin.script_text,
+          updatePatientsDocument,
+          csvText
+        );
+        if (setReload) {
+          setReload({ isReload: true, caller: 'update_plugin' });
         }
-      };
-      fileInput.click();
+        return retValue
+      } catch {
+        console.error('Rejected')
+        return undefined
+      }
     } else {
       // ファイルアップロードなし
       const documentList: formDocument[] = await getDocuments(

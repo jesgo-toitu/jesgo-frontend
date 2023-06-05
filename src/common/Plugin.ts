@@ -132,7 +132,7 @@ const getTargetDocument = async (doc: argDoc) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updatePatientsDocument = async (
   doc: updateObject | updateObject[] | argDoc | undefined,
-  getPackagedDocumentInsted: boolean = false
+  getPackagedDocumentInsted = false
 ) => {
   type updateCheckObject = {
     uuid?: string;
@@ -194,14 +194,14 @@ const updatePatientsDocument = async (
       alert('更新系プラグインからのpackagedドキュメント取得にはdocument_idの指定が必須です')
       return
     }
-    return getTargetDocument(doc as argDoc)
+    return await getTargetDocument(doc as argDoc)
   }
 
   // スキップフラグ
   let isSkip = false;
 
-  // 引数を配列でなければ配列にする
-  const localUpdateTarget = Array.isArray(doc) ? doc : [doc];
+  // 引数を配列でなければupdateObjectの配列にする(argDocはここで落とす)
+  const localUpdateTarget = Array.isArray(doc) ? doc as updateObject[] : [doc as updateObject];
 
   if (pluginData) {
     // 最初に症例IDとドキュメントIDの組み合わせリストを取得する

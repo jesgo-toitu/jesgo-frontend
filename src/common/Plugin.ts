@@ -131,7 +131,8 @@ const getTargetDocument = async (doc: argDoc) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updatePatientsDocument = async (
-  doc: updateObject | updateObject[] | undefined
+  doc: updateObject | updateObject[] | argDoc | undefined,
+  getPackagedDocumentInsted: boolean = false
 ) => {
   type updateCheckObject = {
     uuid?: string;
@@ -176,6 +177,24 @@ const updatePatientsDocument = async (
     // eslint-disable-next-line no-alert
     alert('更新用オブジェクトが不足しています');
     return;
+  }
+
+  // updateではなくてdocument_idに基づいたひとまとめのドキュメントを取得して返す
+  if (getPackagedDocumentInsted) {
+    // セキュリティとして制約あり
+    if ((doc as argDoc).caseList.length === 0) {
+      alert('更新系プラグインからのpackagedドキュメントの取得にはcase_idの指定が必須です')
+      return
+    }
+    if ((doc as argDoc).caseList.length > 1) {
+      alert('更新系プラグインから複数の症例のデータを一度に取得することはできません')
+      return
+    }
+    if (!(doc as argDoc).targetDocument) {
+      alert('更新系プラグインからのpackagedドキュメント取得にはdocument_idの指定が必須です')
+      return
+    }
+    return getTargetDocument(doc as argDoc)
   }
 
   // スキップフラグ

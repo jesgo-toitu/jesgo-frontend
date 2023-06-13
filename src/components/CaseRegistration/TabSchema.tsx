@@ -26,6 +26,8 @@ import { Const } from '../../common/Const';
 import { getEventDate, responseResult } from '../../common/DBUtility';
 import '../../views/Registration.css';
 import store from '../../store';
+import { reloadState } from '../../views/Registration';
+import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
 
 // ルートディレクトリ直下の子スキーマ
 type Props = {
@@ -48,6 +50,10 @@ type Props = {
   selectedTabKey: any;
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void;
   setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void;
 };
 
 const TabSchema = React.memo((props: Props) => {
@@ -69,6 +75,8 @@ const TabSchema = React.memo((props: Props) => {
     selectedTabKey,
     schemaAddModFunc,
     setUpdateFormData,
+    setReload,
+    setOverwriteDialogPlop,
   } = props;
 
   // 表示中のchild_schema
@@ -617,6 +625,8 @@ const TabSchema = React.memo((props: Props) => {
           tabSelectEvents={childTabSelectedFunc}
           addableSubSchemaIds={addableSubSchemaIds}
           setIsLoading={setIsLoading}
+          setReload={setReload}
+          setOverwriteDialogPlop={setOverwriteDialogPlop}
         />
       </div>
       {isTab
@@ -634,7 +644,9 @@ const TabSchema = React.memo((props: Props) => {
             setErrors,
             childTabSelectedFunc,
             setChildTabSelectedFunc,
-            setUpdateChildFormData
+            setUpdateChildFormData,
+            setReload,
+            setOverwriteDialogPlop
           )
         : // パネル表示
           createPanels(
@@ -650,7 +662,9 @@ const TabSchema = React.memo((props: Props) => {
             selectedTabKey,
             schemaAddModFunc,
             tabId,
-            setUpdateChildFormData
+            setUpdateChildFormData,
+            setReload,
+            setOverwriteDialogPlop
           )}
     </>
   );

@@ -26,6 +26,8 @@ import { getEventDate, responseResult } from '../../common/DBUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import store from '../../store';
 import { Const } from '../../common/Const';
+import { reloadState } from '../../views/Registration';
+import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
 
 type Props = {
   tabId: string;
@@ -43,6 +45,10 @@ type Props = {
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
   selectedTabKey: any;
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void;
 };
 
 // ルートディレクトリのスキーマ
@@ -60,6 +66,8 @@ const RootSchema = React.memo((props: Props) => {
     isSchemaChange,
     setErrors,
     schemaAddModFunc,
+    setReload,
+    setOverwriteDialogPlop,
   } = props;
 
   // 表示中のchild_schema
@@ -573,6 +581,8 @@ const RootSchema = React.memo((props: Props) => {
           tabSelectEvents={childTabSelectedFunc}
           addableSubSchemaIds={addableSubSchemaIds}
           setIsLoading={setIsLoading}
+          setReload={setReload}
+          setOverwriteDialogPlop={setOverwriteDialogPlop}
         />
       </div>
       {createTabs(
@@ -588,7 +598,9 @@ const RootSchema = React.memo((props: Props) => {
         setErrors,
         childTabSelectedFunc,
         setChildTabSelectedFunc,
-        setUpdateChildFormData
+        setUpdateChildFormData,
+        setReload,
+        setOverwriteDialogPlop
       )}
     </>
   );

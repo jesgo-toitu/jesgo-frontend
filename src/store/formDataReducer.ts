@@ -245,7 +245,7 @@ const createJesgoDocumentValueItem = (
 
   // ログインユーザID
   valueItem.registrant = getLoginUserId();
-  valueItem.last_updated = new Date().toLocaleString();
+  valueItem.last_updated = new Date().toLocaleString('ja-JP');
 
   return valueItem;
 };
@@ -338,7 +338,7 @@ const formDataReducer: Reducer<
         }
 
         // 更新日時
-        jesgoCaseData.last_updated = new Date().toLocaleString();
+        jesgoCaseData.last_updated = new Date().toLocaleString('ja-JP');
         // 更新ユーザ
         jesgoCaseData.registrant = getLoginUserId();
 
@@ -483,7 +483,7 @@ const formDataReducer: Reducer<
 
       // フォームの入力値変更。デフォルト値が入力された場合もここに来る
       case 'INPUT': {
-        const updateDate = new Date().toLocaleString();
+        const updateDate = new Date().toLocaleString('ja-JP');
 
         const docId = action.documentId;
 
@@ -758,7 +758,7 @@ const formDataReducer: Reducer<
           doc.value.schema_id = schema_id;
           doc.value.schema_primary_id = schema_primary_id;
           doc.value.schema_major_version = version_major;
-          doc.value.last_updated = new Date().toLocaleString();
+          doc.value.last_updated = new Date().toLocaleString('ja-JP');
           doc.value.registrant = getLoginUserId();
         }
         break;

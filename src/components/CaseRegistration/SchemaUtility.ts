@@ -592,6 +592,11 @@ const customSchemaAppendFormDataProperty = (
           return;
         }
 
+        // jesgo:errorの場合は除外
+        if(item[0] === Const.EX_VOCABULARY.JESGO_ERROR) {
+          return;
+        }
+
         // formDataのプロパティからスキーマ生成
         const schemaObj = GetSchemaFromPropItem(item[1]);
         // 元スキーマのプロパティに追加

@@ -9,6 +9,7 @@ import {
   getJesgoSchemaPropValue,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
+import { Const } from '../common/Const';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {

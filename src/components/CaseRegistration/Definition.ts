@@ -31,6 +31,7 @@ export enum VALIDATE_TYPE {
 export type ValidationItem = {
   message: string;
   validateType: VALIDATE_TYPE;
+  jsonpath?: string;
 };
 
 export type validationResult = {
@@ -46,4 +47,5 @@ export type RegistrationErrors = {
   errDocTitle: string;
   schemaId: number;
   documentId: string;
+  sourceJesgoError: any[]
 };

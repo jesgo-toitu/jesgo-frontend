@@ -6,6 +6,7 @@ import React, {
   useLayoutEffect,
   useState,
 } from 'react';
+import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -18,7 +19,10 @@ import {
   Col,
   Panel,
   Checkbox,
+  Button,
+  Glyphicon,
 } from 'react-bootstrap';
+import jsonpatch, { JSONPatch } from 'jsonpatch';
 import {
   ControlButton,
   COMP_TYPE,
@@ -31,6 +35,7 @@ import {
   IsNotUpdate,
   SetSameSchemaTitleNumbering,
   getErrMsg,
+  getErrorMsgObject,
 } from '../common/CaseRegistrationUtility';
 import './Registration.css';
 import {
@@ -61,11 +66,13 @@ import {
 import {
   ShowSaveDialogState,
   RegistrationErrors,
+  VALIDATE_TYPE,
 } from '../components/CaseRegistration/Definition';
 import {
   PluginOverwriteConfirm,
   OverwriteDialogPlop,
 } from '../components/common/PluginOverwriteConfirm';
+import { IconButton } from '../components/CaseRegistration/RjsfDefaultComponents';
 
 export type reloadState = {
   isReload: boolean;
@@ -578,7 +585,8 @@ const Registration = () => {
     }
   }, [saveResponse]);
 
-  const message: string[] = getErrMsg(errors);
+  const message: string[] = []; // getErrMsg(errors);
+  const messageObj = getErrorMsgObject(errors);
 
   // validationのメッセージを利用して注釈メッセージ表示
   if (!isSaved) {
@@ -717,7 +725,7 @@ const Registration = () => {
         </div>
         {!isLoading && hasSchema && (
           <>
-            {message.length > 0 && (
+            {(message.length > 0 || messageObj.length > 0) && (
               <Panel className="error-msg-panel">
                 {message.map((error: string) => (
                   <p key={error}>
@@ -728,6 +736,31 @@ const Registration = () => {
                       </>
                     ))}
                   </p>
+                ))}
+                {messageObj.map((errItem) => (
+                  <div style={{ display: 'flex' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      {typeof errItem !== 'string' &&
+                        errItem.message.split('\n').map((item, index) => (
+                          <>
+                            {index > 0 && <br />}
+                            {item}
+                          </>
+                        ))}
+                      {errItem.showDeleteButton && (
+                        <Button
+                          bsClass="btn btn-sm"
+                          onClick={() => {
+                            console.log(JSON.stringify(errItem, null, 2));
+                            alert(JSON.stringify(errItem, null, 2));
+                          }}
+                          style={{ margin: '0px 0px 0px 20px' }}
+                        >
+                          <Glyphicon glyph="remove" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </Panel>
             )}

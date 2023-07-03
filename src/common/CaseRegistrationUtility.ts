@@ -24,16 +24,19 @@ import {
 } from '../components/CaseRegistration/Definition';
 
 // formDataからjesgo:errorを取り出して削除
-export const popJesgoError = (formData: any) => {
+export const popJesgoError = (formData: any, deleteError = false) => {
   let popValue: any[] = [];
   if (formData && !Array.isArray(formData) && typeof formData === 'object') {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (formData['jesgo:error']) {
+    if (formData[Const.EX_VOCABULARY.JESGO_ERROR]) {
       // 取り出して元のformDataからは削除
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      popValue = formData['jesgo:error'];
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, no-param-reassign
-      delete formData['jesgo:error'];
+      popValue = formData[Const.EX_VOCABULARY.JESGO_ERROR];
+      // jesgo:error削除する場合
+      if (deleteError) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, no-param-reassign
+        delete formData[Const.EX_VOCABULARY.JESGO_ERROR];
+      }
     }
   }
 
@@ -535,6 +538,7 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
           errDocTitle: titleList.join(' > ') ?? '',
           schemaId,
           documentId,
+          sourceJesgoError: [],
         });
       }
     }
@@ -553,6 +557,42 @@ export const getErrMsg = (errorList: RegistrationErrors[]) => {
 
       if (documentMsg.length > 0) {
         message.push(`【 ${error.errDocTitle} 】`);
+        message.push(...documentMsg);
+      }
+    });
+  }
+  return message;
+};
+
+export type ErrorMsgObject = {
+  registErrors: RegistrationErrors;
+  message: string;
+  validateItem?: ValidationItem;
+  showDeleteButton: boolean;
+};
+
+export const getErrorMsgObject = (errorList: RegistrationErrors[]) => {
+  const message: ErrorMsgObject[] = [];
+
+  if (errorList) {
+    errorList.forEach((error) => {
+      const documentMsg: ErrorMsgObject[] = [];
+      error.validationResult.messages.forEach((item: ValidationItem) => {
+        documentMsg.push({
+          message: item.message,
+          registErrors: error,
+          validateItem: item,
+          showDeleteButton: item.validateType === VALIDATE_TYPE.JesgoError,
+        });
+      });
+
+      if (documentMsg.length > 0) {
+        message.push({
+          message: `【 ${error.errDocTitle} 】`,
+          registErrors: error,
+          showDeleteButton: false,
+        });
+
         message.push(...documentMsg);
       }
     });

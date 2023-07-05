@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import lodash, { filter } from 'lodash';
+import lodash from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import Form, { FormProps, IChangeEvent } from '@rjsf/core';
 import { Dispatch } from 'redux';
@@ -8,12 +8,11 @@ import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
 import {
-  GetSchemaTitle,
+  AddJesgoError,
   GetVersionedFormData,
   isNotEmptyObject,
-  popJesgoError,
 } from '../../common/CaseRegistrationUtility';
-import { RegistrationErrors, VALIDATE_TYPE } from './Definition';
+import { RegistrationErrors } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
 import {
   CustomSchema,
@@ -25,7 +24,6 @@ import {
   getEventDate,
 } from '../../common/DBUtility';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
-import { Button } from 'react-bootstrap';
 
 interface CustomDivFormProp extends FormProps<any> {
   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -113,71 +111,21 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   }
 
   // プラグインにて付与されたjesgo:errorがformDataにあればエラーとして表示する
-  const jesgoErrors = popJesgoError(formData);
-  if (jesgoErrors.length > 0) {
-    const oldErrorsJSON = JSON.stringify(errors);
-    // 元々あったjesgo:errorのエラーはクリアする
-    const excludeDocIds: string[] = [];
-    errors.forEach((p) => {
-      // jesgo:errorは除く
-      const filteredMsg = p.validationResult.messages.filter(
-        (q) => q.validateType !== VALIDATE_TYPE.JesgoError
-      );
-      if (filteredMsg.length > 0) {
-        // 別のエラーがあるケース
-        p.validationResult.messages = filteredMsg;
-      } else {
-        // jesgo:errorしかないケースはドキュメントごと除外
-        excludeDocIds.push(p.documentId);
-      }
-    });
 
-    if (excludeDocIds.length > 0) {
-      errors = errors.filter((p) => !excludeDocIds.includes(p.documentId));
-    }
-    // jesgo:errorクリア処理↑ここまで↑
+  const oldErrorsJSON = JSON.stringify(errors);
+  errors = AddJesgoError(
+    errors,
+    formData,
+    documentId,
+    schemaId,
+    schema,
+    thisDocument?.value.deleted
+  );
 
-    let tmpErr = errors.find((p) => p.documentId === documentId);
-    if (!tmpErr) {
-      tmpErr = {
-        errDocTitle: GetSchemaTitle(schemaId),
-        schemaId,
-        documentId,
-        validationResult: { schema, messages: [] },
-        sourceJesgoError: jesgoErrors,
-      };
-      errors.push(tmpErr);
-    }
-
-    const messages = tmpErr.validationResult.messages;
-
-    jesgoErrors.forEach((errorItem, index) => {
-      if (typeof errorItem === 'string') {
-        // 文字列の場合はそのまま表示
-        messages.push({
-          // eslint-disable-next-line no-irregular-whitespace
-          message: `　　${errorItem}`,
-          validateType: VALIDATE_TYPE.JesgoError,
-          jsonpath: `/${index}`,
-        });
-      } else if (typeof errorItem === 'object') {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        Object.entries(errorItem).forEach((item) => {
-          // objectの場合はKeyに項目名、valueにメッセージが格納されている想定
-          messages.push({
-            // eslint-disable-next-line no-irregular-whitespace
-            message: `　　[ ${item[0]} ] ${item[1] as string}`,
-            validateType: VALIDATE_TYPE.JesgoError,
-            jsonpath: `/${index}/${item[0]}`,
-          });
-        });
-      }
-    });
-
-    if (oldErrorsJSON !== JSON.stringify(errors)) {
-      setErrors([...errors]);
-      dispatch({ type: 'SET_ERROR', extraErrors: errors });
-    }
+  // 前後で変更がある場合にエラーをセットして画面更新
+  if (oldErrorsJSON !== JSON.stringify(errors)) {
+    setErrors([...errors]);
+    dispatch({ type: 'SET_ERROR', extraErrors: errors });
   }
 
   // 継承直後、データ入力判定を動かすためにsetFormDataする

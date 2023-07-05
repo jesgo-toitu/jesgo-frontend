@@ -47,5 +47,4 @@ export type RegistrationErrors = {
   errDocTitle: string;
   schemaId: number;
   documentId: string;
-  sourceJesgoError: any[]
 };

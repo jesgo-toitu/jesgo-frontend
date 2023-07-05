@@ -538,7 +538,6 @@ export const validateJesgoDocument = (saveData: SaveDataObjDefine) => {
           errDocTitle: titleList.join(' > ') ?? '',
           schemaId,
           documentId,
-          sourceJesgoError: [],
         });
       }
     }
@@ -1212,4 +1211,100 @@ export const OpenOutputViewScript = (win: typeof window, srcData: string) => {
   win.addEventListener('message', postFunc, false);
 
   win.open('/OutputView', 'outputview');
+};
+
+/**
+ * エラー一覧にjesgo:errorの内容を追加する
+ * @param formData
+ * @param paramErrors
+ * @param documentId
+ * @param schemaId
+ * @param schema
+ * @param notAdd [true]jesgo:errorを追加しない(削除フラグを渡す想定)
+ * @returns
+ */
+export const AddJesgoError = (
+  paramErrors: RegistrationErrors[],
+  formData: any,
+  documentId: string,
+  schemaId: number,
+  schema: JSONSchema7,
+  notAdd = false
+) => {
+  // jesgo:errorを取得
+  const jesgoErrors = popJesgoError(formData);
+  const errors = paramErrors;
+
+  // 元々あったjesgo:errorのエラーはクリアする
+  const targetErr = errors.find((p) => p.documentId === documentId);
+  if (targetErr) {
+    // jesgo:errorは除く
+    const filteredMsg = targetErr.validationResult.messages.filter(
+      (q) => q.validateType !== VALIDATE_TYPE.JesgoError
+    );
+    targetErr.validationResult.messages = filteredMsg;
+  }
+  // jesgo:errorクリア処理↑ここまで↑
+
+  if (jesgoErrors.length > 0 && !notAdd) {
+    // エラー一覧に対象ドキュメントがない場合は新規追加する
+    let tmpErr = errors.find((p) => p.documentId === documentId);
+    if (!tmpErr) {
+      const saveData = store.getState().formDataReducer.saveData;
+      const doc = saveData.jesgo_document.find((p) => p.key === documentId);
+      let titleList: string[] = [];
+      if (doc) {
+        // 親のタイトル取得
+        titleList = GetParentDocumentTitle(saveData, documentId);
+        // 親→子の順にしたいのでリバース
+        titleList = titleList.reverse();
+        const schemaInfo = GetSchemaInfo(schemaId, doc.value.event_date);
+        // 自身のタイトル追加
+        let title = `${schemaInfo?.title ?? ''} ${
+          schemaInfo?.subtitle ?? ''
+        }`.trim();
+        title = GetNumberingTabTitle(saveData, doc, title);
+        titleList.push(title);
+      }
+
+      tmpErr = {
+        errDocTitle: titleList.join(' > ') ?? '',
+        schemaId,
+        documentId,
+        validationResult: { schema, messages: [] },
+      };
+      errors.push(tmpErr);
+    }
+
+    const messages = tmpErr.validationResult.messages;
+
+    // jesgo:errorから画面表示用のメッセージを生成
+    jesgoErrors.forEach((errorItem, index) => {
+      if (typeof errorItem === 'string') {
+        // 文字列の場合はそのまま表示
+        messages.push({
+          // eslint-disable-next-line no-irregular-whitespace
+          message: `　${errorItem}`,
+          validateType: VALIDATE_TYPE.JesgoError,
+          jsonpath: `/${index}`,
+        });
+      } else if (typeof errorItem === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        Object.entries(errorItem).forEach((item) => {
+          // objectの場合はKeyに項目名、valueにメッセージが格納されている想定
+          messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
+            message: `　　[ ${item[0]} ] ${item[1] as string}`,
+            validateType: VALIDATE_TYPE.JesgoError,
+            // 特殊文字はエスケープしないとjsonpatchのpathとして使えない(チルダ、スラッシュ)
+            jsonpath: `/${index}/${item[0]
+              .replace(/~/g, '~0')
+              .replace(/\//g, '~1')}`,
+          });
+        });
+      }
+    });
+  }
+
+  return errors;
 };

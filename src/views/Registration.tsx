@@ -34,7 +34,6 @@ import {
   GetSchemaTitle,
   IsNotUpdate,
   SetSameSchemaTitleNumbering,
-  getErrMsg,
   getErrorMsgObject,
 } from '../common/CaseRegistrationUtility';
 import './Registration.css';
@@ -66,13 +65,12 @@ import {
 import {
   ShowSaveDialogState,
   RegistrationErrors,
-  VALIDATE_TYPE,
 } from '../components/CaseRegistration/Definition';
 import {
   PluginOverwriteConfirm,
   OverwriteDialogPlop,
 } from '../components/common/PluginOverwriteConfirm';
-import { IconButton } from '../components/CaseRegistration/RjsfDefaultComponents';
+import ErrorRow from '../components/CaseRegistration/ErrorRow';
 
 export type reloadState = {
   isReload: boolean;
@@ -585,16 +583,16 @@ const Registration = () => {
     }
   }, [saveResponse]);
 
-  const message: string[] = []; // getErrMsg(errors);
+  const generalMessage: string[] = []; // getErrMsg(errors);
   const messageObj = getErrorMsgObject(errors);
 
   // validationのメッセージを利用して注釈メッセージ表示
   if (!isSaved) {
-    message.push(
+    generalMessage.push(
       'ドキュメントを作成する場合は患者情報を入力後、保存してから下のボタンより追加してください。'
     );
   } else if (dispRootSchemaIdsNotDeleted.length === 0) {
-    message.push(
+    generalMessage.push(
       'ドキュメントを作成する場合は下のボタンより追加してください。'
     );
   }
@@ -725,9 +723,9 @@ const Registration = () => {
         </div>
         {!isLoading && hasSchema && (
           <>
-            {(message.length > 0 || messageObj.length > 0) && (
+            {(generalMessage.length > 0 || messageObj.length > 0) && (
               <Panel className="error-msg-panel">
-                {message.map((error: string) => (
+                {generalMessage.map((error: string) => (
                   <p key={error}>
                     {error.split('\n').map((item, index) => (
                       <>
@@ -738,29 +736,7 @@ const Registration = () => {
                   </p>
                 ))}
                 {messageObj.map((errItem) => (
-                  <div style={{ display: 'flex' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      {typeof errItem !== 'string' &&
-                        errItem.message.split('\n').map((item, index) => (
-                          <>
-                            {index > 0 && <br />}
-                            {item}
-                          </>
-                        ))}
-                      {errItem.showDeleteButton && (
-                        <Button
-                          bsClass="btn btn-sm"
-                          onClick={() => {
-                            console.log(JSON.stringify(errItem, null, 2));
-                            alert(JSON.stringify(errItem, null, 2));
-                          }}
-                          style={{ margin: '0px 0px 0px 20px' }}
-                        >
-                          <Glyphicon glyph="remove" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                  <ErrorRow errMsgObj={errItem} setErrors={setErrors} />
                 ))}
               </Panel>
             )}
@@ -831,6 +807,7 @@ const Registration = () => {
                 setIsLoading={setIsLoading}
                 setReload={setReload}
                 setOverwriteDialogPlop={setOverwriteDialogPlop}
+                setErrors={setErrors}
               />
             </div>
           </>

@@ -12,7 +12,7 @@ import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import store from '../../store/index';
-import { ChildTabSelectedFuncObj } from './Definition';
+import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
 import { fTimeout } from '../../common/CommonUtility';
@@ -70,6 +70,7 @@ type ControlButtonProps = {
   setOverwriteDialogPlop: (
     value: React.SetStateAction<OverwriteDialogPlop | undefined>
   ) => void;
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -99,6 +100,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     setIsLoading,
     setReload,
     setOverwriteDialogPlop,
+    setErrors,
   } = props;
 
   const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
@@ -285,6 +287,10 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               copyIds[index].deleted = true;
               setDispSchemaIds([...copyIds]);
               dispatch({ type: 'DEL', documentId });
+
+              if (setErrors) {
+                setErrors(store.getState().formDataReducer.extraErrors);
+              }
 
               // 削除したタブの1つ前か後のタブを選択する
               const tabList = store

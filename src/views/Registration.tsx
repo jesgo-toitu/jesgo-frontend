@@ -6,6 +6,7 @@ import React, {
   useLayoutEffect,
   useState,
 } from 'react';
+import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -18,7 +19,10 @@ import {
   Col,
   Panel,
   Checkbox,
+  Button,
+  Glyphicon,
 } from 'react-bootstrap';
+import jsonpatch, { JSONPatch } from 'jsonpatch';
 import {
   ControlButton,
   COMP_TYPE,
@@ -30,7 +34,7 @@ import {
   GetSchemaTitle,
   IsNotUpdate,
   SetSameSchemaTitleNumbering,
-  getErrMsg,
+  getErrorMsgObject,
 } from '../common/CaseRegistrationUtility';
 import './Registration.css';
 import {
@@ -66,6 +70,7 @@ import {
   PluginOverwriteConfirm,
   OverwriteDialogPlop,
 } from '../components/common/PluginOverwriteConfirm';
+import ErrorRow from '../components/CaseRegistration/ErrorRow';
 
 export type reloadState = {
   isReload: boolean;
@@ -578,15 +583,16 @@ const Registration = () => {
     }
   }, [saveResponse]);
 
-  const message: string[] = getErrMsg(errors);
+  const generalMessage: string[] = []; // getErrMsg(errors);
+  const messageObj = getErrorMsgObject(errors);
 
   // validationのメッセージを利用して注釈メッセージ表示
   if (!isSaved) {
-    message.push(
+    generalMessage.push(
       'ドキュメントを作成する場合は患者情報を入力後、保存してから下のボタンより追加してください。'
     );
   } else if (dispRootSchemaIdsNotDeleted.length === 0) {
-    message.push(
+    generalMessage.push(
       'ドキュメントを作成する場合は下のボタンより追加してください。'
     );
   }
@@ -717,9 +723,9 @@ const Registration = () => {
         </div>
         {!isLoading && hasSchema && (
           <>
-            {message.length > 0 && (
+            {(generalMessage.length > 0 || messageObj.length > 0) && (
               <Panel className="error-msg-panel">
-                {message.map((error: string) => (
+                {generalMessage.map((error: string) => (
                   <p key={error}>
                     {error.split('\n').map((item, index) => (
                       <>
@@ -728,6 +734,9 @@ const Registration = () => {
                       </>
                     ))}
                   </p>
+                ))}
+                {messageObj.map((errItem) => (
+                  <ErrorRow errMsgObj={errItem} setErrors={setErrors} />
                 ))}
               </Panel>
             )}
@@ -798,6 +807,7 @@ const Registration = () => {
                 setIsLoading={setIsLoading}
                 setReload={setReload}
                 setOverwriteDialogPlop={setOverwriteDialogPlop}
+                setErrors={setErrors}
               />
             </div>
           </>

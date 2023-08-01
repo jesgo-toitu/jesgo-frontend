@@ -630,6 +630,7 @@ const PanelSchema = React.memo((props: Props) => {
           setIsLoading={setIsLoading}
           setReload={setReload}
           setOverwriteDialogPlop={setOverwriteDialogPlop}
+          setErrors={setErrors}
         />
       </div>
       {isTab

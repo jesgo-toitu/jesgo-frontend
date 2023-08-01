@@ -9,6 +9,7 @@ import {
   getJesgoSchemaPropValue,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
+import { Const } from '../common/Const';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -615,6 +616,11 @@ const formDataReducer: Reducer<
               }
             });
           }
+
+          // エラー一覧からも削除
+          copyState.extraErrors = copyState.extraErrors.filter(
+            (p) => !deletedIds.includes(p.documentId)
+          );
         }
 
         break;

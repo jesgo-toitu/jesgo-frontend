@@ -8,12 +8,11 @@ import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { JESGOComp } from './JESGOComponent';
 import store from '../../store';
 import {
-  GetSchemaTitle,
+  AddJesgoError,
   GetVersionedFormData,
   isNotEmptyObject,
-  popJesgoError,
 } from '../../common/CaseRegistrationUtility';
-import { RegistrationErrors, VALIDATE_TYPE } from './Definition';
+import { RegistrationErrors } from './Definition';
 import { CreateUISchema } from './UISchemaUtility';
 import {
   CustomSchema,
@@ -112,49 +111,19 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   }
 
   // プラグインにて付与されたjesgo:errorがformDataにあればエラーとして表示する
-  const jesgoErrors = popJesgoError(formData);
-  if (jesgoErrors.length > 0) {
-    // 元々あったjesgo:errorのエラーはクリアする
-    errors = errors.filter((p) =>
-      p.validationResult.messages.some(
-        (q) => q.validateType !== VALIDATE_TYPE.JesgoError
-      )
-    );
 
-    let tmpErr = errors.find((p) => p.documentId === documentId);
-    if (!tmpErr) {
-      tmpErr = {
-        errDocTitle: GetSchemaTitle(schemaId),
-        schemaId,
-        documentId,
-        validationResult: { schema, messages: [] },
-      };
-      errors.push(tmpErr);
-    }
+  const oldErrorsJSON = JSON.stringify(errors);
+  errors = AddJesgoError(
+    errors,
+    formData,
+    documentId,
+    schemaId,
+    schema,
+    thisDocument?.value.deleted
+  );
 
-    const messages = tmpErr.validationResult.messages;
-
-    jesgoErrors.forEach((errorItem) => {
-      if (typeof errorItem === 'string') {
-        // 文字列の場合はそのまま表示
-        messages.push({
-          // eslint-disable-next-line no-irregular-whitespace
-          message: `　　${errorItem}`,
-          validateType: VALIDATE_TYPE.JesgoError,
-        });
-      } else if (typeof errorItem === 'object') {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        Object.entries(errorItem).forEach((item) => {
-          // objectの場合はKeyに項目名、valueにメッセージが格納されている想定
-          messages.push({
-            // eslint-disable-next-line no-irregular-whitespace
-            message: `　　[ ${item[0]} ] ${item[1] as string}`,
-            validateType: VALIDATE_TYPE.JesgoError,
-          });
-        });
-      }
-    });
-
+  // 前後で変更がある場合にエラーをセットして画面更新
+  if (oldErrorsJSON !== JSON.stringify(errors)) {
     setErrors([...errors]);
     dispatch({ type: 'SET_ERROR', extraErrors: errors });
   }

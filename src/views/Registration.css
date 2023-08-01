@@ -59,6 +59,17 @@ body {
   margin-bottom: 1rem;
 }
 
+.error-msg-jesgo-err-div {
+  display: flex;
+  align-items: center;
+  margin: 1px 0px
+}
+
+.error-msg-btn-delete {
+  margin: 0px 0px 0px 20px;
+  cursor: pointer;
+}
+
 .user-info-row {
   display: flex;
   flex-wrap: wrap;

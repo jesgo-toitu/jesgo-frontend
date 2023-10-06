@@ -290,7 +290,7 @@ const mergeSchemaItem = (props: {
             // フィールド内のif~Thenを入力値に合わせて書き換え
             targetItem.pItems[pName] = customSchemaIfThenElseOnField(
               pitem,
-              formData[pName]
+              formData[pName] ?? {}
             );
           }
         }

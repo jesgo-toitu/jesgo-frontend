@@ -88,12 +88,13 @@ const GetModule: (scriptText: string) => Promise<IPluginModule> = async (
       /* webpackIgnore: true */ script
     ); // webpackIgnoreコメント必要
     return pluginmodule;
-
   } catch (e) {
     // eslint-disable-next-line no-alert
-    alert(`【pluginの実行処理中にエラーが発生しました】\n${(e as Error).message}`);
-    console.error(e as Error)
-    return undefined as unknown as IPluginModule
+    alert(
+      `【pluginの実行処理中にエラーが発生しました】\n${(e as Error).message}`
+    );
+    console.error(e as Error);
+    return undefined as unknown as IPluginModule;
   }
 };
 
@@ -183,25 +184,33 @@ const updatePatientsDocument = async (
   if (getPackagedDocumentInsted) {
     // セキュリティとして制約あり
     if ((doc as argDoc).caseList.length === 0) {
-      alert('更新系プラグインからのpackagedドキュメントの取得にはcase_idの指定が必須です')
-      return
+      alert(
+        '更新系プラグインからのpackagedドキュメントの取得にはcase_idの指定が必須です'
+      );
+      return;
     }
     if ((doc as argDoc).caseList.length > 1) {
-      alert('更新系プラグインから複数の症例のデータを一度に取得することはできません')
-      return
+      alert(
+        '更新系プラグインから複数の症例のデータを一度に取得することはできません'
+      );
+      return;
     }
     if (!(doc as argDoc).targetDocument) {
-      alert('更新系プラグインからのpackagedドキュメント取得にはdocument_idの指定が必須です')
-      return
+      alert(
+        '更新系プラグインからのpackagedドキュメント取得にはdocument_idの指定が必須です'
+      );
+      return;
     }
-    return await getTargetDocument(doc as argDoc)
+    return await getTargetDocument(doc as argDoc);
   }
 
   // スキップフラグ
   let isSkip = false;
 
   // 引数を配列でなければupdateObjectの配列にする(argDocはここで落とす)
-  const localUpdateTarget = Array.isArray(doc) ? doc as updateObject[] : [doc as updateObject];
+  const localUpdateTarget = Array.isArray(doc)
+    ? (doc as updateObject[])
+    : [doc as updateObject];
 
   if (pluginData) {
     // 最初に症例IDとドキュメントIDの組み合わせリストを取得する
@@ -596,8 +605,8 @@ export const moduleMain = async (
   } catch (e) {
     // eslint-disable-next-line no-alert
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
-    console.error(e as Error)
-  }finally{
+    console.error(e as Error);
+  } finally {
     if (module?.finalize) {
       await module.finalize();
     }
@@ -703,16 +712,23 @@ export const executePlugin = async (
                 }
                 const data = reader.result;
                 if (typeof data === 'string') {
-                  resolve(new TextDecoder().decode(toUTF8(data)))
+                  resolve(new TextDecoder().decode(toUTF8(data)));
                 }
-              }
+              };
               reader.readAsBinaryString(file);
             } else {
-              reject()
+              reject();
             }
-          }
+          };
+          // アップロードキャンセル
+          fileInput.addEventListener('cancel', () => {
+            if (setIsLoading) {
+              setIsLoading(false);
+            }
+            reject();
+          });
           fileInput.click();
-        })      
+        });
         const retValue = await moduleMainUpdate(
           plugin.script_text,
           updatePatientsDocument,
@@ -721,10 +737,10 @@ export const executePlugin = async (
         if (setReload) {
           setReload({ isReload: true, caller: 'update_plugin' });
         }
-        return retValue
+        return retValue;
       } catch {
-        console.error('Rejected')
-        return undefined
+        console.error('Rejected');
+        return undefined;
       }
     } else {
       // ファイルアップロードなし
@@ -734,14 +750,16 @@ export const executePlugin = async (
       );
       // ドキュメントのバーガーボタンからの呼び出しでは当該ドキュメントのみを取得する
       if (targetDocumentId) {
-        let documentListIndex = 0
+        let documentListIndex = 0;
         do {
           // formDocumentからの取得でdocument_idが存在しないことは原則としてあり得ない
-          if (documentList[documentListIndex].document_id !== targetDocumentId) {
-            documentList.splice(documentListIndex, 1)
+          if (
+            documentList[documentListIndex].document_id !== targetDocumentId
+          ) {
+            documentList.splice(documentListIndex, 1);
           }
-          documentListIndex++
-        } while(documentListIndex < documentList.length)
+          documentListIndex++;
+        } while (documentListIndex < documentList.length);
       }
       const retValue = await moduleMainUpdate(
         plugin.script_text,
@@ -764,13 +782,13 @@ export const executePlugin = async (
     }
     // 不要な患者属性をプラグインに渡さないように削除
     if (patientList && !plugin.attach_patient_info) {
-      for(const argPatient of patientList) {
+      for (const argPatient of patientList) {
         // anyにキャストして無理矢理削除
-        delete((argPatient as any).his_id)
-        delete((argPatient as any).name)
-        delete((argPatient as any).date_of_birth)
-        delete((argPatient as any).date_of_death)
-        delete((argPatient as any).sex)
+        delete (argPatient as any).his_id;
+        delete (argPatient as any).name;
+        delete (argPatient as any).date_of_birth;
+        delete (argPatient as any).date_of_death;
+        delete (argPatient as any).sex;
       }
     }
     // データ出力系)

@@ -284,6 +284,15 @@ const mergeSchemaItem = (props: {
           if (pitem && pitem.enum && tItem && tItem.enum) {
             tItem.enum = pitem.enum;
           }
+
+          // 置き換え後のpropertiesに対するif~then対応
+          if (pitem.properties) {
+            // フィールド内のif~Thenを入力値に合わせて書き換え
+            targetItem.pItems[pName] = customSchemaIfThenElseOnField(
+              pitem,
+              formData[pName]
+            );
+          }
         }
 
         // ユーザーが入力できない場合(readonly,jesgo:ui:hidden)はFormDataにdefaultを設定
@@ -471,8 +480,15 @@ const customSchemaIfThenElseOnField = (schema: JSONSchema7, formData: any) => {
   let result = lodash.cloneDeep(schema);
   const itemNames = getSchemaItemNames(result);
   itemNames.forEach((name: string) => {
+    // ifの対処
     if (name === Const.JSONSchema7Keys.IF) {
       result = customSchemaIfThenElse(result, result, formData);
+    } else if (name === 'allOf') {
+      // allOfの対処
+      const allOfItemArray = result[name] as JSONSchema7[];
+      allOfItemArray.forEach((allOfItem: JSONSchema7) => {
+        result = customSchemaIfThenElse(allOfItem, result, formData);
+      });
     } else if (name === Const.JSONSchema7Keys.PROP) {
       const targetSchema = getPropItemsAndNames(result);
       targetSchema.pNames.forEach((iname: string) => {
@@ -593,7 +609,7 @@ const customSchemaAppendFormDataProperty = (
         }
 
         // jesgo:errorの場合は除外
-        if(item[0] === Const.EX_VOCABULARY.JESGO_ERROR) {
+        if (item[0] === Const.EX_VOCABULARY.JESGO_ERROR) {
           return;
         }
 

@@ -482,12 +482,12 @@ const customSchemaIfThenElseOnField = (schema: JSONSchema7, formData: any) => {
   itemNames.forEach((name: string) => {
     // ifの対処
     if (name === Const.JSONSchema7Keys.IF) {
-      result = customSchemaIfThenElse(result, result, formData);
+      result = customSchemaIfThenElse(result, result, formData ?? {});
     } else if (name === 'allOf') {
       // allOfの対処
       const allOfItemArray = result[name] as JSONSchema7[];
       allOfItemArray.forEach((allOfItem: JSONSchema7) => {
-        result = customSchemaIfThenElse(allOfItem, result, formData);
+        result = customSchemaIfThenElse(allOfItem, result, formData ?? {});
       });
     } else if (name === Const.JSONSchema7Keys.PROP) {
       const targetSchema = getPropItemsAndNames(result);
@@ -496,7 +496,7 @@ const customSchemaIfThenElseOnField = (schema: JSONSchema7, formData: any) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         targetSchema.pItems[iname] = customSchemaIfThenElseOnField(
           targetItem,
-          formData[iname] ?? {}
+          formData ? formData[iname] ?? {} : {}
         );
       });
     }

@@ -10,6 +10,8 @@ import lodash from 'lodash';
 import { JESGOFiledTemplete } from './JESGOFieldTemplete';
 import { Const } from '../../common/Const';
 import { getPropItemsAndNames, getSchemaType } from './SchemaUtility';
+import { isNotEmptyObject } from '../../common/CaseRegistrationUtility';
+import store from '../../store';
 
 // uiSchema作成用Utility
 
@@ -27,6 +29,7 @@ export type UiSchemaProp = {
 const AddUiSchema = (
   schema: JSONSchema7,
   uiSchema: UiSchema,
+  formData: any,
   isRequired: boolean
 ) => {
   let resultUiSchema: UiSchema = lodash.cloneDeep(uiSchema);
@@ -74,6 +77,13 @@ const AddUiSchema = (
   // "jesgo:ui:visiblewhen"
   if (schema[Const.EX_VOCABULARY.UI_VISIBLE_WHEN]) {
     classNames.push('visiblewhen');
+  }
+  
+  // "jesgo:required"
+  const jesgoRequireds = schema[Const.EX_VOCABULARY.REQUIRED];
+  if (jesgoRequireds && !isNotEmptyObject(formData) &&
+    store.getState().commonReducer.isJesgoRequiredHighlight) {
+    classNames.push('jesgo-require');
   }
 
   // "jesgo:required"、または"description"がある場合、カスタムラベルを使用
@@ -268,6 +278,7 @@ export const createUiSchemaProperties = (
   propNames: string[],
   items: { [key: string]: JSONSchema7Definition },
   uiSchema: UiSchema,
+  formData: any,
   orderList: string[]
 ) => {
   let resUiSchema: UiSchema = lodash.cloneDeep(uiSchema);
@@ -278,11 +289,14 @@ export const createUiSchemaProperties = (
 
   propNames.forEach((propName: string) => {
     const item = items[propName] as JSONSchema7;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const targetFormData = formData != null ? formData[propName] : "";
 
     // 直下のproperties
     resUiSchema[propName] = AddUiSchema(
       item,
       resUiSchema[propName] as UiSchema,
+      targetFormData,
       requiredNames.includes(propName)
     );
     CreateOrderList(orderList, propName);
@@ -299,6 +313,7 @@ export const createUiSchemaProperties = (
         childPropNames,
         childItems,
         resUiSchema[propName] as UiSchema,
+        targetFormData,
         orderList
       );
     } else if (type === Const.JSONSchema7Types.ARRAY) {
@@ -307,11 +322,14 @@ export const createUiSchemaProperties = (
 
       // TODO childItemが配列だった場合の判定はしていない。現状のスキーマにもない。要制限事項
       const propItem = getPropItemsAndNames(childItem as JSONSchema7);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const itemsFormData = formData != null ? formData[propName] : "";
       let itemsUiSchema = lodash.cloneDeep(resUiSchema[propName]) as UiSchema;
 
       itemsUiSchema = AddUiSchema(
         childItem as JSONSchema7,
         itemsUiSchema,
+        itemsFormData,
         requiredNames.includes(propName)
       );
 
@@ -320,6 +338,7 @@ export const createUiSchemaProperties = (
         propItem.pNames,
         propItem.pItems,
         itemsUiSchema,
+        itemsFormData,
         orderList
       );
 
@@ -339,11 +358,11 @@ export const createUiSchemaProperties = (
  * @param schema
  * @returns
  */
-export const CreateUISchema = (schema: JSONSchema7) => {
+export const CreateUISchema = (schema: JSONSchema7, formData: any) => {
   let uiSchema: UiSchema = {};
   const orderList: string[] = [];
   // ルート
-  uiSchema = AddUiSchema(schema, uiSchema, false);
+  uiSchema = AddUiSchema(schema, uiSchema, formData, false);
 
   // ルートのitems
   const rootPropsName = Object.keys(schema);
@@ -371,6 +390,7 @@ export const CreateUISchema = (schema: JSONSchema7) => {
             propItems.pNames,
             propItems.pItems,
             uiSchema,
+            formData,
             orderList
           );
         }
@@ -383,6 +403,7 @@ export const CreateUISchema = (schema: JSONSchema7) => {
           propItems.pNames,
           propItems.pItems,
           uiSchema,
+          formData,
           orderList
         );
       }
@@ -397,6 +418,7 @@ export const CreateUISchema = (schema: JSONSchema7) => {
       Object.keys(properties),
       properties,
       uiSchema,
+      formData,
       orderList
     );
   }
@@ -425,9 +447,12 @@ export const CreateUISchema = (schema: JSONSchema7) => {
                 oneOfItemNames.forEach((oneOfItemName: string) => {
                   // TODO dependenciesに同項目に対し条件が複数あるとおかしくなる（uischemaが重複する）。要修正
                   if (oneOfItemName !== depName) {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    const targetFormData = formData != null ? formData[oneOfItemName] : "";
                     uiSchema[oneOfItemName] = AddUiSchema(
                       oneOfItemProp[oneOfItemName] as JSONSchema7,
                       uiSchema[oneOfItemName] as UiSchema,
+                      targetFormData,
                       oneOfRequired.includes(oneOfItemName)
                     );
                     CreateOrderList(orderList, oneOfItemName, depName);

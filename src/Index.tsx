@@ -13,8 +13,15 @@ import './biz-udpgothic.css';
 import SchemaManager from './views/SchemaManager';
 import OutputView from './components/common/OutputView';
 import PluginManager from './views/PluginManager';
+import { Const } from './common/Const'
 
 const RedirectToLogin = () => <Navigate to="/Login" />;
+
+// plugin APIの仕様変更などをプラグイン側で対応できるように
+// windowオブジェクトのカスタムプロパティにJESGOバージョンを仕込んでおく
+Object.defineProperty(window, '__JESGO_VERSION__', {
+  get: () => Const.VERSION
+})
 
 ReactDOM.render(
   <Provider store={store}>

@@ -37,7 +37,7 @@
   flex-wrap: wrap;
 }
 
-.with-units-div {
+.with-units-div, .with-delete-div {
   display: flex;
   align-items: center;
 }

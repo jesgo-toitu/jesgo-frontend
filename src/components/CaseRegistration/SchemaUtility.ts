@@ -524,7 +524,7 @@ export const transferSchemaMaps = (
  * @param val
  * @returns
  */
-const GetSchemaFromPropItem = (val: any) => {
+const GetSchemaFromPropItem = (val: any, isArrayOfItem: boolean) => {
   const schemaObj: JSONSchema7 = { type: 'string' };
 
   // formDataの入力値の型からtype決定
@@ -544,12 +544,12 @@ const GetSchemaFromPropItem = (val: any) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const unionVal = lodash.merge({}, ...(objVals as Object[]));
 
-      schemaObj.items = GetSchemaFromPropItem(unionVal);
+      schemaObj.items = GetSchemaFromPropItem(unionVal, true);
       // inline(横並び)で展開する
       schemaObj.items[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] = 'inline';
     } else if (val.length > 0) {
       // オブジェクト以外
-      schemaObj.items = GetSchemaFromPropItem(val[0]);
+      schemaObj.items = GetSchemaFromPropItem(val[0], true);
     } else {
       schemaObj.items = { type: 'string' };
     }
@@ -560,7 +560,8 @@ const GetSchemaFromPropItem = (val: any) => {
     Object.entries(val).forEach((entryItem) => {
       if (isNotEmptyObject(entryItem[1])) {
         schemaObj.properties![entryItem[0]] = GetSchemaFromPropItem(
-          entryItem[1]
+          entryItem[1],
+          false
         );
       }
     });
@@ -568,6 +569,9 @@ const GetSchemaFromPropItem = (val: any) => {
 
   // フォームデータから生成したスキーマは編集不可とする
   schemaObj.readOnly = true;
+  if (!isArrayOfItem) {
+    schemaObj[Const.EX_VOCABULARY.NOT_EXIST_PROP] = true;
+  }
 
   return schemaObj;
 };
@@ -613,8 +617,13 @@ const customSchemaAppendFormDataProperty = (
           return;
         }
 
+        // nullの場合も除外
+        if (item[1] == null) {
+          return;
+        }
+
         // formDataのプロパティからスキーマ生成
-        const schemaObj = GetSchemaFromPropItem(item[1]);
+        const schemaObj = GetSchemaFromPropItem(item[1], false);
         // 元スキーマのプロパティに追加
         copySchema.properties![item[0]] = schemaObj;
       });

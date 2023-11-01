@@ -380,7 +380,10 @@ export const transferSchemaItem = (
         refValue = refValue.substring(1);
       }
       // defの内容に置き換え
-      result = JSONPointer.get(schema, refValue) as JSONSchema7;
+      const defSchema = JSONPointer.get(schema, refValue) as JSONSchema7;
+      // defの中を再解析
+      result = transferSchemaItem(schema, defSchema, getSchemaItemNames(defSchema));
+
     } else if (iName === '$comment') {
       // $commentのみのフィールドになるとエラーになるためあらかじめ除去
       delete result.$comment;

@@ -195,7 +195,7 @@ const updatePatientsDocument = async (
       );
       return;
     }
-    if (!(doc as argDoc).targetDocument) {
+    if (Number.isNaN(Number((doc as argDoc).targetDocument))) {
       alert(
         '更新系プラグインからのpackagedドキュメント取得にはdocument_idの指定が必須です'
       );

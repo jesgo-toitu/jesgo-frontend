@@ -382,8 +382,11 @@ export const transferSchemaItem = (
       // defの内容に置き換え
       const defSchema = JSONPointer.get(schema, refValue) as JSONSchema7;
       // defの中を再解析
-      result = transferSchemaItem(schema, defSchema, getSchemaItemNames(defSchema));
-
+      result = transferSchemaItem(
+        schema,
+        defSchema,
+        getSchemaItemNames(defSchema)
+      );
     } else if (iName === '$comment') {
       // $commentのみのフィールドになるとエラーになるためあらかじめ除去
       delete result.$comment;
@@ -603,33 +606,53 @@ const customSchemaAppendFormDataProperty = (
       Object.keys(copySchema.properties)
     );
 
-    Object.entries(formData)
-      .filter((p) => formKeys.includes(p[0]))
-      .forEach((item) => {
+    Object.entries(formData).forEach((item) => {
+      const propName = item[0];
+      const propValue = item[1];
+
+      if (!formKeys.includes(propName)) {
+        // formDataにあるプロパティがスキーマにある場合は基本的に何もしないが
+        // 値がオブジェクトの場合は中身も見る
+        if (!Array.isArray(propValue) && typeof propValue === 'object') {
+          if (copySchema.properties) {
+            const propSchema = copySchema.properties[propName];
+            if (propSchema) {
+              // 子項目に対して再帰
+              const newSchema = customSchemaAppendFormDataProperty(
+                propSchema as JSONSchema7,
+                propValue
+              );
+              // 元スキーマのプロパティに追加
+              copySchema.properties[propName] = newSchema;
+            }
+          }
+        }
+      } else {
         // 空オブジェクトは除外
         if (
-          !Array.isArray(item[1]) &&
-          typeof item[1] === 'object' &&
-          !isNotEmptyObject(item[1])
+          !Array.isArray(propValue) &&
+          typeof propValue === 'object' &&
+          !isNotEmptyObject(propValue)
         ) {
           return;
         }
 
         // jesgo:errorの場合は除外
-        if (item[0] === Const.EX_VOCABULARY.JESGO_ERROR) {
+        if (propName === Const.EX_VOCABULARY.JESGO_ERROR) {
           return;
         }
 
         // nullの場合も除外
-        if (item[1] == null) {
+        if (propValue == null) {
           return;
         }
 
         // formDataのプロパティからスキーマ生成
-        const schemaObj = GetSchemaFromPropItem(item[1], false);
+        const schemaObj = GetSchemaFromPropItem(propValue, false);
         // 元スキーマのプロパティに追加
-        copySchema.properties![item[0]] = schemaObj;
-      });
+        copySchema.properties![propName] = schemaObj;
+      }
+    });
   }
 
   return copySchema;

@@ -5,6 +5,7 @@
 /* eslint-disable no-lonely-if */
 import { Buffer } from 'buffer';
 import React from 'react';
+import lodash from 'lodash';
 import {
   OverwriteDialogPlop,
   overwriteInfo,
@@ -195,7 +196,7 @@ const updatePatientsDocument = async (
       );
       return;
     }
-    if (!(doc as argDoc).targetDocument) {
+    if (Number.isNaN(Number((doc as argDoc).targetDocument))) {
       alert(
         '更新系プラグインからのpackagedドキュメント取得にはdocument_idの指定が必須です'
       );
@@ -684,11 +685,17 @@ export const executePlugin = async (
   setOverwriteDialogPlopGlobal = setOverwriteDialogPlop;
   setIsLoadingGlobal = setIsLoading;
 
+  const copyPatientList = lodash.cloneDeep(patientList);
+
   if (plugin.update_db) {
     // データ更新系
-    if (!plugin.all_patient && patientList && patientList.length === 1) {
+    if (
+      !plugin.all_patient &&
+      copyPatientList &&
+      copyPatientList.length === 1
+    ) {
       // 対象患者が指定されている場合
-      targetCaseId = Number(patientList[0].case_id);
+      targetCaseId = Number(copyPatientList[0].case_id);
     } else {
       targetCaseId = undefined;
     }
@@ -781,8 +788,8 @@ export const executePlugin = async (
       throw new Error('cancel');
     }
     // 不要な患者属性をプラグインに渡さないように削除
-    if (patientList && !plugin.attach_patient_info) {
-      for (const argPatient of patientList) {
+    if (copyPatientList && !plugin.attach_patient_info) {
+      for (const argPatient of copyPatientList) {
         // anyにキャストして無理矢理削除
         delete (argPatient as any).his_id;
         delete (argPatient as any).name;
@@ -792,11 +799,11 @@ export const executePlugin = async (
       }
     }
     // データ出力系)
-    if (patientList) {
+    if (copyPatientList) {
       if (targetDocumentId) {
         // ドキュメント指定あり
         const doc: argDoc = {
-          caseList: patientList,
+          caseList: copyPatientList,
           targetDocument: targetDocumentId,
           filterQuery: plugin.filter_schema_query,
         };
@@ -810,7 +817,7 @@ export const executePlugin = async (
       if (plugin.target_schema_id && plugin.target_schema_id.length > 0) {
         // スキーマ指定あり
         const doc: argDoc = {
-          caseList: patientList,
+          caseList: copyPatientList,
           targetSchemas: plugin.target_schema_id,
           filterQuery: plugin.filter_schema_query,
         };
@@ -823,7 +830,7 @@ export const executePlugin = async (
       }
       // ドキュメント、スキーマ指定なし
       const doc: argDoc = {
-        caseList: patientList,
+        caseList: copyPatientList,
         targetSchemas: undefined,
         filterQuery: plugin.filter_schema_query,
       };

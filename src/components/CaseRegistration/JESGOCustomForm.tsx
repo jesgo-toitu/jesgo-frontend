@@ -1,3 +1,5 @@
+/* eslint-disable no-param-reassign */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import lodash from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -24,6 +26,7 @@ import {
   getEventDate,
 } from '../../common/DBUtility';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
+import { Const } from '../../common/Const';
 
 interface CustomDivFormProp extends FormProps<any> {
   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -136,7 +139,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   copyProps.formData = formData;
 
   // uiSchema作成
-  const uiSchema = CreateUISchema(schema);
+  const uiSchema = CreateUISchema(schema, formData);
   if (isTabItem) {
     uiSchema['ui:ObjectFieldTemplate'] =
       JESGOFiledTemplete.TabItemFieldTemplate;
@@ -195,6 +198,58 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     // 初回描画済みフラグを立てる
     setIsFirstRederComplited(true);
   }, []);
+
+  /**
+   * formDataからスキーマに存在しない項目を削除する
+   * @param argFormData
+   * @param argSchema
+   * @returns
+   */
+  const deleteNotExistProp = (argFormData: any, argSchema: JSONSchema7) => {
+    if (!argSchema) {
+      return;
+    }
+    Object.entries(argSchema).forEach((item) => {
+      const propName = item[0];
+      const schemaInfo = item[1] as JSONSchema7;
+      if (schemaInfo) {
+        // スキーマに存在しない項目のみに適応する
+        if (schemaInfo[Const.EX_VOCABULARY.NOT_EXIST_PROP]) {
+          // array
+          if (Array.isArray(argFormData[propName])) {
+            // 削除されたarrayの項目を取り除く
+            const newArray = (argFormData[propName] as any[]).filter(
+              (p) => p != null && p !== ''
+            );
+            if (newArray.length > 0) {
+              argFormData[propName] = newArray;
+            } else {
+              // 表示内容が0の場合はプロパティごと削除する
+              delete argFormData[propName];
+            }
+          } else if (
+            ((argSchema as any)[propName] as JSONSchema7)?.properties
+          ) {
+            // objectの場合は中身を削除
+            deleteNotExistProp(
+              argFormData[propName],
+              (argSchema as any)[propName].properties as JSONSchema7
+            );
+
+            // 削除した結果、表示内容が1つもなくなればプロパティごと削除する
+            if (Object.entries(argFormData[propName]).length === 0) {
+              delete argFormData[propName];
+            }
+          } else if (
+            argFormData[propName] === '' ||
+            argFormData[propName] == null
+          ) {
+            delete argFormData[propName];
+          }
+        }
+      }
+    });
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onChange = (e: IChangeEvent<any>) => {
@@ -259,6 +314,11 @@ const CustomDivForm = (props: CustomDivFormProp) => {
       }
     }
 
+    // スキーマに存在しない項目を削除する
+    if (schema.properties) {
+      deleteNotExistProp(data, schema.properties);
+    }
+
     if (isFirstOnChange && hasDefault && !isFirstRederComplited) {
       // 作成直後のデフォルト値設定によるonChangeの場合は表示中のデータとデフォルト値をマージする
       data = lodash.merge(formData, e.formData);
@@ -311,6 +371,9 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     layerRadioButton: JESGOComp.LayerRadioButton,
     layerComboBox: JESGOComp.LayerComboBox,
     customCheckboxesWidget: JESGOComp.CustomCheckboxesWidget,
+
+    deleteTextWidget: JESGOComp.DeleteTextWidget,
+    deleteCheckBoxWidget: JESGOComp.DeleteCheckboxWidget,
   };
 
   return (

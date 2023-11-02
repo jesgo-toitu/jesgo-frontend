@@ -37,7 +37,7 @@
   flex-wrap: wrap;
 }
 
-.with-units-div {
+.with-units-div, .with-delete-div {
   display: flex;
   align-items: center;
 }
@@ -104,3 +104,17 @@ li.layer-combobox-item div {
   font-family: 'BIZ-UDPGothic' !important;
 }
 /* 階層表示用コンボボックス向けCSS end */
+
+/* jesgo:require ハイライト start */
+.jesgo-require select,
+.jesgo-require textarea,
+.jesgo-require .checkboxes,
+.jesgo-require .field-radio-group,
+.jesgo-require .MuiInputBase-root,
+.jesgo-require input {
+  background: 
+  linear-gradient(90deg, transparent 95%, pink), 
+  linear-gradient(270deg, transparent 95%, pink), 
+  linear-gradient(0deg, transparent 65%, pink), 
+  linear-gradient(180deg, transparent 65%, pink)
+}

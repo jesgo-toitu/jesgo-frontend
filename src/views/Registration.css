@@ -77,6 +77,13 @@ body {
   /* padding-top: 10px; */
 }
 
+.setting-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: 20px;
+  /* padding-top: 10px; */
+}
+
 .user-info-col {
   min-width: 200px;
   margin-left: 20px;

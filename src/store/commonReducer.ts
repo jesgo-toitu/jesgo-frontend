@@ -12,6 +12,7 @@ export interface commonState {
   isSaveAfterTabbing?: boolean; // タブ移動時の保存有無
   isShownSaveMessage?: boolean; // 保存確認ダイアログ表示中フラグ
   subSchemaCount?: number; // 自動生成されるサブスキーマの個数
+  isJesgoRequiredHighlight?:boolean;  // jesgo:required 未入力時ハイライト
 
   pluginList?: jesgoPluginColumns[];
 }
@@ -22,6 +23,7 @@ export interface commonAction {
   isHiddenSaveMassage?: boolean;
   isSaveAfterTabbing?: boolean;
   isShownSaveMessage?: boolean;
+  isJesgoRequiredHighlight?: boolean;
 
   pluginList?: jesgoPluginColumns[];
 }
@@ -31,6 +33,7 @@ const createInitialState = (): commonState => ({
   isHiddenSaveMassage: false,
   isSaveAfterTabbing: false,
   isShownSaveMessage: false,
+  isJesgoRequiredHighlight: false,
   pluginList: undefined,
 });
 
@@ -65,6 +68,12 @@ const commonReducer: Reducer<commonState, commonAction> = (
     // 保存ダイアログ表示中フラグの更新
     case 'SHOWN_SAVE_MESSAGE': {
       copyState.isShownSaveMessage = action.isShownSaveMessage;
+      break;
+    }
+
+    // 保存ダイアログ表示中フラグの更新
+    case 'JESGO_REQUIRED_HIGHLIGHT': {
+      copyState.isJesgoRequiredHighlight = action.isJesgoRequiredHighlight;
       break;
     }
 

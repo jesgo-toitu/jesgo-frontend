@@ -21,6 +21,7 @@ import {
   Checkbox,
   Button,
   Glyphicon,
+  Radio,
 } from 'react-bootstrap';
 import jsonpatch, { JSONPatch } from 'jsonpatch';
 import {
@@ -131,6 +132,9 @@ const Registration = () => {
   >();
 
   let age = ''; // 年齢
+
+  // jesgo:requiredのハイライト設定
+  const [highlight, setHighlight] = useState<boolean>(false);
 
   // 選択中のタブeventKey
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -638,6 +642,19 @@ const Registration = () => {
     }
   }, [hasSchema]);
 
+  const handleSettingHighlight = (event: any) => {
+    const eventTarget: EventTarget & HTMLInputElement =
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      event.target as EventTarget & HTMLInputElement;
+    if (eventTarget.value === 'true') {
+      dispatch({ type: 'JESGO_REQUIRED_HIGHLIGHT', isJesgoRequiredHighlight: true });
+      setHighlight(true);
+    } else {
+      dispatch({ type: 'JESGO_REQUIRED_HIGHLIGHT', isJesgoRequiredHighlight: false });
+      setHighlight(false);
+    }
+  };
+
   return (
     <>
       {overwriteDialogPlop && (
@@ -708,6 +725,33 @@ const Registration = () => {
                     >
                       登録拒否
                     </Checkbox>
+                  </div>
+                </FormGroup>
+              </Col>
+            </Row>
+            <Row className="setting-row">
+              <Col>
+                <FormGroup>
+                  <ControlLabel>JSOG/JSGOE必須項目ハイライト</ControlLabel>
+                  <div>
+                    <Radio
+                      name="jesgo_required_highlight"
+                      onChange={handleSettingHighlight}
+                      value="true"
+                      inline
+                      checked={highlight}
+                    >
+                      あり
+                    </Radio>
+                    <Radio
+                      name="jesgo_required_highlight"
+                      onChange={handleSettingHighlight}
+                      value="false"
+                      inline
+                      checked={!highlight}
+                    >
+                      なし
+                    </Radio>
                   </div>
                 </FormGroup>
               </Col>

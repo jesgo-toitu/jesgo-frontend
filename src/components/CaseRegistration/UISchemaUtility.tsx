@@ -235,6 +235,28 @@ const AddUiSchema = (
   // autocompleteはoffにしておく
   resultUiSchema[Const.UI_WIDGET.AUTOCOMPLETE] = 'off';
 
+  // スキーマに存在しないプロパティに削除ボタンを表示させるWidget
+  if (schema[Const.EX_VOCABULARY.NOT_EXIST_PROP]) {
+    switch (schemaType) {
+      case 'string':
+      case 'number':
+      case 'integer': {
+        // 削除ボタン付きテキストボックス
+        resultUiSchema[Const.UI_WIDGET.WIDGET] = 'deleteTextWidget';
+        break;
+      }
+      case 'boolean': {
+        // 削除ボタン付きチェックボックス(fieldとwidgetを適応)
+        resultUiSchema[Const.UI_WIDGET.FIELD_TEMPLATE] =
+          JESGOFiledTemplete.CustomNoTitleCheckboxTemplete;
+        resultUiSchema[Const.UI_WIDGET.WIDGET] = 'deleteCheckBoxWidget';
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
   // eslint-disable-next-line no-param-reassign
   return resultUiSchema;
 };

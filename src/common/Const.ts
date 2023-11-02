@@ -22,6 +22,7 @@ export namespace Const {
     UNIQUE: 'jesgo:unique',
     VALIDATION_ALERT: 'jesgo:validationalert',
     JESGO_ERROR: 'jesgo:error',
+    NOT_EXIST_PROP: 'jesgo:notExistProperty',
     UI_TEXTAREA: 'jesgo:ui:textarea',
     UI_LISTTYPE: 'jesgo:ui:listtype',
     UI_SUBSCHEMA_STYLE: 'jesgo:ui:subschemastyle',

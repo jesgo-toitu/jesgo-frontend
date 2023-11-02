@@ -253,7 +253,10 @@ export namespace JESGOFiledTemplete {
                 } else if (subschemastyle === 'column') {
                   editItem.className += ' array-subschemastyle-column';
                 }
-                return JESGOComp.DefaultArrayItem(editItem);
+                return JESGOComp.DefaultArrayItem(
+                  editItem,
+                  schema[Const.EX_VOCABULARY.NOT_EXIST_PROP] ?? false
+                );
               })}
           </div>
 
@@ -311,6 +314,32 @@ export namespace JESGOFiledTemplete {
           />
         )}
       </fieldset>
+    );
+  };
+
+  /**
+   * タイトルなしチェックボックスFieldTemplate
+   * @param props
+   * @returns
+   */
+  export const CustomNoTitleCheckboxTemplete = (props: FieldTemplateProps) => {
+    const {
+      id,
+      classNames,
+      label,
+      help,
+      required,
+      rawDescription,
+      errors,
+      children,
+      schema,
+    } = props;
+    return (
+      <div className={classNames}>
+        {children}
+        {errors}
+        {help}
+      </div>
     );
   };
 }

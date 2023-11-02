@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Autocomplete, {
   AutocompleteRenderOptionState,
 } from '@mui/material/Autocomplete';
-import { Label, Tooltip, OverlayTrigger, Glyphicon } from 'react-bootstrap';
+import {
+  Label,
+  Tooltip,
+  OverlayTrigger,
+  Glyphicon,
+  Button,
+} from 'react-bootstrap';
 import './JESGOComponent.css';
 import './JESGOFieldTemplete.css';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -753,7 +759,7 @@ export namespace JESGOComp {
   // Latest commit 1bbd0ad
   // TODO propsは仮でany
   // 配列Widget用カスタムアイテム
-  export function DefaultArrayItem(props: any) {
+  export function DefaultArrayItem(props: any, isNotExistProperty: boolean) {
     const btnStyle = {
       flex: 1,
       paddingLeft: 6,
@@ -822,7 +828,12 @@ export namespace JESGOComp {
                   className="array-item-remove"
                   tabIndex="-1"
                   style={btnStyle}
-                  disabled={props.disabled || props.readonly}
+                  // スキーマに存在しないプロパティの場合は削除ボタンだけ使用可にする
+                  disable={
+                    isNotExistProperty
+                      ? false
+                      : props.disabled || props.readonly
+                  }
                   onClick={props.onDropIndexClick(props.index)}
                 />
               )}
@@ -1137,5 +1148,98 @@ export namespace JESGOComp {
     );
   }
   //#endregion 複数チェックボックス用
+
+  /**
+   * 削除ボタン付きテキストボックス
+   * @param props
+   * @returns
+   */
+  export const DeleteTextWidget = (props: WidgetProps) => {
+    const { registry, schema } = props;
+    const { BaseInput } = registry.widgets;
+
+    const notExist = schema[Const.EX_VOCABULARY.NOT_EXIST_PROP];
+
+    /**
+     * 削除ボタン押下時の処理
+     */
+    const deleteItem = useCallback(() => {
+      // eslint-disable-next-line react/destructuring-assignment
+      if (props.onChange) {
+        // eslint-disable-next-line react/destructuring-assignment
+        props.onChange(undefined);
+      }
+    }, [props]);
+
+    return (
+      <div className="with-delete-div">
+        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        <BaseInput {...props} />
+        {notExist && (
+          <span>
+            <Button
+              bsClass="btn btn-xs"
+              className="error-msg-btn-delete"
+              onClick={deleteItem}
+            >
+              <Glyphicon glyph="remove" />
+            </Button>
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  export const DeleteCheckboxWidget = (props: WidgetProps) => {
+    const {
+      schema,
+      id,
+      value,
+      disabled,
+      readonly,
+      label,
+      autofocus = false,
+    } = props;
+
+    const notExist = schema[Const.EX_VOCABULARY.NOT_EXIST_PROP];
+
+    /**
+     * 削除ボタン押下時の処理
+     */
+    const deleteItem = useCallback(() => {
+      // eslint-disable-next-line react/destructuring-assignment
+      if (props.onChange) {
+        // eslint-disable-next-line react/destructuring-assignment
+        props.onChange(undefined);
+      }
+    }, [props]);
+
+    return (
+      <div className={`checkbox ${disabled || readonly ? 'disabled' : ''}`}>
+        <label>
+          <input
+            type="checkbox"
+            id={id}
+            name={id}
+            checked={typeof value === 'undefined' ? false : value}
+            disabled={disabled || readonly}
+            autoFocus={autofocus}
+          />
+          <span>{label}</span>
+          {notExist && (
+            <span>
+              <Button
+                bsClass="btn btn-xs"
+                className="error-msg-btn-delete"
+                onClick={deleteItem}
+              >
+                <Glyphicon glyph="remove" />
+              </Button>
+            </span>
+          )}
+        </label>
+      </div>
+    );
+  };
 }
 /* eslint-enable */

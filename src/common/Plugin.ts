@@ -618,6 +618,7 @@ export const moduleMain = async (
 type formDocument = {
   document_id?: number;
   case_id?: number;
+  hash?: string;
   schema_id?: string;
   document: JSON;
 };

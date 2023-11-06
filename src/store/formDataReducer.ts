@@ -132,6 +132,7 @@ export interface formDataAction {
   eventDate: string;
 
   SchemaInfoMap: Map<number, JesgoDocumentSchema[]>;
+  schemaIndex?: number;
 }
 
 // ユーザID取得
@@ -404,8 +405,17 @@ const formDataReducer: Reducer<
             (p) => p.key === parentDocId
           );
           if (parentDocData) {
+            // 挿入位置が渡ってきている場合はその位置に追加する
+            if (action.schemaIndex) {
+              parentDocData.value.child_documents.splice(
+                action.schemaIndex,
+                0,
+                docId
+              );
+            }
             // unique=falseのサブスキーマ追加時は同スキーマの右に追加する
-            if (action.isNotUniqueSubSchemaAdded) {
+            else if (action.isNotUniqueSubSchemaAdded) {
+              // TODO: schemaIndexが正しく設定されていればここに来ることはないため不要かもしれない
               for (
                 let i = parentDocData.value.child_documents.length - 1;
                 i >= 0;
@@ -438,6 +448,11 @@ const formDataReducer: Reducer<
                   parentDocData.value.child_documents.splice(i + 1, 0, docId);
                   break;
                 }
+              }
+
+              // 上記の処理で追加できなかった場合は末尾に追加
+              if (!parentDocData.value.child_documents.includes(docId)) {
+                parentDocData.value.child_documents.push(docId);
               }
             } else {
               // サブスキーマの自動展開、または子スキーマの場合は末尾に追加

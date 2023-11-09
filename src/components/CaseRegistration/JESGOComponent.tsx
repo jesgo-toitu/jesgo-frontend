@@ -534,6 +534,7 @@ export namespace JESGOComp {
     const comboComponent = useRef<HTMLDivElement>(null);
 
     // リストの内容からコンボボックスの幅計算
+    // Arrayで順序変更した時にWidthがリセットされてしまうので、レンダリング毎に実行
     useEffect(() => {
       let comboWidth = 200; // デフォルト200px
 
@@ -571,7 +572,7 @@ export namespace JESGOComp {
       if (comboComponent.current) {
         comboComponent.current.style.width = `${comboWidth}px`;
       }
-    }, []);
+    });
 
     /* コンボボックスの値変更イベント */
     const comboOnChange = (

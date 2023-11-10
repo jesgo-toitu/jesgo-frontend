@@ -580,6 +580,12 @@ export namespace JESGOComp {
       val: any,
       reason: string
     ) => {
+      // arrayで保存後に並べ替えると値がクリアされてしまう問題の回避
+      // 原因不明のため暫定対処
+      if (reason === 'reset') {
+        return;
+      }
+
       if (reason === 'input') {
         setInputValue(val);
         return;

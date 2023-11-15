@@ -25,7 +25,7 @@ import { Const } from './Const';
 import { formatDate, formatDateStr } from './CommonUtility';
 import store from '../store';
 import { JSONSchema7 } from 'json-schema';
-import { jesgoPluginColumns } from './Plugin';
+import { GetModule, jesgoPluginColumns } from './Plugin';
 import staffData from '../components/Staff/StaffData';
 
 export interface responseResult {
@@ -750,6 +750,20 @@ export const LoadPluginList = async (
   // 未読み込みの場合はAPIから取得
   const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
   if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+
+    (pluginListReturn.body as jesgoPluginColumns[]).forEach((item) => {
+      // eslint-disable-next-line no-void
+      void GetModule(item.script_text).then(
+        // eslint-disable-next-line no-return-assign
+        (plugin) =>
+          plugin.init().then((res) => {
+            // DBから取れないものは直接initを叩いて取得
+            // eslint-disable-next-line no-param-reassign
+            item.newdata = res.newdata;
+          })
+      );
+    });
+
     return pluginListReturn;
   }
   const newPlugins: jesgoPluginColumns[] = [];

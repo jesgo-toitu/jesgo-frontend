@@ -12,7 +12,7 @@ import {
   overwriteInfo,
   overWriteSchemaInfo,
 } from '../components/common/PluginOverwriteConfirm';
-import { jesgoCaseDefine } from '../store/formDataReducer';
+import { jesgoCaseDefine, SaveDataObjDefine } from '../store/formDataReducer';
 import { reloadState } from '../views/Registration';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { OpenOutputView } from './CaseRegistrationUtility';
@@ -600,6 +600,11 @@ const updatePatientsDocument = async (
   }
 };
 
+/**
+ * 患者・ドキュメント情報インポート
+ * @param doc
+ * @returns
+ */
 const insertPatientsDocument = async (
   doc: updateObject | updateObject[] | undefined
 ) => {
@@ -638,14 +643,47 @@ const insertPatientsDocument = async (
       }
     }
 
+    const newUpdateObjects: updateObject[] = [];
+
     // eslint-disable-next-line no-restricted-syntax
     for await (const [, value] of updateObjByHisId.entries()) {
       const ret = await apiAccess(METHOD_TYPE.POST, `register-case`, {
         objects: value,
       });
+      if (ret.statusNum === RESULT.NORMAL_TERMINATION) {
+        // 登録成功したらupdateに切り替える
+        const patInfo = ret.body as {
+          case_id: number;
+          his_id: string;
+          patient_name: string;
+          returnUpdateObjects: updateObject[];
+        };
 
-      // await updatePatientsDocument(doc, false);
+        // returnUpdateObjectsにはAPIに渡したobjectsに確定済みのdocument_idが付与されて戻ってくる
+        if (patInfo.returnUpdateObjects) {
+          // 更新用オブジェクト生成。child_documentsなどを一つの配列にまとめる
+          const tmpFunc = (data: updateObject) => {
+            if (data.child_documents && data.child_documents.length > 0) {
+              data.child_documents.forEach((item) => tmpFunc(item));
+              // 追加し終えたchild_documentsは削除
+              // eslint-disable-next-line no-param-reassign
+              delete data.child_documents;
+            }
+            // 新規登録用オブジェクトに付与されたpatient_infoも削除
+            // eslint-disable-next-line no-param-reassign
+            delete data.patient_info;
+            newUpdateObjects.push(data);
+          };
+
+          patInfo.returnUpdateObjects.forEach((item) => {
+            tmpFunc(item);
+          });
+        }
+      }
     }
+
+    // 更新処理呼び出し
+    await updatePatientsDocument(newUpdateObjects, false);
   }
 };
 
@@ -718,7 +756,11 @@ export const moduleImportDocument = async (
     return retValue;
   } catch (e) {
     // eslint-disable-next-line no-alert
-    alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
+    alert(
+      `【importDocument関数実行時にエラーが発生しました】\n${
+        (e as Error).message
+      }`
+    );
   } finally {
     if (module?.finalize) {
       await module.finalize();

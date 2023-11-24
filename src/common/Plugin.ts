@@ -608,11 +608,17 @@ const updatePatientsDocument = async (
 const insertPatientsDocument = async (
   doc: updateObject | updateObject[] | undefined
 ) => {
+  const insertResultList: {
+    his_id: string;
+    success: boolean;
+    errorMsg?: string;
+  }[] = [];
+
   if (!doc) {
     // 処理を中止
     // eslint-disable-next-line no-alert
     alert('更新用オブジェクトが不足しています');
-    return;
+    return insertResultList;
   }
 
   // 引数を配列でなければupdateObjectの配列にする
@@ -646,7 +652,7 @@ const insertPatientsDocument = async (
     const newUpdateObjects: updateObject[] = [];
 
     // eslint-disable-next-line no-restricted-syntax
-    for await (const [, value] of updateObjByHisId.entries()) {
+    for await (const [hisId, value] of updateObjByHisId.entries()) {
       const ret = await apiAccess(METHOD_TYPE.POST, `register-case`, {
         objects: value,
       });
@@ -658,6 +664,9 @@ const insertPatientsDocument = async (
           patient_name: string;
           returnUpdateObjects: updateObject[];
         };
+
+        // 成功
+        insertResultList.push({ his_id: patInfo.his_id, success: true });
 
         // returnUpdateObjectsにはAPIに渡したobjectsに確定済みのdocument_idが付与されて戻ってくる
         if (patInfo.returnUpdateObjects) {
@@ -679,12 +688,20 @@ const insertPatientsDocument = async (
             tmpFunc(item);
           });
         }
+      } else {
+        // 失敗
+        insertResultList.push({
+          his_id: hisId,
+          success: false,
+          errorMsg: ret.body as string,
+        });
       }
     }
 
     // 更新処理呼び出し
     await updatePatientsDocument(newUpdateObjects, false);
   }
+  return insertResultList;
 };
 
 export const moduleMain = async (
@@ -855,7 +872,7 @@ const newDocumentImport = async (
   if (plugin.show_upload_dialog) {
     // ファイルアップロードあり
     try {
-      const csvText: string = (await receiveUploadText(setIsLoading)) as string;
+      const csvText: string = (await receiveUploadText(undefined)) as string;
       const retValue = await moduleImportDocument(
         plugin.script_text,
         insertPatientsDocument,
@@ -870,14 +887,19 @@ const newDocumentImport = async (
       return undefined;
     }
   } else {
-    const retValue = await moduleImportDocument(
-      plugin.script_text,
-      insertPatientsDocument
-    );
-    if (setReload) {
-      setReload({ isReload: true, caller: 'update_plugin' });
+    // ファイルアップロードなし
+    try {
+      const retValue = await moduleImportDocument(
+        plugin.script_text,
+        insertPatientsDocument
+      );
+      if (setReload) {
+        setReload({ isReload: true, caller: 'update_plugin' });
+      }
+      return retValue;
+    } catch {
+      return undefined;
     }
-    return retValue;
   }
 };
 

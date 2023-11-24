@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 /* eslint-disable no-alert */
@@ -750,19 +751,13 @@ export const LoadPluginList = async (
   // 未読み込みの場合はAPIから取得
   const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
   if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
-
-    (pluginListReturn.body as jesgoPluginColumns[]).forEach((item) => {
-      // eslint-disable-next-line no-void
-      void GetModule(item.script_text).then(
-        // eslint-disable-next-line no-return-assign
-        (plugin) =>
-          plugin.init().then((res) => {
-            // DBから取れないものは直接initを叩いて取得
-            // eslint-disable-next-line no-param-reassign
-            item.newdata = res.newdata;
-          })
-      );
-    });
+    // eslint-disable-next-line no-restricted-syntax
+    for (const item of pluginListReturn.body as jesgoPluginColumns[]) {
+      // DBから取れないものは直接initを叩いて取得
+      const plugin = await GetModule(item.script_text);
+      const initValue = await plugin.init();
+      item.newdata = initValue.newdata;
+    }
 
     return pluginListReturn;
   }

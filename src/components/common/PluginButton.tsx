@@ -43,7 +43,9 @@ const PluginButton = (props: {
       }
       case PAGE_TYPE.TARGET_PATIENT: {
         setTargetPlugins(
-          pluginList.filter((p) => !p.all_patient && !p.target_schema_id)
+          pluginList.filter(
+            (p) => !p.all_patient && !p.target_schema_id && !p.newdata
+          )
         );
         break;
       }

@@ -1,6 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 
 import Encoding from 'encoding-japanese';
+import { NavigateFunction } from 'react-router-dom';
+import store from '../store';
 
 /* ここには画面機能に依存しない共通関数などを記述する */
 
@@ -209,4 +211,18 @@ export const getArrayWithSafe = (
     return undefined;
   }
   return array[index];
+};
+
+/**
+ * 患者リストに戻る
+ * @param navigate 
+ */
+export const backToPatientsList = (navigate: NavigateFunction) => {
+  // 検索条件のパラメータを復元する
+  const topMenuInfo = store.getState().commonReducer.topMenuInfo;
+  if (topMenuInfo && topMenuInfo.paramString) {
+    navigate(`/Patients${topMenuInfo.paramString}`);
+  } else {
+    navigate('/Patients');
+  }
 };

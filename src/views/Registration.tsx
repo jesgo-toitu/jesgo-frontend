@@ -53,6 +53,7 @@ import Loading from '../components/CaseRegistration/Loading';
 import apiAccess, { RESULT, METHOD_TYPE } from '../common/ApiAccess';
 import {
   AddBeforeUnloadEvent,
+  backToPatientsList,
   calcAge,
   RemoveBeforeUnloadEvent,
 } from '../common/CommonUtility';
@@ -383,7 +384,8 @@ const Registration = () => {
       alert(errMsg);
       setIsLoading(false);
       RemoveBeforeUnloadEvent();
-      navigate('/Patients');
+
+      backToPatientsList(navigate);
     }
   }, [loadedJesgoCase]);
 
@@ -647,10 +649,16 @@ const Registration = () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       event.target as EventTarget & HTMLInputElement;
     if (eventTarget.value === 'true') {
-      dispatch({ type: 'JESGO_REQUIRED_HIGHLIGHT', isJesgoRequiredHighlight: true });
+      dispatch({
+        type: 'JESGO_REQUIRED_HIGHLIGHT',
+        isJesgoRequiredHighlight: true,
+      });
       setHighlight(true);
     } else {
-      dispatch({ type: 'JESGO_REQUIRED_HIGHLIGHT', isJesgoRequiredHighlight: false });
+      dispatch({
+        type: 'JESGO_REQUIRED_HIGHLIGHT',
+        isJesgoRequiredHighlight: false,
+      });
       setHighlight(false);
     }
   };

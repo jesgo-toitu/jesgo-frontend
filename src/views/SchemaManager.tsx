@@ -37,6 +37,7 @@ import {
 import DndSortableTable from '../components/Schemamanager/DndSortableTable';
 import {
   AddBeforeUnloadEvent,
+  backToPatientsList,
   isDate,
   RemoveBeforeUnloadEvent,
 } from '../common/CommonUtility';
@@ -572,7 +573,7 @@ const SchemaManager = () => {
   const clickCancel = () => {
     if (leaveAlart()) {
       RemoveBeforeUnloadEvent();
-      navigate('/Patients');
+      backToPatientsList(navigate);
     }
   };
 

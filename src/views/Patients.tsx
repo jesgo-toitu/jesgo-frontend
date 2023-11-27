@@ -39,6 +39,7 @@ import SearchDateComponent, {
 } from '../components/common/SearchDateComponent';
 import { reloadState } from './Registration';
 import { LoadPluginList } from '../common/DBUtility';
+import store from '../store';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -223,6 +224,13 @@ const Patients = () => {
 
       setIsLoading(false);
     };
+
+    // リスト表示の選択状態を復元
+    const topMenuInfo = store.getState().commonReducer.topMenuInfo;
+    if (topMenuInfo) {
+      // eslint-disable-next-line no-use-before-define
+      changeListColumn(topMenuInfo.isDetail);
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     f();
@@ -424,6 +432,14 @@ const Patients = () => {
         'hidden'
       );
     }
+
+    dispatch({
+      type: 'SET_TOP_MENU_INFO',
+      topMenuInfo: {
+        paramString: url,
+        isDetail,
+      },
+    });
   };
 
   // 現在表示されている患者リストの一覧をJesgoCaseDefineとして返す
@@ -616,6 +632,13 @@ const Patients = () => {
 
     if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
       setUserListJson(JSON.stringify(returnApiObject.body));
+      dispatch({
+        type: 'SET_TOP_MENU_INFO',
+        topMenuInfo: {
+          paramString: `?${param}`,
+          isDetail: listMode[1] && listMode[1] !== '',
+        },
+      });
       navigate(`/Patients?${param}`);
     } else {
       navigate('/login');
@@ -690,7 +713,10 @@ const Patients = () => {
                 <Button title="検索" onClick={() => changeView('simpleSearch')}>
                   <Glyphicon glyph="search" />
                 </Button>
-                <Button title="表示設定" onClick={() => changeView('detailSearch')}>
+                <Button
+                  title="表示設定"
+                  onClick={() => changeView('detailSearch')}
+                >
                   <Glyphicon glyph="eye-open" />
                 </Button>
               </ButtonGroup>

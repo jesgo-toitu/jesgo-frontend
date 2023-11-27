@@ -1,7 +1,9 @@
+/* eslint-disable no-use-before-define */
 // ★TODO: JSXの属性を修正する
 /* eslint-disable jsx-a11y/control-has-associated-label */
 /* eslint-disable jsx-a11y/anchor-has-content */
 /* eslint-disable jsx-a11y/anchor-is-valid */
+import lodash from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -112,6 +114,67 @@ const makeSelectDataFromStorage = (columnType: string): string[] => {
     dataMap.set(index + 1, dataList[index]);
   }
   return dataList;
+};
+
+const setSearchDateUI = (
+  searchValue: string | null,
+  setSearchDateInfoDataSet: React.Dispatch<
+    React.SetStateAction<searchDateInfoDataSet | undefined>
+  >
+) => {
+  const dataset: searchDateInfoDataSet = {
+    fromInfo: {
+      year: '',
+      month: '',
+      day: '',
+    },
+    toInfo: {
+      year: '',
+      month: '',
+      day: '',
+    },
+    isRange: false,
+    searchType: '年次',
+  };
+
+  if (!searchValue) {
+    setSearchDateInfoDataSet(dataset);
+    return;
+  }
+
+  const dateArray = JSON.parse(searchValue) as string[];
+  dataset.isRange = dateArray.length > 1;
+  // from
+  if (dateArray[0]) {
+    const splitDate = dateArray[0].split('-');
+    if (splitDate[0]) {
+      dataset.fromInfo.year = splitDate[0];
+      dataset.searchType = '年次';
+    }
+    if (splitDate[1]) {
+      dataset.fromInfo.month = splitDate[1];
+      dataset.searchType = '月次';
+    }
+    if (splitDate[2]) {
+      dataset.fromInfo.day = splitDate[2];
+      dataset.searchType = '日次';
+    }
+  }
+  // To
+  if (dateArray[1]) {
+    const splitDate = dateArray[1].split('-');
+    if (splitDate[0]) {
+      dataset.toInfo.year = splitDate[0];
+    }
+    if (splitDate[1]) {
+      dataset.toInfo.month = splitDate[1];
+    }
+    if (splitDate[2]) {
+      dataset.toInfo.day = splitDate[2];
+    }
+  }
+
+  setSearchDateInfoDataSet(dataset);
 };
 
 const Patients = () => {
@@ -225,11 +288,69 @@ const Patients = () => {
       setIsLoading(false);
     };
 
-    // リスト表示の選択状態を復元
+    // URLパラメータから検索条件などをUIに復元
     const topMenuInfo = store.getState().commonReducer.topMenuInfo;
     if (topMenuInfo) {
-      // eslint-disable-next-line no-use-before-define
+      // 患者リスト表示、腫瘍登録管理表示の選択状態を復元
       changeListColumn(topMenuInfo.isDetail);
+
+      const searchParam = new URLSearchParams(url);
+
+      const copySearchWord = lodash.cloneDeep(searchWord);
+
+      // 検索条件の復元
+
+      // 腫瘍登録対象のみ
+      let paramValue = searchParam.get('showOnlyTumorRegistry');
+      copySearchWord.showOnlyTumorRegistry = paramValue === 'true';
+
+      // がん種
+      paramValue = searchParam.get('cancerType');
+      copySearchWord.cancerType = paramValue ?? '';
+
+      // 初回治療開始日
+      paramValue = searchParam.get('initialTreatmentDate');
+      setSearchDateUI(paramValue, setSearchDateInfoInitialTreatment);
+      // 診断日
+      paramValue = searchParam.get('diagnosisDate');
+      copySearchWord.checkOfDiagnosisDate = !!paramValue;
+      setSearchDateUI(paramValue, setSearchDateInfoDiagnosis);
+      // イベント日
+      paramValue = searchParam.get('eventDate');
+      copySearchWord.checkOfEventDate = !!paramValue;
+      let eventDateType = searchParam.get('eventDateType');
+      if (!eventDateType || eventDateType === '') {
+        eventDateType = '最新';
+      }
+      setSearchDateEventDateType(eventDateType);
+      setSearchDateUI(paramValue, setSearchDateInfoEventDate);
+
+      // 未入力項目
+      // 進行期
+      paramValue = searchParam.get('advancedStage');
+      copySearchWord.blankFields.advancedStage = paramValue === 'true';
+      // 診断
+      paramValue = searchParam.get('pathlogicalDiagnosis');
+      copySearchWord.blankFields.pathlogicalDiagnosis = paramValue === 'true';
+      // 初回治療
+      paramValue = searchParam.get('initialTreatment');
+      copySearchWord.blankFields.initialTreatment = paramValue === 'true';
+      // 合併症
+      paramValue = searchParam.get('copilacations');
+      copySearchWord.blankFields.copilacations = paramValue === 'true';
+      // 3年予後
+      paramValue = searchParam.get('threeYearPrognosis');
+      copySearchWord.blankFields.threeYearPrognosis = paramValue === 'true';
+      // 5年予後
+      paramValue = searchParam.get('fiveYearPrognosis');
+      copySearchWord.blankFields.fiveYearPrognosis = paramValue === 'true';
+
+      // 未入力項目で絞り込みのチェックはいずれかの項目にチェックがあればON
+      copySearchWord.checkOfBlankFields = Object.entries(
+        copySearchWord.blankFields
+      ).some((blankItem) => blankItem[1]);
+
+      setSearchWord(copySearchWord);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises

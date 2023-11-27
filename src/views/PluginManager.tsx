@@ -33,6 +33,7 @@ import {
 import './PluginManager.css';
 import { jesgoPluginColumns } from '../common/Plugin';
 import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
+import { backToPatientsList } from '../common/CommonUtility';
 
 type settings = {
   facility_name: string;
@@ -280,7 +281,7 @@ const PluginManager = () => {
             style={{ display: 'none' }}
           />
           <Button
-            onClick={() => navigate('/Patients')}
+            onClick={() => backToPatientsList(navigate)}
             bsStyle="primary"
             className="normal-button"
           >

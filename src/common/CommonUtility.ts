@@ -215,10 +215,10 @@ export const getArrayWithSafe = (
 
 /**
  * 患者リストに戻る
- * @param navigate 
+ * @param navigate
  */
 export const backToPatientsList = (navigate: NavigateFunction) => {
-  // 検索条件のパラメータを復元する
+  // 遷移前の検索条件のパラメータを付与する
   const topMenuInfo = store.getState().commonReducer.topMenuInfo;
   if (topMenuInfo && topMenuInfo.paramString) {
     navigate(`/Patients${topMenuInfo.paramString}`);

@@ -580,7 +580,7 @@ const Registration = () => {
         // 読み込み失敗
         setIsLoading(false);
         RemoveBeforeUnloadEvent();
-        navigate('/Patients');
+        backToPatientsList(navigate);
       }
     } else if (saveResponse.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
       // トークン期限切れはログイン画面に戻る

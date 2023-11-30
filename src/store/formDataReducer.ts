@@ -35,6 +35,7 @@ export type jesgoDocumentValueItem = {
   schema_primary_id: number;
   schema_major_version: number;
   registrant: number;
+  created: string;
   last_updated: string;
   readonly: boolean;
   deleted: boolean;
@@ -217,6 +218,7 @@ const createJesgoDocumentValueItem = (
     schema_primary_id: -1,
     schema_major_version: -1,
     registrant: -1,
+    created: '',
     last_updated: '',
     readonly: false,
     deleted: false,
@@ -247,7 +249,8 @@ const createJesgoDocumentValueItem = (
 
   // ログインユーザID
   valueItem.registrant = getLoginUserId();
-  valueItem.last_updated = new Date().toLocaleString('ja-JP');
+  valueItem.created = new Date().toLocaleString('ja-JP');
+  valueItem.last_updated = valueItem.created;
 
   return valueItem;
 };

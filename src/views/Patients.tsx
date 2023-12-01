@@ -782,6 +782,13 @@ const Patients = () => {
     setSearchDateEventDateType('最新');
   };
 
+  // 新規作成
+  const clickRegistration = () => {
+    // 遷移前にstoreを初期化
+    dispatch({ type: 'INIT_STORE' });
+    navigate(`/registration`);
+  };
+
   return (
     <>
       <div className="relative">
@@ -852,8 +859,8 @@ const Patients = () => {
             {localStorage.getItem('is_add_roll') === 'true' && (
               <Button
                 bsStyle="primary"
-                href="/registration"
                 className="normal-button"
+                onClick={clickRegistration}
               >
                 新規作成
               </Button>

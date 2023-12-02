@@ -189,7 +189,12 @@ export namespace JESGOFiledTemplete {
             ].$id as string;
             const element = document.getElementById(itemId);
             if (element) {
-              const parentClass = element.parentElement?.className;
+              let parentElement = element.parentElement
+              // 単位付きフィールドではもう一つ上の階層がdiv.visiblewhenとなる
+              if (parentElement?.className && parentElement.className.includes('with-units-div')) {
+                parentElement = parentElement.parentElement
+              }
+              const parentClass = parentElement?.className;
               if (parentClass && parentClass.includes('visiblewhen')) {
                 if (
                   !(
@@ -201,16 +206,18 @@ export namespace JESGOFiledTemplete {
                 ) {
                   // 条件に【当てはまらなければ】非表示にするCSSを追加
                   if (
-                    !element.parentElement.className.includes('visiblewhen-item')
+                    parentElement && !parentElement?.className.includes('visiblewhen-item')
                   ) {
-                    element.parentElement.className += ' visiblewhen-item';
+                    parentElement.className += ' visiblewhen-item';
                   }
                 } else {
                   // 当てはまる場合は非表示用のCSSをクリア
-                  element.parentElement.className =
-                    element.parentElement.className
+                  if (parentElement) {
+                    parentElement.className =
+                    parentElement.className
                       .replace(/visiblewhen-item/g, '')
                       .trim();
+                  }
                 }
               }
             }

@@ -99,10 +99,17 @@ const SearchDateComponent = React.memo(
       let nextCtrlId1 = ''; // 移動先第1候補
       let nextCtrlId2 = ''; // 移動先第2候補
 
+      // 入力中フラグ(全角入力の未確定時にtrue)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const isComposing = !!(e.nativeEvent as any)?.isComposing;
+
       // 数値は半角にする
-      const value = element.value.replace(/[０-９]/g, (s) =>
-        String.fromCharCode(s.charCodeAt(0) - 0xfee0)
-      );
+      let value = element.value;
+      if (!isComposing) {
+        value = value.replace(/[０-９]/g, (s) =>
+          String.fromCharCode(s.charCodeAt(0) - 0xfee0)
+        );
+      }
 
       // Fromのテキスト欄
       if (targetId.includes('dateFromYear')) {
@@ -134,7 +141,8 @@ const SearchDateComponent = React.memo(
         value &&
         value.length === element.maxLength &&
         element.selectionStart === element.maxLength &&
-        element.selectionStart === element.selectionEnd
+        element.selectionStart === element.selectionEnd &&
+        !isComposing
       ) {
         let nextElement = nextCtrlId1
           ? document.getElementById(nextCtrlId1)
@@ -357,6 +365,9 @@ const SearchDateComponent = React.memo(
             maxLength={4}
             value={dateFromInfo.year}
             onChange={onChangeDateText}
+            onCompositionEnd={(e) => {
+              onChangeDateText(e);
+            }}
           />
           <span className="searchdate-between-text">年</span>
           {!isHiddenMonth && (
@@ -370,6 +381,9 @@ const SearchDateComponent = React.memo(
                 readOnly={isHiddenMonth}
                 value={dateFromInfo.month}
                 onChange={onChangeDateText}
+                onCompositionEnd={(e) => {
+                  onChangeDateText(e);
+                }}
               />
               <span className="searchdate-between-text">月</span>
             </>
@@ -385,6 +399,9 @@ const SearchDateComponent = React.memo(
                 readOnly={isHiddenDay}
                 value={dateFromInfo.day}
                 onChange={onChangeDateText}
+                onCompositionEnd={(e) => {
+                  onChangeDateText(e);
+                }}
               />
               <span className="searchdate-between-text">日</span>
             </>
@@ -408,6 +425,9 @@ const SearchDateComponent = React.memo(
                 maxLength={4}
                 value={dateToInfo.year}
                 onChange={onChangeDateText}
+                onCompositionEnd={(e) => {
+                  onChangeDateText(e);
+                }}
               />
               <span className="searchdate-between-text">年</span>
               {!isHiddenMonth && (
@@ -421,6 +441,9 @@ const SearchDateComponent = React.memo(
                     readOnly={isHiddenMonth}
                     value={dateToInfo.month}
                     onChange={onChangeDateText}
+                    onCompositionEnd={(e) => {
+                      onChangeDateText(e);
+                    }}
                   />
                   <span className="searchdate-between-text">月</span>
                 </>
@@ -436,6 +459,9 @@ const SearchDateComponent = React.memo(
                     readOnly={isHiddenDay}
                     value={dateToInfo.day}
                     onChange={onChangeDateText}
+                    onCompositionEnd={(e) => {
+                      onChangeDateText(e);
+                    }}
                   />
                   <span className="searchdate-between-text">日</span>
                 </>

@@ -92,7 +92,7 @@ const initialSearchWord = {
     advancedStage: false,
     pathlogicalDiagnosis: false,
     initialTreatment: false,
-    copilacations: false,
+    complications: false,
     threeYearPrognosis: false,
     fiveYearPrognosis: false,
   },
@@ -374,8 +374,8 @@ const Patients = () => {
         setSearchWord({ ...searchWord, blankFields });
         break;
 
-      case 'copilacations':
-        blankFields = { ...blankFields, copilacations: eventTarget.checked };
+      case 'complications':
+        blankFields = { ...blankFields, complications: eventTarget.checked };
         setSearchWord({ ...searchWord, blankFields });
         break;
 
@@ -592,8 +592,8 @@ const Patients = () => {
           query += `&initialTreatment=${encodeURIComponent(
             searchWord.blankFields.initialTreatment
           )}`;
-          query += `&copilacations=${encodeURIComponent(
-            searchWord.blankFields.copilacations
+          query += `&complications=${encodeURIComponent(
+            searchWord.blankFields.complications
           )}`;
           query += `&threeYearPrognosis=${encodeURIComponent(
             searchWord.blankFields.threeYearPrognosis
@@ -903,11 +903,11 @@ const Patients = () => {
                   初回治療
                 </Checkbox>
                 <Checkbox
-                  name="copilacations"
+                  name="complications"
                   onChange={handleSearchCondition}
                   inline
                   disabled
-                  checked={searchWord.blankFields.copilacations}
+                  checked={searchWord.blankFields.complications}
                 >
                   合併症
                 </Checkbox>

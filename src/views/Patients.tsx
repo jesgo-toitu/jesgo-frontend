@@ -336,8 +336,8 @@ const Patients = () => {
       paramValue = searchParam.get('initialTreatment');
       copySearchWord.blankFields.initialTreatment = paramValue === 'true';
       // 合併症
-      paramValue = searchParam.get('copilacations');
-      copySearchWord.blankFields.copilacations = paramValue === 'true';
+      paramValue = searchParam.get('complications');
+      copySearchWord.blankFields.complications = paramValue === 'true';
       // 3年予後
       paramValue = searchParam.get('threeYearPrognosis');
       copySearchWord.blankFields.threeYearPrognosis = paramValue === 'true';

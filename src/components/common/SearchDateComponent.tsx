@@ -65,8 +65,13 @@ const SearchDateComponent = React.memo(
       radioSelectedValue === targetValue;
 
     // 年次/月次/日次ラジオボタン選択時のイベント
-    const onChangeRadio = (e: React.FormEvent<Radio>) => {
-      const selectedValue = (e.target as HTMLInputElement).value.toString();
+    const onChangeRadio = (e: React.FormEvent<Radio> | string) => {
+      let selectedValue = '';
+      if (typeof e === 'string') {
+        selectedValue = e;
+      } else {
+        selectedValue = (e.target as HTMLInputElement).value.toString();
+      }
       setRadioSelectedValue(selectedValue);
       switch (selectedValue) {
         case '年次': {
@@ -181,14 +186,20 @@ const SearchDateComponent = React.memo(
     }, [dateFromInfo, dateToInfo, isRangeSearch, radioSelectedValue]);
 
     useEffect(() => {
-      // 検索条件リセット
       if (!searchValue) {
+        // 検索条件リセット
         setRadioSelectedValue(radioDefaultValue);
         setIsRangeSearch(false);
         setisHiddenMonth(true);
         setisHiddenDay(true);
         setDateFromInfo(dateInfoDefaultValue);
         setDateToInfo(dateInfoDefaultValue);
+      } else {
+        // 検索条件設定
+        onChangeRadio(searchValue.searchType);
+        setIsRangeSearch(searchValue.isRange);
+        setDateFromInfo(searchValue.fromInfo);
+        setDateToInfo(searchValue.toInfo);
       }
     }, [searchValue]);
 

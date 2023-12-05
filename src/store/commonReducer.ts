@@ -12,9 +12,14 @@ export interface commonState {
   isSaveAfterTabbing?: boolean; // タブ移動時の保存有無
   isShownSaveMessage?: boolean; // 保存確認ダイアログ表示中フラグ
   subSchemaCount?: number; // 自動生成されるサブスキーマの個数
-  isJesgoRequiredHighlight?:boolean;  // jesgo:required 未入力時ハイライト
+  isJesgoRequiredHighlight?: boolean; // jesgo:required 未入力時ハイライト
 
   pluginList?: jesgoPluginColumns[];
+
+  topMenuInfo?: {
+    paramString: string;
+    isDetail: boolean;
+  };
 }
 
 export interface commonAction {
@@ -26,6 +31,11 @@ export interface commonAction {
   isJesgoRequiredHighlight?: boolean;
 
   pluginList?: jesgoPluginColumns[];
+
+  topMenuInfo?: {
+    paramString: string;
+    isDetail: boolean;
+  };
 }
 
 const createInitialState = (): commonState => ({
@@ -35,6 +45,10 @@ const createInitialState = (): commonState => ({
   isShownSaveMessage: false,
   isJesgoRequiredHighlight: false,
   pluginList: undefined,
+  topMenuInfo: {
+    paramString: '',
+    isDetail: false,
+  },
 });
 
 const initialState: commonState = createInitialState();
@@ -83,10 +97,20 @@ const commonReducer: Reducer<commonState, commonAction> = (
       break;
     }
 
+    // 患者一覧の検索条件
+    case 'SET_TOP_MENU_INFO': {
+      copyState.topMenuInfo = action.topMenuInfo;
+      break;
+    }
+
     // 初期化
     case 'INIT_STORE': {
       // プラグイン一覧はここでは初期化しない
-      return { ...createInitialState(), pluginList: copyState.pluginList };
+      return {
+        ...createInitialState(),
+        pluginList: copyState.pluginList,
+        topMenuInfo: copyState.topMenuInfo,
+      };
     }
     default:
       break;

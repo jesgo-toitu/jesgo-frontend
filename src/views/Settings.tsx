@@ -7,6 +7,7 @@ import { UserMenu } from '../components/common/UserMenu';
 import { SystemMenu } from '../components/common/SystemMenu';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
+import { backToPatientsList } from '../common/CommonUtility';
 
 export type settingsFromApi = {
   hisid_alignment: string;
@@ -201,7 +202,7 @@ const Settings = () => {
   };
 
   const clickCancel = () => {
-    navigate('/Patients');
+    backToPatientsList(navigate);
   };
 
   const submit = async () => {
@@ -240,7 +241,7 @@ const Settings = () => {
       );
       // eslint-disable-next-line no-alert
       alert('設定が完了しました');
-      navigate('/patients');
+      backToPatientsList(navigate);
     } else {
       // eslint-disable-next-line no-alert
       alert('【エラー】\n設定に失敗しました');

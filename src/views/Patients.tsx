@@ -1060,7 +1060,6 @@ const Patients = () => {
                   name="complications"
                   onChange={handleSearchCondition}
                   inline
-                  disabled
                   checked={searchWord.blankFields.complications}
                 >
                   合併症
@@ -1069,7 +1068,6 @@ const Patients = () => {
                   name="threeYearPrognosis"
                   onChange={handleSearchCondition}
                   inline
-                  disabled
                   checked={searchWord.blankFields.threeYearPrognosis}
                 >
                   3年予後
@@ -1078,7 +1076,6 @@ const Patients = () => {
                   name="fiveYearPrognosis"
                   onChange={handleSearchCondition}
                   inline
-                  disabled
                   checked={searchWord.blankFields.fiveYearPrognosis}
                 >
                   5年予後

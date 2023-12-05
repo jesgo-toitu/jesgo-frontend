@@ -197,7 +197,7 @@ const RootSchema = React.memo((props: Props) => {
           schemaInfo: itemSchemaInfo,
           setAddedDocumentCount,
           isNotUniqueSubSchemaAdded: true,
-          schemaIndex: newItemIdx
+          schemaIndex: newItemIdx,
         });
       }
     } else if (
@@ -590,6 +590,7 @@ const RootSchema = React.memo((props: Props) => {
       </div>
       {createTabs(
         tabId,
+        eventDate,
         dispSubSchemaIds,
         dispSubSchemaIdsNotDeleted,
         setDispSubSchemaIds,

@@ -276,10 +276,17 @@ export const checkEventDateInfinityLoop = (
   return ret;
 };
 
-// event_date取得処理
+/**
+ * event_date取得処理
+ * @param jesgoDoc 
+ * @param formData 
+ * @param isRecursion true:再帰呼び出し false:非再帰呼び出し
+ * @returns 
+ */
 export const getEventDate = (
   jesgoDoc: jesgoDocumentObjDefine,
-  formData: any
+  formData: any,
+  isRecursion = false
 ): string => {
   let eventDate = '';
 
@@ -347,7 +354,12 @@ export const getEventDate = (
     );
     if (parentDoc) {
       // 見つかるまでルートまで探索
-      eventDate = getEventDate(parentDoc, parentDoc.value.document);
+      eventDate = getEventDate(parentDoc, parentDoc.value.document, true);
+    }
+
+    // ルートまで遡って見つからない場合、ドキュメントの作成日を使用する
+    if (!isRecursion && !eventDate) {
+      eventDate = formatDateStr(jesgoDoc.value.created, '-');
     }
   }
 

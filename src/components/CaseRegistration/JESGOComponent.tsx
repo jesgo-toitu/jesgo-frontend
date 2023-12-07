@@ -738,6 +738,11 @@ export namespace JESGOComp {
               return options;
             }
 
+            // 入力値と完全一致するリストがある = リストから選択済み と見なし、選択肢の検索をしない
+            if (options.find((op) => (op.label ?? '') === state.inputValue)) {
+              return options;
+            }
+
             // 同一グループのタイトルは表示させる
             const groupIds = options
               // .filter((op) => (op.label ?? '').startsWith(state.inputValue)) // 前方一致

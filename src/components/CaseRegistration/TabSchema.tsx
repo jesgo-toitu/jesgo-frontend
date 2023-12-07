@@ -33,6 +33,7 @@ import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
 type Props = {
   tabId: string;
   parentTabsId: string;
+  parentEventDate: string | null;
   schemaId: number;
   dispSchemaIds: dispSchemaIdAndDocumentIdDefine[];
   setDispSchemaIds: React.Dispatch<
@@ -60,6 +61,7 @@ const TabSchema = React.memo((props: Props) => {
   const {
     tabId,
     parentTabsId,
+    parentEventDate,
     schemaId,
     dispSchemaIds,
     setDispSchemaIds,
@@ -108,7 +110,7 @@ const TabSchema = React.memo((props: Props) => {
     .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
   const eventDate = useMemo(
     () => (saveDoc ? getEventDate(saveDoc, formData) : null),
-    [saveDoc, formData]
+    [saveDoc, formData, parentEventDate]
   );
 
   // schemaIdをもとに情報を取得
@@ -192,8 +194,9 @@ const TabSchema = React.memo((props: Props) => {
       dispSubSchemaIds.find((p) => p.documentId === '')
     ) {
       // unieque=falseのサブスキーマ追加
-      const newItem = dispSubSchemaIds.find((p) => p.documentId === '');
-      if (newItem) {
+      const newItemIdx = dispSubSchemaIds.findIndex((p) => p.documentId === '');
+      if (newItemIdx > -1) {
+        const newItem = dispSubSchemaIds[newItemIdx];
         const itemSchemaInfo = GetSchemaInfo(newItem.schemaId);
         dispatch({
           type: 'ADD_CHILD',
@@ -207,6 +210,7 @@ const TabSchema = React.memo((props: Props) => {
           schemaInfo: itemSchemaInfo,
           setAddedDocumentCount,
           isNotUniqueSubSchemaAdded: true,
+          schemaIndex: newItemIdx,
         });
       }
     } else if (
@@ -634,6 +638,7 @@ const TabSchema = React.memo((props: Props) => {
         ? // タブ表示
           createTabs(
             tabId,
+            eventDate,
             dispSubSchemaIds,
             dispSubSchemaIdsNotDeleted,
             setDispSubSchemaIds,
@@ -663,6 +668,7 @@ const TabSchema = React.memo((props: Props) => {
             selectedTabKey,
             schemaAddModFunc,
             tabId,
+            eventDate,
             setUpdateChildFormData,
             setReload,
             setOverwriteDialogPlop

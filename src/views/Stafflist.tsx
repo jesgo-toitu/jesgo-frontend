@@ -10,6 +10,7 @@ import StaffTables from '../components/Staff/StaffTables';
 import UserRollSetting from '../components/Staff/UserRollSetting';
 import { settingsFromApi } from './Settings';
 import './Stafflist.css';
+import { backToPatientsList } from '../common/CommonUtility';
 
 export const Stafflist = () => {
   const navigate = useNavigate();
@@ -71,11 +72,11 @@ export const Stafflist = () => {
   const clickCancel = useCallback(() => {
     if (selectedTab === 1) {
       //
-      navigate('/Patients');
+      backToPatientsList(navigate);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     } else if (isTransitionOkWrapper()) {
       // 権限管理の場合、確認ダイアログを表示する
-      navigate('/Patients');
+      backToPatientsList(navigate);
     }
   }, [selectedTab]);
 

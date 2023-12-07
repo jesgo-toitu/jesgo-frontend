@@ -32,6 +32,8 @@ import {
 } from '../common/CaseRegistrationUtility';
 import './PluginManager.css';
 import { jesgoPluginColumns } from '../common/Plugin';
+import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
+import { backToPatientsList } from '../common/CommonUtility';
 
 type settings = {
   facility_name: string;
@@ -99,6 +101,9 @@ const PluginManager = () => {
 
   useEffect(() => {
     const f = async () => {
+      setIsLoading(true);
+      await storeSchemaInfo(dispatch);
+
       // 設定情報取得APIを呼ぶ
       const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
 
@@ -114,6 +119,8 @@ const PluginManager = () => {
       }
 
       await loadPluginList();
+
+      setIsLoading(false);
     };
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     f();
@@ -144,10 +151,9 @@ const PluginManager = () => {
     const fileList = e.target.files;
     if (fileList) {
       const file = fileList[0];
-      if (file.size > 1048576) { // 1024×1024
-        alert(
-          '一度にアップロードするファイルのサイズは1MBまでにしてください'
-        );
+      if (file.size > 1048576) {
+        // 1024×1024
+        alert('一度にアップロードするファイルのサイズは1MBまでにしてください');
         return;
       }
       const fileName: string = file.name.toLocaleLowerCase();
@@ -275,7 +281,7 @@ const PluginManager = () => {
             style={{ display: 'none' }}
           />
           <Button
-            onClick={() => navigate('/Patients')}
+            onClick={() => backToPatientsList(navigate)}
             bsStyle="primary"
             className="normal-button"
           >
@@ -315,10 +321,16 @@ const PluginManager = () => {
                 <td className="plugin-table-short">
                   <ButtonToolbar>
                     <ButtonGroup>
-                      <Button title="内容の表示" onClick={() => openSyntax(plugin.plugin_id)}>
+                      <Button
+                        title="内容の表示"
+                        onClick={() => openSyntax(plugin.plugin_id)}
+                      >
                         <Glyphicon glyph="list-alt" />
                       </Button>
-                      <Button title="ダウンロード" onClick={() => downloadPlugin(plugin)}>
+                      <Button
+                        title="ダウンロード"
+                        onClick={() => downloadPlugin(plugin)}
+                      >
                         <Glyphicon glyph="download-alt" />
                       </Button>
                       <Button title="削除" onClick={() => deletePlugin(plugin)}>

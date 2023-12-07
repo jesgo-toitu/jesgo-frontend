@@ -26,6 +26,7 @@ import TabSchema from './TabSchema';
 
 export const createTab = (
   parentTabsId: string,
+  parentEventDate: string | null,
   schemaIds: dispSchemaIdAndDocumentIdDefine[],
   filteredSchemaIds: dispSchemaIdAndDocumentIdDefine[],
   setSchemaIds: React.Dispatch<
@@ -61,6 +62,7 @@ export const createTab = (
           key={`tabitem-${info.compId}`}
           tabId={`${parentTabsId}-tab-${info.compId}`}
           parentTabsId={parentTabsId}
+          parentEventDate={parentEventDate}
           isChildSchema={isChildSchema}
           schemaId={info.schemaId}
           documentId={info.documentId}
@@ -85,6 +87,7 @@ export const createTab = (
 
 export const createTabs = (
   id: string,
+  parentEventDate: string | null,
   subschemaIds: dispSchemaIdAndDocumentIdDefine[],
   subschemaIdsNotDeleted: dispSchemaIdAndDocumentIdDefine[],
   setSubschemaIds: React.Dispatch<
@@ -293,6 +296,7 @@ export const createTabs = (
           {/* subschema表示 */}
           {createTab(
             id,
+            parentEventDate,
             subschemaIds,
             subschemaIdsNotDeleted,
             setSubschemaIds,
@@ -312,6 +316,7 @@ export const createTabs = (
           {/* childSchema表示 */}
           {createTab(
             id,
+            parentEventDate,
             dispChildSchemaIds,
             dispChildSchemaIdsNotDeleted,
             setDispChildSchemaIds,
@@ -354,6 +359,7 @@ export const createPanel = (
   selectedTabKey: any,
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void,
   parentTabsId: string,
+  parentEventDate: string | null,
   setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>,
   setReload: (value: React.SetStateAction<reloadState>) => void,
   setOverwriteDialogPlop: (
@@ -366,6 +372,7 @@ export const createPanel = (
     <PanelSchema
       key={`panel-${info.compId}`}
       parentTabsId={parentTabsId}
+      parentEventDate={parentEventDate}
       isChildSchema={isChildSchema} // eslint-disable-line react/jsx-boolean-value
       schemaId={info.schemaId}
       documentId={info.documentId}
@@ -403,6 +410,7 @@ export const createPanels = (
   selectedTabKey: any,
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void,
   parentTabsId: string,
+  parentEventDate: string | null,
   setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>,
   setReload: (value: React.SetStateAction<reloadState>) => void,
   setOverwriteDialogPlop: (
@@ -423,6 +431,7 @@ export const createPanels = (
         selectedTabKey,
         schemaAddModFunc,
         parentTabsId,
+        parentEventDate,
         setUpdateFormData,
         setReload,
         setOverwriteDialogPlop
@@ -438,6 +447,7 @@ export const createPanels = (
         selectedTabKey,
         schemaAddModFunc,
         parentTabsId,
+        parentEventDate,
         setUpdateFormData,
         setReload,
         setOverwriteDialogPlop

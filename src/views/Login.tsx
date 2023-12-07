@@ -125,6 +125,14 @@ export const Login = () => {
         }
       }
 
+      dispatch({
+        type: 'SET_TOP_MENU_INFO',
+        topMenuInfo: {
+          paramString: '',
+          isDetail: false
+        },
+      });
+
       navigate('/Patients');
     } else if (returnApiObject.statusNum === RESULT.NETWORK_ERROR) {
       // eslint-disable-next-line no-alert

@@ -33,6 +33,7 @@ import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
 type Props = {
   schemaId: number;
   parentTabsId: string;
+  parentEventDate: string | null;
   setDispSchemaIds: React.Dispatch<
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >;
@@ -56,6 +57,7 @@ type Props = {
 const PanelSchema = React.memo((props: Props) => {
   const {
     schemaId,
+    parentEventDate,
     parentTabsId,
     setDispSchemaIds,
     dispSchemaIds,
@@ -80,7 +82,7 @@ const PanelSchema = React.memo((props: Props) => {
     .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
   const eventDate = useMemo(
     () => (saveDoc ? getEventDate(saveDoc, formData) : null),
-    [saveDoc, formData]
+    [saveDoc, formData, parentEventDate]
   );
 
   // schemaIdをもとに情報を取得
@@ -195,8 +197,9 @@ const PanelSchema = React.memo((props: Props) => {
       dispSubSchemaIds.find((p) => p.documentId === '')
     ) {
       // unieque=falseのサブスキーマ追加
-      const newItem = dispSubSchemaIds.find((p) => p.documentId === '');
-      if (newItem) {
+      const newItemIdx = dispSubSchemaIds.findIndex((p) => p.documentId === '');
+      if (newItemIdx > -1) {
+        const newItem = dispSubSchemaIds[newItemIdx];
         // ここはtrueになる
         const itemSchemaInfo = GetSchemaInfo(newItem.schemaId);
         dispatch({
@@ -211,6 +214,7 @@ const PanelSchema = React.memo((props: Props) => {
           schemaInfo: itemSchemaInfo,
           setAddedDocumentCount,
           isNotUniqueSubSchemaAdded: true,
+          schemaIndex: newItemIdx,
         });
       }
     } else if (
@@ -637,6 +641,7 @@ const PanelSchema = React.memo((props: Props) => {
         ? // タブ表示
           createTabs(
             parentTabsId,
+            eventDate,
             dispSubSchemaIds,
             dispSubSchemaIdsNotDeleted,
             setDispSubSchemaIds,
@@ -666,6 +671,7 @@ const PanelSchema = React.memo((props: Props) => {
             selectedTabKey,
             schemaAddModFunc,
             parentTabsId,
+            eventDate,
             setUpdateChildFormData,
             setReload,
             setOverwriteDialogPlop

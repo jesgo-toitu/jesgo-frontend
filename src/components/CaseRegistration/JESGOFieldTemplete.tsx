@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 // eslint-disable-next-line import/no-unresolved
 import { JSONSchema7, JSONSchema7Type } from 'json-schema';
 import {
@@ -169,52 +169,62 @@ export namespace JESGOFiledTemplete {
       }
     });
 
-    // jesgo:ui:visibleWhenによる項目表示/非表示制御
-    // eslint-disable-next-line react/destructuring-assignment
-    if (props.items) {
-      //  eslint-disable-next-line react/destructuring-assignment
-      props.items.forEach((item, index) => {
-        const editItem = item;
+    useEffect(() => {
 
-        // visiblewhen
-        visibleWhenCondition.forEach((condition: VisibleWhenItem) => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          const inputData = formData[index][condition.name] as JSONSchema7Type;
+      // jesgo:ui:visibleWhenによる項目表示/非表示制御
+      // eslint-disable-next-line react/destructuring-assignment
+      if (props.items) {
+        //  eslint-disable-next-line react/destructuring-assignment
+        props.items.forEach((item, index) => {
+          const editItem = item;
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          const itemId = editItem.children.props.idSchema[
-            condition.parentItemName
-          ].$id as string;
-          const element = document.getElementById(itemId);
-          if (element) {
-            const parentClass = element.parentElement?.className;
-            if (parentClass && parentClass.includes('visiblewhen')) {
-              if (
-                !(
-                  (condition.values && condition.values.includes(inputData)) ||
-                  (condition.pattern &&
-                    typeof inputData === 'string' &&
-                    inputData.match(condition.pattern))
-                )
-              ) {
-                // 条件に【当てはまらなければ】非表示にするCSSを追加
+          // visiblewhen
+          visibleWhenCondition.forEach((condition: VisibleWhenItem) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const inputData = formData[index][condition.name] as JSONSchema7Type;
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const itemId = editItem.children.props.idSchema[
+              condition.parentItemName
+            ].$id as string;
+            const element = document.getElementById(itemId);
+            if (element) {
+              let parentElement = element.parentElement
+              // 単位付きフィールドではもう一つ上の階層がdiv.visiblewhenとなる
+              if (parentElement?.className && parentElement.className.includes('with-units-div')) {
+                parentElement = parentElement.parentElement
+              }
+              const parentClass = parentElement?.className;
+              if (parentClass && parentClass.includes('visiblewhen')) {
                 if (
-                  !element.parentElement.className.includes('visiblewhen-item')
+                  !(
+                    (condition.values && condition.values.includes(inputData)) ||
+                    (condition.pattern &&
+                      typeof inputData === 'string' &&
+                      inputData.match(condition.pattern))
+                  )
                 ) {
-                  element.parentElement.className += ' visiblewhen-item';
+                  // 条件に【当てはまらなければ】非表示にするCSSを追加
+                  if (
+                    parentElement && !parentElement?.className.includes('visiblewhen-item')
+                  ) {
+                    parentElement.className += ' visiblewhen-item';
+                  }
+                } else {
+                  // 当てはまる場合は非表示用のCSSをクリア
+                  if (parentElement) {
+                    parentElement.className =
+                    parentElement.className
+                      .replace(/visiblewhen-item/g, '')
+                      .trim();
+                  }
                 }
-              } else {
-                // 当てはまる場合は非表示用のCSSをクリア
-                element.parentElement.className =
-                  element.parentElement.className
-                    .replace(/visiblewhen-item/g, '')
-                    .trim();
               }
             }
-          }
+          });
         });
-      });
-    }
+      }
+    });
 
     return (
       <div>

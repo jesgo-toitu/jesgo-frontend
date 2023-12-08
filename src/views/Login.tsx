@@ -49,6 +49,7 @@ export const Login = () => {
         localStorage.setItem('digit', returned.hisid_digit);
         localStorage.setItem('alphabet_enable', returned.hisid_alphabet_enable);
         localStorage.setItem('hyphen_enable', returned.hisid_hyphen_enable);
+        localStorage.setItem('jesgo_required_highlight', returned.jesgo_required_highlight);
         setFacilityName(returned.facility_name);
       }
     };

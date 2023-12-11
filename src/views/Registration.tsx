@@ -6,7 +6,6 @@ import React, {
   useLayoutEffect,
   useState,
 } from 'react';
-import lodash from 'lodash';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -19,11 +18,9 @@ import {
   Col,
   Panel,
   Checkbox,
-  Button,
   Glyphicon,
   Radio,
 } from 'react-bootstrap';
-import jsonpatch, { JSONPatch } from 'jsonpatch';
 import {
   ControlButton,
   COMP_TYPE,
@@ -36,6 +33,7 @@ import {
   IsNotUpdate,
   SetSameSchemaTitleNumbering,
   getErrorMsgObject,
+  JesgoRequiredHighlight,
 } from '../common/CaseRegistrationUtility';
 import './Registration.css';
 import {
@@ -135,7 +133,11 @@ const Registration = () => {
   let age = ''; // 年齢
 
   // jesgo:requiredのハイライト設定
-  const [highlight, setHighlight] = useState<boolean>(false);
+  const highlightSettingStr = localStorage.getItem('jesgo_required_highlight');
+  const highlightSetting: JesgoRequiredHighlight =
+    highlightSettingStr != null && highlightSettingStr !== "null" ?
+      JSON.parse(highlightSettingStr) : { jsog: false, jsgoe: false, others: false } as JesgoRequiredHighlight;
+  const [highlight, setHighlight] = useState<JesgoRequiredHighlight>(highlightSetting);
 
   // 選択中のタブeventKey
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -249,6 +251,12 @@ const Registration = () => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       asyncFunc();
     }
+
+    // ハイライト設定を保持
+    dispatch({
+      type: 'JESGO_REQUIRED_HIGHLIGHT',
+      isJesgoRequiredHighlight: highlight,
+    });
   });
 
   const LoadDataFromDB = () => {
@@ -644,23 +652,34 @@ const Registration = () => {
     }
   }, [hasSchema]);
 
+  /**
+   * jesgo:requiredのハイライト設定変更
+   * @param event 
+   */
   const handleSettingHighlight = (event: any) => {
     const eventTarget: EventTarget & HTMLInputElement =
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       event.target as EventTarget & HTMLInputElement;
-    if (eventTarget.value === 'true') {
-      dispatch({
-        type: 'JESGO_REQUIRED_HIGHLIGHT',
-        isJesgoRequiredHighlight: true,
-      });
-      setHighlight(true);
-    } else {
-      dispatch({
-        type: 'JESGO_REQUIRED_HIGHLIGHT',
-        isJesgoRequiredHighlight: false,
-      });
-      setHighlight(false);
+
+    const value = eventTarget.checked ?? false;
+    const result = {...highlight};
+    switch (eventTarget.id) {
+      case "jesgo_required_highlight_jsog":
+        result.jsog = value;
+        break;
+      case "jesgo_required_highlight_jsgoe":
+        result.jsgoe = value;
+        break;
+      default:
+        result.others = value;
+        break;
     }
+
+    dispatch({
+      type: 'JESGO_REQUIRED_HIGHLIGHT',
+      isJesgoRequiredHighlight: result,
+    });
+    setHighlight(result);
   };
 
   return (
@@ -724,7 +743,7 @@ const Registration = () => {
               <Col>
                 <FormGroup>
                   <ControlLabel />
-                  <div>
+                  <div className="user-info-checkbox-group">
                     <Checkbox
                       className="user-info-checkbox"
                       id="decline"
@@ -737,33 +756,35 @@ const Registration = () => {
                 </FormGroup>
               </Col>
             </Row>
-            <Row className="setting-row">
-              <Col>
-                <FormGroup>
-                  <ControlLabel>JSOG/JSGOE必須項目ハイライト</ControlLabel>
-                  <div>
-                    <Radio
-                      name="jesgo_required_highlight"
-                      onChange={handleSettingHighlight}
-                      value="true"
-                      inline
-                      checked={highlight}
-                    >
-                      あり
-                    </Radio>
-                    <Radio
-                      name="jesgo_required_highlight"
-                      onChange={handleSettingHighlight}
-                      value="false"
-                      inline
-                      checked={!highlight}
-                    >
-                      なし
-                    </Radio>
-                  </div>
-                </FormGroup>
-              </Col>
-            </Row>
+            <FormGroup>
+              <ControlLabel>必須項目ハイライト設定</ControlLabel>
+              <div className="setting-checkbox-group">
+                <Checkbox
+                  className="no-checkbox-auto-styling"
+                  id="jesgo_required_highlight_jsog"
+                  onChange={handleSettingHighlight}
+                  checked={highlight.jsog}
+                >
+                  JSOG
+                </Checkbox>
+                <Checkbox
+                  className="no-checkbox-auto-styling"
+                  id="jesgo_required_highlight_jsgoe"
+                  onChange={handleSettingHighlight}
+                  checked={highlight.jsgoe}
+                >
+                  JSGOE
+                </Checkbox>
+                <Checkbox
+                  className="no-checkbox-auto-styling"
+                  id="jesgo_required_highlight_others"
+                  onChange={handleSettingHighlight}
+                  checked={highlight.others}
+                >
+                  JSOG/JSGOE以外
+                </Checkbox>
+              </div>
+            </FormGroup>
             <SubmitButton
               setIsLoading={setIsLoading}
               setLoadedJesgoCase={setLoadedJesgoCase}

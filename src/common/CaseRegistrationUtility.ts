@@ -1308,3 +1308,12 @@ export const AddJesgoError = (
 
   return errors;
 };
+
+/**
+ * jesgo:requiredのハイライト設定
+ */
+export type JesgoRequiredHighlight = {
+  jsog: boolean,  // JSOG
+  jsgoe: boolean, // JSGOE
+  others: boolean,  // JSOG・JSGOE以外(独自拡張を想定)
+}

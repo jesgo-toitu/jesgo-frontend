@@ -48,17 +48,17 @@ export const SystemMenu = (props: {
     }
   };
 
-  const handlSchemaManager = useCallback(() => {
+  const handlSchemaManager = () => {
     if (isConfirm === null || isConfirm()) {
       checkAuth('is_system_manage_roll', '/SchemaManager');
     }
-  }, []);
+  };
 
-  const handlPluginManager = useCallback(() => {
+  const handlPluginManager = () => {
     if (isConfirm === null || isConfirm()) {
       checkAuth('is_plugin_registerable', '/PluginManager');
     }
-  }, []);
+  };
 
   return (
     <ButtonToolbar>

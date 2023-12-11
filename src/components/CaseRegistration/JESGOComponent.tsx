@@ -24,19 +24,16 @@ import { Const } from '../../common/Const';
 export namespace JESGOComp {
   // "jesgo:required"用ラベル
   export const TypeLabel = (props: { requireType: string[]; pId: string }) => {
-    const require = ['JSOG', 'JSGOE'];
     const { requireType, pId } = props;
+    const requiredStyles = { [Const.JesgoRequiredTypes.JSOG]: "default", [Const.JesgoRequiredTypes.JSGOE]: "info" } as { [key: string]: string; };
 
-    let style = 'default';
     return (
       <>
-        {require.map((type: string) => {
-          if (type === 'JSGOE') {
-            style = 'info';
-          }
-
-          return (
-            requireType.includes(type) && (
+        {
+          requireType.map((type: string) => {
+            // JSOG,JSGOE以外は"success"
+            const style: string = Object.keys(requiredStyles).includes(type) ? requiredStyles[type] : "success";
+            return (
               <Label
                 className="label-type"
                 bsStyle={style}
@@ -44,9 +41,9 @@ export namespace JESGOComp {
               >
                 {type}
               </Label>
-            )
-          );
-        })}
+            );
+          })
+        }
       </>
     );
   };

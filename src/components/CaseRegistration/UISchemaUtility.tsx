@@ -81,9 +81,20 @@ const AddUiSchema = (
   
   // "jesgo:required"
   const jesgoRequireds = schema[Const.EX_VOCABULARY.REQUIRED];
-  if (jesgoRequireds && !isNotEmptyObject(formData) &&
-    store.getState().commonReducer.isJesgoRequiredHighlight) {
-    classNames.push('jesgo-require');
+  const highlight = store.getState().commonReducer.isJesgoRequiredHighlight;
+  if (jesgoRequireds && !isNotEmptyObject(formData) && highlight) {
+    if (jesgoRequireds.includes(Const.JesgoRequiredTypes.JSOG) && highlight.jsog === true) {
+      classNames.push('jesgo-require-jsog');
+      
+    }
+    if (jesgoRequireds.includes(Const.JesgoRequiredTypes.JSGOE) && highlight.jsgoe === true) {
+      classNames.push('jesgo-require-jsgoe');
+    }
+    // 上記以外の設定があった場合
+    const others = jesgoRequireds.filter((x) => x !== Const.JesgoRequiredTypes.JSOG && x !== Const.JesgoRequiredTypes.JSGOE)
+    if (others.length > 0 && highlight.others === true) {
+      classNames.push('jesgo-require-others');
+    }
   }
 
   // "jesgo:required"、または"description"がある場合、カスタムラベルを使用

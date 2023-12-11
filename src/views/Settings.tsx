@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Navbar, Button, Nav, NavItem, Radio, Table, Checkbox } from 'react-bootstrap';
+import {
+  Navbar,
+  Button,
+  Nav,
+  NavItem,
+  Radio,
+  Table,
+  Checkbox,
+} from 'react-bootstrap';
 import './Settings.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { UserMenu } from '../components/common/UserMenu';
@@ -15,7 +23,7 @@ export type settingsFromApi = {
   hisid_digit: string;
   hisid_hyphen_enable: string;
   hisid_alphabet_enable: string;
-  jesgo_required_highlight: string,
+  jesgo_required_highlight: string;
   facility_name: string;
   jsog_registration_number: string;
   joed_registration_number: string;
@@ -27,7 +35,7 @@ type settings = {
   hisid_digit_string: string;
   hisid_hyphen_enable: boolean;
   hisid_alphabet_enable: boolean;
-  jesgo_required_highlight: JesgoRequiredHighlight,
+  jesgo_required_highlight: JesgoRequiredHighlight;
   facility_name: string;
   jsog_registration_number: string;
   joed_registration_number: string;
@@ -46,12 +54,14 @@ const Settings = () => {
     jesgo_required_highlight: {
       jsog: false,
       jsgoe: false,
-      others: false
+      others: false,
     },
     facility_name: '',
     jsog_registration_number: '',
     joed_registration_number: '',
   });
+  const [loadedSettingJson, setLoadedSettingJson] =
+    useState<settings>(settingJson);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -64,8 +74,13 @@ const Settings = () => {
 
       if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
         const returned = returnApiObject.body as settingsFromApi;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const highlightSetting =
-          returned.jesgo_required_highlight != null ? JSON.parse(returned.jesgo_required_highlight) as JesgoRequiredHighlight : { jsog: false, jsgoe: false, others: false };
+          returned.jesgo_required_highlight != null
+            ? (JSON.parse(
+                returned.jesgo_required_highlight
+              ) as JesgoRequiredHighlight)
+            : { jsog: false, jsgoe: false, others: false };
         const setting: settings = {
           hisid_alignment: returned.hisid_alignment === 'true',
           hisid_digit: Number(returned.hisid_digit),
@@ -79,6 +94,7 @@ const Settings = () => {
         };
         setFacilityName(returned.facility_name);
         setSettingJson(setting);
+        setLoadedSettingJson(setting);
       } else {
         navigate('/login');
       }
@@ -237,8 +253,21 @@ const Settings = () => {
     return errorMessages;
   };
 
+  // 編集中チェック
+  const editingCheck = () => {
+    if (JSON.stringify(loadedSettingJson) !== JSON.stringify(settingJson)) {
+      // eslint-disable-next-line no-restricted-globals
+      return confirm(
+        `編集中のデータがありますが、破棄して画面遷移します。よろしいですか？`
+      );
+    }
+    return true;
+  };
+
   const clickCancel = () => {
-    backToPatientsList(navigate);
+    if (editingCheck()) {
+      backToPatientsList(navigate);
+    }
   };
 
   const submit = async () => {
@@ -313,7 +342,7 @@ const Settings = () => {
               </Navbar.Brand>
               <Navbar.Brand>
                 <div>
-                  <SystemMenu title="設定" i={0} isConfirm={null} />
+                  <SystemMenu title="設定" i={0} isConfirm={editingCheck} />
                 </div>
               </Navbar.Brand>
             </Nav>
@@ -515,4 +544,5 @@ const Settings = () => {
     </>
   );
 };
+
 export default Settings;

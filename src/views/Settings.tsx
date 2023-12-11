@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Navbar, Button, Nav, NavItem, Radio, Table } from 'react-bootstrap';
+import {
+  Navbar,
+  Button,
+  Nav,
+  NavItem,
+  Radio,
+  Table,
+  Checkbox,
+} from 'react-bootstrap';
 import './Settings.css';
 import apiAccess, { METHOD_TYPE, RESULT } from '../common/ApiAccess';
 import { UserMenu } from '../components/common/UserMenu';
@@ -8,12 +16,14 @@ import { SystemMenu } from '../components/common/SystemMenu';
 import { Const } from '../common/Const';
 import Loading from '../components/CaseRegistration/Loading';
 import { backToPatientsList } from '../common/CommonUtility';
+import { JesgoRequiredHighlight } from '../common/CaseRegistrationUtility';
 
 export type settingsFromApi = {
   hisid_alignment: string;
   hisid_digit: string;
   hisid_hyphen_enable: string;
   hisid_alphabet_enable: string;
+  jesgo_required_highlight: string;
   facility_name: string;
   jsog_registration_number: string;
   joed_registration_number: string;
@@ -25,6 +35,7 @@ type settings = {
   hisid_digit_string: string;
   hisid_hyphen_enable: boolean;
   hisid_alphabet_enable: boolean;
+  jesgo_required_highlight: JesgoRequiredHighlight;
   facility_name: string;
   jsog_registration_number: string;
   joed_registration_number: string;
@@ -40,10 +51,17 @@ const Settings = () => {
     hisid_digit_string: '8',
     hisid_hyphen_enable: true,
     hisid_alphabet_enable: true,
+    jesgo_required_highlight: {
+      jsog: false,
+      jsgoe: false,
+      others: false,
+    },
     facility_name: '',
     jsog_registration_number: '',
     joed_registration_number: '',
   });
+  const [loadedSettingJson, setLoadedSettingJson] =
+    useState<settings>(settingJson);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,18 +74,27 @@ const Settings = () => {
 
       if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
         const returned = returnApiObject.body as settingsFromApi;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const highlightSetting =
+          returned.jesgo_required_highlight != null
+            ? (JSON.parse(
+                returned.jesgo_required_highlight
+              ) as JesgoRequiredHighlight)
+            : { jsog: false, jsgoe: false, others: false };
         const setting: settings = {
           hisid_alignment: returned.hisid_alignment === 'true',
           hisid_digit: Number(returned.hisid_digit),
           hisid_digit_string: returned.hisid_digit,
           hisid_hyphen_enable: returned.hisid_hyphen_enable === 'true',
           hisid_alphabet_enable: returned.hisid_alphabet_enable === 'true',
+          jesgo_required_highlight: highlightSetting,
           facility_name: returned.facility_name,
           jsog_registration_number: returned.jsog_registration_number,
           joed_registration_number: returned.joed_registration_number,
         };
         setFacilityName(returned.facility_name);
         setSettingJson(setting);
+        setLoadedSettingJson(setting);
       } else {
         navigate('/login');
       }
@@ -84,6 +111,7 @@ const Settings = () => {
     const eventTarget: EventTarget & HTMLInputElement =
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       event.target as EventTarget & HTMLInputElement;
+    const highlight = { ...settingJson.jesgo_required_highlight };
 
     switch (eventTarget.name) {
       case 'alignment':
@@ -137,6 +165,30 @@ const Settings = () => {
         setSettingJson({
           ...settingJson,
           facility_name: eventTarget.value,
+        });
+        break;
+
+      case 'jesgo_required_highlight_jsog':
+        highlight.jsog = eventTarget.checked;
+        setSettingJson({
+          ...settingJson,
+          jesgo_required_highlight: highlight,
+        });
+        break;
+
+      case 'jesgo_required_highlight_jsgoe':
+        highlight.jsgoe = eventTarget.checked;
+        setSettingJson({
+          ...settingJson,
+          jesgo_required_highlight: highlight,
+        });
+        break;
+
+      case 'jesgo_required_highlight_others':
+        highlight.others = eventTarget.checked;
+        setSettingJson({
+          ...settingJson,
+          jesgo_required_highlight: highlight,
         });
         break;
 
@@ -201,8 +253,21 @@ const Settings = () => {
     return errorMessages;
   };
 
+  // 編集中チェック
+  const editingCheck = () => {
+    if (JSON.stringify(loadedSettingJson) !== JSON.stringify(settingJson)) {
+      // eslint-disable-next-line no-restricted-globals
+      return confirm(
+        `編集中のデータがありますが、破棄して画面遷移します。よろしいですか？`
+      );
+    }
+    return true;
+  };
+
   const clickCancel = () => {
-    backToPatientsList(navigate);
+    if (editingCheck()) {
+      backToPatientsList(navigate);
+    }
   };
 
   const submit = async () => {
@@ -239,6 +304,10 @@ const Settings = () => {
         'hyphen_enable',
         settingJson.hisid_hyphen_enable.toString()
       );
+      localStorage.setItem(
+        'jesgo_required_highlight',
+        JSON.stringify(settingJson.jesgo_required_highlight)
+      );
       // eslint-disable-next-line no-alert
       alert('設定が完了しました');
       backToPatientsList(navigate);
@@ -273,7 +342,7 @@ const Settings = () => {
               </Navbar.Brand>
               <Navbar.Brand>
                 <div>
-                  <SystemMenu title="設定" i={0} isConfirm={null} />
+                  <SystemMenu title="設定" i={0} isConfirm={editingCheck} />
                 </div>
               </Navbar.Brand>
             </Nav>
@@ -409,6 +478,32 @@ const Settings = () => {
                 </td>
               </tr>
               <tr>
+                <td>JSOG/JSGOE必須項目 未入力時ハイライト</td>
+                <td>
+                  <Checkbox
+                    name="jesgo_required_highlight_jsog"
+                    onChange={handleSettingInputs}
+                    checked={settingJson.jesgo_required_highlight.jsog}
+                  >
+                    JSOG
+                  </Checkbox>
+                  <Checkbox
+                    name="jesgo_required_highlight_jsgoe"
+                    onChange={handleSettingInputs}
+                    checked={settingJson.jesgo_required_highlight.jsgoe}
+                  >
+                    JSGOE
+                  </Checkbox>
+                  <Checkbox
+                    name="jesgo_required_highlight_others"
+                    onChange={handleSettingInputs}
+                    checked={settingJson.jesgo_required_highlight.others}
+                  >
+                    JSOG/JSGOE以外
+                  </Checkbox>
+                </td>
+              </tr>
+              <tr>
                 <td>施設名称</td>
                 <td>
                   <input
@@ -449,4 +544,5 @@ const Settings = () => {
     </>
   );
 };
+
 export default Settings;

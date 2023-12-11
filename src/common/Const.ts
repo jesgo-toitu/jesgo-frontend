@@ -69,6 +69,15 @@ export namespace Const {
   } as const;
 
   /**
+   * jesgo:requiredの種類
+   * ※これ以外は「その他」として扱われる
+   */
+  export const JesgoRequiredTypes = {
+    JSOG: "JSOG",
+    JSGOE: "JSGOE",
+  }
+
+  /**
    * 必須項目のラベル横に出るマーク
    */
   export const REQUIRED_FIELD_SYMBOL = '*';

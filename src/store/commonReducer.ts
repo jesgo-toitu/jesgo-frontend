@@ -2,9 +2,9 @@
  * その他共通で扱うデータ
  */
 
-import lodash from 'lodash';
 import { Reducer } from 'redux';
 import { jesgoPluginColumns } from '../common/Plugin';
+import { JesgoRequiredHighlight } from '../common/CaseRegistrationUtility';
 
 export interface commonState {
   scrollTop?: number; // スクロール位置(Y軸)
@@ -12,7 +12,7 @@ export interface commonState {
   isSaveAfterTabbing?: boolean; // タブ移動時の保存有無
   isShownSaveMessage?: boolean; // 保存確認ダイアログ表示中フラグ
   subSchemaCount?: number; // 自動生成されるサブスキーマの個数
-  isJesgoRequiredHighlight?: boolean; // jesgo:required 未入力時ハイライト
+  isJesgoRequiredHighlight?: JesgoRequiredHighlight; // jesgo:required 未入力時ハイライト
 
   pluginList?: jesgoPluginColumns[];
 
@@ -28,7 +28,7 @@ export interface commonAction {
   isHiddenSaveMassage?: boolean;
   isSaveAfterTabbing?: boolean;
   isShownSaveMessage?: boolean;
-  isJesgoRequiredHighlight?: boolean;
+  isJesgoRequiredHighlight?: JesgoRequiredHighlight;
 
   pluginList?: jesgoPluginColumns[];
 
@@ -43,7 +43,11 @@ const createInitialState = (): commonState => ({
   isHiddenSaveMassage: false,
   isSaveAfterTabbing: false,
   isShownSaveMessage: false,
-  isJesgoRequiredHighlight: false,
+  isJesgoRequiredHighlight: {
+    jsog: false,
+    jsgoe: false,
+    others: false
+  },
   pluginList: undefined,
   topMenuInfo: {
     paramString: '',
@@ -85,7 +89,7 @@ const commonReducer: Reducer<commonState, commonAction> = (
       break;
     }
 
-    // 保存ダイアログ表示中フラグの更新
+    // jesgo:requiredのハイライトON/OFFの更新
     case 'JESGO_REQUIRED_HIGHLIGHT': {
       copyState.isJesgoRequiredHighlight = action.isJesgoRequiredHighlight;
       break;

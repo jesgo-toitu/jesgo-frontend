@@ -590,7 +590,7 @@ const TabSchema = React.memo((props: Props) => {
     ) {
       dispatch({ type: 'CHANGED_SCHEMA', documentId, schemaInfo });
     }
-  }, [formData, updateChildFormData]);
+  }, [formData, updateChildFormData, schemaInfo]);
 
   return (
     <>

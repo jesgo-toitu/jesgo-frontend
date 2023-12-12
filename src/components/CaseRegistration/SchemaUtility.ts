@@ -544,7 +544,7 @@ const GetSchemaFromPropItem = (val: any, isArrayOfItem: boolean) => {
     // 配列
     schemaObj.type = 'array';
 
-    const objVals = val.filter((p) => typeof p === 'object');
+    const objVals = val.filter((p) => p !== null && typeof p === 'object');
     if (objVals.length > 0) {
       // 配列の中身がオブジェクトの場合はプロパティをマージしてすべての値が表示されるようにする
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -559,7 +559,7 @@ const GetSchemaFromPropItem = (val: any, isArrayOfItem: boolean) => {
     } else {
       schemaObj.items = { type: 'string' };
     }
-  } else if (typeof val === 'object') {
+  } else if (val !== null && typeof val === 'object') {
     // オブジェクト
     schemaObj.type = 'object';
     schemaObj.properties = {};
@@ -624,6 +624,42 @@ const customSchemaAppendFormDataProperty = (
               );
               // 元スキーマのプロパティに追加
               copySchema.properties[propName] = newSchema;
+            }
+          }
+        } else if (Array.isArray(propValue)) {
+          const objVals = propValue.filter((p) => p !== null && typeof p === 'object');
+          // 配列の中身がオブジェクトの場合は中身も見る
+          if (objVals.length > 0) {
+            if (copySchema.properties) {
+              const propSchema = copySchema.properties[propName] as JSONSchema7;
+              if (propSchema) {
+                const itemsSchema = propSchema.items as JSONSchema7;
+                if (itemsSchema) {
+                  const unionVal = lodash.merge({}, ...(objVals as object[]));
+                  // formDataにしかない項目一覧取得
+                  const diffKeys = lodash.difference(
+                    Object.keys(unionVal),
+                    Object.keys(itemsSchema)
+                  );
+
+                  if (diffKeys.length > 0) {
+                    // 子項目に対して再帰
+                    const newSchema = customSchemaAppendFormDataProperty(
+                      itemsSchema,
+                      unionVal
+                    );
+
+                    // 配列の中身が全てスキーマ未定義の場合は配列自体を編集不可に
+                    if (itemsSchema.properties && Object.keys(itemsSchema.properties).length === 0) {
+                      (copySchema.properties[propName] as JSONSchema7).readOnly = true;
+                      (copySchema.properties[propName] as JSONSchema7)[Const.EX_VOCABULARY.NOT_EXIST_PROP] = true;
+                    }
+
+                    // 元スキーマのプロパティに追加
+                    (copySchema.properties[propName] as JSONSchema7).items = newSchema;
+                  }
+                }
+              }
             }
           }
         }

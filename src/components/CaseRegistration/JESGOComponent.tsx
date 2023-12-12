@@ -421,7 +421,7 @@ export namespace JESGOComp {
 
     useEffect(() => {
       setInputValue(value ?? '');
-    }, []);
+    }, [value]);
 
     // コンボボックスのアイテム一覧
     const comboItemList: ComboItemDefine[] = [];

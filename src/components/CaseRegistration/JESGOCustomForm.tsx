@@ -218,14 +218,42 @@ const CustomDivForm = (props: CustomDivFormProp) => {
           // array
           if (Array.isArray(argFormData[propName])) {
             // 削除されたarrayの項目を取り除く
-            const newArray = (argFormData[propName] as any[]).filter(
-              (p) => p != null && p !== ''
-            );
-            if (newArray.length > 0) {
-              argFormData[propName] = newArray;
+            const arrayFormData = argFormData[propName] as any[];
+            if (arrayFormData.filter((val) => val !== null && typeof val === "object").length > 0) {
+              // Arrayのitemsが複数
+              const newArrayFormData: any[] = [];
+              arrayFormData.map((formDatas: { [key: string]: any }) => {
+                const newFormDatas = { ...formDatas };
+                Object.entries(newFormDatas).forEach((data) => {
+                  const dataProp = data[0];
+                  const dataValue = data[1];
+                  if (dataValue == null) {
+                    delete newFormDatas[dataProp];
+                  }
+                })
+                if (newFormDatas != null && typeof newFormDatas === 'object' && Object.keys(newFormDatas).length > 0) {
+                  newArrayFormData.push(newFormDatas);
+                }
+              })
+
+              if (newArrayFormData.length > 0) {
+                argFormData[propName] = [...newArrayFormData];
+              } else {
+                // 表示内容が0の場合はプロパティごと削除する
+                delete argFormData[propName];
+              }
+
             } else {
-              // 表示内容が0の場合はプロパティごと削除する
-              delete argFormData[propName];
+              // Arrayのitemsが1つ
+              const newArray = (arrayFormData).filter(
+                (p) => p != null && p !== ''
+              );
+              if (newArray.length > 0) {
+                argFormData[propName] = newArray;
+              } else {
+                // 表示内容が0の場合はプロパティごと削除する
+                delete argFormData[propName];
+              }
             }
           } else if (
             ((argSchema as any)[propName] as JSONSchema7)?.properties

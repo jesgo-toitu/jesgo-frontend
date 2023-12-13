@@ -82,10 +82,9 @@ export const SaveFormDataToDB = async (
   resFunc(res);
 };
 
-
 /**
  * Nullをundefinedに変換
- * @param obj 
+ * @param obj
  */
 const convertNullToUndefind = (obj: object) => {
   Object.entries(obj).forEach((item) => {
@@ -108,10 +107,10 @@ const convertNullToUndefind = (obj: object) => {
 
 /**
  * Nullをundefinedに変換(Array)
- * @param arrayObj 
+ * @param arrayObj
  */
 const convertNullToUndefindForArray = (arrayObj: any[]) => {
-  for(let i = 0; i < arrayObj.length; i += 1){
+  for (let i = 0; i < arrayObj.length; i += 1) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const arrayItem = arrayObj[i];
     if (arrayItem === null) {
@@ -123,8 +122,7 @@ const convertNullToUndefindForArray = (arrayObj: any[]) => {
       convertNullToUndefind(arrayItem as object);
     }
   }
-}
-
+};
 
 // 症例情報(1患者)読み込み
 export const loadJesgoCaseAndDocument = async (
@@ -178,7 +176,6 @@ export const loadJesgoCaseAndDocument = async (
         ) {
           convertNullToUndefind(doc);
         }
-          
       });
     }
   }
@@ -333,10 +330,10 @@ export const checkEventDateInfinityLoop = (
 
 /**
  * event_date取得処理
- * @param jesgoDoc 
- * @param formData 
+ * @param jesgoDoc
+ * @param formData
  * @param isRecursion true:再帰呼び出し false:非再帰呼び出し
- * @returns 
+ * @returns
  */
 export const getEventDate = (
   jesgoDoc: jesgoDocumentObjDefine,
@@ -806,21 +803,37 @@ export const ReadStaffList = async (
  * @returns
  */
 export const LoadPluginList = async (
-  forceLoad = false
+  forceLoad = false,
+  isAll = false
 ): Promise<ApiReturnObject> => {
   // すでに読み込み済みの場合はstoreから取得する
   const pluginList = store.getState().commonReducer.pluginList;
   if (pluginList && !forceLoad) {
-    return { statusNum: RESULT.PLUGIN_CACHE, body: pluginList };
+    return {
+      statusNum: RESULT.PLUGIN_CACHE,
+      body: isAll ? pluginList : pluginList.filter((p) => !p.disabled),
+    };
   }
 
   // 未読み込みの場合はAPIから取得
   const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
   if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
-    return pluginListReturn;
+    return {
+      statusNum: pluginListReturn.statusNum,
+      body: isAll
+        ? pluginListReturn.body
+        : (pluginListReturn.body as jesgoPluginColumns[]).filter(
+            (p) => !p.disabled
+          ),
+    };
   }
   const newPlugins: jesgoPluginColumns[] = [];
   return { statusNum: pluginListReturn.statusNum, body: newPlugins };
+};
+
+export const SavePluginList = async (pluginList: jesgoPluginColumns[]) => {
+  const ret = await apiAccess(METHOD_TYPE.POST, `save-plugin`, pluginList);
+  return ret;
 };
 
 export default SaveCommand;

@@ -39,6 +39,7 @@ export type jesgoPluginColumns = {
   show_upload_dialog: boolean;
   filter_schema_query?: string;
   explain?: string;
+  disabled?: boolean;
 };
 
 type argDoc = {

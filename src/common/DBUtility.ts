@@ -82,6 +82,50 @@ export const SaveFormDataToDB = async (
   resFunc(res);
 };
 
+
+/**
+ * Nullをundefinedに変換
+ * @param obj 
+ */
+const convertNullToUndefind = (obj: object) => {
+  Object.entries(obj).forEach((item) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const itemValue = item[1];
+    const itemType = typeof itemValue;
+    if (itemValue === null) {
+      // eslint-disable-next-line no-param-reassign
+      item[1] = undefined;
+    } else if (itemType === 'object') {
+      if (Array.isArray(itemValue)) {
+        // eslint-disable-next-line no-use-before-define
+        convertNullToUndefindForArray(itemValue);
+      } else {
+        convertNullToUndefind(itemValue as object);
+      }
+    }
+  });
+};
+
+/**
+ * Nullをundefinedに変換(Array)
+ * @param arrayObj 
+ */
+const convertNullToUndefindForArray = (arrayObj: any[]) => {
+  for(let i = 0; i < arrayObj.length; i += 1){
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const arrayItem = arrayObj[i];
+    if (arrayItem === null) {
+      // eslint-disable-next-line no-param-reassign
+      arrayObj[i] = undefined;
+    } else if (Array.isArray(arrayItem) && arrayItem.length > 0) {
+      convertNullToUndefindForArray(arrayItem);
+    } else if (typeof arrayItem === 'object') {
+      convertNullToUndefind(arrayItem as object);
+    }
+  }
+}
+
+
 // 症例情報(1患者)読み込み
 export const loadJesgoCaseAndDocument = async (
   caseId: number,
@@ -124,6 +168,17 @@ export const loadJesgoCaseAndDocument = async (
         // eventdate
         // eslint-disable-next-line no-param-reassign
         doc.value.event_date = formatDateStr(doc.value.event_date, '-');
+
+        // そのままだとArray内の順番変更がうまくいかないため、nullをundefindに変換
+        if (
+          doc.value.document &&
+          JSON.stringify(doc.value.document).includes('null') &&
+          !Array.isArray(doc.value.document) &&
+          typeof doc.value.document === 'object'
+        ) {
+          convertNullToUndefind(doc);
+        }
+          
       });
     }
   }

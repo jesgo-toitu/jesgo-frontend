@@ -82,10 +82,9 @@ export const SaveFormDataToDB = async (
   resFunc(res);
 };
 
-
 /**
  * Nullをundefinedに変換
- * @param obj 
+ * @param obj
  */
 const convertNullToUndefind = (obj: object) => {
   Object.entries(obj).forEach((item) => {
@@ -108,10 +107,10 @@ const convertNullToUndefind = (obj: object) => {
 
 /**
  * Nullをundefinedに変換(Array)
- * @param arrayObj 
+ * @param arrayObj
  */
 const convertNullToUndefindForArray = (arrayObj: any[]) => {
-  for(let i = 0; i < arrayObj.length; i += 1){
+  for (let i = 0; i < arrayObj.length; i += 1) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const arrayItem = arrayObj[i];
     if (arrayItem === null) {
@@ -123,8 +122,7 @@ const convertNullToUndefindForArray = (arrayObj: any[]) => {
       convertNullToUndefind(arrayItem as object);
     }
   }
-}
-
+};
 
 // 症例情報(1患者)読み込み
 export const loadJesgoCaseAndDocument = async (
@@ -178,7 +176,6 @@ export const loadJesgoCaseAndDocument = async (
         ) {
           convertNullToUndefind(doc);
         }
-          
       });
     }
   }
@@ -333,10 +330,10 @@ export const checkEventDateInfinityLoop = (
 
 /**
  * event_date取得処理
- * @param jesgoDoc 
- * @param formData 
+ * @param jesgoDoc
+ * @param formData
  * @param callerEventDate 一番最初に呼び出したドキュメントのeventDate undefinedで非再帰呼び出しを意味する
- * @returns 
+ * @returns
  */
 export const getEventDate = (
   jesgoDoc: jesgoDocumentObjDefine,
@@ -344,7 +341,7 @@ export const getEventDate = (
   callerEventDate?: string
 ): string => {
   let eventDate = '';
-  const isRecursion = callerEventDate !== undefined
+  const isRecursion = callerEventDate !== undefined;
 
   // 無限ループチェック
   const loopCheck = checkEventDateInfinityLoop(
@@ -406,8 +403,6 @@ export const getEventDate = (
             func(item[1]);
             return !!eventDate;
           });
-      } else {
-
       }
     };
     func(formData);
@@ -415,17 +410,17 @@ export const getEventDate = (
 
   // 遡っている途中でjesgo:inheriteventdate = clearにたどり着いた場合 元のドキュメントの入力値があれば使用
   if (isRecursion && inheritClearPropName) {
-    eventDate = callerEventDate || eventDate
+    eventDate = callerEventDate || eventDate;
   }
 
   // 遡っている途中でjesgo:inheriteventdate = inheritにたどり着いた場合 たどり着いたドキュメントの入力値を使用
   if (isRecursion && inheritForcePropName) {
-    eventDate = callerEventDate || eventDate
+    eventDate = callerEventDate || eventDate;
   }
 
   // eventDateが未入力の場合は上位から引用
   // eventDateが入力されていても、スキーマにjesgo:inheritEventdateがない場合は上位から引用
-  if (!eventDate || !(inheritForcePropName || inheritClearPropName) ) {
+  if (!eventDate || !(inheritForcePropName || inheritClearPropName)) {
     // 親のeventDate取得処理
     const jesgoDocList =
       store.getState().formDataReducer.saveData.jesgo_document;
@@ -434,7 +429,11 @@ export const getEventDate = (
     );
     if (parentDoc) {
       // 見つかるまで探索
-      eventDate = getEventDate(parentDoc, parentDoc.value.document, eventDate || '');
+      eventDate = getEventDate(
+        parentDoc,
+        parentDoc.value.document,
+        eventDate || ''
+      );
     } else {
       // eventDate未入力でルートまで遡って見つからない場合、ドキュメントの作成日を使用する
       eventDate = eventDate || formatDateStr(jesgoDoc.value.created, '-');

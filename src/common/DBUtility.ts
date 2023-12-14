@@ -335,15 +335,16 @@ export const checkEventDateInfinityLoop = (
  * event_date取得処理
  * @param jesgoDoc 
  * @param formData 
- * @param isRecursion true:再帰呼び出し false:非再帰呼び出し
+ * @param callerEventDate 一番最初に呼び出したドキュメントのeventDate undefinedで非再帰呼び出しを意味する
  * @returns 
  */
 export const getEventDate = (
   jesgoDoc: jesgoDocumentObjDefine,
   formData: any,
-  isRecursion = false
+  callerEventDate?: string
 ): string => {
   let eventDate = '';
+  const isRecursion = callerEventDate !== undefined
 
   // 無限ループチェック
   const loopCheck = checkEventDateInfinityLoop(
@@ -377,6 +378,16 @@ export const getEventDate = (
     'jesgo:set',
     'eventdate'
   );
+  const inheritForcePropName = getJesgoSchemaPropValue(
+    customSchema,
+    'jesgo:inheriteventdate',
+    'inherit'
+  );
+  const inheritClearPropName = getJesgoSchemaPropValue(
+    customSchema,
+    'jesgo:inheriteventdate',
+    'clear'
+  );
 
   // event_dateの設定
   if (eventDatePropName && formData) {
@@ -395,12 +406,26 @@ export const getEventDate = (
             func(item[1]);
             return !!eventDate;
           });
+      } else {
+
       }
     };
     func(formData);
   }
 
-  if (!eventDate) {
+  // 遡っている途中でjesgo:inheriteventdate = clearにたどり着いた場合 元のドキュメントの入力値があれば使用
+  if (isRecursion && inheritClearPropName) {
+    eventDate = callerEventDate || eventDate
+  }
+
+  // 遡っている途中でjesgo:inheriteventdate = inheritにたどり着いた場合 たどり着いたドキュメントの入力値を使用
+  if (isRecursion && inheritForcePropName) {
+    eventDate = callerEventDate || eventDate
+  }
+
+  // eventDateが未入力の場合は上位から引用
+  // eventDateが入力されていても、スキーマにjesgo:inheritEventdateがない場合は上位から引用
+  if (!eventDate || !(inheritForcePropName || inheritClearPropName) ) {
     // 親のeventDate取得処理
     const jesgoDocList =
       store.getState().formDataReducer.saveData.jesgo_document;
@@ -408,13 +433,11 @@ export const getEventDate = (
       p.value.child_documents.includes(jesgoDoc.key)
     );
     if (parentDoc) {
-      // 見つかるまでルートまで探索
-      eventDate = getEventDate(parentDoc, parentDoc.value.document, true);
-    }
-
-    // ルートまで遡って見つからない場合、ドキュメントの作成日を使用する
-    if (!isRecursion && !eventDate) {
-      eventDate = formatDateStr(jesgoDoc.value.created, '-');
+      // 見つかるまで探索
+      eventDate = getEventDate(parentDoc, parentDoc.value.document, eventDate || '');
+    } else {
+      // eventDate未入力でルートまで遡って見つからない場合、ドキュメントの作成日を使用する
+      eventDate = eventDate || formatDateStr(jesgoDoc.value.created, '-');
     }
   }
 

@@ -82,7 +82,11 @@ const PluginManager = () => {
 
   // プラグインアップロードボタン押下
   const pluginUpload = () => {
-    if (editingCheck('編集中のデータがありますが、破棄してアップロードを実行します。よろしいですか？')) {
+    if (
+      editingCheck(
+        '編集中のデータがありますが、破棄してアップロードを実行します。よろしいですか？'
+      )
+    ) {
       const button = refBtnUpload.current;
       button?.click();
     }
@@ -110,7 +114,10 @@ const PluginManager = () => {
       const pluginList = pluginListReturn.body as jesgoPluginColumns[];
 
       if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
-        dispatch({ type: 'PLUGIN_LIST', pluginList });
+        dispatch({
+          type: 'PLUGIN_LIST',
+          pluginList: lodash.cloneDeep(pluginList),
+        });
       }
 
       setJesgoPluginList(pluginList);

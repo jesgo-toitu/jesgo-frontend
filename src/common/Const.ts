@@ -73,9 +73,9 @@ export namespace Const {
    * ※これ以外は「その他」として扱われる
    */
   export const JesgoRequiredTypes = {
-    JSOG: "JSOG",
-    JSGOE: "JSGOE",
-  }
+    JSOG: 'JSOG',
+    JSGOE: 'JSGOE',
+  };
 
   /**
    * 必須項目のラベル横に出るマーク

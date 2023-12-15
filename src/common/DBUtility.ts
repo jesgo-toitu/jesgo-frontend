@@ -828,21 +828,37 @@ export const ReadStaffList = async (
  * @returns
  */
 export const LoadPluginList = async (
-  forceLoad = false
+  forceLoad = false,
+  isAll = false
 ): Promise<ApiReturnObject> => {
   // すでに読み込み済みの場合はstoreから取得する
   const pluginList = store.getState().commonReducer.pluginList;
   if (pluginList && !forceLoad) {
-    return { statusNum: RESULT.PLUGIN_CACHE, body: pluginList };
+    return {
+      statusNum: RESULT.PLUGIN_CACHE,
+      body: isAll ? pluginList : pluginList.filter((p) => !p.disabled),
+    };
   }
 
   // 未読み込みの場合はAPIから取得
   const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
   if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
-    return pluginListReturn;
+    return {
+      statusNum: pluginListReturn.statusNum,
+      body: isAll
+        ? pluginListReturn.body
+        : (pluginListReturn.body as jesgoPluginColumns[]).filter(
+            (p) => !p.disabled
+          ),
+    };
   }
   const newPlugins: jesgoPluginColumns[] = [];
   return { statusNum: pluginListReturn.statusNum, body: newPlugins };
+};
+
+export const SavePluginList = async (pluginList: jesgoPluginColumns[]) => {
+  const ret = await apiAccess(METHOD_TYPE.POST, `save-plugin`, pluginList);
+  return ret;
 };
 
 export default SaveCommand;

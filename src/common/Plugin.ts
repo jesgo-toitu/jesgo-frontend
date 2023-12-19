@@ -5,6 +5,7 @@
 /* eslint-disable no-lonely-if */
 import { Buffer } from 'buffer';
 import React from 'react';
+import lodash from 'lodash';
 import {
   OverwriteDialogPlop,
   overwriteInfo,
@@ -38,6 +39,7 @@ export type jesgoPluginColumns = {
   show_upload_dialog: boolean;
   filter_schema_query?: string;
   explain?: string;
+  disabled?: boolean;
 };
 
 type argDoc = {
@@ -82,11 +84,20 @@ const GetModule: (scriptText: string) => Promise<IPluginModule> = async (
   const readScriptText = Buffer.from(scriptText).toString('base64');
   const script = `data:text/javascript;base64,${readScriptText}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const pluginmodule: Promise<IPluginModule> = await import(
-    /* webpackIgnore: true */ script
-  ); // webpackIgnoreコメント必要
-  return pluginmodule;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const pluginmodule: Promise<IPluginModule> = await import(
+      /* webpackIgnore: true */ script
+    ); // webpackIgnoreコメント必要
+    return pluginmodule;
+  } catch (e) {
+    // eslint-disable-next-line no-alert
+    alert(
+      `【pluginの実行処理中にエラーが発生しました】\n${(e as Error).message}`
+    );
+    console.error(e as Error);
+    return undefined as unknown as IPluginModule;
+  }
 };
 
 const getPatientsDocument = async (doc: argDoc) => {
@@ -123,7 +134,8 @@ const getTargetDocument = async (doc: argDoc) => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const updatePatientsDocument = async (
-  doc: updateObject | updateObject[] | undefined
+  doc: updateObject | updateObject[] | argDoc | undefined,
+  getPackagedDocumentInsted = false
 ) => {
   type updateCheckObject = {
     uuid?: string;
@@ -170,11 +182,37 @@ const updatePatientsDocument = async (
     return;
   }
 
+  // updateではなくてdocument_idに基づいたひとまとめのドキュメントを取得して返す
+  if (getPackagedDocumentInsted) {
+    // セキュリティとして制約あり
+    if ((doc as argDoc).caseList.length === 0) {
+      alert(
+        '更新系プラグインからのpackagedドキュメントの取得にはcase_idの指定が必須です'
+      );
+      return;
+    }
+    if ((doc as argDoc).caseList.length > 1) {
+      alert(
+        '更新系プラグインから複数の症例のデータを一度に取得することはできません'
+      );
+      return;
+    }
+    if (Number.isNaN(Number((doc as argDoc).targetDocument))) {
+      alert(
+        '更新系プラグインからのpackagedドキュメント取得にはdocument_idの指定が必須です'
+      );
+      return;
+    }
+    return await getTargetDocument(doc as argDoc);
+  }
+
   // スキップフラグ
   let isSkip = false;
 
-  // 引数を配列でなければ配列にする
-  const localUpdateTarget = Array.isArray(doc) ? doc : [doc];
+  // 引数を配列でなければupdateObjectの配列にする(argDocはここで落とす)
+  const localUpdateTarget = Array.isArray(doc)
+    ? (doc as updateObject[])
+    : [doc as updateObject];
 
   if (pluginData) {
     // 最初に症例IDとドキュメントIDの組み合わせリストを取得する
@@ -569,9 +607,9 @@ export const moduleMain = async (
   } catch (e) {
     // eslint-disable-next-line no-alert
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
-    console.error(e as Error)
-  }finally{
-    if (module.finalize) {
+    console.error(e as Error);
+  } finally {
+    if (module?.finalize) {
       await module.finalize();
     }
   }
@@ -581,6 +619,7 @@ export const moduleMain = async (
 type formDocument = {
   document_id?: number;
   case_id?: number;
+  hash?: string;
   schema_id?: string;
   document: JSON;
 };
@@ -600,7 +639,7 @@ export const moduleMainUpdate = async (
     // eslint-disable-next-line no-alert
     alert(`【main関数実行時にエラーが発生しました】\n${(e as Error).message}`);
   } finally {
-    if (module.finalize) {
+    if (module?.finalize) {
       await module.finalize();
     }
   }
@@ -648,55 +687,89 @@ export const executePlugin = async (
   setOverwriteDialogPlopGlobal = setOverwriteDialogPlop;
   setIsLoadingGlobal = setIsLoading;
 
+  const copyPatientList = lodash.cloneDeep(patientList);
+
   if (plugin.update_db) {
     // データ更新系
-    if (!plugin.all_patient && patientList && patientList.length === 1) {
+    if (
+      !plugin.all_patient &&
+      copyPatientList &&
+      copyPatientList.length === 1
+    ) {
       // 対象患者が指定されている場合
-      targetCaseId = Number(patientList[0].case_id);
+      targetCaseId = Number(copyPatientList[0].case_id);
     } else {
       targetCaseId = undefined;
     }
     if (plugin.show_upload_dialog) {
       // ファイルアップロードあり
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.onchange = () => {
-        const files = fileInput.files;
-        const file = files ? files[0] : undefined;
-        let csvText = '';
-        if (file) {
-          if (setIsLoading) {
-            setIsLoading(true);
-          }
-          const reader = new FileReader();
-          reader.onload = async () => {
-            const data = reader.result;
-            if (typeof data === 'string') {
-              csvText = new TextDecoder().decode(toUTF8(data));
+      try {
+        const csvText: string = await new Promise((resolve, reject) => {
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.onchange = () => {
+            const files = fileInput.files;
+            const file = files ? files[0] : undefined;
+            if (file) {
+              if (setIsLoading) {
+                setIsLoading(true);
+              }
+              const reader = new FileReader();
+              reader.onload = async () => {
+                if (setIsLoading) {
+                  setIsLoading(false);
+                }
+                const data = reader.result;
+                if (typeof data === 'string') {
+                  resolve(new TextDecoder().decode(toUTF8(data)));
+                }
+              };
+              reader.readAsBinaryString(file);
+            } else {
+              reject();
             }
-            const retValue = await moduleMainUpdate(
-              plugin.script_text,
-              updatePatientsDocument,
-              csvText
-            );
+          };
+          // アップロードキャンセル
+          fileInput.addEventListener('cancel', () => {
             if (setIsLoading) {
               setIsLoading(false);
             }
-            if (setReload) {
-              setReload({ isReload: true, caller: 'update_plugin' });
-            }
-            return retValue;
-          };
-          reader.readAsBinaryString(file);
+            reject();
+          });
+          fileInput.click();
+        });
+        const retValue = await moduleMainUpdate(
+          plugin.script_text,
+          updatePatientsDocument,
+          csvText
+        );
+        if (setReload) {
+          setReload({ isReload: true, caller: 'update_plugin' });
         }
-      };
-      fileInput.click();
+        return retValue;
+      } catch {
+        console.error('Rejected');
+        return undefined;
+      }
     } else {
       // ファイルアップロードなし
       const documentList: formDocument[] = await getDocuments(
         targetCaseId,
         pluginData.target_schema_id
       );
+      // ドキュメントのバーガーボタンからの呼び出しでは当該ドキュメントのみを取得する
+      if (targetDocumentId) {
+        let documentListIndex = 0;
+        do {
+          // formDocumentからの取得でdocument_idが存在しないことは原則としてあり得ない
+          if (
+            documentList[documentListIndex].document_id !== targetDocumentId
+          ) {
+            documentList.splice(documentListIndex, 1);
+          }
+          documentListIndex++;
+        } while (documentListIndex < documentList.length);
+      }
       const retValue = await moduleMainUpdate(
         plugin.script_text,
         updatePatientsDocument,
@@ -708,6 +781,7 @@ export const executePlugin = async (
       return retValue;
     }
   } else {
+    // データ出力系
     if (
       plugin.attach_patient_info &&
       // eslint-disable-next-line no-restricted-globals, no-alert
@@ -715,12 +789,23 @@ export const executePlugin = async (
     ) {
       throw new Error('cancel');
     }
+    // 不要な患者属性をプラグインに渡さないように削除
+    if (copyPatientList && !plugin.attach_patient_info) {
+      for (const argPatient of copyPatientList) {
+        // anyにキャストして無理矢理削除
+        delete (argPatient as any).his_id;
+        delete (argPatient as any).name;
+        delete (argPatient as any).date_of_birth;
+        delete (argPatient as any).date_of_death;
+        delete (argPatient as any).sex;
+      }
+    }
     // データ出力系)
-    if (patientList) {
+    if (copyPatientList) {
       if (targetDocumentId) {
         // ドキュメント指定あり
         const doc: argDoc = {
-          caseList: patientList,
+          caseList: copyPatientList,
           targetDocument: targetDocumentId,
           filterQuery: plugin.filter_schema_query,
         };
@@ -734,7 +819,7 @@ export const executePlugin = async (
       if (plugin.target_schema_id && plugin.target_schema_id.length > 0) {
         // スキーマ指定あり
         const doc: argDoc = {
-          caseList: patientList,
+          caseList: copyPatientList,
           targetSchemas: plugin.target_schema_id,
           filterQuery: plugin.filter_schema_query,
         };
@@ -747,7 +832,7 @@ export const executePlugin = async (
       }
       // ドキュメント、スキーマ指定なし
       const doc: argDoc = {
-        caseList: patientList,
+        caseList: copyPatientList,
         targetSchemas: undefined,
         filterQuery: plugin.filter_schema_query,
       };

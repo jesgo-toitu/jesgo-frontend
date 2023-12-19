@@ -26,11 +26,14 @@ import { Const } from '../../common/Const';
 import { getEventDate, responseResult } from '../../common/DBUtility';
 import '../../views/Registration.css';
 import store from '../../store';
+import { reloadState } from '../../views/Registration';
+import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
 
 // ルートディレクトリ直下の子スキーマ
 type Props = {
   tabId: string;
   parentTabsId: string;
+  parentEventDate: string | null;
   schemaId: number;
   dispSchemaIds: dispSchemaIdAndDocumentIdDefine[];
   setDispSchemaIds: React.Dispatch<
@@ -48,12 +51,17 @@ type Props = {
   selectedTabKey: any;
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void;
   setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void;
 };
 
 const TabSchema = React.memo((props: Props) => {
   const {
     tabId,
     parentTabsId,
+    parentEventDate,
     schemaId,
     dispSchemaIds,
     setDispSchemaIds,
@@ -69,6 +77,8 @@ const TabSchema = React.memo((props: Props) => {
     selectedTabKey,
     schemaAddModFunc,
     setUpdateFormData,
+    setReload,
+    setOverwriteDialogPlop,
   } = props;
 
   // 表示中のchild_schema
@@ -100,7 +110,7 @@ const TabSchema = React.memo((props: Props) => {
     .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
   const eventDate = useMemo(
     () => (saveDoc ? getEventDate(saveDoc, formData) : null),
-    [saveDoc, formData]
+    [saveDoc, formData, parentEventDate]
   );
 
   // schemaIdをもとに情報を取得
@@ -184,8 +194,9 @@ const TabSchema = React.memo((props: Props) => {
       dispSubSchemaIds.find((p) => p.documentId === '')
     ) {
       // unieque=falseのサブスキーマ追加
-      const newItem = dispSubSchemaIds.find((p) => p.documentId === '');
-      if (newItem) {
+      const newItemIdx = dispSubSchemaIds.findIndex((p) => p.documentId === '');
+      if (newItemIdx > -1) {
+        const newItem = dispSubSchemaIds[newItemIdx];
         const itemSchemaInfo = GetSchemaInfo(newItem.schemaId);
         dispatch({
           type: 'ADD_CHILD',
@@ -199,6 +210,7 @@ const TabSchema = React.memo((props: Props) => {
           schemaInfo: itemSchemaInfo,
           setAddedDocumentCount,
           isNotUniqueSubSchemaAdded: true,
+          schemaIndex: newItemIdx,
         });
       }
     } else if (
@@ -578,7 +590,7 @@ const TabSchema = React.memo((props: Props) => {
     ) {
       dispatch({ type: 'CHANGED_SCHEMA', documentId, schemaInfo });
     }
-  }, [formData, updateChildFormData]);
+  }, [formData, updateChildFormData, schemaInfo]);
 
   return (
     <>
@@ -617,12 +629,16 @@ const TabSchema = React.memo((props: Props) => {
           tabSelectEvents={childTabSelectedFunc}
           addableSubSchemaIds={addableSubSchemaIds}
           setIsLoading={setIsLoading}
+          setReload={setReload}
+          setOverwriteDialogPlop={setOverwriteDialogPlop}
+          setErrors={setErrors}
         />
       </div>
       {isTab
         ? // タブ表示
           createTabs(
             tabId,
+            eventDate,
             dispSubSchemaIds,
             dispSubSchemaIdsNotDeleted,
             setDispSubSchemaIds,
@@ -634,7 +650,9 @@ const TabSchema = React.memo((props: Props) => {
             setErrors,
             childTabSelectedFunc,
             setChildTabSelectedFunc,
-            setUpdateChildFormData
+            setUpdateChildFormData,
+            setReload,
+            setOverwriteDialogPlop
           )
         : // パネル表示
           createPanels(
@@ -650,7 +668,10 @@ const TabSchema = React.memo((props: Props) => {
             selectedTabKey,
             schemaAddModFunc,
             tabId,
-            setUpdateChildFormData
+            eventDate,
+            setUpdateChildFormData,
+            setReload,
+            setOverwriteDialogPlop
           )}
     </>
   );

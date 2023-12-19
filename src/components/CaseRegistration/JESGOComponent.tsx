@@ -1,11 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Autocomplete, {
   AutocompleteRenderOptionState,
 } from '@mui/material/Autocomplete';
-import { Label, Tooltip, OverlayTrigger, Glyphicon } from 'react-bootstrap';
+import {
+  Label,
+  Tooltip,
+  OverlayTrigger,
+  Glyphicon,
+  Button,
+} from 'react-bootstrap';
 import './JESGOComponent.css';
 import './JESGOFieldTemplete.css';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -18,19 +24,16 @@ import { Const } from '../../common/Const';
 export namespace JESGOComp {
   // "jesgo:required"用ラベル
   export const TypeLabel = (props: { requireType: string[]; pId: string }) => {
-    const require = ['JSOG', 'JSGOE'];
     const { requireType, pId } = props;
+    const requiredStyles = { [Const.JesgoRequiredTypes.JSOG]: "default", [Const.JesgoRequiredTypes.JSGOE]: "info" } as { [key: string]: string; };
 
-    let style = 'default';
     return (
       <>
-        {require.map((type: string) => {
-          if (type === 'JSGOE') {
-            style = 'info';
-          }
-
-          return (
-            requireType.includes(type) && (
+        {
+          requireType.map((type: string) => {
+            // JSOG,JSGOE以外は"success"
+            const style: string = Object.keys(requiredStyles).includes(type) ? requiredStyles[type] : "success";
+            return (
               <Label
                 className="label-type"
                 bsStyle={style}
@@ -38,9 +41,9 @@ export namespace JESGOComp {
               >
                 {type}
               </Label>
-            )
-          );
-        })}
+            );
+          })
+        }
       </>
     );
   };
@@ -324,11 +327,14 @@ export namespace JESGOComp {
    */
   export const LayerDropdown = (props: WidgetProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { id, schema, onChange, value } = props;
+    const { id, schema, onChange } = props;
+    let { value } = props;
     const selectItems = schema.oneOf as JSONSchema7[];
     if (!selectItems) {
       return null;
     }
+    // Array内での順番変更が出来なくなるため空文字に置き換え
+    value = value ?? '';
 
     const seqNo = seqNoMap.get(id) ?? 0;
     seqNoMap.set(id, seqNo + 1);
@@ -418,7 +424,7 @@ export namespace JESGOComp {
 
     useEffect(() => {
       setInputValue(value ?? '');
-    }, []);
+    }, [value]);
 
     // コンボボックスのアイテム一覧
     const comboItemList: ComboItemDefine[] = [];
@@ -528,6 +534,7 @@ export namespace JESGOComp {
     const comboComponent = useRef<HTMLDivElement>(null);
 
     // リストの内容からコンボボックスの幅計算
+    // Arrayで順序変更した時にWidthがリセットされてしまうので、レンダリング毎に実行
     useEffect(() => {
       let comboWidth = 200; // デフォルト200px
 
@@ -565,7 +572,7 @@ export namespace JESGOComp {
       if (comboComponent.current) {
         comboComponent.current.style.width = `${comboWidth}px`;
       }
-    }, []);
+    });
 
     /* コンボボックスの値変更イベント */
     const comboOnChange = (
@@ -573,6 +580,12 @@ export namespace JESGOComp {
       val: any,
       reason: string
     ) => {
+      // arrayで保存後に並べ替えると値がクリアされてしまう問題の回避
+      // 原因不明のため暫定対処
+      if (reason === 'reset') {
+        return;
+      }
+
       if (reason === 'input') {
         setInputValue(val);
         return;
@@ -725,6 +738,11 @@ export namespace JESGOComp {
               return options;
             }
 
+            // 入力値と完全一致するリストがある = リストから選択済み と見なし、選択肢の検索をしない
+            if (options.find((op) => (op.label ?? '') === state.inputValue)) {
+              return options;
+            }
+
             // 同一グループのタイトルは表示させる
             const groupIds = options
               // .filter((op) => (op.label ?? '').startsWith(state.inputValue)) // 前方一致
@@ -753,7 +771,7 @@ export namespace JESGOComp {
   // Latest commit 1bbd0ad
   // TODO propsは仮でany
   // 配列Widget用カスタムアイテム
-  export function DefaultArrayItem(props: any) {
+  export function DefaultArrayItem(props: any, isNotExistProperty: boolean) {
     const btnStyle = {
       flex: 1,
       paddingLeft: 6,
@@ -822,7 +840,12 @@ export namespace JESGOComp {
                   className="array-item-remove"
                   tabIndex="-1"
                   style={btnStyle}
-                  disabled={props.disabled || props.readonly}
+                  // スキーマに存在しないプロパティの場合は削除ボタンだけ使用可にする
+                  disable={
+                    isNotExistProperty
+                      ? false
+                      : props.disabled || props.readonly
+                  }
                   onClick={props.onDropIndexClick(props.index)}
                 />
               )}
@@ -1137,5 +1160,98 @@ export namespace JESGOComp {
     );
   }
   //#endregion 複数チェックボックス用
+
+  /**
+   * 削除ボタン付きテキストボックス
+   * @param props
+   * @returns
+   */
+  export const DeleteTextWidget = (props: WidgetProps) => {
+    const { registry, schema } = props;
+    const { BaseInput } = registry.widgets;
+
+    const notExist = schema[Const.EX_VOCABULARY.NOT_EXIST_PROP];
+
+    /**
+     * 削除ボタン押下時の処理
+     */
+    const deleteItem = useCallback(() => {
+      // eslint-disable-next-line react/destructuring-assignment
+      if (props.onChange) {
+        // eslint-disable-next-line react/destructuring-assignment
+        props.onChange(undefined);
+      }
+    }, [props]);
+
+    return (
+      <div className="with-delete-div">
+        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        <BaseInput {...props} />
+        {notExist && (
+          <span>
+            <Button
+              bsClass="btn btn-xs"
+              className="error-msg-btn-delete"
+              onClick={deleteItem}
+            >
+              <Glyphicon glyph="remove" />
+            </Button>
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  export const DeleteCheckboxWidget = (props: WidgetProps) => {
+    const {
+      schema,
+      id,
+      value,
+      disabled,
+      readonly,
+      label,
+      autofocus = false,
+    } = props;
+
+    const notExist = schema[Const.EX_VOCABULARY.NOT_EXIST_PROP];
+
+    /**
+     * 削除ボタン押下時の処理
+     */
+    const deleteItem = useCallback(() => {
+      // eslint-disable-next-line react/destructuring-assignment
+      if (props.onChange) {
+        // eslint-disable-next-line react/destructuring-assignment
+        props.onChange(undefined);
+      }
+    }, [props]);
+
+    return (
+      <div className={`checkbox ${disabled || readonly ? 'disabled' : ''}`}>
+        <label>
+          <input
+            type="checkbox"
+            id={id}
+            name={id}
+            checked={typeof value === 'undefined' ? false : value}
+            disabled={disabled || readonly}
+            autoFocus={autofocus}
+          />
+          <span>{label}</span>
+          {notExist && (
+            <span>
+              <Button
+                bsClass="btn btn-xs"
+                className="error-msg-btn-delete"
+                onClick={deleteItem}
+              >
+                <Glyphicon glyph="remove" />
+              </Button>
+            </span>
+          )}
+        </label>
+      </div>
+    );
+  };
 }
 /* eslint-enable */

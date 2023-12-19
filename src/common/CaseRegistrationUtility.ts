@@ -24,16 +24,19 @@ import {
 } from '../components/CaseRegistration/Definition';
 
 // formDataからjesgo:errorを取り出して削除
-export const popJesgoError = (formData: any) => {
+export const popJesgoError = (formData: any, deleteError = false) => {
   let popValue: any[] = [];
   if (formData && !Array.isArray(formData) && typeof formData === 'object') {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (formData['jesgo:error']) {
+    if (formData[Const.EX_VOCABULARY.JESGO_ERROR]) {
       // 取り出して元のformDataからは削除
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      popValue = formData['jesgo:error'];
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, no-param-reassign
-      delete formData['jesgo:error'];
+      popValue = formData[Const.EX_VOCABULARY.JESGO_ERROR];
+      // jesgo:error削除する場合
+      if (deleteError) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, no-param-reassign
+        delete formData[Const.EX_VOCABULARY.JESGO_ERROR];
+      }
     }
   }
 
@@ -553,6 +556,42 @@ export const getErrMsg = (errorList: RegistrationErrors[]) => {
 
       if (documentMsg.length > 0) {
         message.push(`【 ${error.errDocTitle} 】`);
+        message.push(...documentMsg);
+      }
+    });
+  }
+  return message;
+};
+
+export type ErrorMsgObject = {
+  registErrors: RegistrationErrors;
+  message: string;
+  validateItem?: ValidationItem;
+  showDeleteButton: boolean;
+};
+
+export const getErrorMsgObject = (errorList: RegistrationErrors[]) => {
+  const message: ErrorMsgObject[] = [];
+
+  if (errorList) {
+    errorList.forEach((error) => {
+      const documentMsg: ErrorMsgObject[] = [];
+      error.validationResult.messages.forEach((item: ValidationItem) => {
+        documentMsg.push({
+          message: item.message,
+          registErrors: error,
+          validateItem: item,
+          showDeleteButton: item.validateType === VALIDATE_TYPE.JesgoError,
+        });
+      });
+
+      if (documentMsg.length > 0) {
+        message.push({
+          message: `【 ${error.errDocTitle} 】`,
+          registErrors: error,
+          showDeleteButton: false,
+        });
+
         message.push(...documentMsg);
       }
     });
@@ -1173,3 +1212,108 @@ export const OpenOutputViewScript = (win: typeof window, srcData: string) => {
 
   win.open('/OutputView', 'outputview');
 };
+
+/**
+ * エラー一覧にjesgo:errorの内容を追加する
+ * @param formData
+ * @param paramErrors
+ * @param documentId
+ * @param schemaId
+ * @param schema
+ * @param notAdd [true]jesgo:errorを追加しない(削除フラグを渡す想定)
+ * @returns
+ */
+export const AddJesgoError = (
+  paramErrors: RegistrationErrors[],
+  formData: any,
+  documentId: string,
+  schemaId: number,
+  schema: JSONSchema7,
+  notAdd = false
+) => {
+  // jesgo:errorを取得
+  const jesgoErrors = popJesgoError(formData);
+  const errors = paramErrors;
+
+  // 元々あったjesgo:errorのエラーはクリアする
+  const targetErr = errors.find((p) => p.documentId === documentId);
+  if (targetErr) {
+    // jesgo:errorは除く
+    const filteredMsg = targetErr.validationResult.messages.filter(
+      (q) => q.validateType !== VALIDATE_TYPE.JesgoError
+    );
+    targetErr.validationResult.messages = filteredMsg;
+  }
+  // jesgo:errorクリア処理↑ここまで↑
+
+  if (jesgoErrors.length > 0 && !notAdd) {
+    // エラー一覧に対象ドキュメントがない場合は新規追加する
+    let tmpErr = errors.find((p) => p.documentId === documentId);
+    if (!tmpErr) {
+      const saveData = store.getState().formDataReducer.saveData;
+      const doc = saveData.jesgo_document.find((p) => p.key === documentId);
+      let titleList: string[] = [];
+      if (doc) {
+        // 親のタイトル取得
+        titleList = GetParentDocumentTitle(saveData, documentId);
+        // 親→子の順にしたいのでリバース
+        titleList = titleList.reverse();
+        const schemaInfo = GetSchemaInfo(schemaId, doc.value.event_date);
+        // 自身のタイトル追加
+        let title = `${schemaInfo?.title ?? ''} ${
+          schemaInfo?.subtitle ?? ''
+        }`.trim();
+        title = GetNumberingTabTitle(saveData, doc, title);
+        titleList.push(title);
+      }
+
+      tmpErr = {
+        errDocTitle: titleList.join(' > ') ?? '',
+        schemaId,
+        documentId,
+        validationResult: { schema, messages: [] },
+      };
+      errors.push(tmpErr);
+    }
+
+    const messages = tmpErr.validationResult.messages;
+
+    // jesgo:errorから画面表示用のメッセージを生成
+    jesgoErrors.forEach((errorItem, index) => {
+      if (typeof errorItem === 'string') {
+        // 文字列の場合はそのまま表示
+        messages.push({
+          // eslint-disable-next-line no-irregular-whitespace
+          message: `　${errorItem}`,
+          validateType: VALIDATE_TYPE.JesgoError,
+          jsonpath: `/${index}`,
+        });
+      } else if (typeof errorItem === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        Object.entries(errorItem).forEach((item) => {
+          // objectの場合はKeyに項目名、valueにメッセージが格納されている想定
+          messages.push({
+            // eslint-disable-next-line no-irregular-whitespace
+            message: `　　[ ${item[0]} ] ${item[1] as string}`,
+            validateType: VALIDATE_TYPE.JesgoError,
+            // 特殊文字はエスケープしないとjsonpatchのpathとして使えない(チルダ、スラッシュ)
+            jsonpath: `/${index}/${item[0]
+              .replace(/~/g, '~0')
+              .replace(/\//g, '~1')}`,
+          });
+        });
+      }
+    });
+  }
+
+  return errors;
+};
+
+/**
+ * jesgo:requiredのハイライト設定
+ */
+export type JesgoRequiredHighlight = {
+  jsog: boolean,  // JSOG
+  jsgoe: boolean, // JSGOE
+  others: boolean,  // JSOG・JSGOE以外(独自拡張を想定)
+}

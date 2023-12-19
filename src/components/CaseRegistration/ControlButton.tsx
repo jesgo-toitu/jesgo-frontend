@@ -12,13 +12,15 @@ import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import store from '../../store/index';
-import { ChildTabSelectedFuncObj } from './Definition';
+import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
 import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
 import { fTimeout } from '../../common/CommonUtility';
 import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import { LoadPluginList } from '../../common/DBUtility';
+import { reloadState } from '../../views/Registration';
+import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -64,6 +66,11 @@ type ControlButtonProps = {
   tabSelectEvents?: ChildTabSelectedFuncObj;
   disabled?: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void;
+  setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -91,6 +98,9 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     tabSelectEvents,
     disabled,
     setIsLoading,
+    setReload,
+    setOverwriteDialogPlop,
+    setErrors,
   } = props;
 
   const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
@@ -278,6 +288,10 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
               setDispSchemaIds([...copyIds]);
               dispatch({ type: 'DEL', documentId });
 
+              if (setErrors) {
+                setErrors(store.getState().formDataReducer.extraErrors);
+              }
+
               // 削除したタブの1つ前か後のタブを選択する
               const tabList = store
                 .getState()
@@ -354,12 +368,17 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
                 executePlugin(
                   plugin,
                   [store.getState().formDataReducer.saveData.jesgo_case],
-                  Number(documentId)
+                  Number(documentId),
+                  setReload,
+                  setIsLoading,
+                  setOverwriteDialogPlop
                 ),
               ])
                 .then((res) => {
-                  // eslint-disable-next-line
-                  OpenOutputView(window, res);
+                  if (plugin && !plugin.update_db) {
+                    // eslint-disable-next-line
+                    OpenOutputView(window, res);
+                  }
                 })
                 .catch((err) => {
                   if (err === 'timeout') {
@@ -660,7 +679,6 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           {jesgoPluginList.map(
             (plugin: jesgoPluginColumns) =>
               !plugin.all_patient &&
-              !plugin.update_db &&
               plugin.target_schema_id &&
               plugin.target_schema_id.includes(schemaId) && (
                 <MenuItem eventKey={`plugin_${plugin.plugin_id}`}>

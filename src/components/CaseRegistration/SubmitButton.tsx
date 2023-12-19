@@ -11,7 +11,7 @@ import SaveCommand, {
   responseResult,
 } from '../../common/DBUtility';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
-import { RemoveBeforeUnloadEvent } from '../../common/CommonUtility';
+import { RemoveBeforeUnloadEvent, backToPatientsList } from '../../common/CommonUtility';
 import { IsNotUpdate } from '../../common/CaseRegistrationUtility';
 import { RegistrationErrors } from './Definition';
 import { jesgoPluginColumns } from '../../common/Plugin';
@@ -89,7 +89,7 @@ const SubmitButton = (props: ButtonProps) => {
         (saveResponse.anyValue as boolean) === true
       ) {
         RemoveBeforeUnloadEvent();
-        navigate('/Patients');
+        backToPatientsList(navigate);
       } else if (saveResponse.caseId) {
         // 保存ボタンの場合は再読み込み
         setIsLoading(true);
@@ -104,7 +104,7 @@ const SubmitButton = (props: ButtonProps) => {
         // 読み込み失敗
         setIsLoading(false);
         RemoveBeforeUnloadEvent();
-        navigate('/Patients');
+        backToPatientsList(navigate);
       }
     } else if (saveResponse.resCode === RESULT.TOKEN_EXPIRED_ERROR) {
       // トークン期限切れはログイン画面に戻る
@@ -150,7 +150,7 @@ const SubmitButton = (props: ButtonProps) => {
       )
     ) {
       RemoveBeforeUnloadEvent();
-      navigate('/Patients');
+      backToPatientsList(navigate);
     }
   };
 

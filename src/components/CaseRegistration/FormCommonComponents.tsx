@@ -13,6 +13,8 @@ import {
   dispSchemaIdAndDocumentIdDefine,
   SaveDataObjDefine,
 } from '../../store/formDataReducer';
+import { reloadState } from '../../views/Registration';
+import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
 import {
   RegistrationErrors,
   ShowSaveDialogState,
@@ -24,6 +26,7 @@ import TabSchema from './TabSchema';
 
 export const createTab = (
   parentTabsId: string,
+  parentEventDate: string | null,
   schemaIds: dispSchemaIdAndDocumentIdDefine[],
   filteredSchemaIds: dispSchemaIdAndDocumentIdDefine[],
   setSchemaIds: React.Dispatch<
@@ -37,7 +40,11 @@ export const createTab = (
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>,
   selectedTabKey: any,
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void,
-  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>
+  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>,
+  setReload: (value: React.SetStateAction<reloadState>) => void,
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void
 ) =>
   // subschema表示
   filteredSchemaIds.map((info: dispSchemaIdAndDocumentIdDefine) => {
@@ -55,6 +62,7 @@ export const createTab = (
           key={`tabitem-${info.compId}`}
           tabId={`${parentTabsId}-tab-${info.compId}`}
           parentTabsId={parentTabsId}
+          parentEventDate={parentEventDate}
           isChildSchema={isChildSchema}
           schemaId={info.schemaId}
           documentId={info.documentId}
@@ -70,6 +78,8 @@ export const createTab = (
           selectedTabKey={selectedTabKey}
           schemaAddModFunc={schemaAddModFunc}
           setUpdateFormData={setUpdateFormData}
+          setReload={setReload}
+          setOverwriteDialogPlop={setOverwriteDialogPlop}
         />
       </Tab>
     );
@@ -77,6 +87,7 @@ export const createTab = (
 
 export const createTabs = (
   id: string,
+  parentEventDate: string | null,
   subschemaIds: dispSchemaIdAndDocumentIdDefine[],
   subschemaIdsNotDeleted: dispSchemaIdAndDocumentIdDefine[],
   setSubschemaIds: React.Dispatch<
@@ -95,7 +106,11 @@ export const createTabs = (
   setChildTabSelectedFunc:
     | React.Dispatch<React.SetStateAction<ChildTabSelectedFuncObj>>
     | undefined,
-  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>
+  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>,
+  setReload: (value: React.SetStateAction<reloadState>) => void,
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void
 ) => {
   // 選択中のタブeventKey
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -281,6 +296,7 @@ export const createTabs = (
           {/* subschema表示 */}
           {createTab(
             id,
+            parentEventDate,
             subschemaIds,
             subschemaIdsNotDeleted,
             setSubschemaIds,
@@ -292,12 +308,15 @@ export const createTabs = (
             setErrors,
             selectedTabKey,
             onTabSelectEvent,
-            setUpdateFormData
+            setUpdateFormData,
+            setReload,
+            setOverwriteDialogPlop
           )}
 
           {/* childSchema表示 */}
           {createTab(
             id,
+            parentEventDate,
             dispChildSchemaIds,
             dispChildSchemaIdsNotDeleted,
             setDispChildSchemaIds,
@@ -309,7 +328,9 @@ export const createTabs = (
             setErrors,
             selectedTabKey,
             onTabSelectEvent,
-            setUpdateFormData
+            setUpdateFormData,
+            setReload,
+            setOverwriteDialogPlop
           )}
         </Tabs>
         <SaveConfirmDialog
@@ -338,7 +359,12 @@ export const createPanel = (
   selectedTabKey: any,
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void,
   parentTabsId: string,
-  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>
+  parentEventDate: string | null,
+  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>,
+  setReload: (value: React.SetStateAction<reloadState>) => void,
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void
 ) =>
   // subschema表示
   filteredSchemaIds.map((info: dispSchemaIdAndDocumentIdDefine) => (
@@ -346,6 +372,7 @@ export const createPanel = (
     <PanelSchema
       key={`panel-${info.compId}`}
       parentTabsId={parentTabsId}
+      parentEventDate={parentEventDate}
       isChildSchema={isChildSchema} // eslint-disable-line react/jsx-boolean-value
       schemaId={info.schemaId}
       documentId={info.documentId}
@@ -359,6 +386,8 @@ export const createPanel = (
       selectedTabKey={selectedTabKey}
       schemaAddModFunc={schemaAddModFunc}
       setUpdateFormData={setUpdateFormData}
+      setReload={setReload}
+      setOverwriteDialogPlop={setOverwriteDialogPlop}
     />
   ));
 
@@ -381,7 +410,12 @@ export const createPanels = (
   selectedTabKey: any,
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void,
   parentTabsId: string,
-  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>
+  parentEventDate: string | null,
+  setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>,
+  setReload: (value: React.SetStateAction<reloadState>) => void,
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void
 ) =>
   (subschemaIdsNotDeleted.length > 0 ||
     dispChildSchemaIdsNotDeleted.length > 0) && (
@@ -397,7 +431,10 @@ export const createPanels = (
         selectedTabKey,
         schemaAddModFunc,
         parentTabsId,
-        setUpdateFormData
+        parentEventDate,
+        setUpdateFormData,
+        setReload,
+        setOverwriteDialogPlop
       )}
       {createPanel(
         dispChildSchemaIds,
@@ -410,7 +447,10 @@ export const createPanels = (
         selectedTabKey,
         schemaAddModFunc,
         parentTabsId,
-        setUpdateFormData
+        parentEventDate,
+        setUpdateFormData,
+        setReload,
+        setOverwriteDialogPlop
       )}
     </>
   );

@@ -13,6 +13,7 @@ const makeIconList = (props: { iconList: string[] }) => {
     radio: '放',
     surgery: '手',
     supportivecare: '緩和',
+    has_error: 'エラーあり',
   };
   const { iconList } = props;
   const orderRule = [
@@ -26,6 +27,7 @@ const makeIconList = (props: { iconList: string[] }) => {
     'death',
     'not_completed',
     'completed',
+    'has_error',
   ];
 
   return (

@@ -3,7 +3,7 @@ import { formatDateStr } from './CommonUtility';
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {
   // JESGO Webアプリバージョン
-  export const VERSION = '1.0.3';
+  export const VERSION = '1.1';
 
   // UiSchemaプロパティ
   export const UI_WIDGET = {
@@ -21,6 +21,8 @@ export namespace Const {
     REQUIRED: 'jesgo:required',
     UNIQUE: 'jesgo:unique',
     VALIDATION_ALERT: 'jesgo:validationalert',
+    JESGO_ERROR: 'jesgo:error',
+    NOT_EXIST_PROP: 'jesgo:notExistProperty',
     UI_TEXTAREA: 'jesgo:ui:textarea',
     UI_LISTTYPE: 'jesgo:ui:listtype',
     UI_SUBSCHEMA_STYLE: 'jesgo:ui:subschemastyle',
@@ -65,6 +67,15 @@ export namespace Const {
     INTEGER: 'integer',
     NUMBER: 'number',
   } as const;
+
+  /**
+   * jesgo:requiredの種類
+   * ※これ以外は「その他」として扱われる
+   */
+  export const JesgoRequiredTypes = {
+    JSOG: 'JSOG',
+    JSGOE: 'JSGOE',
+  };
 
   /**
    * 必須項目のラベル横に出るマーク

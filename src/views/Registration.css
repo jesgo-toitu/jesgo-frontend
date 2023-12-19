@@ -59,11 +59,42 @@ body {
   margin-bottom: 1rem;
 }
 
+.error-msg-jesgo-err-div {
+  display: flex;
+  align-items: center;
+  margin: 1px 0px
+}
+
+.error-msg-btn-delete {
+  margin: 0px 0px 0px 20px;
+  cursor: pointer;
+}
+
 .user-info-row {
   display: flex;
   flex-wrap: wrap;
   margin-right: 20px;
   /* padding-top: 10px; */
+}
+
+.setting-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: 20px;
+  /* padding-top: 10px; */
+}
+
+.user-info-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 5px;
+  align-items: center;
+}
+
+.setting-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .user-info-col {
@@ -84,6 +115,17 @@ body {
   margin: 0px;
   margin: 0px 0px 0px 20px;
   min-width: 80px;
+}
+
+.no-checkbox-auto-styling{
+  /* 自動で付与されるスタイルを防ぐ */
+  margin: 0px 0px 0px 20px
+}
+
+
+.checkbox.no-checkbox-auto-styling+.checkbox {
+  /* 自動で付与されるスタイルを防ぐ */
+  margin: 0px 0px 0px 20px;
 }
 
 .user-info-button-col {

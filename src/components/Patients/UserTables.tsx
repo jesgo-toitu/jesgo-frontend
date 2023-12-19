@@ -27,7 +27,7 @@ export interface userData {
   advancedStage: string;
   pathlogicalDiagnosis: string;
   initialTreatment: string[];
-  copilacations: string[];
+  complications: string[];
   progress: string[];
   postRelapseTreatment: string[];
   registration: string[];

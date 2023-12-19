@@ -9,6 +9,7 @@ import {
   getJesgoSchemaPropValue,
   GetSchemaInfo,
 } from '../components/CaseRegistration/SchemaUtility';
+import { Const } from '../common/Const';
 
 // 症例情報の定義
 export type jesgoCaseDefine = {
@@ -34,6 +35,7 @@ export type jesgoDocumentValueItem = {
   schema_primary_id: number;
   schema_major_version: number;
   registrant: number;
+  created: string;
   last_updated: string;
   readonly: boolean;
   deleted: boolean;
@@ -131,6 +133,7 @@ export interface formDataAction {
   eventDate: string;
 
   SchemaInfoMap: Map<number, JesgoDocumentSchema[]>;
+  schemaIndex?: number;
 }
 
 // ユーザID取得
@@ -215,6 +218,7 @@ const createJesgoDocumentValueItem = (
     schema_primary_id: -1,
     schema_major_version: -1,
     registrant: -1,
+    created: '',
     last_updated: '',
     readonly: false,
     deleted: false,
@@ -245,7 +249,8 @@ const createJesgoDocumentValueItem = (
 
   // ログインユーザID
   valueItem.registrant = getLoginUserId();
-  valueItem.last_updated = new Date().toLocaleString();
+  valueItem.created = new Date().toLocaleString('ja-JP');
+  valueItem.last_updated = valueItem.created;
 
   return valueItem;
 };
@@ -338,7 +343,7 @@ const formDataReducer: Reducer<
         }
 
         // 更新日時
-        jesgoCaseData.last_updated = new Date().toLocaleString();
+        jesgoCaseData.last_updated = new Date().toLocaleString('ja-JP');
         // 更新ユーザ
         jesgoCaseData.registrant = getLoginUserId();
 
@@ -403,8 +408,17 @@ const formDataReducer: Reducer<
             (p) => p.key === parentDocId
           );
           if (parentDocData) {
+            // 挿入位置が渡ってきている場合はその位置に追加する
+            if (action.schemaIndex) {
+              parentDocData.value.child_documents.splice(
+                action.schemaIndex,
+                0,
+                docId
+              );
+            }
             // unique=falseのサブスキーマ追加時は同スキーマの右に追加する
-            if (action.isNotUniqueSubSchemaAdded) {
+            else if (action.isNotUniqueSubSchemaAdded) {
+              // TODO: schemaIndexが正しく設定されていればここに来ることはないため不要かもしれない
               for (
                 let i = parentDocData.value.child_documents.length - 1;
                 i >= 0;
@@ -437,6 +451,11 @@ const formDataReducer: Reducer<
                   parentDocData.value.child_documents.splice(i + 1, 0, docId);
                   break;
                 }
+              }
+
+              // 上記の処理で追加できなかった場合は末尾に追加
+              if (!parentDocData.value.child_documents.includes(docId)) {
+                parentDocData.value.child_documents.push(docId);
               }
             } else {
               // サブスキーマの自動展開、または子スキーマの場合は末尾に追加
@@ -483,7 +502,7 @@ const formDataReducer: Reducer<
 
       // フォームの入力値変更。デフォルト値が入力された場合もここに来る
       case 'INPUT': {
-        const updateDate = new Date().toLocaleString();
+        const updateDate = new Date().toLocaleString('ja-JP');
 
         const docId = action.documentId;
 
@@ -615,6 +634,11 @@ const formDataReducer: Reducer<
               }
             });
           }
+
+          // エラー一覧からも削除
+          copyState.extraErrors = copyState.extraErrors.filter(
+            (p) => !deletedIds.includes(p.documentId)
+          );
         }
 
         break;
@@ -758,7 +782,7 @@ const formDataReducer: Reducer<
           doc.value.schema_id = schema_id;
           doc.value.schema_primary_id = schema_primary_id;
           doc.value.schema_major_version = version_major;
-          doc.value.last_updated = new Date().toLocaleString();
+          doc.value.last_updated = new Date().toLocaleString('ja-JP');
           doc.value.registrant = getLoginUserId();
         }
         break;

@@ -26,11 +26,14 @@ import { Const } from '../../common/Const';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import { getEventDate, responseResult } from '../../common/DBUtility';
 import store from '../../store';
+import { reloadState } from '../../views/Registration';
+import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
 
 // 孫スキーマ以降
 type Props = {
   schemaId: number;
   parentTabsId: string;
+  parentEventDate: string | null;
   setDispSchemaIds: React.Dispatch<
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >;
@@ -45,11 +48,16 @@ type Props = {
   selectedTabKey: any;
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void;
   setUpdateFormData: React.Dispatch<React.SetStateAction<boolean>>;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void;
 };
 
 const PanelSchema = React.memo((props: Props) => {
   const {
     schemaId,
+    parentEventDate,
     parentTabsId,
     setDispSchemaIds,
     dispSchemaIds,
@@ -63,6 +71,8 @@ const PanelSchema = React.memo((props: Props) => {
     selectedTabKey,
     schemaAddModFunc,
     setUpdateFormData,
+    setReload,
+    setOverwriteDialogPlop,
   } = props;
 
   const [formData, setFormData] = useState<any>({}); // eslint-disable-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
@@ -72,7 +82,7 @@ const PanelSchema = React.memo((props: Props) => {
     .formDataReducer.saveData.jesgo_document.find((p) => p.key === documentId);
   const eventDate = useMemo(
     () => (saveDoc ? getEventDate(saveDoc, formData) : null),
-    [saveDoc, formData]
+    [saveDoc, formData, parentEventDate]
   );
 
   // schemaIdをもとに情報を取得
@@ -187,8 +197,9 @@ const PanelSchema = React.memo((props: Props) => {
       dispSubSchemaIds.find((p) => p.documentId === '')
     ) {
       // unieque=falseのサブスキーマ追加
-      const newItem = dispSubSchemaIds.find((p) => p.documentId === '');
-      if (newItem) {
+      const newItemIdx = dispSubSchemaIds.findIndex((p) => p.documentId === '');
+      if (newItemIdx > -1) {
+        const newItem = dispSubSchemaIds[newItemIdx];
         // ここはtrueになる
         const itemSchemaInfo = GetSchemaInfo(newItem.schemaId);
         dispatch({
@@ -203,6 +214,7 @@ const PanelSchema = React.memo((props: Props) => {
           schemaInfo: itemSchemaInfo,
           setAddedDocumentCount,
           isNotUniqueSubSchemaAdded: true,
+          schemaIndex: newItemIdx,
         });
       }
     } else if (
@@ -581,7 +593,7 @@ const PanelSchema = React.memo((props: Props) => {
     ) {
       dispatch({ type: 'CHANGED_SCHEMA', documentId, schemaInfo });
     }
-  }, [formData, updateChildFormData]);
+  }, [formData, updateChildFormData, schemaInfo]);
 
   return (
     <Panel key={`panel-${schemaId}`} className="panel-style">
@@ -620,12 +632,16 @@ const PanelSchema = React.memo((props: Props) => {
           tabSelectEvents={childTabSelectedFunc}
           addableSubSchemaIds={addableSubSchemaIds}
           setIsLoading={setIsLoading}
+          setReload={setReload}
+          setOverwriteDialogPlop={setOverwriteDialogPlop}
+          setErrors={setErrors}
         />
       </div>
       {isTab
         ? // タブ表示
           createTabs(
             parentTabsId,
+            eventDate,
             dispSubSchemaIds,
             dispSubSchemaIdsNotDeleted,
             setDispSubSchemaIds,
@@ -637,7 +653,9 @@ const PanelSchema = React.memo((props: Props) => {
             setErrors,
             childTabSelectedFunc,
             setChildTabSelectedFunc,
-            setUpdateChildFormData
+            setUpdateChildFormData,
+            setReload,
+            setOverwriteDialogPlop
           )
         : // パネル表示
           createPanels(
@@ -653,7 +671,10 @@ const PanelSchema = React.memo((props: Props) => {
             selectedTabKey,
             schemaAddModFunc,
             parentTabsId,
-            setUpdateChildFormData
+            eventDate,
+            setUpdateChildFormData,
+            setReload,
+            setOverwriteDialogPlop
           )}
     </Panel>
   );

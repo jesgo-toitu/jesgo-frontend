@@ -31,6 +31,7 @@ export enum VALIDATE_TYPE {
 export type ValidationItem = {
   message: string;
   validateType: VALIDATE_TYPE;
+  jsonpath?: string;
 };
 
 export type validationResult = {

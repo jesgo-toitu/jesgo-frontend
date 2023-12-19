@@ -1,10 +1,10 @@
 {
   "name": "jesgo-web",
-  "version": "1.0.3",
+  "version": "1.1",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "C:\\jesgo\\node\\node-v16.13.2-win-x64\\node start.js",
+    "start": "C:\\jesgo\\node\\node-v16.20.2-win-x64\\node start.js",
     "dev-start": "node start.js",
     "build": "webpack --progress --mode development",
     "release-build": "powershell -File ./export/export.ps1",
@@ -32,6 +32,7 @@
     "encoding-japanese": "^2.0.0",
     "file-saver": "^2.0.5",
     "js-file-download": "^0.4.12",
+    "jsonpatch": "^3.1.0",
     "jsonpointer": "^5.0.0",
     "lodash": "^4.17.21",
     "prismjs": "^1.29.0",

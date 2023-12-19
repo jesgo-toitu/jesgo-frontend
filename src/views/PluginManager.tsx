@@ -1,6 +1,7 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable no-alert */
 import React, { useEffect, useRef, useState } from 'react';
+import lodash from 'lodash';
 import {
   Navbar,
   Button,
@@ -10,6 +11,7 @@ import {
   ButtonGroup,
   ButtonToolbar,
   Glyphicon,
+  Checkbox,
 } from 'react-bootstrap';
 import { saveAs } from 'file-saver';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +26,7 @@ import { settingsFromApi } from './Settings';
 import {
   LoadPluginList,
   responseResult,
+  SavePluginList,
   UploadPluginFile,
 } from '../common/DBUtility';
 import {
@@ -32,6 +35,8 @@ import {
 } from '../common/CaseRegistrationUtility';
 import './PluginManager.css';
 import { jesgoPluginColumns } from '../common/Plugin';
+import { storeSchemaInfo } from '../components/CaseRegistration/SchemaUtility';
+import { backToPatientsList } from '../common/CommonUtility';
 
 type settings = {
   facility_name: string;
@@ -50,6 +55,9 @@ const PluginManager = () => {
   const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
     []
   );
+  const [loadedJesgoPluginList, setLoadedJesgoPluginList] = useState<
+    jesgoPluginColumns[]
+  >([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [, setErrorMessages] = useState<string[]>([]);
@@ -60,10 +68,28 @@ const PluginManager = () => {
   // 実際のアップロードボタンへの参照
   const refBtnUpload = useRef<HTMLInputElement>(null);
 
+  // 変更チェック
+  const editingCheck = (
+    message = '編集中のデータがありますが、破棄して画面遷移します。よろしいですか？'
+  ) => {
+    if (
+      JSON.stringify(jesgoPluginList) !== JSON.stringify(loadedJesgoPluginList)
+    ) {
+      return confirm(message);
+    }
+    return true;
+  };
+
   // プラグインアップロードボタン押下
   const pluginUpload = () => {
-    const button = refBtnUpload.current;
-    button?.click();
+    if (
+      editingCheck(
+        '編集中のデータがありますが、破棄してアップロードを実行します。よろしいですか？'
+      )
+    ) {
+      const button = refBtnUpload.current;
+      button?.click();
+    }
   };
 
   const getSchemaNameList = (idList: number[]): string => {
@@ -80,7 +106,7 @@ const PluginManager = () => {
 
   // プラグイン全ロード処理
   const loadPluginList = async () => {
-    const pluginListReturn = await LoadPluginList(true);
+    const pluginListReturn = await LoadPluginList(true, true);
     if (
       pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION ||
       pluginListReturn.statusNum === RESULT.PLUGIN_CACHE
@@ -88,10 +114,14 @@ const PluginManager = () => {
       const pluginList = pluginListReturn.body as jesgoPluginColumns[];
 
       if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
-        dispatch({ type: 'PLUGIN_LIST', pluginList });
+        dispatch({
+          type: 'PLUGIN_LIST',
+          pluginList: lodash.cloneDeep(pluginList),
+        });
       }
 
       setJesgoPluginList(pluginList);
+      setLoadedJesgoPluginList(lodash.cloneDeep(pluginList));
     } else {
       navigate('/login');
     }
@@ -99,6 +129,9 @@ const PluginManager = () => {
 
   useEffect(() => {
     const f = async () => {
+      setIsLoading(true);
+      await storeSchemaInfo(dispatch);
+
       // 設定情報取得APIを呼ぶ
       const returnApiObject = await apiAccess(METHOD_TYPE.GET, `getSettings`);
 
@@ -114,6 +147,8 @@ const PluginManager = () => {
       }
 
       await loadPluginList();
+
+      setIsLoading(false);
     };
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     f();
@@ -144,10 +179,9 @@ const PluginManager = () => {
     const fileList = e.target.files;
     if (fileList) {
       const file = fileList[0];
-      if (file.size > 1048576) { // 1024×1024
-        alert(
-          '一度にアップロードするファイルのサイズは1MBまでにしてください'
-        );
+      if (file.size > 1048576) {
+        // 1024×1024
+        alert('一度にアップロードするファイルのサイズは1MBまでにしてください');
         return;
       }
       const fileName: string = file.name.toLocaleLowerCase();
@@ -225,6 +259,30 @@ const PluginManager = () => {
       setIsLoading(false);
     }
   };
+
+  // プラグインへの変更保存
+  const pluginSave = () => {
+    setIsLoading(true);
+
+    // disabledの変更があったものを抽出
+    const diffList = jesgoPluginList.filter((p) =>
+      loadedJesgoPluginList.find(
+        (q) => q.plugin_id === p.plugin_id && p.disabled !== q.disabled
+      )
+    );
+
+    // eslint-disable-next-line no-void
+    void SavePluginList(diffList).then(async (returnApiObject) => {
+      if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
+        alert('保存しました');
+        await loadPluginList();
+      } else {
+        alert('【エラー】\n保存に失敗しました');
+      }
+      setIsLoading(false);
+    });
+  };
+
   return (
     <>
       <div className="page-area">
@@ -247,7 +305,7 @@ const PluginManager = () => {
               </Navbar.Brand>
               <Navbar.Brand>
                 <div>
-                  <SystemMenu title="設定" i={0} isConfirm={null} />
+                  <SystemMenu title="設定" i={0} isConfirm={editingCheck} />
                 </div>
               </Navbar.Brand>
             </Nav>
@@ -275,7 +333,18 @@ const PluginManager = () => {
             style={{ display: 'none' }}
           />
           <Button
-            onClick={() => navigate('/Patients')}
+            bsStyle="success"
+            className="normal-button"
+            onClick={pluginSave}
+          >
+            保存
+          </Button>
+          <Button
+            onClick={() => {
+              if (editingCheck()) {
+                backToPatientsList(navigate);
+              }
+            }}
             bsStyle="primary"
             className="normal-button"
           >
@@ -293,6 +362,7 @@ const PluginManager = () => {
               <th className="plugin-table-short">プラグイン種別</th>
               <th>対象スキーマ名</th>
               <th>詳細</th>
+              <th className="plugin-table-short">有効</th>
               <th className="plugin-table-short">
                 {/* ボタン類(DL/スクリプト/削除) */}
               </th>
@@ -313,12 +383,31 @@ const PluginManager = () => {
                 </td>
                 <td>{plugin.explain}</td>
                 <td className="plugin-table-short">
+                  <Checkbox
+                    id={`chkPluginDisabled-${plugin.plugin_id}`}
+                    checked={!plugin.disabled}
+                    onChange={(e) => {
+                      const ctrl = e.target as HTMLInputElement;
+                      if (ctrl) {
+                        plugin.disabled = !ctrl.checked;
+                        setJesgoPluginList([...jesgoPluginList]);
+                      }
+                    }}
+                  />
+                </td>
+                <td className="plugin-table-short">
                   <ButtonToolbar>
                     <ButtonGroup>
-                      <Button title="内容の表示" onClick={() => openSyntax(plugin.plugin_id)}>
+                      <Button
+                        title="内容の表示"
+                        onClick={() => openSyntax(plugin.plugin_id)}
+                      >
                         <Glyphicon glyph="list-alt" />
                       </Button>
-                      <Button title="ダウンロード" onClick={() => downloadPlugin(plugin)}>
+                      <Button
+                        title="ダウンロード"
+                        onClick={() => downloadPlugin(plugin)}
+                      >
                         <Glyphicon glyph="download-alt" />
                       </Button>
                       <Button title="削除" onClick={() => deletePlugin(plugin)}>

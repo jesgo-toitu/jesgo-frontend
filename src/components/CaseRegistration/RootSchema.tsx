@@ -26,6 +26,8 @@ import { getEventDate, responseResult } from '../../common/DBUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import store from '../../store';
 import { Const } from '../../common/Const';
+import { reloadState } from '../../views/Registration';
+import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
 
 type Props = {
   tabId: string;
@@ -43,6 +45,10 @@ type Props = {
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
   selectedTabKey: any;
   schemaAddModFunc: (isTabSelected: boolean, eventKey: any) => void;
+  setReload: (value: React.SetStateAction<reloadState>) => void;
+  setOverwriteDialogPlop: (
+    value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void;
 };
 
 // ルートディレクトリのスキーマ
@@ -60,6 +66,8 @@ const RootSchema = React.memo((props: Props) => {
     isSchemaChange,
     setErrors,
     schemaAddModFunc,
+    setReload,
+    setOverwriteDialogPlop,
   } = props;
 
   // 表示中のchild_schema
@@ -173,8 +181,9 @@ const RootSchema = React.memo((props: Props) => {
       dispSubSchemaIds.find((p) => p.documentId === '')
     ) {
       // unieque=falseのサブスキーマ追加
-      const newItem = dispSubSchemaIds.find((p) => p.documentId === '');
-      if (newItem) {
+      const newItemIdx = dispSubSchemaIds.findIndex((p) => p.documentId === '');
+      if (newItemIdx > -1) {
+        const newItem = dispSubSchemaIds[newItemIdx];
         const itemSchemaInfo = GetSchemaInfo(newItem.schemaId);
         dispatch({
           type: 'ADD_CHILD',
@@ -188,6 +197,7 @@ const RootSchema = React.memo((props: Props) => {
           schemaInfo: itemSchemaInfo,
           setAddedDocumentCount,
           isNotUniqueSubSchemaAdded: true,
+          schemaIndex: newItemIdx,
         });
       }
     } else if (
@@ -533,7 +543,7 @@ const RootSchema = React.memo((props: Props) => {
     ) {
       dispatch({ type: 'CHANGED_SCHEMA', documentId, schemaInfo });
     }
-  }, [formData, updateChildFormData]);
+  }, [formData, updateChildFormData, schemaInfo]);
 
   return (
     <>
@@ -573,10 +583,14 @@ const RootSchema = React.memo((props: Props) => {
           tabSelectEvents={childTabSelectedFunc}
           addableSubSchemaIds={addableSubSchemaIds}
           setIsLoading={setIsLoading}
+          setReload={setReload}
+          setOverwriteDialogPlop={setOverwriteDialogPlop}
+          setErrors={setErrors}
         />
       </div>
       {createTabs(
         tabId,
+        eventDate,
         dispSubSchemaIds,
         dispSubSchemaIdsNotDeleted,
         setDispSubSchemaIds,
@@ -588,7 +602,9 @@ const RootSchema = React.memo((props: Props) => {
         setErrors,
         childTabSelectedFunc,
         setChildTabSelectedFunc,
-        setUpdateChildFormData
+        setUpdateChildFormData,
+        setReload,
+        setOverwriteDialogPlop
       )}
     </>
   );

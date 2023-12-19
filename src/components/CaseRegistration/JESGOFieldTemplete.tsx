@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 // eslint-disable-next-line import/no-unresolved
 import { JSONSchema7, JSONSchema7Type } from 'json-schema';
 import {
@@ -137,6 +137,17 @@ export namespace JESGOFiledTemplete {
       (uiSchema['ui:description'] as string) || schema.description;
     const items = schema.items as JSONSchema7;
     const subschemastyle = items[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE];
+    // 配列内に項目があるかどうか
+    let hasItems = false;
+    if (items != null) {
+      if (items.type === Const.JSONSchema7Types.OBJECT) {
+        if (items.properties != null && Object.keys(items.properties).length > 0) {
+          hasItems = true;
+        }
+      } else if (items.type != null) {
+        hasItems = true;
+      }
+    }
 
     // jesgo:ui:visibleWhen
     const visibleWhenCondition: VisibleWhenItem[] = [];
@@ -169,53 +180,63 @@ export namespace JESGOFiledTemplete {
       }
     });
 
-    // jesgo:ui:visibleWhenによる項目表示/非表示制御
-    // eslint-disable-next-line react/destructuring-assignment
-    if (props.items) {
-      //  eslint-disable-next-line react/destructuring-assignment
-      props.items.forEach((item, index) => {
-        const editItem = item;
+    useEffect(() => {
 
-        // visiblewhen
-        visibleWhenCondition.forEach((condition: VisibleWhenItem) => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          const inputData = formData[index][condition.name] as JSONSchema7Type;
+      // jesgo:ui:visibleWhenによる項目表示/非表示制御
+      // eslint-disable-next-line react/destructuring-assignment
+      if (props.items) {
+        //  eslint-disable-next-line react/destructuring-assignment
+        props.items.forEach((item, index) => {
+          const editItem = item;
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          const itemId = editItem.children.props.idSchema[
-            condition.parentItemName
-          ].$id as string;
-          const element = document.getElementById(itemId);
-          if (element) {
-            const parentClass = element.parentElement?.className;
-            if (parentClass && parentClass.includes('visiblewhen')) {
-              if (
-                !(
-                  (condition.values && condition.values.includes(inputData)) ||
-                  (condition.pattern &&
-                    typeof inputData === 'string' &&
-                    inputData.match(condition.pattern))
-                )
-              ) {
-                // 条件に【当てはまらなければ】非表示にするCSSを追加
+          // visiblewhen
+          visibleWhenCondition.forEach((condition: VisibleWhenItem) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const inputData = formData[index][condition.name] as JSONSchema7Type;
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const itemId = editItem.children.props.idSchema[
+              condition.parentItemName
+            ].$id as string;
+            const element = document.getElementById(itemId);
+            if (element) {
+              let parentElement = element.parentElement
+              // 単位付きフィールドではもう一つ上の階層がdiv.visiblewhenとなる
+              if (parentElement?.className && parentElement.className.includes('with-units-div')) {
+                parentElement = parentElement.parentElement
+              }
+              const parentClass = parentElement?.className;
+              if (parentClass && parentClass.includes('visiblewhen')) {
                 if (
-                  !element.parentElement.className.includes('visiblewhen-item')
+                  !(
+                    (condition.values && condition.values.includes(inputData)) ||
+                    (condition.pattern &&
+                      typeof inputData === 'string' &&
+                      inputData.match(condition.pattern))
+                  )
                 ) {
-                  element.parentElement.className += ' visiblewhen-item';
+                  // 条件に【当てはまらなければ】非表示にするCSSを追加
+                  if (
+                    parentElement && !parentElement?.className.includes('visiblewhen-item')
+                  ) {
+                    parentElement.className += ' visiblewhen-item';
+                  }
+                } else {
+                  // 当てはまる場合は非表示用のCSSをクリア
+                  if (parentElement) {
+                    parentElement.className =
+                    parentElement.className
+                      .replace(/visiblewhen-item/g, '')
+                      .trim();
+                  }
                 }
-              } else {
-                // 当てはまる場合は非表示用のCSSをクリア
-                element.parentElement.className =
-                  element.parentElement.className
-                    .replace(/visiblewhen-item/g, '')
-                    .trim();
               }
             }
-          }
+          });
         });
-      });
-    }
-
+      }
+    });
+   
     return (
       <div>
         {/* eslint-disable-next-line react/destructuring-assignment */}
@@ -253,16 +274,19 @@ export namespace JESGOFiledTemplete {
                 } else if (subschemastyle === 'column') {
                   editItem.className += ' array-subschemastyle-column';
                 }
-                return JESGOComp.DefaultArrayItem(editItem);
+                return JESGOComp.DefaultArrayItem(
+                  editItem,
+                  schema[Const.EX_VOCABULARY.NOT_EXIST_PROP] ?? false
+                );
               })}
           </div>
-
+          
           {/* eslint-disable react/destructuring-assignment */}
           {props.canAdd && (
             <JESGOComp.AddButton
               className="array-item-add col-lg-1 col-md-1 col-sm-2 col-lg-offset-11 col-md-offset-11 col-sm-offset-10"
               onClick={props.onAddClick}
-              disabled={props.disabled || props.readonly}
+              disabled={props.disabled || props.readonly || !hasItems}
             />
           )}
           {/* eslint-enable */}
@@ -311,6 +335,32 @@ export namespace JESGOFiledTemplete {
           />
         )}
       </fieldset>
+    );
+  };
+
+  /**
+   * タイトルなしチェックボックスFieldTemplate
+   * @param props
+   * @returns
+   */
+  export const CustomNoTitleCheckboxTemplete = (props: FieldTemplateProps) => {
+    const {
+      id,
+      classNames,
+      label,
+      help,
+      required,
+      rawDescription,
+      errors,
+      children,
+      schema,
+    } = props;
+    return (
+      <div className={classNames}>
+        {children}
+        {errors}
+        {help}
+      </div>
     );
   };
 }

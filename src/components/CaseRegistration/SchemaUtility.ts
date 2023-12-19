@@ -284,6 +284,15 @@ const mergeSchemaItem = (props: {
           if (pitem && pitem.enum && tItem && tItem.enum) {
             tItem.enum = pitem.enum;
           }
+
+          // 置き換え後のpropertiesに対するif~then対応
+          if (pitem.properties) {
+            // フィールド内のif~Thenを入力値に合わせて書き換え
+            targetItem.pItems[pName] = customSchemaIfThenElseOnField(
+              pitem,
+              formData[pName] ?? {}
+            );
+          }
         }
 
         // ユーザーが入力できない場合(readonly,jesgo:ui:hidden)はFormDataにdefaultを設定
@@ -371,7 +380,13 @@ export const transferSchemaItem = (
         refValue = refValue.substring(1);
       }
       // defの内容に置き換え
-      result = JSONPointer.get(schema, refValue) as JSONSchema7;
+      const defSchema = JSONPointer.get(schema, refValue) as JSONSchema7;
+      // defの中を再解析
+      result = transferSchemaItem(
+        schema,
+        defSchema,
+        getSchemaItemNames(defSchema)
+      );
     } else if (iName === '$comment') {
       // $commentのみのフィールドになるとエラーになるためあらかじめ除去
       delete result.$comment;
@@ -471,8 +486,15 @@ const customSchemaIfThenElseOnField = (schema: JSONSchema7, formData: any) => {
   let result = lodash.cloneDeep(schema);
   const itemNames = getSchemaItemNames(result);
   itemNames.forEach((name: string) => {
+    // ifの対処
     if (name === Const.JSONSchema7Keys.IF) {
-      result = customSchemaIfThenElse(result, result, formData);
+      result = customSchemaIfThenElse(result, result, formData ?? {});
+    } else if (name === 'allOf') {
+      // allOfの対処
+      const allOfItemArray = result[name] as JSONSchema7[];
+      allOfItemArray.forEach((allOfItem: JSONSchema7) => {
+        result = customSchemaIfThenElse(allOfItem, result, formData ?? {});
+      });
     } else if (name === Const.JSONSchema7Keys.PROP) {
       const targetSchema = getPropItemsAndNames(result);
       targetSchema.pNames.forEach((iname: string) => {
@@ -480,7 +502,7 @@ const customSchemaIfThenElseOnField = (schema: JSONSchema7, formData: any) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         targetSchema.pItems[iname] = customSchemaIfThenElseOnField(
           targetItem,
-          formData[iname] ?? {}
+          formData ? formData[iname] ?? {} : {}
         );
       });
     }
@@ -508,7 +530,7 @@ export const transferSchemaMaps = (
  * @param val
  * @returns
  */
-const GetSchemaFromPropItem = (val: any) => {
+const GetSchemaFromPropItem = (val: any, isArrayOfItem: boolean) => {
   const schemaObj: JSONSchema7 = { type: 'string' };
 
   // formDataの入力値の型からtype決定
@@ -522,29 +544,30 @@ const GetSchemaFromPropItem = (val: any) => {
     // 配列
     schemaObj.type = 'array';
 
-    const objVals = val.filter((p) => typeof p === 'object');
+    const objVals = val.filter((p) => p !== null && typeof p === 'object');
     if (objVals.length > 0) {
       // 配列の中身がオブジェクトの場合はプロパティをマージしてすべての値が表示されるようにする
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const unionVal = lodash.merge({}, ...(objVals as Object[]));
 
-      schemaObj.items = GetSchemaFromPropItem(unionVal);
+      schemaObj.items = GetSchemaFromPropItem(unionVal, true);
       // inline(横並び)で展開する
       schemaObj.items[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE] = 'inline';
     } else if (val.length > 0) {
       // オブジェクト以外
-      schemaObj.items = GetSchemaFromPropItem(val[0]);
+      schemaObj.items = GetSchemaFromPropItem(val[0], true);
     } else {
       schemaObj.items = { type: 'string' };
     }
-  } else if (typeof val === 'object') {
+  } else if (val !== null && typeof val === 'object') {
     // オブジェクト
     schemaObj.type = 'object';
     schemaObj.properties = {};
     Object.entries(val).forEach((entryItem) => {
       if (isNotEmptyObject(entryItem[1])) {
         schemaObj.properties![entryItem[0]] = GetSchemaFromPropItem(
-          entryItem[1]
+          entryItem[1],
+          false
         );
       }
     });
@@ -552,6 +575,9 @@ const GetSchemaFromPropItem = (val: any) => {
 
   // フォームデータから生成したスキーマは編集不可とする
   schemaObj.readOnly = true;
+  if (!isArrayOfItem) {
+    schemaObj[Const.EX_VOCABULARY.NOT_EXIST_PROP] = true;
+  }
 
   return schemaObj;
 };
@@ -580,23 +606,89 @@ const customSchemaAppendFormDataProperty = (
       Object.keys(copySchema.properties)
     );
 
-    Object.entries(formData)
-      .filter((p) => formKeys.includes(p[0]))
-      .forEach((item) => {
+    Object.entries(formData).forEach((item) => {
+      const propName = item[0];
+      const propValue = item[1];
+
+      if (!formKeys.includes(propName)) {
+        // formDataにあるプロパティがスキーマにある場合は基本的に何もしないが
+        // 値がオブジェクトの場合は中身も見る
+        if (!Array.isArray(propValue) && typeof propValue === 'object') {
+          if (copySchema.properties) {
+            const propSchema = copySchema.properties[propName];
+            if (propSchema) {
+              // 子項目に対して再帰
+              const newSchema = customSchemaAppendFormDataProperty(
+                propSchema as JSONSchema7,
+                propValue
+              );
+              // 元スキーマのプロパティに追加
+              copySchema.properties[propName] = newSchema;
+            }
+          }
+        } else if (Array.isArray(propValue)) {
+          const objVals = propValue.filter((p) => p !== null && typeof p === 'object');
+          // 配列の中身がオブジェクトの場合は中身も見る
+          if (objVals.length > 0) {
+            if (copySchema.properties) {
+              const propSchema = copySchema.properties[propName] as JSONSchema7;
+              if (propSchema) {
+                const itemsSchema = propSchema.items as JSONSchema7;
+                if (itemsSchema) {
+                  const unionVal = lodash.merge({}, ...(objVals as object[]));
+                  // formDataにしかない項目一覧取得
+                  const diffKeys = lodash.difference(
+                    Object.keys(unionVal),
+                    Object.keys(itemsSchema)
+                  );
+
+                  if (diffKeys.length > 0) {
+                    // 子項目に対して再帰
+                    const newSchema = customSchemaAppendFormDataProperty(
+                      itemsSchema,
+                      unionVal
+                    );
+
+                    // 配列の中身が全てスキーマ未定義の場合は配列自体を編集不可に
+                    if (itemsSchema.properties && Object.keys(itemsSchema.properties).length === 0) {
+                      (copySchema.properties[propName] as JSONSchema7).readOnly = true;
+                      (copySchema.properties[propName] as JSONSchema7)[Const.EX_VOCABULARY.NOT_EXIST_PROP] = true;
+                    }
+
+                    // 元スキーマのプロパティに追加
+                    (copySchema.properties[propName] as JSONSchema7).items = newSchema;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else {
         // 空オブジェクトは除外
         if (
-          !Array.isArray(item[1]) &&
-          typeof item[1] === 'object' &&
-          !isNotEmptyObject(item[1])
+          !Array.isArray(propValue) &&
+          typeof propValue === 'object' &&
+          !isNotEmptyObject(propValue)
         ) {
           return;
         }
 
+        // jesgo:errorの場合は除外
+        if (propName === Const.EX_VOCABULARY.JESGO_ERROR) {
+          return;
+        }
+
+        // nullの場合も除外
+        if (propValue == null) {
+          return;
+        }
+
         // formDataのプロパティからスキーマ生成
-        const schemaObj = GetSchemaFromPropItem(item[1]);
+        const schemaObj = GetSchemaFromPropItem(propValue, false);
         // 元スキーマのプロパティに追加
-        copySchema.properties![item[0]] = schemaObj;
-      });
+        copySchema.properties![propName] = schemaObj;
+      }
+    });
   }
 
   return copySchema;

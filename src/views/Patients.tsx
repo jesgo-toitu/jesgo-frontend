@@ -1,7 +1,9 @@
+/* eslint-disable no-use-before-define */
 // ★TODO: JSXの属性を修正する
 /* eslint-disable jsx-a11y/control-has-associated-label */
 /* eslint-disable jsx-a11y/anchor-has-content */
 /* eslint-disable jsx-a11y/anchor-is-valid */
+import lodash from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -39,6 +41,7 @@ import SearchDateComponent, {
 } from '../components/common/SearchDateComponent';
 import { reloadState } from './Registration';
 import { LoadPluginList } from '../common/DBUtility';
+import store from '../store';
 
 const UNIT_TYPE = {
   DAY: 0,
@@ -92,7 +95,7 @@ const initialSearchWord = {
     advancedStage: false,
     pathlogicalDiagnosis: false,
     initialTreatment: false,
-    copilacations: false,
+    complications: false,
     threeYearPrognosis: false,
     fiveYearPrognosis: false,
   },
@@ -111,6 +114,67 @@ const makeSelectDataFromStorage = (columnType: string): string[] => {
     dataMap.set(index + 1, dataList[index]);
   }
   return dataList;
+};
+
+const setSearchDateUI = (
+  searchValue: string | null,
+  setSearchDateInfoDataSet: React.Dispatch<
+    React.SetStateAction<searchDateInfoDataSet | undefined>
+  >
+) => {
+  const dataset: searchDateInfoDataSet = {
+    fromInfo: {
+      year: '',
+      month: '',
+      day: '',
+    },
+    toInfo: {
+      year: '',
+      month: '',
+      day: '',
+    },
+    isRange: false,
+    searchType: '年次',
+  };
+
+  if (!searchValue) {
+    setSearchDateInfoDataSet(dataset);
+    return;
+  }
+
+  const dateArray = JSON.parse(searchValue) as string[];
+  dataset.isRange = dateArray.length > 1;
+  // from
+  if (dateArray[0]) {
+    const splitDate = dateArray[0].split('-');
+    if (splitDate[0]) {
+      dataset.fromInfo.year = splitDate[0];
+      dataset.searchType = '年次';
+    }
+    if (splitDate[1]) {
+      dataset.fromInfo.month = splitDate[1];
+      dataset.searchType = '月次';
+    }
+    if (splitDate[2]) {
+      dataset.fromInfo.day = splitDate[2];
+      dataset.searchType = '日次';
+    }
+  }
+  // To
+  if (dateArray[1]) {
+    const splitDate = dateArray[1].split('-');
+    if (splitDate[0]) {
+      dataset.toInfo.year = splitDate[0];
+    }
+    if (splitDate[1]) {
+      dataset.toInfo.month = splitDate[1];
+    }
+    if (splitDate[2]) {
+      dataset.toInfo.day = splitDate[2];
+    }
+  }
+
+  setSearchDateInfoDataSet(dataset);
 };
 
 const Patients = () => {
@@ -223,6 +287,71 @@ const Patients = () => {
 
       setIsLoading(false);
     };
+
+    // URLパラメータから検索条件などをUIに復元
+    const topMenuInfo = store.getState().commonReducer.topMenuInfo;
+    if (topMenuInfo) {
+      // 患者リスト表示、腫瘍登録管理表示の選択状態を復元
+      changeListColumn(topMenuInfo.isDetail);
+
+      const searchParam = new URLSearchParams(url);
+
+      const copySearchWord = lodash.cloneDeep(searchWord);
+
+      // 検索条件の復元
+
+      // 腫瘍登録対象のみ
+      let paramValue = searchParam.get('showOnlyTumorRegistry');
+      copySearchWord.showOnlyTumorRegistry = paramValue === 'true';
+
+      // がん種
+      paramValue = searchParam.get('cancerType');
+      copySearchWord.cancerType = paramValue ?? '';
+
+      // 初回治療開始日
+      paramValue = searchParam.get('initialTreatmentDate');
+      setSearchDateUI(paramValue, setSearchDateInfoInitialTreatment);
+      // 診断日
+      paramValue = searchParam.get('diagnosisDate');
+      copySearchWord.checkOfDiagnosisDate = !!paramValue;
+      setSearchDateUI(paramValue, setSearchDateInfoDiagnosis);
+      // イベント日
+      paramValue = searchParam.get('eventDate');
+      copySearchWord.checkOfEventDate = !!paramValue;
+      let eventDateType = searchParam.get('eventDateType');
+      if (!eventDateType || eventDateType === '') {
+        eventDateType = '最新';
+      }
+      setSearchDateEventDateType(eventDateType);
+      setSearchDateUI(paramValue, setSearchDateInfoEventDate);
+
+      // 未入力項目
+      // 進行期
+      paramValue = searchParam.get('advancedStage');
+      copySearchWord.blankFields.advancedStage = paramValue === 'true';
+      // 診断
+      paramValue = searchParam.get('pathlogicalDiagnosis');
+      copySearchWord.blankFields.pathlogicalDiagnosis = paramValue === 'true';
+      // 初回治療
+      paramValue = searchParam.get('initialTreatment');
+      copySearchWord.blankFields.initialTreatment = paramValue === 'true';
+      // 合併症
+      paramValue = searchParam.get('complications');
+      copySearchWord.blankFields.complications = paramValue === 'true';
+      // 3年予後
+      paramValue = searchParam.get('threeYearPrognosis');
+      copySearchWord.blankFields.threeYearPrognosis = paramValue === 'true';
+      // 5年予後
+      paramValue = searchParam.get('fiveYearPrognosis');
+      copySearchWord.blankFields.fiveYearPrognosis = paramValue === 'true';
+
+      // 未入力項目で絞り込みのチェックはいずれかの項目にチェックがあればON
+      copySearchWord.checkOfBlankFields = Object.entries(
+        copySearchWord.blankFields
+      ).some((blankItem) => blankItem[1]);
+
+      setSearchWord(copySearchWord);
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     f();
@@ -374,8 +503,8 @@ const Patients = () => {
         setSearchWord({ ...searchWord, blankFields });
         break;
 
-      case 'copilacations':
-        blankFields = { ...blankFields, copilacations: eventTarget.checked };
+      case 'complications':
+        blankFields = { ...blankFields, complications: eventTarget.checked };
         setSearchWord({ ...searchWord, blankFields });
         break;
 
@@ -424,6 +553,14 @@ const Patients = () => {
         'hidden'
       );
     }
+
+    dispatch({
+      type: 'SET_TOP_MENU_INFO',
+      topMenuInfo: {
+        paramString: url,
+        isDetail,
+      },
+    });
   };
 
   // 現在表示されている患者リストの一覧をJesgoCaseDefineとして返す
@@ -592,8 +729,8 @@ const Patients = () => {
           query += `&initialTreatment=${encodeURIComponent(
             searchWord.blankFields.initialTreatment
           )}`;
-          query += `&copilacations=${encodeURIComponent(
-            searchWord.blankFields.copilacations
+          query += `&complications=${encodeURIComponent(
+            searchWord.blankFields.complications
           )}`;
           query += `&threeYearPrognosis=${encodeURIComponent(
             searchWord.blankFields.threeYearPrognosis
@@ -616,6 +753,13 @@ const Patients = () => {
 
     if (returnApiObject.statusNum === RESULT.NORMAL_TERMINATION) {
       setUserListJson(JSON.stringify(returnApiObject.body));
+      dispatch({
+        type: 'SET_TOP_MENU_INFO',
+        topMenuInfo: {
+          paramString: `?${param}`,
+          isDetail: listMode[1] && listMode[1] !== '',
+        },
+      });
       navigate(`/Patients?${param}`);
     } else {
       navigate('/login');
@@ -636,6 +780,13 @@ const Patients = () => {
     setSearchDateInfoDiagnosis(undefined);
     setSearchDateInfoEventDate(undefined);
     setSearchDateEventDateType('最新');
+  };
+
+  // 新規作成
+  const clickRegistration = () => {
+    // 遷移前にstoreを初期化
+    dispatch({ type: 'INIT_STORE' });
+    navigate(`/registration`);
   };
 
   return (
@@ -690,7 +841,10 @@ const Patients = () => {
                 <Button title="検索" onClick={() => changeView('simpleSearch')}>
                   <Glyphicon glyph="search" />
                 </Button>
-                <Button title="表示設定" onClick={() => changeView('detailSearch')}>
+                <Button
+                  title="表示設定"
+                  onClick={() => changeView('detailSearch')}
+                >
                   <Glyphicon glyph="eye-open" />
                 </Button>
               </ButtonGroup>
@@ -705,8 +859,8 @@ const Patients = () => {
             {localStorage.getItem('is_add_roll') === 'true' && (
               <Button
                 bsStyle="primary"
-                href="/registration"
                 className="normal-button"
+                onClick={clickRegistration}
               >
                 新規作成
               </Button>
@@ -903,11 +1057,10 @@ const Patients = () => {
                   初回治療
                 </Checkbox>
                 <Checkbox
-                  name="copilacations"
+                  name="complications"
                   onChange={handleSearchCondition}
                   inline
-                  disabled
-                  checked={searchWord.blankFields.copilacations}
+                  checked={searchWord.blankFields.complications}
                 >
                   合併症
                 </Checkbox>
@@ -915,7 +1068,6 @@ const Patients = () => {
                   name="threeYearPrognosis"
                   onChange={handleSearchCondition}
                   inline
-                  disabled
                   checked={searchWord.blankFields.threeYearPrognosis}
                 >
                   3年予後
@@ -924,7 +1076,6 @@ const Patients = () => {
                   name="fiveYearPrognosis"
                   onChange={handleSearchCondition}
                   inline
-                  disabled
                   checked={searchWord.blankFields.fiveYearPrognosis}
                 >
                   5年予後

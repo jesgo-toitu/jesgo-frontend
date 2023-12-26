@@ -40,6 +40,7 @@ interface CustomDivFormProp extends FormProps<any> {
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >;
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
+  parentEventDate: string | null;
 }
 
 // カスタムフォーム
@@ -49,7 +50,7 @@ interface CustomDivFormProp extends FormProps<any> {
 // - onChangeでuseStateで保持しているformDataを更新する
 const CustomDivForm = (props: CustomDivFormProp) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { schemaId, dispatch, setFormData, documentId, isTabItem, setErrors } =
+  const { schemaId, dispatch, setFormData, documentId, isTabItem, setErrors, parentEventDate } =
     props;
   let { formData, schema } = props;
 
@@ -78,6 +79,14 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   }
 
   const [eventDate, setEventDate] = useState<string>(initEventDate);
+
+  // 親のeventDateが変更されたらeventDateを更新
+  useEffect(() => {
+    if (thisDocument) {
+      const newEventDate = getEventDate(thisDocument, formData);
+      setEventDate(newEventDate);
+    }
+  }, [parentEventDate]);
 
   // 継承直後、データ入力判定を動かすためにsetFormDataする
   if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {

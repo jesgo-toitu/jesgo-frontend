@@ -610,6 +610,7 @@ const PanelSchema = React.memo((props: Props) => {
           dispSchemaIds={[...dispSchemaIds]}
           setDispSchemaIds={setDispSchemaIds}
           setErrors={setErrors}
+          parentEventDate={parentEventDate}
         />
         <ControlButton
           tabId={parentTabsId}

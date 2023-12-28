@@ -137,6 +137,17 @@ export namespace JESGOFiledTemplete {
       (uiSchema['ui:description'] as string) || schema.description;
     const items = schema.items as JSONSchema7;
     const subschemastyle = items[Const.EX_VOCABULARY.UI_SUBSCHEMA_STYLE];
+    // 配列内に項目があるかどうか
+    let hasItems = false;
+    if (items != null) {
+      if (items.type === Const.JSONSchema7Types.OBJECT) {
+        if (items.properties != null && Object.keys(items.properties).length > 0) {
+          hasItems = true;
+        }
+      } else if (items.type != null) {
+        hasItems = true;
+      }
+    }
 
     // jesgo:ui:visibleWhen
     const visibleWhenCondition: VisibleWhenItem[] = [];
@@ -225,7 +236,7 @@ export namespace JESGOFiledTemplete {
         });
       }
     });
-
+   
     return (
       <div>
         {/* eslint-disable-next-line react/destructuring-assignment */}
@@ -269,13 +280,13 @@ export namespace JESGOFiledTemplete {
                 );
               })}
           </div>
-
+          
           {/* eslint-disable react/destructuring-assignment */}
           {props.canAdd && (
             <JESGOComp.AddButton
               className="array-item-add col-lg-1 col-md-1 col-sm-2 col-lg-offset-11 col-md-offset-11 col-sm-offset-10"
               onClick={props.onAddClick}
-              disabled={props.disabled || props.readonly}
+              disabled={props.disabled || props.readonly || !hasItems}
             />
           )}
           {/* eslint-enable */}

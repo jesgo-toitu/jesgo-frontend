@@ -83,6 +83,48 @@ export const SaveFormDataToDB = async (
   resFunc(res);
 };
 
+/**
+ * Nullをundefinedに変換
+ * @param obj
+ */
+const convertNullToUndefind = (obj: object) => {
+  Object.entries(obj).forEach((item) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const itemValue = item[1];
+    const itemType = typeof itemValue;
+    if (itemValue === null) {
+      // eslint-disable-next-line no-param-reassign
+      item[1] = undefined;
+    } else if (itemType === 'object') {
+      if (Array.isArray(itemValue)) {
+        // eslint-disable-next-line no-use-before-define
+        convertNullToUndefindForArray(itemValue);
+      } else {
+        convertNullToUndefind(itemValue as object);
+      }
+    }
+  });
+};
+
+/**
+ * Nullをundefinedに変換(Array)
+ * @param arrayObj
+ */
+const convertNullToUndefindForArray = (arrayObj: any[]) => {
+  for (let i = 0; i < arrayObj.length; i += 1) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const arrayItem = arrayObj[i];
+    if (arrayItem === null) {
+      // eslint-disable-next-line no-param-reassign
+      arrayObj[i] = undefined;
+    } else if (Array.isArray(arrayItem) && arrayItem.length > 0) {
+      convertNullToUndefindForArray(arrayItem);
+    } else if (typeof arrayItem === 'object') {
+      convertNullToUndefind(arrayItem as object);
+    }
+  }
+};
+
 // 症例情報(1患者)読み込み
 export const loadJesgoCaseAndDocument = async (
   caseId: number,
@@ -125,6 +167,16 @@ export const loadJesgoCaseAndDocument = async (
         // eventdate
         // eslint-disable-next-line no-param-reassign
         doc.value.event_date = formatDateStr(doc.value.event_date, '-');
+
+        // そのままだとArray内の順番変更がうまくいかないため、nullをundefindに変換
+        if (
+          doc.value.document &&
+          JSON.stringify(doc.value.document).includes('null') &&
+          !Array.isArray(doc.value.document) &&
+          typeof doc.value.document === 'object'
+        ) {
+          convertNullToUndefind(doc);
+        }
       });
     }
   }
@@ -279,17 +331,18 @@ export const checkEventDateInfinityLoop = (
 
 /**
  * event_date取得処理
- * @param jesgoDoc 
- * @param formData 
- * @param isRecursion true:再帰呼び出し false:非再帰呼び出し
- * @returns 
+ * @param jesgoDoc
+ * @param formData
+ * @param callerEventDate 一番最初に呼び出したドキュメントのeventDate undefinedで非再帰呼び出しを意味する
+ * @returns
  */
 export const getEventDate = (
   jesgoDoc: jesgoDocumentObjDefine,
   formData: any,
-  isRecursion = false
+  callerEventDate?: string
 ): string => {
   let eventDate = '';
+  const isRecursion = callerEventDate !== undefined;
 
   // 無限ループチェック
   const loopCheck = checkEventDateInfinityLoop(
@@ -323,6 +376,16 @@ export const getEventDate = (
     'jesgo:set',
     'eventdate'
   );
+  const inheritForcePropName = getJesgoSchemaPropValue(
+    customSchema,
+    'jesgo:inheriteventdate',
+    'inherit'
+  );
+  const inheritClearPropName = getJesgoSchemaPropValue(
+    customSchema,
+    'jesgo:inheriteventdate',
+    'clear'
+  );
 
   // event_dateの設定
   if (eventDatePropName && formData) {
@@ -346,7 +409,19 @@ export const getEventDate = (
     func(formData);
   }
 
-  if (!eventDate) {
+  // 遡っている途中でjesgo:inheriteventdate = clearにたどり着いた場合 元のドキュメントの入力値があれば使用
+  if (isRecursion && inheritClearPropName) {
+    eventDate = callerEventDate || eventDate;
+  }
+
+  // 遡っている途中でjesgo:inheriteventdate = inheritにたどり着いた場合 たどり着いたドキュメントの入力値を使用
+  if (isRecursion && inheritForcePropName) {
+    eventDate = callerEventDate || eventDate;
+  }
+
+  // eventDateが未入力の場合は上位から引用
+  // eventDateが入力されていても、スキーマにjesgo:inheritEventdateがない場合は上位から引用
+  if (!eventDate || !(inheritForcePropName || inheritClearPropName)) {
     // 親のeventDate取得処理
     const jesgoDocList =
       store.getState().formDataReducer.saveData.jesgo_document;
@@ -354,13 +429,15 @@ export const getEventDate = (
       p.value.child_documents.includes(jesgoDoc.key)
     );
     if (parentDoc) {
-      // 見つかるまでルートまで探索
-      eventDate = getEventDate(parentDoc, parentDoc.value.document, true);
-    }
-
-    // ルートまで遡って見つからない場合、ドキュメントの作成日を使用する
-    if (!isRecursion && !eventDate) {
-      eventDate = formatDateStr(jesgoDoc.value.created, '-');
+      // 見つかるまで探索
+      eventDate = getEventDate(
+        parentDoc,
+        parentDoc.value.document,
+        eventDate || ''
+      );
+    } else {
+      // eventDate未入力でルートまで遡って見つからない場合、ドキュメントの作成日を使用する
+      eventDate = eventDate || formatDateStr(jesgoDoc.value.created, '-');
     }
   }
 
@@ -752,17 +829,27 @@ export const ReadStaffList = async (
  * @returns
  */
 export const LoadPluginList = async (
-  forceLoad = false
+  forceLoad = false,
+  isAll = false
 ): Promise<ApiReturnObject> => {
   // すでに読み込み済みの場合はstoreから取得する
   const pluginList = store.getState().commonReducer.pluginList;
   if (pluginList && !forceLoad) {
-    return { statusNum: RESULT.PLUGIN_CACHE, body: pluginList };
+    return {
+      statusNum: RESULT.PLUGIN_CACHE,
+      body: isAll ? pluginList : pluginList.filter((p) => !p.disabled),
+    };
   }
 
   // 未読み込みの場合はAPIから取得
   const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
   if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
+    if (!isAll) {
+      pluginListReturn.body = (
+        pluginListReturn.body as jesgoPluginColumns[]
+      ).filter((p) => !p.disabled);
+    }
+
     // eslint-disable-next-line no-restricted-syntax
     for (const item of pluginListReturn.body as jesgoPluginColumns[]) {
       // DBから取れないものは直接initを叩いて取得
@@ -775,6 +862,11 @@ export const LoadPluginList = async (
   }
   const newPlugins: jesgoPluginColumns[] = [];
   return { statusNum: pluginListReturn.statusNum, body: newPlugins };
+};
+
+export const SavePluginList = async (pluginList: jesgoPluginColumns[]) => {
+  const ret = await apiAccess(METHOD_TYPE.POST, `save-plugin`, pluginList);
+  return ret;
 };
 
 export default SaveCommand;

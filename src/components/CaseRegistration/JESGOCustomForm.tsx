@@ -40,6 +40,7 @@ interface CustomDivFormProp extends FormProps<any> {
     React.SetStateAction<dispSchemaIdAndDocumentIdDefine[]>
   >;
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
+  parentEventDate: string | null;
 }
 
 // カスタムフォーム
@@ -49,7 +50,7 @@ interface CustomDivFormProp extends FormProps<any> {
 // - onChangeでuseStateで保持しているformDataを更新する
 const CustomDivForm = (props: CustomDivFormProp) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { schemaId, dispatch, setFormData, documentId, isTabItem, setErrors } =
+  const { schemaId, dispatch, setFormData, documentId, isTabItem, setErrors, parentEventDate } =
     props;
   let { formData, schema } = props;
 
@@ -78,6 +79,14 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   }
 
   const [eventDate, setEventDate] = useState<string>(initEventDate);
+
+  // 親のeventDateが変更されたらeventDateを更新
+  useEffect(() => {
+    if (thisDocument) {
+      const newEventDate = getEventDate(thisDocument, formData);
+      setEventDate(newEventDate);
+    }
+  }, [parentEventDate]);
 
   // 継承直後、データ入力判定を動かすためにsetFormDataする
   if (JSON.stringify(copyProps.formData) !== JSON.stringify(formData)) {
@@ -218,14 +227,42 @@ const CustomDivForm = (props: CustomDivFormProp) => {
           // array
           if (Array.isArray(argFormData[propName])) {
             // 削除されたarrayの項目を取り除く
-            const newArray = (argFormData[propName] as any[]).filter(
-              (p) => p != null && p !== ''
-            );
-            if (newArray.length > 0) {
-              argFormData[propName] = newArray;
+            const arrayFormData = argFormData[propName] as any[];
+            if (arrayFormData.filter((val) => val !== null && typeof val === "object").length > 0) {
+              // Arrayのitemsが複数
+              const newArrayFormData: any[] = [];
+              arrayFormData.map((formDatas: { [key: string]: any }) => {
+                const newFormDatas = { ...formDatas };
+                Object.entries(newFormDatas).forEach((data) => {
+                  const dataProp = data[0];
+                  const dataValue = data[1];
+                  if (dataValue == null) {
+                    delete newFormDatas[dataProp];
+                  }
+                })
+                if (newFormDatas != null && typeof newFormDatas === 'object' && Object.keys(newFormDatas).length > 0) {
+                  newArrayFormData.push(newFormDatas);
+                }
+              })
+
+              if (newArrayFormData.length > 0) {
+                argFormData[propName] = [...newArrayFormData];
+              } else {
+                // 表示内容が0の場合はプロパティごと削除する
+                delete argFormData[propName];
+              }
+
             } else {
-              // 表示内容が0の場合はプロパティごと削除する
-              delete argFormData[propName];
+              // Arrayのitemsが1つ
+              const newArray = (arrayFormData).filter(
+                (p) => p != null && p !== ''
+              );
+              if (newArray.length > 0) {
+                argFormData[propName] = newArray;
+              } else {
+                // 表示内容が0の場合はプロパティごと削除する
+                delete argFormData[propName];
+              }
             }
           } else if (
             ((argSchema as any)[propName] as JSONSchema7)?.properties

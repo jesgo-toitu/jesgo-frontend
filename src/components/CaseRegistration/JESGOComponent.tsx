@@ -327,11 +327,14 @@ export namespace JESGOComp {
    */
   export const LayerDropdown = (props: WidgetProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { id, schema, onChange, value } = props;
+    const { id, schema, onChange } = props;
+    let { value } = props;
     const selectItems = schema.oneOf as JSONSchema7[];
     if (!selectItems) {
       return null;
     }
+    // Array内での順番変更が出来なくなるため空文字に置き換え
+    value = value ?? '';
 
     const seqNo = seqNoMap.get(id) ?? 0;
     seqNoMap.set(id, seqNo + 1);
@@ -421,7 +424,7 @@ export namespace JESGOComp {
 
     useEffect(() => {
       setInputValue(value ?? '');
-    }, []);
+    }, [value]);
 
     // コンボボックスのアイテム一覧
     const comboItemList: ComboItemDefine[] = [];

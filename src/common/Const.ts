@@ -3,7 +3,7 @@ import { formatDateStr } from './CommonUtility';
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace Const {
   // JESGO Webアプリバージョン
-  export const VERSION = '1.0.4';
+  export const VERSION = '1.1';
 
   // UiSchemaプロパティ
   export const UI_WIDGET = {
@@ -73,9 +73,9 @@ export namespace Const {
    * ※これ以外は「その他」として扱われる
    */
   export const JesgoRequiredTypes = {
-    JSOG: "JSOG",
-    JSGOE: "JSGOE",
-  }
+    JSOG: 'JSOG',
+    JSGOE: 'JSGOE',
+  };
 
   /**
    * 必須項目のラベル横に出るマーク

@@ -41,6 +41,7 @@ export type jesgoPluginColumns = {
   filter_schema_query?: string;
   explain?: string;
   newdata?: boolean;
+  disabled?: boolean;
 };
 
 type argDoc = {
@@ -1006,22 +1007,16 @@ export const executePlugin = async (
         }
       } else {
         // ファイルアップロードなし
-        const documentList: formDocument[] = await getDocuments(
+        let documentList: formDocument[] = await getDocuments(
           targetCaseId,
           pluginData.target_schema_id
         );
         // ドキュメントのバーガーボタンからの呼び出しでは当該ドキュメントのみを取得する
         if (targetDocumentId) {
-          let documentListIndex = 0;
-          do {
-            // formDocumentからの取得でdocument_idが存在しないことは原則としてあり得ない
-            if (
-              documentList[documentListIndex].document_id !== targetDocumentId
-            ) {
-              documentList.splice(documentListIndex, 1);
-            }
-            documentListIndex++;
-          } while (documentListIndex < documentList.length);
+          // formDocumentからの取得でdocument_idが存在しないことは原則としてあり得ない
+          documentList = documentList.filter(
+            (x) => x.document_id === targetDocumentId
+          );
         }
         const retValue = await moduleMainUpdate(
           plugin.script_text,

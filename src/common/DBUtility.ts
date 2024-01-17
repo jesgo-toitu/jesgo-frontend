@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 /* eslint-disable no-alert */
@@ -25,7 +26,7 @@ import { Const } from './Const';
 import { formatDate, formatDateStr } from './CommonUtility';
 import store from '../store';
 import { JSONSchema7 } from 'json-schema';
-import { jesgoPluginColumns } from './Plugin';
+import { GetModule, jesgoPluginColumns } from './Plugin';
 import staffData from '../components/Staff/StaffData';
 
 export interface responseResult {
@@ -843,14 +844,21 @@ export const LoadPluginList = async (
   // 未読み込みの場合はAPIから取得
   const pluginListReturn = await apiAccess(METHOD_TYPE.GET, `plugin-list`);
   if (pluginListReturn.statusNum === RESULT.NORMAL_TERMINATION) {
-    return {
-      statusNum: pluginListReturn.statusNum,
-      body: isAll
-        ? pluginListReturn.body
-        : (pluginListReturn.body as jesgoPluginColumns[]).filter(
-            (p) => !p.disabled
-          ),
-    };
+    if (!isAll) {
+      pluginListReturn.body = (
+        pluginListReturn.body as jesgoPluginColumns[]
+      ).filter((p) => !p.disabled);
+    }
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const item of pluginListReturn.body as jesgoPluginColumns[]) {
+      // DBから取れないものは直接initを叩いて取得
+      const plugin = await GetModule(item.script_text);
+      const initValue = await plugin.init();
+      item.newdata = initValue.newdata;
+    }
+
+    return pluginListReturn;
   }
   const newPlugins: jesgoPluginColumns[] = [];
   return { statusNum: pluginListReturn.statusNum, body: newPlugins };

@@ -881,6 +881,7 @@ const Registration = () => {
                 setReload={setReload}
                 setOverwriteDialogPlop={setOverwriteDialogPlop}
                 setErrors={setErrors}
+                eventDate={null}
               />
             </div>
           </>

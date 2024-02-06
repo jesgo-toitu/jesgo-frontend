@@ -10,11 +10,11 @@ import {
 } from '../../common/CaseRegistrationUtility';
 import { JesgoDocumentSchema } from '../../store/schemaDataReducer';
 import './ControlButton.css';
-import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
+import { dispSchemaIdAndDocumentIdDefine, jesgoDocumentObjDefine } from '../../store/formDataReducer';
 import store from '../../store/index';
 import { ChildTabSelectedFuncObj, RegistrationErrors } from './Definition';
 import { Const } from '../../common/Const';
-import { GetRootSchema, GetSchemaInfo } from './SchemaUtility';
+import { GetRootSchema, GetSchemaInfo, getJesgoSchemaPropValue } from './SchemaUtility';
 import { fTimeout } from '../../common/CommonUtility';
 import { executePlugin, jesgoPluginColumns } from '../../common/Plugin';
 import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
@@ -71,6 +71,7 @@ type ControlButtonProps = {
     value: React.SetStateAction<OverwriteDialogPlop | undefined>
   ) => void;
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
+  eventDate: string | null;
 };
 
 // ルートドキュメント操作用コントロールボタン
@@ -101,11 +102,52 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     setReload,
     setOverwriteDialogPlop,
     setErrors,
+    eventDate,
   } = props;
 
   const [jesgoPluginList, setJesgoPluginList] = useState<jesgoPluginColumns[]>(
     []
   );
+  // 同じスキーマの別ドキュメント
+  let sameSchemaDocs: jesgoDocumentObjDefine[] = [];
+
+  // 自身のスキーマ情報
+  const scInfo = GetSchemaInfo(schemaId, eventDate, true, false);
+  if (scInfo) {
+    // 自身のeventDateが設定されている項目
+    const eventDatePropName = getJesgoSchemaPropValue(scInfo.document_schema, 'jesgo:set', 'eventdate');
+    if (eventDatePropName) {
+
+      const getEventDate = (targetObj: any) => {
+        let targetValue = "";
+        if (targetObj) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          targetValue = targetObj[eventDatePropName] as string;
+          if (!targetValue) {
+            // 再帰的にobject内を検索
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            Object.entries(targetObj)
+              .filter((p) => !Array.isArray(p[1]) && typeof p[1] === 'object')
+              .forEach((item) => {
+                getEventDate(item[1]);
+              });
+          }
+        }
+        return targetValue;
+      };
+      const targetEventDate = getEventDate(formData);
+
+      if (targetEventDate) {
+        // スキーマid(PK)が同じ && 自分以外 && eventDate(入力値)が同じ
+        // TODO：バージョン違いを許容するか
+        sameSchemaDocs = store.getState().formDataReducer.saveData.jesgo_document.filter(
+          (item) =>
+            item.value.schema_primary_id === scInfo.schema_primary_id
+            && item.key !== documentId
+            && getEventDate(item.value.document) === targetEventDate);
+      }
+    }
+  }
 
   useEffect(() => {
     const f = async () => {
@@ -238,6 +280,13 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
       if (eventKey.startsWith('plugin_')) {
         const pluginId = eventKey.replace('plugin_', '');
         plugin = jesgoPluginList.find((p) => p.plugin_id === Number(pluginId));
+      }
+
+      // 選択した同スキーマのドキュメントID
+      let sameDoc: jesgoDocumentObjDefine | undefined;
+      if (eventKey.startsWith('sameschema_')) {
+        const sameDocId = eventKey.replace('sameschema_', '');
+        sameDoc = sameSchemaDocs.find((p) => p.key === sameDocId);
       }
 
       switch (eventKey) {
@@ -397,6 +446,22 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
 
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           f();
+          break;
+        }
+        // 同じスキーマのコピー
+        case eventKey.startsWith('sameschema_') && eventKey: {
+          if (sameDoc && setFormData) {
+            // 選択したドキュメントで更新
+            setFormData(sameDoc.value.document);
+            dispatch({
+              type: 'INPUT',
+              schemaId,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              formData: sameDoc.value.document,
+              documentId,
+              isUpdateInput: true,
+            });
+          }
           break;
         }
         default:
@@ -676,6 +741,18 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           <Glyphicon glyph="th-list" />
         </Dropdown.Toggle>
         <Dropdown.Menu>
+          {/* 表示のみのためクリックを無効化 */}
+          <MenuItem style={{ pointerEvents: 'none' }} >
+            [Id:{documentId}]スキーマId:{schemaId}
+          </MenuItem>
+          <MenuItem divider />
+          {
+            sameSchemaDocs.map((doc: jesgoDocumentObjDefine) => (
+              <MenuItem eventKey={`sameschema_${doc.key}`} >
+                Id:{doc.key} の内容をコピー
+              </MenuItem>
+            ))
+          }
           {jesgoPluginList.map(
             (plugin: jesgoPluginColumns) =>
               !plugin.all_patient &&

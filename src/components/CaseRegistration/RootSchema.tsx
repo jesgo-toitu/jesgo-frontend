@@ -587,6 +587,7 @@ const RootSchema = React.memo((props: Props) => {
           setReload={setReload}
           setOverwriteDialogPlop={setOverwriteDialogPlop}
           setErrors={setErrors}
+          eventDate={eventDate}
         />
       </div>
       {createTabs(

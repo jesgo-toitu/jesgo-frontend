@@ -28,6 +28,7 @@ import { getEventDate, responseResult } from '../../common/DBUtility';
 import store from '../../store';
 import { reloadState } from '../../views/Registration';
 import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
+import { OverwriteCompletedDialogPlop } from '../common/PluginOverwriteCompleted';
 
 // 孫スキーマ以降
 type Props = {
@@ -52,6 +53,9 @@ type Props = {
   setOverwriteDialogPlop: (
     value: React.SetStateAction<OverwriteDialogPlop | undefined>
   ) => void;
+  setOverwriteCompletedDialogPlop: (
+    value: React.SetStateAction<OverwriteCompletedDialogPlop | undefined>
+  ) => void;
 };
 
 const PanelSchema = React.memo((props: Props) => {
@@ -73,6 +77,7 @@ const PanelSchema = React.memo((props: Props) => {
     setUpdateFormData,
     setReload,
     setOverwriteDialogPlop,
+    setOverwriteCompletedDialogPlop,
   } = props;
 
   const [formData, setFormData] = useState<any>({}); // eslint-disable-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-explicit-any
@@ -635,6 +640,7 @@ const PanelSchema = React.memo((props: Props) => {
           setIsLoading={setIsLoading}
           setReload={setReload}
           setOverwriteDialogPlop={setOverwriteDialogPlop}
+          setOverwriteCompletedDialogPlop={setOverwriteCompletedDialogPlop}
           setErrors={setErrors}
         />
       </div>
@@ -656,7 +662,8 @@ const PanelSchema = React.memo((props: Props) => {
             setChildTabSelectedFunc,
             setUpdateChildFormData,
             setReload,
-            setOverwriteDialogPlop
+            setOverwriteDialogPlop,
+            setOverwriteCompletedDialogPlop
           )
         : // パネル表示
           createPanels(
@@ -675,7 +682,8 @@ const PanelSchema = React.memo((props: Props) => {
             eventDate,
             setUpdateChildFormData,
             setReload,
-            setOverwriteDialogPlop
+            setOverwriteDialogPlop,
+            setOverwriteCompletedDialogPlop
           )}
     </Panel>
   );

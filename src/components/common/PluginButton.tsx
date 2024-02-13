@@ -14,6 +14,8 @@ import PluginOverwriteConfirm, {
   OverwriteDialogPlop,
 } from './PluginOverwriteConfirm';
 import { reloadState } from '../../views/Registration';
+import PluginOverwriteCompleted from './PluginOverwriteCompleted';
+import { OverwriteCompletedDialogPlop } from './PluginOverwriteCompleted';
 
 const PAGE_TYPE = {
   PATIENT_LIST: 0,
@@ -33,6 +35,9 @@ const PluginButton = (props: {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const [overwriteDialogPlop, setOverwriteDialogPlop] = useState<
     OverwriteDialogPlop | undefined
+  >();
+  const [overwriteCompletedDialogPlop, setOverwriteCompletedDialogPlop] = useState<
+    OverwriteCompletedDialogPlop | undefined
   >();
 
   useEffect(() => {
@@ -81,7 +86,8 @@ const PluginButton = (props: {
           undefined,
           setReload,
           setIsLoading,
-          setOverwriteDialogPlop
+          setOverwriteDialogPlop,
+          setOverwriteCompletedDialogPlop,
         ),
       ])
         .then((res) => {
@@ -107,6 +113,12 @@ const PluginButton = (props: {
         <PluginOverwriteConfirm
           // eslint-disable-next-line react/jsx-props-no-spreading
           {...overwriteDialogPlop}
+        />
+      )}
+      {overwriteCompletedDialogPlop && (
+        <PluginOverwriteCompleted
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...overwriteCompletedDialogPlop}
         />
       )}
       <ButtonToolbar style={{ margin: '1rem' }}>

@@ -21,6 +21,7 @@ import apiAccess, { METHOD_TYPE, RESULT } from '../../common/ApiAccess';
 import { LoadPluginList } from '../../common/DBUtility';
 import { reloadState } from '../../views/Registration';
 import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
+import { OverwriteCompletedDialogPlop } from '../common/PluginOverwriteCompleted';
 
 export const COMP_TYPE = {
   ROOT: 'root',
@@ -70,6 +71,9 @@ type ControlButtonProps = {
   setOverwriteDialogPlop: (
     value: React.SetStateAction<OverwriteDialogPlop | undefined>
   ) => void;
+  setOverwriteCompletedDialogPlop: (
+    value: React.SetStateAction<OverwriteCompletedDialogPlop | undefined>
+  ) => void;
   setErrors: React.Dispatch<React.SetStateAction<RegistrationErrors[]>>;
 };
 
@@ -100,6 +104,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
     setIsLoading,
     setReload,
     setOverwriteDialogPlop,
+    setOverwriteCompletedDialogPlop,
     setErrors,
   } = props;
 
@@ -371,7 +376,8 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
                   Number(documentId),
                   setReload,
                   setIsLoading,
-                  setOverwriteDialogPlop
+                  setOverwriteDialogPlop,
+                  setOverwriteCompletedDialogPlop
                 ),
               ])
                 .then((res) => {

@@ -71,6 +71,7 @@ import {
   OverwriteDialogPlop,
 } from '../components/common/PluginOverwriteConfirm';
 import ErrorRow from '../components/CaseRegistration/ErrorRow';
+import PluginOverwriteCompleted, { OverwriteCompletedDialogPlop } from '../components/common/PluginOverwriteCompleted';
 
 export type reloadState = {
   isReload: boolean;
@@ -128,6 +129,9 @@ const Registration = () => {
   // プラグイン用上書き確認ダイアログ
   const [overwriteDialogPlop, setOverwriteDialogPlop] = useState<
     OverwriteDialogPlop | undefined
+  >();
+  const [overwriteCompletedDialogPlop, setOverwriteCompletedDialogPlop] = useState<
+    OverwriteCompletedDialogPlop | undefined
   >();
 
   let age = ''; // 年齢
@@ -690,6 +694,12 @@ const Registration = () => {
           {...overwriteDialogPlop}
         />
       )}
+      {overwriteCompletedDialogPlop && (
+        <PluginOverwriteCompleted
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...overwriteCompletedDialogPlop}
+        />
+      )}
       <div className="page-area">
         {/* 患者情報入力 */}
         <div className="patient-area">
@@ -851,6 +861,7 @@ const Registration = () => {
                               schemaAddModFunc={onTabSelectEvent}
                               setReload={setReload}
                               setOverwriteDialogPlop={setOverwriteDialogPlop}
+                              setOverwriteCompletedDialogPlop={setOverwriteCompletedDialogPlop}
                             />
                           </Tab>
                         );
@@ -880,6 +891,7 @@ const Registration = () => {
                 setIsLoading={setIsLoading}
                 setReload={setReload}
                 setOverwriteDialogPlop={setOverwriteDialogPlop}
+                setOverwriteCompletedDialogPlop={setOverwriteCompletedDialogPlop}
                 setErrors={setErrors}
               />
             </div>

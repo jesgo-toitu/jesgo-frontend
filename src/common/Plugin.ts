@@ -24,6 +24,7 @@ import {
   toUTF8,
 } from './CommonUtility';
 import { GetPackagedDocument } from './DBUtility';
+import { OverwriteCompletedDialogPlop } from '../components/common/PluginOverwriteCompleted';
 
 window.Buffer = Buffer;
 
@@ -72,6 +73,9 @@ let pluginData: jesgoPluginColumns;
 let targetCaseId: number | undefined;
 let setOverwriteDialogPlopGlobal:
   | React.Dispatch<React.SetStateAction<OverwriteDialogPlop | undefined>>
+  | undefined;
+let setOverwriteCompletedDialogPlopGlobal:
+  | React.Dispatch<React.SetStateAction<OverwriteCompletedDialogPlop | undefined>>
   | undefined;
 let setIsLoadingGlobal:
   | React.Dispatch<React.SetStateAction<boolean>>
@@ -186,6 +190,7 @@ const updatePatientsDocument = async (
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   const modalHide = () => {};
+  let isConfirmed = false;
 
   if (!doc) {
     // 処理を中止
@@ -435,6 +440,7 @@ const updatePatientsDocument = async (
               type: 'Confirm',
               data,
             });
+            isConfirmed = true;
           });
           setOverwriteDialogPlopGlobal?.(undefined);
           setIsLoadingGlobal(true);
@@ -596,7 +602,42 @@ const updatePatientsDocument = async (
           csv.push(getCsvRow(element));
         }
       }
-      OpenOutputView(window, csv, 'overwritelog');
+      if (
+        setOverwriteCompletedDialogPlopGlobal &&
+        setIsLoadingGlobal &&
+        isConfirmed 
+      ) {
+        setIsLoadingGlobal(false);
+
+        const postData = (e: MessageEvent<any>) => {
+          // 画面の準備ができたらデータをポストする
+          const iframe = document.getElementById("overwrite_iframe") as HTMLIFrameElement;
+          if (e.origin === window.location.origin && e.data === 'output_ready') {
+            iframe.contentWindow?.postMessage(csv, iframe.contentWindow.location.origin);
+            window.removeEventListener('message', postData, false);
+          }
+        };
+        window.addEventListener('message', postData, false);       
+
+        const modalRet = await new Promise<{
+          result: boolean
+        }>((resolve) => {
+          setOverwriteCompletedDialogPlopGlobal?.({
+            show: true,
+            onHide: () => modalHide,
+            onClose: resolve,
+            title: 'ドキュメント上書き結果',
+            type: 'Completed'
+          });
+          isConfirmed = true;
+        });
+        setOverwriteCompletedDialogPlopGlobal?.(undefined);
+        setIsLoadingGlobal(true);
+        if (modalRet.result) {
+          // 別タブで表示
+          OpenOutputView(window, csv, 'overwritelog');
+        }
+      }
     }
   }
 };
@@ -926,10 +967,14 @@ export const executePlugin = async (
     | undefined = undefined,
   setOverwriteDialogPlop:
     | React.Dispatch<React.SetStateAction<OverwriteDialogPlop | undefined>>
+    | undefined = undefined,
+  setOverwriteCompletedDialogPlop:
+    | React.Dispatch<React.SetStateAction<OverwriteCompletedDialogPlop | undefined>>
     | undefined = undefined
 ) => {
   pluginData = plugin;
   setOverwriteDialogPlopGlobal = setOverwriteDialogPlop;
+  setOverwriteCompletedDialogPlopGlobal = setOverwriteCompletedDialogPlop;
   setIsLoadingGlobal = setIsLoading;
 
   const copyPatientList = lodash.cloneDeep(patientList);

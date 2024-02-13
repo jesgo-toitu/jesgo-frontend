@@ -31,11 +31,21 @@ const OutputView = () => {
   const [codeType, setCodeType] = useState<string>(CODE_TYPES.NONE);
 
   const readyNotificate = (e: Event) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    (e.currentTarget as Window).opener.postMessage(
-      'output_ready',
-      window.origin
-    );
+    const targetWindow = e.currentTarget as Window;
+    const urlParams = new URLSearchParams(targetWindow.location.search);
+    if (urlParams.has("iframe") && urlParams.get("iframe") === "true") {
+      // iFrameの場合
+      targetWindow.parent.postMessage(
+        'output_ready', 
+        window.parent.origin
+        );
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+      targetWindow.opener.postMessage(
+        'output_ready', 
+        window.origin
+        );
+    }
 
     window.removeEventListener('DOMContentLoaded', readyNotificate);
   };

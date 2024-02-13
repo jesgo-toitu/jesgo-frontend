@@ -1,0 +1,11 @@
+iframe {
+  border: none;
+  width: 100%;
+  height: 500px;
+}
+
+.completed-modal-size {
+  width: auto;
+  max-width: 1300px;
+  min-width: 300px;
+}

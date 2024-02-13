@@ -28,6 +28,7 @@ import store from '../../store';
 import { Const } from '../../common/Const';
 import { reloadState } from '../../views/Registration';
 import { OverwriteDialogPlop } from '../common/PluginOverwriteConfirm';
+import { OverwriteCompletedDialogPlop } from '../common/PluginOverwriteCompleted';
 
 type Props = {
   tabId: string;
@@ -49,6 +50,9 @@ type Props = {
   setOverwriteDialogPlop: (
     value: React.SetStateAction<OverwriteDialogPlop | undefined>
   ) => void;
+  setOverwriteCompletedDialogPlop: (
+    value: React.SetStateAction<OverwriteCompletedDialogPlop | undefined>
+  ) => void;
 };
 
 // ルートディレクトリのスキーマ
@@ -68,6 +72,7 @@ const RootSchema = React.memo((props: Props) => {
     schemaAddModFunc,
     setReload,
     setOverwriteDialogPlop,
+    setOverwriteCompletedDialogPlop,
   } = props;
 
   // 表示中のchild_schema
@@ -586,6 +591,7 @@ const RootSchema = React.memo((props: Props) => {
           setIsLoading={setIsLoading}
           setReload={setReload}
           setOverwriteDialogPlop={setOverwriteDialogPlop}
+          setOverwriteCompletedDialogPlop={setOverwriteCompletedDialogPlop}
           setErrors={setErrors}
         />
       </div>
@@ -605,7 +611,8 @@ const RootSchema = React.memo((props: Props) => {
         setChildTabSelectedFunc,
         setUpdateChildFormData,
         setReload,
-        setOverwriteDialogPlop
+        setOverwriteDialogPlop,
+        setOverwriteCompletedDialogPlop,
       )}
     </>
   );

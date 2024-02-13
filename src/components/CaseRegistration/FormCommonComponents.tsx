@@ -23,6 +23,7 @@ import {
 import PanelSchema from './PanelSchema';
 import SaveConfirmDialog from './SaveConfirmDialog';
 import TabSchema from './TabSchema';
+import { OverwriteCompletedDialogPlop } from '../common/PluginOverwriteCompleted';
 
 export const createTab = (
   parentTabsId: string,
@@ -44,6 +45,9 @@ export const createTab = (
   setReload: (value: React.SetStateAction<reloadState>) => void,
   setOverwriteDialogPlop: (
     value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void,
+  setOverwriteCompletedDialogPlop: (
+    value: React.SetStateAction<OverwriteCompletedDialogPlop | undefined>
   ) => void
 ) =>
   // subschema表示
@@ -80,6 +84,7 @@ export const createTab = (
           setUpdateFormData={setUpdateFormData}
           setReload={setReload}
           setOverwriteDialogPlop={setOverwriteDialogPlop}
+          setOverwriteCompletedDialogPlop={setOverwriteCompletedDialogPlop}
         />
       </Tab>
     );
@@ -110,6 +115,9 @@ export const createTabs = (
   setReload: (value: React.SetStateAction<reloadState>) => void,
   setOverwriteDialogPlop: (
     value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void,
+  setOverwriteCompletedDialogPlop: (
+    value: React.SetStateAction<OverwriteCompletedDialogPlop | undefined>
   ) => void
 ) => {
   // 選択中のタブeventKey
@@ -310,7 +318,8 @@ export const createTabs = (
             onTabSelectEvent,
             setUpdateFormData,
             setReload,
-            setOverwriteDialogPlop
+            setOverwriteDialogPlop,
+            setOverwriteCompletedDialogPlop
           )}
 
           {/* childSchema表示 */}
@@ -330,7 +339,8 @@ export const createTabs = (
             onTabSelectEvent,
             setUpdateFormData,
             setReload,
-            setOverwriteDialogPlop
+            setOverwriteDialogPlop,
+            setOverwriteCompletedDialogPlop
           )}
         </Tabs>
         <SaveConfirmDialog
@@ -364,6 +374,9 @@ export const createPanel = (
   setReload: (value: React.SetStateAction<reloadState>) => void,
   setOverwriteDialogPlop: (
     value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void,
+  setOverwriteCompletedDialogPlop: (
+    value: React.SetStateAction<OverwriteCompletedDialogPlop | undefined>
   ) => void
 ) =>
   // subschema表示
@@ -388,6 +401,7 @@ export const createPanel = (
       setUpdateFormData={setUpdateFormData}
       setReload={setReload}
       setOverwriteDialogPlop={setOverwriteDialogPlop}
+      setOverwriteCompletedDialogPlop = {setOverwriteCompletedDialogPlop}
     />
   ));
 
@@ -415,6 +429,9 @@ export const createPanels = (
   setReload: (value: React.SetStateAction<reloadState>) => void,
   setOverwriteDialogPlop: (
     value: React.SetStateAction<OverwriteDialogPlop | undefined>
+  ) => void,
+  setOverwriteCompletedDialogPlop: (
+    value: React.SetStateAction<OverwriteCompletedDialogPlop | undefined>
   ) => void
 ) =>
   (subschemaIdsNotDeleted.length > 0 ||
@@ -434,7 +451,8 @@ export const createPanels = (
         parentEventDate,
         setUpdateFormData,
         setReload,
-        setOverwriteDialogPlop
+        setOverwriteDialogPlop,
+        setOverwriteCompletedDialogPlop
       )}
       {createPanel(
         dispChildSchemaIds,
@@ -450,7 +468,8 @@ export const createPanels = (
         parentEventDate,
         setUpdateFormData,
         setReload,
-        setOverwriteDialogPlop
+        setOverwriteDialogPlop,
+        setOverwriteCompletedDialogPlop
       )}
     </>
   );

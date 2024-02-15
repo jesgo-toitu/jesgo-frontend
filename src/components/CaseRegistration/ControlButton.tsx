@@ -138,11 +138,10 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
       const targetEventDate = getEventDate(formData);
 
       if (targetEventDate) {
-        // スキーマid(PK)が同じ && 自分以外 && eventDate(入力値)が同じ
-        // TODO：バージョン違いを許容するか
+        // スキーマidが同じ && 自分以外 && eventDate(入力値)が同じ
         sameSchemaDocs = store.getState().formDataReducer.saveData.jesgo_document.filter(
           (item) =>
-            item.value.schema_primary_id === scInfo.schema_primary_id
+            item.value.schema_id === scInfo.schema_id
             && item.key !== documentId
             && getEventDate(item.value.document) === targetEventDate);
       }
@@ -743,7 +742,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
         <Dropdown.Menu>
           {/* 表示のみのためクリックを無効化 */}
           <MenuItem style={{ pointerEvents: 'none' }} >
-            [Id:{documentId}]スキーマId:{schemaId}
+            [Id:{documentId}]
           </MenuItem>
           <MenuItem divider />
           {

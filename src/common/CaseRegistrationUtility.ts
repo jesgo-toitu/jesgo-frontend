@@ -244,8 +244,11 @@ const customSchemaValidation = (
 
   // 表示用項目名
   // propNameが空の場合（最上位のみ）、表示名も空とする
-  const displayPropName = propName ? resultSchema.title || propName : "";
-  const displayName = displayPropName && !arrayFlg && propName !== 'items' ? [...parentDisplayName, displayPropName].join(' > ') : displayPropName;
+  const displayPropName = propName ? resultSchema.title || propName : '';
+  const displayName =
+    displayPropName && !arrayFlg && propName !== 'items'
+      ? [...parentDisplayName, displayPropName].join(' > ')
+      : displayPropName;
 
   if (resultSchema.properties) {
     // propertiesの場合はさらに下の階層を解析
@@ -257,10 +260,12 @@ const customSchemaValidation = (
         schemaId,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         formData[iname] ?? {},
-        displayPropName && !arrayFlg && propName !== 'items' ? [...parentDisplayName, displayPropName] : parentDisplayName,
+        displayPropName && !arrayFlg && propName !== 'items'
+          ? [...parentDisplayName, displayPropName]
+          : parentDisplayName,
         iname,
         resultSchema.required ?? [],
-        false,
+        false
       );
       targetSchema.pItems[iname] = res.schema;
       messages.push(...res.messages);
@@ -1185,6 +1190,11 @@ export const OpenOutputView = (
   srcData: any,
   type: string | undefined = undefined
 ) => {
+  // 表示データがない場合は開かない
+  if (srcData == null) {
+    return;
+  }
+
   const postData = (e: MessageEvent<any>) => {
     // 画面の準備ができたらデータをポストする
     if (e.origin === win.location.origin && e.data === 'output_ready') {
@@ -1209,6 +1219,10 @@ export const OpenOutputView = (
 };
 
 export const OpenOutputViewScript = (win: typeof window, srcData: string) => {
+  // 表示データがない場合は開かない
+  if (srcData == null) {
+    return;
+  }
   const postFunc = (e: MessageEvent) => {
     // 画面の準備ができたらデータをポストする
     if (e.origin === win.location.origin && e.data === 'output_ready') {
@@ -1323,7 +1337,7 @@ export const AddJesgoError = (
  * jesgo:requiredのハイライト設定
  */
 export type JesgoRequiredHighlight = {
-  jsog: boolean,  // JSOG
-  jsgoe: boolean, // JSGOE
-  others: boolean,  // JSOG・JSGOE以外(独自拡張を想定)
-}
+  jsog: boolean; // JSOG
+  jsgoe: boolean; // JSGOE
+  others: boolean; // JSOG・JSGOE以外(独自拡張を想定)
+};

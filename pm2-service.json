@@ -1,0 +1,19 @@
+{
+    "apps": [
+        {
+            "name"        : "jesgoWeb",
+            "script"      : "start.js",
+            "instances"  : 0,
+            "watch"     : true,
+            "exec_mode"  : "cluster",
+            "source_map_support": true,
+            "env": {
+                "PORT": 3030,
+                "NODE_ENV": "development"
+            },
+            "env_production" : {
+                "NODE_ENV": "production"
+            }
+        }
+    ]
+}

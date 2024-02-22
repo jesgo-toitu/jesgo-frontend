@@ -8,6 +8,7 @@
     "dev-start": "node start.js",
     "build": "webpack --progress --mode development",
     "release-build": "powershell -File ./export/export.ps1",
+    "release-demo": "webpack --progress --mode production",
     "postinstall": "patch-package",
     "lint": "eslint --ext .jsx,.js,.tsx,.ts src/",
     "fmt": "prettier --write src/**/*",

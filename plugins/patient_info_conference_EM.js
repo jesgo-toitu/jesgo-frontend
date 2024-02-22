@@ -5,7 +5,7 @@ const script_info = {
     update_db: false,
     attach_patient_info: true,
     show_upload_dialog: false,
-    target_schema_id_string: "/schema/EM/root",
+    target_schema_id_string: "",
     filter_schema_query: '',
     explain: '子宮体がんのカンファをテキスト形式で出力します',
 }
@@ -14,15 +14,20 @@ export async function init() {
 }
 
 /**
+ * 対象がんに合わせて変える
+ */
+const TARGET_TYPE_NAME = "子宮体がん";
+const subWindowName = "subWindowConferenceEM";
+
+/**
  * 子画面を表示
  * @param {string} dispText 表示テキスト
  */
-async function openWindow(dispText) {
+function openWindow(dispText) {
     // 子画面のサイズ
     const height = 600;
     const width = 800;
-    const subWindowName = "subWindowConferenceEM";  // ※各スクリプトで変える
-    const subWindowTitle = "カンファレンス（子宮体がん）";
+    const subWindowTitle = `カンファレンス（${TARGET_TYPE_NAME}）`;
 
     // 新しいウィンドウを開く
     // 同名のウィンドウがあればそちらが使われる
@@ -69,6 +74,7 @@ async function openWindow(dispText) {
         }
     `)
     newWindowDoc.body.appendChild(scriptElement);
+    popupWindow.focus();
 }
 
 /**
@@ -105,85 +111,118 @@ function convertString(str) {
     return str ? str : "";
 }
 
+/**
+ * JSONオブジェクト変換
+ * @param {*} targetValue  - 変換するJSONオブジェクト
+ * @returns  - paramが空なら空オブジェクトを返す。それ以外はそのまま。
+ */
+function convertJsonObj(targetValue) {
+    return targetValue == null ? {} : targetValue;
+}
+
+/**
+ * 患者台帳　値取得
+ * @param {json} root 
+ * @returns 
+ */
+function setRootValues(root) {
+    var rootValues = {
+        operations: {},
+        staging: {},
+        stagingTMN_T: {},
+        stagingTMN_M: {},
+        stagingTMN_N: {},
+        pathology: {},
+        findings: {},
+        genes: {},
+        muscleInvasion: {},
+        vascularIinvasion: {},
+    }
+
+    // 病期診断
+    rootValues.staging = convertJsonObj(root["病期診断"]);
+    var stagingTMN = {}
+    if (rootValues.staging["治療施行状況"] === "初回手術施行例") {
+        stagingTMN = convertJsonObj(rootValues.staging["pTNM"])
+    } else if (rootValues.staging["治療施行状況"] === "術前治療後に手術施行") {
+        stagingTMN = convertJsonObj(rootValues.staging["ypTNM"]);
+    }
+    if (stagingTMN) {
+        rootValues.stagingTMN_T = convertJsonObj(stagingTMN["T"]);
+        rootValues.stagingTMN_M = convertJsonObj(stagingTMN["M"]);
+        rootValues.stagingTMN_N = convertJsonObj(stagingTMN["N"]);
+    }
+
+    // 初回治療
+    var initialTreatment = convertJsonObj(root["初回治療"]);
+    rootValues.operations = convertJsonObj(initialTreatment["手術療法"]);
+
+    // 組織診断
+    rootValues.pathology = convertJsonObj(root["組織診断"]);
+
+    // 診断所見
+    rootValues.findings = convertJsonObj(root["診断所見"]);
+    rootValues.genes = convertJsonObj(rootValues.findings["腫瘍遺伝子検査"]);
+    rootValues.muscleInvasion = convertJsonObj(rootValues.findings["筋層浸潤"]);
+    rootValues.vascularIinvasion = convertJsonObj(rootValues.findings["脈管侵襲"]);
+
+    return rootValues;
+}
+
 export async function main(docObj, func) {
     var output = [];
     var targetData = await func(docObj);
     var caseInfo = {};
-    var root = {};
-    var operations = {};
-    var staging = {};
-    var stagingTMN_T = {};
-    var stagingTMN_M = {};
-    var stagingTMN_N = {};
-    var pathology = {};
-    var findings = {};
-    var genes = {};
-    var muscleInvasion = {};
-    var vascularIinvasion = {};
 
+    var rootValues = {
+        operations: {},
+        staging: {},
+        stagingTMN_T: {},
+        stagingTMN_M: {},
+        stagingTMN_N: {},
+        pathology: {},
+        findings: {},
+        genes: {},
+        muscleInvasion: {},
+        vascularIinvasion: {},
+    }
+    
     // formDataの中身を掘っていく
     if (targetData) {
         var targetDataJson = JSON.parse(targetData);
+         // all_patientがfalseなのでtargetDataは必ず 0 or 1件
         if (targetDataJson && targetDataJson.length > 0) {
             caseInfo = targetDataJson[0];
             if (caseInfo) {
-                var docLists = caseInfo.documentList;
-                if (docLists && docLists.length > 0) {
-                    var docList = docLists[0];
+                caseInfo.documentList.forEach((docList) => {
                     if (docList) {
                         // 患者台帳
-                        root = docList["患者台帳"];
+                        var root = docList["患者台帳"];
+                        // 対象のがん
                         if (root) {
-                            // 病期診断
-                            staging = root["病期診断"];
-                            if (staging) {
-                                var stagingTMN = {}
-                                if (staging["治療施行状況"] === "初回手術施行例") {
-                                    stagingTMN = staging["pTNM"]
-                                } else if (staging["治療施行状況"] === "術前治療後に手術施行") {
-                                    stagingTMN = staging["ypTNM"]
-                                }
-                                if (stagingTMN) {
-                                    stagingTMN_T = stagingTMN["T"] == null ? {} : stagingTMN["T"];
-                                    stagingTMN_M = stagingTMN["M"] == null ? {} : stagingTMN["M"];
-                                    stagingTMN_N = stagingTMN["N"] == null ? {} : stagingTMN["N"];
-                                }
+                            if (Array.isArray(root) && root.length > 0) {
+                                root.forEach((value) => {
+                                    if (value && value["がん種"] === TARGET_TYPE_NAME) {
+                                        // 患者台帳が複数
+                                        rootValues = setRootValues(value);
+                                    }
+                                })
                             } else {
-                                staging = {};
-                            }
+                                if (root["がん種"] === TARGET_TYPE_NAME) {
+                                    // 患者台帳が1つ
+                                    rootValues = setRootValues(root);
+                                }
 
-                            // 初回治療
-                            var initialTreatment = root["初回治療"];
-                            if (initialTreatment) {
-                                operations = initialTreatment["手術療法"] == null ? {} : initialTreatment["手術療法"];
-                            }
-
-                            // 組織診断
-                            pathology = root["組織診断"] == null ? {} : root["組織診断"];
-
-                            // 診断所見
-                            findings = root["診断所見"];
-                            if (findings) {
-                                // 腫瘍遺伝子検査
-                                genes = findings["腫瘍遺伝子検査"] == null ? {} : findings["腫瘍遺伝子検査"];
-                                // 筋層浸潤
-                                muscleInvasion = findings["筋層浸潤"] == null ? {} : findings["筋層浸潤"];
-                                // 脈管侵襲
-                                vascularIinvasion = findings["脈管侵襲"] == null ? {} : findings["脈管侵襲"];
-                            } else {
-                                findings = {};
-                            }
-
-                        } else {
-                            root = {};
+                            }                           
                         }
-                    } else {
-                        docList = {};
-                    }
-                }
+                    } 
+                })
             } else {
                 caseInfo = {};
             }
+        }else {
+            alert("出力対象のデータがありません")
+            return;
         }
     } else {
         alert("出力対象のデータがありません")
@@ -193,15 +232,13 @@ export async function main(docObj, func) {
     // データが無くても項目名は出したい
     output.push("ーーー基本情報ーーー");
     output.push(`氏名：${caseInfo["name"]}`);
-    output.push(`年齢：${await calcAge(caseInfo["date_of_birth"])} 歳`);
+    output.push(`年齢：${calcAge(caseInfo["date_of_birth"])} 歳`);
     output.push(`外来ID：${caseInfo["his_id"]}`);
     output.push(``);
     output.push("ーーー手術情報ーーー");
-    if (Array.isArray(operations) && operations.length > 0) {
+    if (Array.isArray(rootValues.operations) && rootValues.operations.length > 0) {
         var num = 1;
-        operations.forEach(operation => {
-            output.push(`＜手術情報 ${num}件目＞`);
-            output.push(`　手術年月日：${convertString(operation["手術日"])}`);
+        rootValues.operations.forEach(operation => {
             if(operation["実施手術"]){
                 var operationMethods = operation["実施手術"]["実施手術"];
                 var operationMethodStr = "";
@@ -220,9 +257,11 @@ export async function main(docObj, func) {
                         operationMethodStr = methodsStr.join(",");
                     }
                 } 
-                output.push(`　術式：${convertString(operationMethodStr)}`);
+                output.push(`＜手術情報 ${num}件目＞`);
+                output.push(`　手術年月日：${convertString(operation["手術日"])}`);
+                output.push(`　術式：${operationMethodStr}`);
+                num++;
             }
-            num++;
         });
 
     } else {
@@ -231,33 +270,34 @@ export async function main(docObj, func) {
     }
 
     output.push(``);
-    output.push(`TNM分類（2021）T：${convertString(stagingTMN_T["T"])}`);
+    output.push(`TNM分類（2021）T：${convertString(rootValues.stagingTMN_T["T"])}`);
     output.push(`TNM分類（2021）N：`);
     // TNM分類のNは複数回使うので一つにまとめておく
     const tnmNList = [];
-    tnmNList.push(`　骨盤リンパ節に対する処置：${convertString(stagingTMN_N["RP"])}`);
-    tnmNList.push(`　骨盤リンパ節の所見　　　：${convertString(stagingTMN_N["RPX"])}`);
-    tnmNList.push(`　傍大動脈リンパ節に対する処置：${convertString(stagingTMN_N["RA"])}`);
-    tnmNList.push(`　傍大動脈リンパ節の所見　　　：${convertString(stagingTMN_N["RAX"])}`);
+    tnmNList.push(`　骨盤リンパ節に対する処置：${convertString(rootValues.stagingTMN_N["RP"])}`);
+    tnmNList.push(`　骨盤リンパ節の所見　　　：${convertString(rootValues.stagingTMN_N["RPX"])}`);
+    tnmNList.push(`　傍大動脈リンパ節に対する処置：${convertString(rootValues.stagingTMN_N["RA"])}`);
+    tnmNList.push(`　傍大動脈リンパ節の所見　　　：${convertString(rootValues.stagingTMN_N["RAX"])}`);
 
     output.push(...tnmNList);
-    output.push(`TNM分類（2021）M：${convertString(stagingTMN_M["M"])}`);
+    output.push(`TNM分類（2021）M：${convertString(rootValues.stagingTMN_M["M"])}`);
 
     output.push(``);
     output.push("ーーー組織診・病理ーーー");
-    output.push(`組織診断：${convertString(pathology["組織型"])}`);
-    output.push(`grede：${convertString(pathology["組織学的異型度"])}`);
-    output.push(`g-BRCA BRCA1変異：${convertString(genes["BRCA1変異"])}`);
-    output.push(`　　　　BRCA2変異：${convertString(genes["BRCA2変異"])}`);
-    output.push(`HRD：${convertString(genes["HRD"])}`);
-    output.push(`MSI：${convertString(genes["MSI"])}`);
-    output.push(`摘出病理所見 筋層浸潤　　：${convertString(muscleInvasion["所見"])}`);
-    output.push(`　　　　　　 筋層浸潤詳細：${convertString(muscleInvasion["詳細"])}`);
-    output.push(`　　　　　　 脈管侵襲 リンパ管侵襲：${convertString(vascularIinvasion["リンパ管侵襲"])}`);
-    output.push(`　　　　　　 　　　　 静脈侵襲　　：${convertString(vascularIinvasion["静脈侵襲"])}`);
-    output.push(`　　　　　　 頸管浸潤　：${convertString(findings["子宮頸部間質浸潤"])}`);
-    output.push(`　　　　　　 附属器転移：${convertString(findings["付属器転移"])}`);
-    var lymphNodeMetastasis = findings["リンパ節転移"];
+    output.push(`組織診断：${convertString(rootValues.pathology["組織型"])}`);
+    output.push(`組織学的異形度：${convertString(rootValues.pathology["組織学的異型度"])}`);
+    output.push(`g-BRCA BRCA1変異：${convertString(rootValues.genes["BRCA1変異"])}`);
+    output.push(`　　　　BRCA2変異：${convertString(rootValues.genes["BRCA2変異"])}`);
+    output.push(`HRD：${convertString(rootValues.genes["HRD"])}`);
+    output.push(`MSI：${convertString(rootValues.genes["MSI"])}`);
+    output.push(`摘出病理所見 筋層浸潤　　：${convertString(rootValues.muscleInvasion["所見"])}`);
+    output.push(`　　　　　　 筋層浸潤詳細：${convertString(rootValues.muscleInvasion["詳細"])}`);
+    output.push(`　　　　　　 脈管侵襲 リンパ管侵襲：${convertString(rootValues.vascularIinvasion["リンパ管侵襲"])}`);
+    output.push(`　　　　　　 　　　　 静脈侵襲　　：${convertString(rootValues.vascularIinvasion["静脈侵襲"])}`);
+    output.push(`　　　　　　 頸管浸潤　：${convertString(rootValues.findings["子宮頸部間質浸潤"])}`);
+    output.push(`　　　　　　 附属器転移：${convertString(rootValues.findings["付属器転移"])}`);
+    output.push(``);
+    var lymphNodeMetastasis = rootValues.findings["リンパ節転移"];
     if (Array.isArray(lymphNodeMetastasis) && lymphNodeMetastasis.length > 0) {
         var num = 1;
         lymphNodeMetastasis.forEach(item => {
@@ -267,18 +307,18 @@ export async function main(docObj, func) {
             output.push(`　　　 転移陽性リンパ節数：${convertString(item["転移陽性リンパ節数"])}`);
             num++;
         });
-
     } else {
-        output.push(`リンパ節転移 部位：`);
-        output.push(`　　　　　　 個数 摘出リンパ節：`);
-        output.push(`　　　　　　 　　 転移陽性リンパ節数：`);
+        output.push(`＜リンパ節転移 1件目＞`);
+        output.push(`　部位：`);
+        output.push(`　個数 摘出リンパ節　　　：`);
+        output.push(`　　　 転移陽性リンパ節数：`);
     }
 
     output.push(``);
-    output.push(`腹水、洗浄腹水細胞診所見：${convertString(findings["腹水細胞診"])}`);
+    output.push(`腹水、洗浄腹水細胞診所見：${convertString(rootValues.findings["腹水細胞診"])}`);
     
     var distantMetastasisStrList = [];
-    var distantMetastasis = stagingTMN_M["遠隔転移部位"];
+    var distantMetastasis = rootValues.stagingTMN_M["遠隔転移部位"];
     if (distantMetastasis && Array.isArray(distantMetastasis) && distantMetastasis.length > 0) {
         var num = 1;
         distantMetastasis.forEach((item) => {
@@ -292,26 +332,26 @@ export async function main(docObj, func) {
         })
     }
     output.push(`遠隔転移：${distantMetastasisStrList.join(",")}`);
-    output.push(`(post)Surgical stage：${convertString(staging["FIGO"])}`);
-    output.push(`ベクセルTMN分類 T ：${convertString(stagingTMN_T["T"])}`);
+    output.push(`(post)Surgical stage：${convertString(rootValues.staging["FIGO"])}`);
+    output.push(`ベクセルTMN分類 T ：${convertString(rootValues.stagingTMN_T["T"])}`);
     output.push(`ベクセルTMN分類 NP：`);
-    output.push(`　骨盤リンパ節に対する処置：${convertString(stagingTMN_N["RP"])}`);
-    output.push(`　骨盤リンパ節の所見　　　：${convertString(stagingTMN_N["RPX"])}`);
-    output.push(`　傍大動脈リンパ節に対する処置：${convertString(stagingTMN_N["RA"])}`);
-    output.push(`　傍大動脈リンパ節の所見　　　：${convertString(stagingTMN_N["RAX"])}`);
+    output.push(`　骨盤リンパ節に対する処置：${convertString(rootValues.stagingTMN_N["RP"])}`);
+    output.push(`　骨盤リンパ節の所見　　　：${convertString(rootValues.stagingTMN_N["RPX"])}`);
+    output.push(`　傍大動脈リンパ節に対する処置：${convertString(rootValues.stagingTMN_N["RA"])}`);
+    output.push(`　傍大動脈リンパ節の所見　　　：${convertString(rootValues.stagingTMN_N["RAX"])}`);
     output.push(`ベクセルTMN分類 A ：`);
-    output.push(`　骨盤リンパ節に対する処置：${convertString(stagingTMN_N["RP"])}`);
-    output.push(`　骨盤リンパ節の所見　　　：${convertString(stagingTMN_N["RPX"])}`);
-    output.push(`　傍大動脈リンパ節に対する処置：${convertString(stagingTMN_N["RA"])}`);
-    output.push(`　傍大動脈リンパ節の所見　　　：${convertString(stagingTMN_N["RAX"])}`);
-    output.push(`ベクセルTMN分類　M ：${convertString(stagingTMN_M["M"])}`);
+    output.push(`　骨盤リンパ節に対する処置：${convertString(rootValues.stagingTMN_N["RP"])}`);
+    output.push(`　骨盤リンパ節の所見　　　：${convertString(rootValues.stagingTMN_N["RPX"])}`);
+    output.push(`　傍大動脈リンパ節に対する処置：${convertString(rootValues.stagingTMN_N["RA"])}`);
+    output.push(`　傍大動脈リンパ節の所見　　　：${convertString(rootValues.stagingTMN_N["RAX"])}`);
+    output.push(`ベクセルTMN分類　M ：${convertString(rootValues.stagingTMN_M["M"])}`);
     output.push(``);
     output.push("ーーーその他ーーー");
-    output.push(`術後方針：${convertString(findings["再発リスク"])}`);
+    output.push(`術後方針：${convertString(rootValues.findings["再発リスク"])}`);
     output.push(``);
 
     // 子画面表示
-    await openWindow(output.join("\r\n"))
+    openWindow(output.join("\r\n"))
 }
 
 

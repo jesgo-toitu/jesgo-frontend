@@ -66,9 +66,9 @@ const stagingItems = [
 
 // [項目定義]診断所見
 const findingsItems = [
-  { colName: "診断所見_漿液性卵管上皮内癌（STIC）", jsonpath: "/漿液性卵管上皮内癌（STIC）"},
-  { colName: "診断所見_腹水細胞診"                , jsonpath: "/腹水細胞診"},
-  { colName: "診断所見_皮膜破綻の有無"            , jsonpath: "/皮膜破綻の有無"},
+  { colName: "診断所見_漿液性卵管上皮内癌STIC", jsonpath: "/漿液性卵管上皮内癌（STIC）"},
+  { colName: "診断所見_腹水細胞診"            , jsonpath: "/腹水細胞診"},
+  { colName: "診断所見_皮膜破綻の有無"        , jsonpath: "/皮膜破綻の有無"},
 ];
 
 // [項目定義]組織診断

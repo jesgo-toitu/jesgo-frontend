@@ -169,6 +169,23 @@ function setRootValues(root) {
     return rootValues;
 }
 
+/**
+ * 条件のテキストであれば追加文言も合わせて出力する
+ * @param {string} mainText 
+ * @param {string} additional 
+ * @param {string[]} conditions 
+ * @returns 
+ */
+function getTextWithAdditional(mainText, additional, conditions) {
+    if (mainText) {
+        if (Array.isArray(conditions) && conditions.includes(mainText)) {
+            return `${mainText}(${convertString(additional)})`;
+        } else {
+            return convertString(mainText);
+        }
+    }
+}
+
 export async function main(docObj, func) {
     var output = [];
     var targetData = await func(docObj);
@@ -245,12 +262,12 @@ export async function main(docObj, func) {
                 if (operationMethods && Array.isArray(operationMethods) && operationMethods.length > 0) {
                     var methodsStr = [];
                     operationMethods.forEach(method => {
-                        if (method && method["術式"]) {
-                            if (method["自由入力"]) {
-                                methodsStr.push(`${method["術式"]}(${method["自由入力"]})`)
-                            } else {
-                                methodsStr.push(`${method["術式"]}`)
-                            }
+                        // スキーマと同じ条件で確認
+                        if (method) {
+                            methodsStr.push(
+                                getTextWithAdditional(method["術式"], method["自由入力"],
+                                    ["その他の開腹手術", "その他の腟式手術", "その他の腹腔鏡手術", "その他のロボット支援下手術"])
+                            );
                         }
                     });
                     if (methodsStr.length > 0) {
@@ -265,8 +282,9 @@ export async function main(docObj, func) {
         });
 
     } else {
-        output.push(`手術年月日：`);
-        output.push(`術式：`);
+        output.push(`＜手術情報 1件目＞`);
+        output.push(`　手術年月日：`);
+        output.push(`　術式：`);
     }
 
     output.push(``);
@@ -322,12 +340,8 @@ export async function main(docObj, func) {
     if (distantMetastasis && Array.isArray(distantMetastasis) && distantMetastasis.length > 0) {
         var num = 1;
         distantMetastasis.forEach((item) => {
-            if (item["部位"]) {
-                if (item["具体的部位"]) {
-                    distantMetastasisStrList.push(`${convertString(item["部位"])}(${convertString(item["具体的部位"])})`)
-                } else {
-                    distantMetastasisStrList.push(convertString(item["部位"]))
-                }
+            if (item) {
+                distantMetastasisStrList.push(getTextWithAdditional(item["部位"], item["具体的部位"], ["その他"]))
             }
         })
     }

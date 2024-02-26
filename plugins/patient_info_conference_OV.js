@@ -164,6 +164,23 @@ function setRootValues(root) {
     return rootValues;
 }
 
+/**
+ * 条件のテキストであれば追加文言も合わせて出力する
+ * @param {string} mainText 
+ * @param {string} additional 
+ * @param {string[]} conditions 
+ * @returns 
+ */
+function getTextWithAdditional(mainText, additional, conditions) {
+    if (mainText) {
+        if (Array.isArray(conditions) && conditions.includes(mainText)) {
+            return `${mainText}(${convertString(additional)})`;
+        } else {
+            return convertString(mainText);
+        }
+    }
+}
+
 export async function main(docObj, func) {
     var output = [];
     var targetData = await func(docObj);
@@ -243,12 +260,12 @@ export async function main(docObj, func) {
                 if (operationMethods && Array.isArray(operationMethods) && operationMethods.length > 0) {
                     var methodsStr = [];
                     operationMethods.forEach(method => {
-                        if (method && method["術式"]) {
-                            if (method["自由入力"]) {
-                                methodsStr.push(`${method["術式"]}(${method["自由入力"]})`)
-                            } else {
-                                methodsStr.push(`${method["術式"]}`)
-                            }
+                        // スキーマと同じ条件で確認
+                        if (method) {
+                            methodsStr.push(
+                                getTextWithAdditional(method["術式"], method["自由入力"],
+                                    ["その他の開腹手術", "その他の腟式手術", "その他の腹腔鏡手術", "その他のロボット支援下手術"])
+                            );
                         }
                     });
                     if (methodsStr.length > 0) {
@@ -276,8 +293,13 @@ export async function main(docObj, func) {
     output.push(``);
     output.push("ーーー組織診・病理ーーー");
     var tissueType = rootValues.pathology["組織型"];
+    // スキーマと同じ条件で確認
     if (rootValues.pathology["その他組織型"]) {
-        tissueType = `${convertString(rootValues.pathology["組織型"])}(${convertString(rootValues.pathology["その他組織型"])})`
+        tissueType = getTextWithAdditional(
+            rootValues.pathology["その他組織型"],
+            rootValues.pathology["その他組織型"],
+            ["その他の腫瘍", "組織型診断保留中"]
+        );
     }
     output.push(`組織診断：${tissueType}`);
     output.push(`g-BRCA BRCA1変異：${convertString(rootValues.genes["BRCA1変異"])}`);
@@ -312,15 +334,17 @@ export async function main(docObj, func) {
     }
 
     var distantMetastasisStrList = [];
-    var distantMetastasis = rootValues.stagingTMN["遠隔転移部位"];
-    if (distantMetastasis && Array.isArray(distantMetastasis) && distantMetastasis.length > 0) {
-        var num = 1;
-        distantMetastasis.forEach((item) => {
-            if (item) {
-                distantMetastasisStrList.push(item)
-            }
-            num++;
-        })
+    if (rootValues.stagingTMN["M"] && new RegExp("^1").test(rootValues.stagingTMN["M"])) {
+        var distantMetastasis = rootValues.stagingTMN["遠隔転移部位"];
+        if (distantMetastasis && Array.isArray(distantMetastasis) && distantMetastasis.length > 0) {
+            var num = 1;
+            distantMetastasis.forEach((item) => {
+                if (item) {
+                    distantMetastasisStrList.push(item)
+                }
+                num++;
+            })
+        }
     }
     output.push(``);
     output.push(`遠隔転移：${distantMetastasisStrList.join(",")}`);

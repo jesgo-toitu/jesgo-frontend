@@ -162,6 +162,23 @@ function setRootValues(root) {
     return rootValues;
 }
 
+/**
+ * 条件のテキストであれば追加文言も合わせて出力する
+ * @param {string} mainText 
+ * @param {string} additional 
+ * @param {string[]} conditions 
+ * @returns 
+ */
+function getTextWithAdditional(mainText, additional, conditions) {
+    if (mainText) {
+        if (Array.isArray(conditions) && conditions.includes(mainText)) {
+            return `${mainText}(${convertString(additional)})`;
+        } else {
+            return convertString(mainText);
+        }
+    }
+}
+
 export async function main(docObj, func) {
     var output = [];
     var targetData = await func(docObj);
@@ -227,7 +244,12 @@ export async function main(docObj, func) {
     output.push(`外来ID：${convertString(caseInfo["his_id"])}`);
     output.push(``);
     output.push("ーーー術前情報ーーー");
-    output.push(`術前TNM分類（第8版）T：${convertString(convertJsonObj(rootValues.preoperativeTNM["T"])["T"])}`);
+    // スキーマと同じ条件で確認
+    var ctnmT = convertString(convertJsonObj(rootValues.preoperativeTNM["T"])["T"]);
+    if (ctnmT && new RegExp("^T1a.*").test(ctnmT)) {
+        ctnmT = `${ctnmT}(${convertString(convertJsonObj(rootValues.preoperativeTNM["T"])["T1a期 詳細入力"])})`
+    }
+    output.push(`術前TNM分類（第8版）T：${ctnmT}`);
     output.push(`術前TNM分類（第8版）N：${convertString(convertJsonObj(rootValues.preoperativeTNM["N"])["N"])}`);
     output.push(`術前TNM分類（第8版）M：${convertString(convertJsonObj(rootValues.preoperativeTNM["M"])["M"])}`);
     output.push(``);
@@ -242,12 +264,12 @@ export async function main(docObj, func) {
                 if (operationMethods && Array.isArray(operationMethods) && operationMethods.length > 0) {
                     var methodsStr = [];
                     operationMethods.forEach(method => {
-                        if (method && method["術式"]) {
-                            if (method["自由入力"]) {
-                                methodsStr.push(`${method["術式"]}(${method["自由入力"]})`)
-                            } else {
-                                methodsStr.push(`${method["術式"]}`)
-                            }
+                        // スキーマと同じ条件で確認
+                        if (method) {
+                            methodsStr.push(
+                                getTextWithAdditional(method["術式"], method["自由入力"],
+                                    ["その他の開腹手術", "その他の腟式手術", "その他の腹腔鏡手術", "その他のロボット支援下手術"])
+                            );
                         }
                     });
                     if (methodsStr.length > 0) {
@@ -266,8 +288,21 @@ export async function main(docObj, func) {
         output.push(`術式：`);
     }
     output.push(``);
+    output.push(`術後診断：子宮頸がん`);
     output.push(`stage(FIGO2018)：${convertString(rootValues.staging["FIGO"])}`);
-    output.push(`TNM分類（2021）T：${convertString(convertJsonObj(rootValues.stagingTNM["T"])["T"])}`);
+    var ctnmT = convertString(convertJsonObj(rootValues.stagingTNM["T"])["T"]);
+    // スキーマと同じ条件で確認
+    if (ctnmT && new RegExp("^T1a.*").test(ctnmT)) {
+        var additionalText = [];
+        var t1aDetail = convertJsonObj(rootValues.stagingTNM["T"])["T1a期 詳細入力"];
+        if (t1aDetail) additionalText.push(t1aDetail);
+        var t1aThickness = convertJsonObj(rootValues.stagingTNM["T"])["T1a期 腫瘍の厚さ"];
+        if (t1aThickness) additionalText.push(t1aThickness);
+        if (additionalText.length > 0) {
+            ctnmT = `${ctnmT}(${additionalText.join("、")})`
+        }
+    }
+    output.push(`TNM分類（2021）T：${ctnmT}`);
     output.push(`TNM分類（2021）N：`);
     output.push(`　骨盤リンパ節に対する処置：${convertString(convertJsonObj(rootValues.stagingTNM["N"])["RP"])}`);
     output.push(`　骨盤リンパ節の所見　　　：${convertString(convertJsonObj(rootValues.stagingTNM["N"])["RPX"])}`);
@@ -301,6 +336,8 @@ export async function main(docObj, func) {
                 if (pathlogyReport["所見"]) {
                     output.push(`＜摘出病理所見 ${num}件目＞`);
                     output.push(`　検査実施日：${convertString(pathlogyReport["検査実施日"])}`);
+                    output.push(`　標本番号：${convertString(pathlogyReport["標本番号"])}`);
+                    output.push(`　病理診断：${convertString(pathlogyReport["病理診断"])}`);
                     output.push(`　所見：${convertString(pathlogyReport["所見"])}`);
                     num++;
                     hasOutput = true;
@@ -313,6 +350,8 @@ export async function main(docObj, func) {
     if (!hasOutput) {
         output.push(`＜摘出病理所見 1件目＞`);
         output.push(`　確認日：`);
+        output.push(`　標本番号：`);
+        output.push(`　病理診断：`);
         output.push(`　所見：`);
     }
 

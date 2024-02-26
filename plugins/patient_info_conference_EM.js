@@ -361,7 +361,14 @@ export async function main(docObj, func) {
     output.push(`ベクセルTMN分類　M ：${convertString(rootValues.stagingTMN_M["M"])}`);
     output.push(``);
     output.push("ーーーその他ーーー");
+    output.push(`特記事項：`);
     output.push(`術後方針：${convertString(rootValues.findings["再発リスク"])}`);
+    output.push(`　　　　 治療方針：`);
+    output.push(`　　　　 詳細：`);
+    output.push(`受持医1：`);
+    output.push(`受持医2：`);
+    output.push(`受持医3：`);
+    output.push(`カンファレンス日：`);
     output.push(``);
 
     // 子画面表示

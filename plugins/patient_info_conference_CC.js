@@ -279,13 +279,16 @@ export async function main(docObj, func) {
                 output.push(`＜手術情報 ${num}件目＞`);
                 output.push(`　手術年月日：${convertString(operation["手術日"])}`);
                 output.push(`　術式：${operationMethodStr}`);
+                output.push(`　詳細：`);
                 num++;
             }
         });
 
     } else {
-        output.push(`手術年月日：`);
-        output.push(`術式：`);
+        output.push(`＜手術情報 1件目＞`);
+        output.push(`　手術年月日：`);
+        output.push(`　術式：`);
+        output.push(`　詳細：`);
     }
     output.push(``);
     output.push(`術後診断：子宮頸がん`);
@@ -322,6 +325,9 @@ export async function main(docObj, func) {
         tissueType = `${tissueType}(${convertString(rootValues.pathology["腺癌 詳細"])})`
     }
     output.push(`組織診断：${tissueType}`);
+    output.push(`術前円切標本 間質浸潤：`);
+    output.push(`　　　　　　 縦軸方向：`);
+    output.push(`　　　　　　 脈管侵襲：`);
     output.push(`g-BRCA BRCA1変異：${convertString(rootValues.genes["BRCA1変異"])}`);
     output.push(`　　　　BRCA2変異：${convertString(rootValues.genes["BRCA2変異"])}`);
     output.push(`HRD：${convertString(rootValues.genes["HRD"])}`);
@@ -355,17 +361,6 @@ export async function main(docObj, func) {
         output.push(`　所見：`);
     }
 
-    var distantMetastasisStrList = [];
-    var distantMetastasis = rootValues.stagingTNM["遠隔転移部位"];
-    if (distantMetastasis && Array.isArray(distantMetastasis) && distantMetastasis.length > 0) {
-        var num = 1;
-        distantMetastasis.forEach((item) => {
-            if (item) {
-                distantMetastasisStrList.push(item)
-            }
-            num++;
-        })
-    }
     output.push(``);
     output.push(`摘出病理所見 マクロ腫瘍径：${convertString(rootValues.tumorMaxDiameter["所見"])}`);
     output.push(`腫瘍径計測法：${convertString(rootValues.tumorMaxDiameter["診断方法"])}`);
@@ -373,10 +368,18 @@ export async function main(docObj, func) {
     output.push(`　　　　　　 傍大動脈リンパ節転移：${convertString(convertJsonObj(rootValues.findings["傍大動脈リンパ節転移"])["所見"])}`);
     output.push(`　　　　　　 その他のリンパ節転移：${convertString(convertJsonObj(rootValues.findings["その他のリンパ節転移"])["所見"])}`);
     output.push(`腟壁浸潤：${convertString(convertJsonObj(rootValues.findings["腟壁浸潤"])["所見"])}`);
+    output.push(`surgical margin：`);
     output.push(`遠隔転移：${convertString(convertJsonObj(rootValues.findings["リンパ節以外の遠隔転移"])["所見"])}`);
     output.push(``);
     output.push("ーーーその他ーーー");
+    output.push(`特記事項：`);
     output.push(`術後方針：${convertString(rootValues.findings["術後再発リスク"])}`);
+    output.push(`　　　　 治療方針：`);
+    output.push(`　　　　 詳細：`);
+    output.push(`受持医1：`);
+    output.push(`受持医2：`);
+    output.push(`受持医3：`);
+    output.push(`カンファレンス日：`);
     output.push(``);
 
     // 子画面表示

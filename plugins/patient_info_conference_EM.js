@@ -54,7 +54,7 @@ function openWindow(dispText) {
             </div>
         </div>
         <div class="modal-body">
-            <textarea id="summaryTextarea" rows="10" cols="40" readonly 
+            <textarea id="summaryTextarea" rows="10" cols="40"  
             style="height: calc(100vh - 55px - 30px); width: 100%; resize:none">${dispText}</textarea>
         </div>`;
 
@@ -108,7 +108,7 @@ function calcAge(birthday) {
  * @returns {string} - paramが空なら空文字を返す。それ以外はそのまま。
  */
 function convertString(str) {
-    return str ? str : "";
+    return str == null ? "" : str;
 }
 
 /**
@@ -205,9 +205,10 @@ export async function main(docObj, func) {
     }
     
     // formDataの中身を掘っていく
+    var existTarget = false;
     if (targetData) {
         var targetDataJson = JSON.parse(targetData);
-         // all_patientがfalseなのでtargetDataは必ず 0 or 1件
+        // all_patientがfalseなのでtargetDataは必ず 0 or 1件
         if (targetDataJson && targetDataJson.length > 0) {
             caseInfo = targetDataJson[0];
             if (caseInfo) {
@@ -222,37 +223,37 @@ export async function main(docObj, func) {
                                     if (value && value["がん種"] === TARGET_TYPE_NAME) {
                                         // 患者台帳が複数
                                         rootValues = setRootValues(value);
+                                        existTarget = true;
                                     }
                                 })
                             } else {
                                 if (root["がん種"] === TARGET_TYPE_NAME) {
                                     // 患者台帳が1つ
                                     rootValues = setRootValues(root);
+                                    existTarget = true;
                                 }
 
-                            }                           
+                            }
                         }
-                    } 
+                    }
                 })
             } else {
                 caseInfo = {};
             }
-        }else {
-            alert("出力対象のデータがありません")
-            return;
         }
-    } else {
+    }
+    if (!existTarget) {
         alert("出力対象のデータがありません")
         return;
     }
 
     // データが無くても項目名は出したい
-    output.push("ーーー基本情報ーーー");
+    output.push("－－－基本情報－－－");
     output.push(`氏名：${caseInfo["name"]}`);
     output.push(`年齢：${calcAge(caseInfo["date_of_birth"])} 歳`);
     output.push(`外来ID：${caseInfo["his_id"]}`);
     output.push(``);
-    output.push("ーーー手術情報ーーー");
+    output.push("－－－手術情報－－－");
     if (Array.isArray(rootValues.operations) && rootValues.operations.length > 0) {
         var num = 1;
         rootValues.operations.forEach(operation => {
@@ -301,8 +302,13 @@ export async function main(docObj, func) {
     output.push(`TNM分類（2021）M：${convertString(rootValues.stagingTMN_M["M"])}`);
 
     output.push(``);
-    output.push("ーーー組織診・病理ーーー");
-    output.push(`組織診断：${convertString(rootValues.pathology["組織型"])}`);
+    output.push("－－－組織診・病理－－－");
+    var tissueType = convertString(rootValues.pathology["組織型"]);
+    // スキーマと同じ条件で分岐
+    if (tissueType == "その他") {
+        tissueType = `${tissueType}(${convertString(rootValues.pathology["その他組織型"])})`
+    } 
+    output.push(`組織診断：${tissueType}`);
     output.push(`組織学的異形度：${convertString(rootValues.pathology["組織学的異型度"])}`);
     output.push(`g-BRCA BRCA1変異：${convertString(rootValues.genes["BRCA1変異"])}`);
     output.push(`　　　　BRCA2変異：${convertString(rootValues.genes["BRCA2変異"])}`);
@@ -360,7 +366,7 @@ export async function main(docObj, func) {
     output.push(`　傍大動脈リンパ節の所見　　　：${convertString(rootValues.stagingTMN_N["RAX"])}`);
     output.push(`ベクセルTMN分類　M ：${convertString(rootValues.stagingTMN_M["M"])}`);
     output.push(``);
-    output.push("ーーーその他ーーー");
+    output.push("－－－その他－－－");
     output.push(`特記事項：`);
     output.push(`術後方針：${convertString(rootValues.findings["再発リスク"])}`);
     output.push(`　　　　 治療方針：`);

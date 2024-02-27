@@ -49,7 +49,7 @@ function openWindow(dispText) {
             </div>
         </div>
         <div class="modal-body">
-            <textarea id="summaryTextarea" rows="10" cols="40" readonly 
+            <textarea id="summaryTextarea" rows="10" cols="40"  
             style="height: calc(100vh - 55px - 30px); width: 100%; resize:none">${dispText}</textarea>
         </div>`;
 
@@ -103,7 +103,7 @@ function calcAge(birthday) {
  * @returns {string} - paramが空なら空文字を返す。それ以外はそのまま。
  */
 function convertString(str) {
-    return str ? str : "";
+    return str == null ? "" : str;
 }
 
 /**
@@ -198,6 +198,7 @@ export async function main(docObj, func) {
     var surveillanceList = {};
 
     // formDataの中身を掘っていく
+    var existTarget = false;
     if (targetData) {
         var targetDataJson = JSON.parse(targetData);
         // all_patientがfalseなのでtargetDataは必ず 0 or 1件
@@ -215,39 +216,41 @@ export async function main(docObj, func) {
                                     if (value && value["がん種"] === '卵巣がん') {
                                         // 患者台帳が複数
                                         rootValues = setRootValues(value);
+                                        existTarget = true;
                                     }
                                 })
                             } else {
                                 if (root["がん種"] === '卵巣がん') {
                                     // 患者台帳が1つ
                                     rootValues = setRootValues(root);
+                                    existTarget = true;
                                 }
 
                             }
                         } else if (docList["経過"]) {
-                            surveillanceList = docList["経過"]["経過・所見"] = null ? {} : docList["経過"]["経過・所見"];
+                            surveillanceList = docList["経過"]["経過・所見"] == null ? {} : docList["経過"]["経過・所見"];
+                            existTarget = true;
                         }
                     }
                 })
             } else {
                 caseInfo = {};
             }
-        } else {
-            alert("出力対象のデータがありません")
-            return;
         }
-    } else {
+    }
+
+    if (!existTarget) {
         alert("出力対象のデータがありません")
         return;
     }
 
     // データが無くても項目名は出したい
-    output.push("ーーー基本情報ーーー");
+    output.push("－－－基本情報－－－");
     output.push(`氏名：${convertString(caseInfo["name"])}`);
     output.push(`年齢：${calcAge(caseInfo["date_of_birth"])} 歳`);
     output.push(`外来ID：${convertString(caseInfo["his_id"])}`);
     output.push(``);
-    output.push("ーーー手術情報ーーー");
+    output.push("－－－手術情報－－－");
 
     if (Array.isArray(rootValues.operations) && rootValues.operations.length > 0) {
         var num = 1;
@@ -291,7 +294,7 @@ export async function main(docObj, func) {
     output.push(`TNM分類（2021）M：${convertString(rootValues.stagingTMN["M"])}`);
 
     output.push(``);
-    output.push("ーーー組織診・病理ーーー");
+    output.push("－－－組織診・病理－－－");
     var tissueType = rootValues.pathology["組織型"];
     // スキーマと同じ条件で確認
     if (rootValues.pathology["その他組織型"]) {
@@ -352,7 +355,7 @@ export async function main(docObj, func) {
     output.push(`遠隔転移：${distantMetastasisStrList.join(",")}`);
     output.push(`特記事項：`);
     output.push(``);
-    output.push("ーーーその他ーーー");
+    output.push("－－－その他－－－");
     output.push(`術後方針：`);
     output.push(`　　　　 詳細：`);
     output.push(`受持医1：`);

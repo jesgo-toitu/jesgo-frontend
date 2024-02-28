@@ -1,5 +1,5 @@
 const script_info = {
-    plugin_name: '頸がんカンファ',
+    plugin_name: '頸癌カンファ',
     plugin_version: '1.0',
     all_patient: false,
     update_db: false,

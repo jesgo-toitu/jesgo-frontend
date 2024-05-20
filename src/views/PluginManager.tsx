@@ -120,8 +120,9 @@ const PluginManager = () => {
         });
       }
 
-      setJesgoPluginList(pluginList);
-      setLoadedJesgoPluginList(lodash.cloneDeep(pluginList));
+      const targetPlugins = pluginList.filter((p) => p.plugin_id);
+      setJesgoPluginList(targetPlugins);
+      setLoadedJesgoPluginList(lodash.cloneDeep(targetPlugins));
     } else {
       navigate('/login');
     }

@@ -850,12 +850,24 @@ export const LoadPluginList = async (
       ).filter((p) => !p.disabled);
     }
 
+    const pluginListReturnBody = pluginListReturn.body as jesgoPluginColumns[];
+    const plugins = pluginListReturnBody.filter((p) => p.plugin_id);
+    const pluginGroups = pluginListReturnBody.filter((p) => !p.plugin_id);
+
     // eslint-disable-next-line no-restricted-syntax
-    for (const item of pluginListReturn.body as jesgoPluginColumns[]) {
+    for (const item of plugins) {
       // DBから取れないものは直接initを叩いて取得
       const plugin = await GetModule(item.script_text);
       const initValue = await plugin.init();
       item.newdata = initValue.newdata;
+    }
+
+    // プラグイングループ制御
+    for (const group of pluginGroups) {
+      if (group.all_patient) continue;
+      group.newdata = !plugins.some(
+        (p) => !p.target_schema_id && !p.newdata && p.plugin_group_id === group.plugin_group_id
+      );
     }
 
     return pluginListReturn;

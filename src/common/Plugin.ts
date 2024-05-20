@@ -42,6 +42,7 @@ export type jesgoPluginColumns = {
   explain?: string;
   newdata?: boolean;
   disabled?: boolean;
+  plugin_group_id?: number;
 };
 
 type argDoc = {

@@ -1,5 +1,5 @@
 const script_info = {
-  plugin_name: "患者データ一括登録(子宮体がん)_2023年用",
+  plugin_name: "患者データ一括取込(子宮体がん)_2023年様式",
   plugin_version: "1.0",
   all_patient: true,
   update_db: true,
@@ -9,6 +9,7 @@ const script_info = {
   filter_schema_query: "",
   explain: "子宮体がん(2023)のCSVを一括インポートします",
   newdata: true,
+  plugin_group_id: 1,
 };
 export async function init() {
   return script_info;

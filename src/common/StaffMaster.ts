@@ -23,8 +23,8 @@ export const Roll = {
 
 // 6文字以上8文字以内の半角英数字
 export const LOGINID_PATTERN = /^([a-zA-Z0-9]{6,8})$/;
-// 半角英数字を含む6文字以上10文字以内
-export const PASSWORD_PATTERN = /^(?=.*?[a-z])(?=.*?\d)[a-z\d]{6,20}$/i;
+// 半角英数字を含む8文字以上20文字以内
+export const PASSWORD_PATTERN = /^(?=.*?[a-z])(?=.*?\d)[a-z\d]{8,20}$/i;
 export const DISPLAYNAME_MAX_LENGTH = 20;
 
 export const loginIdCheck = (value: string): boolean => {

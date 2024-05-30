@@ -270,7 +270,7 @@ const PluginManager = () => {
       loadedJesgoPluginList.find(
         (q) => q.plugin_id === p.plugin_id && p.disabled !== q.disabled
       )
-    );
+    ).map((p) => ({ plugin_id:p.plugin_id, disabled:p.disabled } as jesgoPluginColumns));
 
     // eslint-disable-next-line no-void
     void SavePluginList(diffList).then(async (returnApiObject) => {

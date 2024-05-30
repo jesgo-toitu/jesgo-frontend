@@ -121,7 +121,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           dispatch({ type: 'PLUGIN_LIST', pluginList });
         }
 
-        setJesgoPluginList(pluginList);
+        setJesgoPluginList(pluginList.filter((p) => p.plugin_id));
       }
     };
 

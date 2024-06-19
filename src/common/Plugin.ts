@@ -1,3 +1,4 @@
+/* eslint-disable no-alert */
 /* eslint-disable no-loop-func */
 /* eslint-disable array-callback-return */
 /* eslint-disable no-plusplus */
@@ -11,7 +12,7 @@ import {
   overwriteInfo,
   overWriteSchemaInfo,
 } from '../components/common/PluginOverwriteConfirm';
-import { jesgoCaseDefine } from '../store/formDataReducer';
+import { jesgoCaseDefine, SaveDataObjDefine } from '../store/formDataReducer';
 import { reloadState } from '../views/Registration';
 import apiAccess, { METHOD_TYPE, RESULT } from './ApiAccess';
 import { OpenOutputView } from './CaseRegistrationUtility';
@@ -39,7 +40,9 @@ export type jesgoPluginColumns = {
   show_upload_dialog: boolean;
   filter_schema_query?: string;
   explain?: string;
+  newdata?: boolean;
   disabled?: boolean;
+  plugin_group_id?: number;
 };
 
 type argDoc = {
@@ -58,6 +61,12 @@ type updateObject = {
   schema_id?: string;
   schema_ids?: number[];
   target: Record<string, string | number>;
+  patient_info?: {
+    his_id: string;
+    date_of_birth: string;
+    name: string;
+  };
+  child_documents?: updateObject[];
 };
 
 let pluginData: jesgoPluginColumns;
@@ -71,13 +80,17 @@ let setIsLoadingGlobal:
 
 // モジュールのFunc定義インターフェース
 interface IPluginModule {
-  init: () => Promise<string>;
+  init: () => Promise<jesgoPluginColumns>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   main: (doc: any, func: (args: any[]) => Promise<any>) => Promise<unknown>;
   finalize?: () => Promise<void>;
+  importDocument?: (
+    doc: any,
+    func: (args: any[]) => Promise<any>
+  ) => Promise<unknown>;
 }
 
-const GetModule: (scriptText: string) => Promise<IPluginModule> = async (
+export const GetModule: (scriptText: string) => Promise<IPluginModule> = async (
   scriptText: string
 ) => {
   // バックエンドから読み込み予定のスクリプト文字列
@@ -210,9 +223,7 @@ const updatePatientsDocument = async (
   let isSkip = false;
 
   // 引数を配列でなければupdateObjectの配列にする(argDocはここで落とす)
-  const localUpdateTarget = Array.isArray(doc)
-    ? (doc as updateObject[])
-    : [doc as updateObject];
+  const localUpdateTarget = Array.isArray(doc) ? doc : [doc as updateObject];
 
   if (pluginData) {
     // 最初に症例IDとドキュメントIDの組み合わせリストを取得する
@@ -251,22 +262,23 @@ const updatePatientsDocument = async (
 
     // eslint-disable-next-line no-plusplus
     for (let index = 0; index < localUpdateTarget.length; index++) {
+      const patientItem = localUpdateTarget[index];
       let tempCaseId: number | undefined;
       if (targetCaseId) {
         tempCaseId = targetCaseId;
-      } else if (localUpdateTarget[index].case_id) {
-        tempCaseId = localUpdateTarget[index].case_id;
-      } else if (localUpdateTarget[index].hash) {
+      } else if (patientItem.case_id) {
+        tempCaseId = patientItem.case_id;
+      } else if (patientItem.hash) {
         tempCaseId = caseIdAndHashList.find(
-          (p) => p.hash === localUpdateTarget[index].hash
+          (p) => p.hash === patientItem.hash
         )?.case_id;
-      } else if (localUpdateTarget[index].case_no) {
+      } else if (patientItem.case_no) {
         tempCaseId = caseIdAndCaseNoList.find(
-          (p) => p.caseNo === localUpdateTarget[index].case_no
+          (p) => p.caseNo === patientItem.case_no
         )?.case_id;
-      } else if (localUpdateTarget[index].document_id) {
+      } else if (patientItem.document_id) {
         tempCaseId = caseIdAndDocIdList.find(
-          (p) => p.document_id === localUpdateTarget[index].document_id
+          (p) => p.document_id === patientItem.document_id
         )?.case_id;
       }
 
@@ -276,10 +288,7 @@ const updatePatientsDocument = async (
         }
         const oldObj = updateObjByCase.get(tempCaseId);
         if (Array.isArray(oldObj))
-          updateObjByCase.set(
-            tempCaseId,
-            oldObj.concat(localUpdateTarget[index])
-          );
+          updateObjByCase.set(tempCaseId, oldObj.concat(patientItem));
       }
     }
 
@@ -593,6 +602,110 @@ const updatePatientsDocument = async (
   }
 };
 
+/**
+ * 患者・ドキュメント情報インポート
+ * @param doc
+ * @returns
+ */
+const insertPatientsDocument = async (
+  doc: updateObject | updateObject[] | undefined
+) => {
+  const insertResultList: {
+    his_id: string;
+    success: boolean;
+    errorMsg?: string;
+  }[] = [];
+
+  if (!doc) {
+    // 処理を中止
+    // eslint-disable-next-line no-alert
+    alert('更新用オブジェクトが不足しています');
+    return insertResultList;
+  }
+
+  // 引数を配列でなければupdateObjectの配列にする
+  const localUpdateTarget = Array.isArray(doc) ? doc : [doc];
+
+  if (pluginData) {
+    const updateObjByHisId: Map<string, updateObject[]> = new Map();
+
+    // eslint-disable-next-line no-plusplus
+    for (let index = 0; index < localUpdateTarget.length; index++) {
+      const patientItem = localUpdateTarget[index];
+
+      if (
+        patientItem.patient_info &&
+        patientItem.patient_info.his_id &&
+        patientItem.patient_info.date_of_birth &&
+        patientItem.patient_info.name
+      ) {
+        if (!updateObjByHisId.has(patientItem.patient_info.his_id)) {
+          updateObjByHisId.set(patientItem.patient_info.his_id, []);
+        }
+        // 同じ患者IDのオブジェクトは1つにまとめる
+        const popItem = updateObjByHisId.get(patientItem.patient_info.his_id);
+        if (popItem) {
+          popItem.push(patientItem);
+          updateObjByHisId.set(patientItem.patient_info.his_id, popItem);
+        }
+      }
+    }
+
+    const newUpdateObjects: updateObject[] = [];
+
+    // eslint-disable-next-line no-restricted-syntax
+    for await (const [hisId, value] of updateObjByHisId.entries()) {
+      const ret = await apiAccess(METHOD_TYPE.POST, `register-case`, {
+        objects: value,
+      });
+      if (ret.statusNum === RESULT.NORMAL_TERMINATION) {
+        // 登録成功したらupdateに切り替える
+        const patInfo = ret.body as {
+          case_id: number;
+          his_id: string;
+          patient_name: string;
+          returnUpdateObjects: updateObject[];
+        };
+
+        // 成功
+        insertResultList.push({ his_id: patInfo.his_id, success: true });
+
+        // returnUpdateObjectsにはAPIに渡したobjectsに確定済みのdocument_idが付与されて戻ってくる
+        if (patInfo.returnUpdateObjects) {
+          // 更新用オブジェクト生成。child_documentsなどを一つの配列にまとめる
+          const tmpFunc = (data: updateObject) => {
+            if (data.child_documents && data.child_documents.length > 0) {
+              data.child_documents.forEach((item) => tmpFunc(item));
+              // 追加し終えたchild_documentsは削除
+              // eslint-disable-next-line no-param-reassign
+              delete data.child_documents;
+            }
+            // 新規登録用オブジェクトに付与されたpatient_infoも削除
+            // eslint-disable-next-line no-param-reassign
+            delete data.patient_info;
+            newUpdateObjects.push(data);
+          };
+
+          patInfo.returnUpdateObjects.forEach((item) => {
+            tmpFunc(item);
+          });
+        }
+      } else {
+        // 失敗
+        insertResultList.push({
+          his_id: hisId,
+          success: false,
+          errorMsg: ret.body as string,
+        });
+      }
+    }
+
+    // 更新処理呼び出し
+    await updatePatientsDocument(newUpdateObjects, false);
+  }
+  return insertResultList;
+};
+
 export const moduleMain = async (
   scriptText: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -646,6 +759,35 @@ export const moduleMainUpdate = async (
   return undefined;
 };
 
+export const moduleImportDocument = async (
+  scriptText: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  func: (doc: any) => Promise<any>,
+  doc?: string
+): Promise<unknown> => {
+  // モジュール読み込みからのmain実行、引数にCSVファイルを利用することあり
+  const module = await GetModule(scriptText);
+  try {
+    if (!module.importDocument) {
+      return undefined;
+    }
+    const retValue = await module.importDocument(doc, func);
+    return retValue;
+  } catch (e) {
+    // eslint-disable-next-line no-alert
+    alert(
+      `【importDocument関数実行時にエラーが発生しました】\n${
+        (e as Error).message
+      }`
+    );
+  } finally {
+    if (module?.finalize) {
+      await module.finalize();
+    }
+  }
+  return undefined;
+};
+
 const getDocuments = async (
   caseId: number | undefined,
   schemaIds: number[] | undefined
@@ -669,6 +811,110 @@ const getDocuments = async (
   return [];
 };
 
+const receiveUploadText = async (
+  setIsLoading:
+    | React.Dispatch<React.SetStateAction<boolean>>
+    | undefined = undefined
+) =>
+  new Promise((resolve, reject) => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.onchange = () => {
+      const files = fileInput.files;
+      const file = files ? files[0] : undefined;
+      if (file) {
+        if (setIsLoading) {
+          setIsLoading(true);
+        }
+        const reader = new FileReader();
+        reader.onload = async () => {
+          if (setIsLoading) {
+            setIsLoading(false);
+          }
+          const data = reader.result;
+          if (typeof data === 'string') {
+            resolve(new TextDecoder().decode(toUTF8(data)));
+          }
+        };
+        reader.readAsBinaryString(file);
+      } else {
+        reject();
+      }
+    };
+    // アップロードキャンセル
+    fileInput.addEventListener('cancel', () => {
+      if (setIsLoading) {
+        setIsLoading(false);
+      }
+      reject();
+    });
+    fileInput.click();
+  });
+
+/**
+ * 新規患者、ドキュメント登録用
+ * @param plugin
+ * @param setReload
+ * @param setIsLoading
+ * @param setOverwriteDialogPlop
+ * @returns
+ */
+const newDocumentImport = async (
+  plugin: jesgoPluginColumns,
+  setReload:
+    | ((value: React.SetStateAction<reloadState>) => void)
+    | undefined = undefined,
+  setIsLoading:
+    | React.Dispatch<React.SetStateAction<boolean>>
+    | undefined = undefined,
+  setOverwriteDialogPlop:
+    | React.Dispatch<React.SetStateAction<OverwriteDialogPlop | undefined>>
+    | undefined = undefined
+) => {
+  if (plugin.show_upload_dialog) {
+    // ファイルアップロードあり
+    try {
+      const csvText: string = (await receiveUploadText(undefined)) as string;
+      const retValue = await moduleImportDocument(
+        plugin.script_text,
+        insertPatientsDocument,
+        csvText
+      );
+      if (setReload) {
+        setReload({ isReload: true, caller: 'update_plugin' });
+      }
+      return retValue;
+    } catch {
+      console.error('Rejected');
+      return undefined;
+    }
+  } else {
+    // ファイルアップロードなし
+    try {
+      const retValue = await moduleImportDocument(
+        plugin.script_text,
+        insertPatientsDocument
+      );
+      if (setReload) {
+        setReload({ isReload: true, caller: 'update_plugin' });
+      }
+      return retValue;
+    } catch {
+      return undefined;
+    }
+  }
+};
+
+/**
+ * プラグイン実行
+ * @param plugin
+ * @param patientList
+ * @param targetDocumentId
+ * @param setReload
+ * @param setIsLoading
+ * @param setOverwriteDialogPlop
+ * @returns
+ */
 export const executePlugin = async (
   plugin: jesgoPluginColumns,
   patientList: jesgoCaseDefine[] | undefined,
@@ -690,95 +936,99 @@ export const executePlugin = async (
   const copyPatientList = lodash.cloneDeep(patientList);
 
   if (plugin.update_db) {
-    // データ更新系
-    if (
-      !plugin.all_patient &&
-      copyPatientList &&
-      copyPatientList.length === 1
-    ) {
-      // 対象患者が指定されている場合
-      targetCaseId = Number(copyPatientList[0].case_id);
+    // データ登録
+    if (plugin.newdata) {
+      await newDocumentImport(
+        plugin,
+        setReload,
+        setIsLoading,
+        setOverwriteDialogPlop
+      );
     } else {
-      targetCaseId = undefined;
-    }
-    if (plugin.show_upload_dialog) {
-      // ファイルアップロードあり
-      try {
-        const csvText: string = await new Promise((resolve, reject) => {
-          const fileInput = document.createElement('input');
-          fileInput.type = 'file';
-          fileInput.onchange = () => {
-            const files = fileInput.files;
-            const file = files ? files[0] : undefined;
-            if (file) {
-              if (setIsLoading) {
-                setIsLoading(true);
-              }
-              const reader = new FileReader();
-              reader.onload = async () => {
+      // データ更新系
+      if (
+        !plugin.all_patient &&
+        copyPatientList &&
+        copyPatientList.length === 1
+      ) {
+        // 対象患者が指定されている場合
+        targetCaseId = Number(copyPatientList[0].case_id);
+      } else {
+        targetCaseId = undefined;
+      }
+      if (plugin.show_upload_dialog) {
+        // ファイルアップロードあり
+        try {
+          const csvText: string = await new Promise((resolve, reject) => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.onchange = () => {
+              const files = fileInput.files;
+              const file = files ? files[0] : undefined;
+              if (file) {
                 if (setIsLoading) {
-                  setIsLoading(false);
+                  setIsLoading(true);
                 }
-                const data = reader.result;
-                if (typeof data === 'string') {
-                  resolve(new TextDecoder().decode(toUTF8(data)));
-                }
-              };
-              reader.readAsBinaryString(file);
-            } else {
+                const reader = new FileReader();
+                reader.onload = async () => {
+                  if (setIsLoading) {
+                    setIsLoading(false);
+                  }
+                  const data = reader.result;
+                  if (typeof data === 'string') {
+                    resolve(new TextDecoder().decode(toUTF8(data)));
+                  }
+                };
+                reader.readAsBinaryString(file);
+              } else {
+                reject();
+              }
+            };
+            // アップロードキャンセル
+            fileInput.addEventListener('cancel', () => {
+              if (setIsLoading) {
+                setIsLoading(false);
+              }
               reject();
-            }
-          };
-          // アップロードキャンセル
-          fileInput.addEventListener('cancel', () => {
-            if (setIsLoading) {
-              setIsLoading(false);
-            }
-            reject();
+            });
+            fileInput.click();
           });
-          fileInput.click();
-        });
+          const retValue = await moduleMainUpdate(
+            plugin.script_text,
+            updatePatientsDocument,
+            csvText
+          );
+          if (setReload) {
+            setReload({ isReload: true, caller: 'update_plugin' });
+          }
+          return retValue;
+        } catch {
+          console.error('Rejected');
+          return undefined;
+        }
+      } else {
+        // ファイルアップロードなし
+        let documentList: formDocument[] = await getDocuments(
+          targetCaseId,
+          pluginData.target_schema_id
+        );
+        // ドキュメントのバーガーボタンからの呼び出しでは当該ドキュメントのみを取得する
+        if (targetDocumentId) {
+          // formDocumentからの取得でdocument_idが存在しないことは原則としてあり得ない
+          documentList = documentList.filter(
+            (x) => x.document_id === targetDocumentId
+          );
+        }
         const retValue = await moduleMainUpdate(
           plugin.script_text,
           updatePatientsDocument,
-          csvText
+          documentList
         );
         if (setReload) {
           setReload({ isReload: true, caller: 'update_plugin' });
         }
         return retValue;
-      } catch {
-        console.error('Rejected');
-        return undefined;
       }
-    } else {
-      // ファイルアップロードなし
-      const documentList: formDocument[] = await getDocuments(
-        targetCaseId,
-        pluginData.target_schema_id
-      );
-      // ドキュメントのバーガーボタンからの呼び出しでは当該ドキュメントのみを取得する
-      if (targetDocumentId) {
-        let documentListIndex = 0;
-        do {
-          // formDocumentからの取得でdocument_idが存在しないことは原則としてあり得ない
-          if (
-            documentList[documentListIndex].document_id !== targetDocumentId
-          ) {
-            documentList.splice(documentListIndex, 1);
-          }
-          documentListIndex++;
-        } while (documentListIndex < documentList.length);
-      }
-      const retValue = await moduleMainUpdate(
-        plugin.script_text,
-        updatePatientsDocument,
-        documentList
-      );
-      if (setReload) {
-        setReload({ isReload: true, caller: 'update_plugin' });
-      }
-      return retValue;
     }
   } else {
     // データ出力系

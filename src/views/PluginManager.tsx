@@ -120,8 +120,9 @@ const PluginManager = () => {
         });
       }
 
-      setJesgoPluginList(pluginList);
-      setLoadedJesgoPluginList(lodash.cloneDeep(pluginList));
+      const targetPlugins = pluginList.filter((p) => p.plugin_id);
+      setJesgoPluginList(targetPlugins);
+      setLoadedJesgoPluginList(lodash.cloneDeep(targetPlugins));
     } else {
       navigate('/login');
     }
@@ -269,7 +270,7 @@ const PluginManager = () => {
       loadedJesgoPluginList.find(
         (q) => q.plugin_id === p.plugin_id && p.disabled !== q.disabled
       )
-    );
+    ).map((p) => ({ plugin_id:p.plugin_id, disabled:p.disabled } as jesgoPluginColumns));
 
     // eslint-disable-next-line no-void
     void SavePluginList(diffList).then(async (returnApiObject) => {

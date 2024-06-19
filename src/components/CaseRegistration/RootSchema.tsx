@@ -560,6 +560,7 @@ const RootSchema = React.memo((props: Props) => {
           dispSchemaIds={[...dispSchemaIds]}
           setDispSchemaIds={setDispSchemaIds}
           setErrors={setErrors}
+          parentEventDate={eventDate}
         />
         <ControlButton
           tabId={tabId}

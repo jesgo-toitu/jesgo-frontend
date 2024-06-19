@@ -365,36 +365,34 @@ const Patients = () => {
       // eslint-disable-next-line no-plusplus
       for (let index = 0; index < decordedJson.data.length; index++) {
         const userData = decordedJson.data[index];
-        if (userData.startDate) {
-          const patientCsv: patientListCsv = {
-            patientId: userData.patientId,
-            patinetName: userData.patientName,
-            age: userData.age.toString(),
-            startDate: userData.startDate,
-            lastUpdate: userData.lastUpdate,
-            diagnosisMajor: userData.diagnosisMajor,
-            diagnosisMinor: userData.diagnosisMinor,
-            advancedStage: userData.advancedStage,
-            recurrence: userData.status.includes('recurrence') ? '有' : '無',
-            chemotherapy: userData.status.includes('chemo') ? '有' : '無',
-            operation: userData.status.includes('surgery') ? '有' : '無',
-            radiotherapy: userData.status.includes('radio') ? '有' : '無',
-            supportiveCare: userData.status.includes('surveillance')
-              ? '有'
-              : '無',
-            registration:
-              // eslint-disable-next-line no-nested-ternary
-              userData.registration.includes('decline')
-                ? '拒否'
-                : userData.registration.includes('not_completed')
+        const patientCsv: patientListCsv = {
+          patientId: userData.patientId,
+          patinetName: userData.patientName,
+          age: userData.age.toString(),
+          startDate: userData.startDate ?? '',
+          lastUpdate: userData.lastUpdate,
+          diagnosisMajor: userData.diagnosisMajor,
+          diagnosisMinor: userData.diagnosisMinor,
+          advancedStage: userData.advancedStage,
+          recurrence: userData.status.includes('recurrence') ? '有' : '無',
+          chemotherapy: userData.status.includes('chemo') ? '有' : '無',
+          operation: userData.status.includes('surgery') ? '有' : '無',
+          radiotherapy: userData.status.includes('radio') ? '有' : '無',
+          supportiveCare: userData.status.includes('surveillance')
+            ? '有'
+            : '無',
+          registration:
+            // eslint-disable-next-line no-nested-ternary
+            userData.registration.includes('decline')
+              ? '拒否'
+              : userData.registration.includes('not_completed')
                 ? '無'
                 : '有',
-            death: userData.status.includes('death') ? '有' : '無',
-            threeYearPrognosis: `無`,
-            fiveYearPrognosis: `無`,
-          };
-          newData.push(patientCsv);
-        }
+          death: userData.status.includes('death') ? '有' : '無',
+          threeYearPrognosis: `無`,
+          fiveYearPrognosis: `無`,
+        };
+        newData.push(patientCsv);
       }
 
       setCsvData(newData);

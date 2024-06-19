@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ButtonToolbar from 'react-bootstrap/lib/ButtonToolbar';
 import DropdownButton from 'react-bootstrap/lib/DropdownButton';
 import MenuItem from 'react-bootstrap/lib/MenuItem';
@@ -14,6 +14,7 @@ import PluginOverwriteConfirm, {
   OverwriteDialogPlop,
 } from './PluginOverwriteConfirm';
 import { reloadState } from '../../views/Registration';
+import { PluginModalDialog } from '../Plugin/PluginModal';
 
 const PAGE_TYPE = {
   PATIENT_LIST: 0,
@@ -35,16 +36,20 @@ const PluginButton = (props: {
     OverwriteDialogPlop | undefined
   >();
 
+  const [childPlugins, setChildPlugins] = useState<jesgoPluginColumns[]>([]);
+  const [show, setShow] = useState(false);
+  const [update, setUpdate] = useState(false);
+  const [pluginTitle, setPluginTitle] = useState("");
+
   useEffect(() => {
+    const plugins = pluginList.filter((p) => !p.plugin_id || (p.plugin_id && !p.plugin_group_id));
     switch (pageType) {
       case PAGE_TYPE.PATIENT_LIST: {
-        setTargetPlugins(pluginList.filter((p) => p.all_patient));
+        setTargetPlugins(plugins.filter((p) => p.all_patient));
         break;
       }
       case PAGE_TYPE.TARGET_PATIENT: {
-        setTargetPlugins(
-          pluginList.filter((p) => !p.all_patient && !p.target_schema_id)
-        );
+        setTargetPlugins(plugins.filter((p) => !p.all_patient && !p.target_schema_id && !p.newdata));
         break;
       }
       default:
@@ -61,6 +66,14 @@ const PluginButton = (props: {
     ) {
       // eslint-disable-next-line no-alert
       alert('権限がありません');
+      return;
+    }
+
+    // プラグイングループ項目：モーダルダイアログ表示
+    if (!plugin.plugin_id) {
+      setChildPlugins(pluginList.filter((p) => p.plugin_id && p.plugin_group_id === plugin.plugin_group_id));
+      setPluginTitle(plugin.plugin_name);
+      setShow(true);
       return;
     }
 
@@ -99,6 +112,22 @@ const PluginButton = (props: {
     }
   };
 
+  const modalHide = useCallback(() => {
+    // setShow(false);
+  }, [setShow]);
+
+  const modalOk = () => {
+    setUpdate((prevState) => !prevState);
+    setShow(false);
+    setChildPlugins([]);
+  };
+
+  const modalCancel = useCallback(() => {
+    setUpdate((prevState) => !prevState);
+    setShow(false);
+    setChildPlugins([]);
+  }, [setShow]);
+
   return (
     <>
       {overwriteDialogPlop && (
@@ -122,6 +151,19 @@ const PluginButton = (props: {
           ))}
         </DropdownButton>
       </ButtonToolbar>
+      <PluginModalDialog
+        show={show}
+        onHide={() => modalHide()}
+        onOk={modalOk}
+        onCancel={() => modalCancel()}
+        title="JESGO プラグイン"
+        pluginTitle={pluginTitle}
+        pageType={pageType}
+        pluginList={childPlugins}
+        getTargetFunction={getTargetFunction}
+        setIsLoading={setIsLoading}
+        setReload={setReload}
+      />
     </>
   );
 };

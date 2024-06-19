@@ -121,7 +121,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           dispatch({ type: 'PLUGIN_LIST', pluginList });
         }
 
-        setJesgoPluginList(pluginList);
+        setJesgoPluginList(pluginList.filter((p) => p.plugin_id));
       }
     };
 
@@ -679,6 +679,7 @@ export const ControlButton = React.memo((props: ControlButtonProps) => {
           {jesgoPluginList.map(
             (plugin: jesgoPluginColumns) =>
               !plugin.all_patient &&
+              !plugin.newdata &&
               plugin.target_schema_id &&
               plugin.target_schema_id.includes(schemaId) && (
                 <MenuItem eventKey={`plugin_${plugin.plugin_id}`}>

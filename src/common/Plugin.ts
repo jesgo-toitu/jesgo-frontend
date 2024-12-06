@@ -836,7 +836,7 @@ const receiveUploadText = async (
             resolve(new TextDecoder().decode(toUTF8(data)));
           }
         };
-        reader.readAsBinaryString(file);
+        reader.readAsText(file, 'SJIS');
       } else {
         reject();
       }
@@ -979,7 +979,7 @@ export const executePlugin = async (
                     resolve(new TextDecoder().decode(toUTF8(data)));
                   }
                 };
-                reader.readAsBinaryString(file);
+                reader.readAsText(file, 'SJIS');
               } else {
                 reject();
               }

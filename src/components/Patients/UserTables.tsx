@@ -31,6 +31,7 @@ export interface userData {
   progress: string[];
   postRelapseTreatment: string[];
   registration: string[];
+  registrationNumber: string[];
   threeYearPrognosis: string[];
   fiveYearPrognosis: string[];
   status: string[];
@@ -186,19 +187,19 @@ const makeTable = (props: {
               )}
             </td>
             <td className={search}>
-              <IconList iconList={user.initialTreatment} />
+              <IconList iconList={user.initialTreatment} displayCaption='' displayText='' />
             </td>
             <td className={search}>
-              <IconList iconList={user.registration} />
+              <IconList iconList={user.registration} displayCaption='completed' displayText={user.registrationNumber.join('・')} />
             </td>
             <td className={search}>
-              <IconList iconList={user.threeYearPrognosis} />
+              <IconList iconList={user.threeYearPrognosis} displayCaption='' displayText='' />
             </td>
             <td className={search}>
-              <IconList iconList={user.fiveYearPrognosis} />
+              <IconList iconList={user.fiveYearPrognosis} displayCaption='' displayText='' />
             </td>
             <td className={noSearch}>
-              <IconList iconList={user.status} />
+              <IconList iconList={user.status} displayCaption='' displayText='' />
             </td>
             {(localStorage.getItem('is_edit_roll') === 'true' ||
               localStorage.getItem('is_view_roll') === 'true' ||

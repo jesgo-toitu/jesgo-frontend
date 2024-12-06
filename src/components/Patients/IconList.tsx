@@ -1,7 +1,7 @@
 import React from 'react';
 import lodash from 'lodash';
 
-const makeIconList = (props: { iconList: string[] }) => {
+const makeIconList = (props: { iconList: string[], displayCaption: string, displayText: string }) => {
   const iconCaptions: { [key: string]: string } = {
     death: '死',
     recurrence: '再発',
@@ -15,7 +15,7 @@ const makeIconList = (props: { iconList: string[] }) => {
     supportivecare: '緩和',
     has_error: 'エラーあり',
   };
-  const { iconList } = props;
+  const { iconList, displayCaption, displayText } = props;
   const orderRule = [
     'surgery',
     'chemo',
@@ -36,6 +36,7 @@ const makeIconList = (props: { iconList: string[] }) => {
         .uniq(iconList)
         .sort((a, b) => orderRule.indexOf(a) - orderRule.indexOf(b))
         .map((icon) => (
+          icon === displayCaption ? displayText :
           <img
             key={icon}
             src={`./image/icon_${icon}.svg`}

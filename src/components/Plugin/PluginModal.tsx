@@ -158,6 +158,12 @@ export const PluginModalDialog = (props: {
 
   return (
     <>
+      {overwriteDialogPlop && (
+        <PluginOverwriteConfirm
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...overwriteDialogPlop}
+        />
+      )}
       <Modal show={show} onHide={onHide}>
         <Modal.Header>
           <Modal.Title>{title}</Modal.Title>

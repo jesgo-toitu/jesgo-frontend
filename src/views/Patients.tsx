@@ -385,9 +385,12 @@ const Patients = () => {
             // eslint-disable-next-line no-nested-ternary
             userData.registration.includes('decline')
               ? '拒否'
+              // eslint-disable-next-line no-nested-ternary
               : userData.registration.includes('not_completed')
                 ? '無'
-                : '有',
+                : userData.registration.includes('completed')
+                  ? userData.registrationNumber.join('・')
+                  : '有',
           death: userData.status.includes('death') ? '有' : '無',
           threeYearPrognosis: `無`,
           fiveYearPrognosis: `無`,

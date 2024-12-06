@@ -288,6 +288,34 @@ const CustomDivForm = (props: CustomDivFormProp) => {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, arrow-body-style
+  const calculeteItemValue = (argSchema: JSONSchema7, data: any, calculationType: string, calculationTag: string) : (number | undefined)[] => {
+    return argSchema.properties ?
+      Object.entries(argSchema.properties).flatMap((p) => {
+        const propName = p[0];
+        const tmpSchema = p[1] as JSONSchema7;
+        const calcTag = tmpSchema.calculationTag;
+        // eslint-disable-next-line no-nested-ternary
+        return JSON.stringify(tmpSchema).includes('"properties"') ?
+          calculeteItemValue(tmpSchema, data[propName], calculationType, calculationTag) :
+            !tmpSchema.calculationType
+            && calcTag === calculationTag
+            && data[propName] != null
+            && !Number.isNaN(data[propName]) ? data[propName] as number : [];
+      }) : [];
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const calculateItem = (argSchema: JSONSchema7, data: any, calculationType: string, calculationTag: string) => {
+    const itemValues = calculeteItemValue(argSchema, data, calculationType, calculationTag) as number[];
+    switch (calculationType) {
+      case 'sum':
+        return itemValues.length > 0 ? itemValues.reduce((a, b) => a + b) : undefined;
+      default:
+        return undefined;
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onChange = (e: IChangeEvent<any>) => {
     let data = e.formData;
@@ -348,6 +376,31 @@ const CustomDivForm = (props: CustomDivFormProp) => {
                 return false;
             }
           }).length > 0;
+      }
+
+      // 計算項目
+      if (JSON.stringify(e.schema.properties).includes('"calculationType"')) {
+        const calculatedData = Object.entries(e.schema.properties).flatMap((p) => {
+          const propName = p[0];
+          const tmpSchema = p[1] as JSONSchema7;
+          const calculationType = tmpSchema.calculationType;
+          const calculationTag = tmpSchema.calculationTag;
+          if (calculationType && calculationTag) {
+            const result = calculateItem(e.schema, data, calculationType, calculationTag);
+            if (data[propName] !== result) {
+              return { propertyName: propName, calculatedValue: result };
+            }
+          }
+          return [];
+        });
+
+        if (calculatedData.length > 0) {
+          const tmpData = structuredClone(data);
+          calculatedData.forEach((d) => {
+            tmpData[d.propertyName] = d.calculatedValue;
+          });
+          data = tmpData;
+        }
       }
     }
 

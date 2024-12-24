@@ -238,7 +238,7 @@ const Settings = () => {
     if (
       settingJson.joed_registration_number !== '' &&
       !settingJson.joed_registration_number.match(
-        /^(0[1-9]|[2-3]\d|4[0-7])\d{3}$/
+        /^(0[1-9]|[1-3]\d|4[0-7])\d{3}$/
       )
     ) {
       errorMessages.push(

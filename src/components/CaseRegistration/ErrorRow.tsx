@@ -52,6 +52,10 @@ const ErrorRow = React.memo(
 
           if (patchedObj && Array.isArray(patchedObj)) {
             const validErrors = patchedObj.filter((item) => {
+              // nullは除外(objectなので最初にはじく)
+              if (item == null) {
+                return false
+              }
               // 空配列は除外
               if (Array.isArray(item)) {
                 // 配列中のnullや空白のみの要素は除外する

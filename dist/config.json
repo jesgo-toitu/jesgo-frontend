@@ -1,5 +1,6 @@
 {
-    "config": {
+    "webApp": {
+        "webAppPort": 3030,
         "endPointUrl": "http://localhost:3000/"
     }
 }

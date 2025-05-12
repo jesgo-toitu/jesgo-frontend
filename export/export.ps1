@@ -9,12 +9,14 @@ Remove-item .\release -Recurse -Force
 
 # ディレクトリを再生成
 New-Item release -ItemType Directory
-# ファイルコピー
-Copy-Item -Path ..\dist\ -Destination .\release\ -Recurse
+
+# ファイルコピー(設定ファイル以外)
+Copy-Item -Exclude ("config.json") -Path ..\dist\ -Destination .\release\ -Recurse
 Copy-Item -Path ..\image\ -Destination .\release\ -Recurse
 
 # その他単体ファイルをコピーする
 Copy-Item -Path ..\start.js -Destination .\release\
+Copy-Item -Path ..\config.js -Destination .\release\
 Copy-Item -Path ..\package.json -Destination .\release\
 
 # node_modules格納のためのディレクトリを作成

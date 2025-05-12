@@ -2,12 +2,12 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 const CONFIG_PATH = './config.json' as string;
 
-export type EndPointCOnfig = {
+export type WebApp = {
   endPointUrl: string;
 };
 
 export type Config = {
-  config: EndPointCOnfig;
+  webApp: WebApp;
 };
 
 let config: Config;
@@ -59,7 +59,7 @@ const apiAccess = async (
       config = configJson;
     })
     .catch(() => {
-      config.config.endPointUrl = 'http://localhost:3000';
+      config.webApp.endPointUrl = 'http://localhost:3000';
     });
 
   let token = localStorage.getItem('token');
@@ -96,7 +96,7 @@ const apiAccess = async (
   switch (methodType) {
     case METHOD_TYPE.GET:
       await axios
-        .get(`${config.config.endPointUrl}${url}`, payloadObj)
+        .get(`${config.webApp.endPointUrl}${url}`, payloadObj)
         .then((response) => {
           returnObj = response.data as ApiReturnObject;
         })
@@ -107,7 +107,7 @@ const apiAccess = async (
 
     case METHOD_TYPE.POST:
       await axios
-        .post(`${config.config.endPointUrl}${url}`, payloadObj)
+        .post(`${config.webApp.endPointUrl}${url}`, payloadObj)
         .then((response) => {
           returnObj = response.data as ApiReturnObject;
         })
@@ -118,7 +118,7 @@ const apiAccess = async (
 
     case METHOD_TYPE.DELETE:
       await axios
-        .delete(`${config.config.endPointUrl}${url}`, payloadObj)
+        .delete(`${config.webApp.endPointUrl}${url}`, payloadObj)
         .then((response) => {
           returnObj = response.data as ApiReturnObject;
         })
@@ -129,7 +129,7 @@ const apiAccess = async (
 
     case METHOD_TYPE.POST_ZIP:
       await axios
-        .post(`${config.config.endPointUrl}${url}`, payloadObj.data, payloadObj)
+        .post(`${config.webApp.endPointUrl}${url}`, payloadObj.data, payloadObj)
         .then((response) => {
           returnObj = response.data as ApiReturnObject;
         })
@@ -158,7 +158,7 @@ const apiAccess = async (
     const refleshToken = localStorage.getItem('reflesh_token');
     if (refleshToken !== null) {
       await axios
-        .post(`${config.config.endPointUrl}relogin/`, {
+        .post(`${config.webApp.endPointUrl}relogin/`, {
           reflesh_token: refleshToken,
         })
         .then(async (response) => {

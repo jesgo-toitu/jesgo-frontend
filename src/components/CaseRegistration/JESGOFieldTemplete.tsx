@@ -121,7 +121,7 @@ export namespace JESGOFiledTemplete {
   // 配列フィールドテンプレート
   export const ArrayFieldTemplate = (props: ArrayFieldTemplateProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { idSchema, schema, uiSchema, required, DescriptionField, formData } =
+    const { idSchema, schema, uiSchema, required, formContext } =
       props;
 
     const id = `${idSchema.$id}__title`;
@@ -140,6 +140,9 @@ export namespace JESGOFiledTemplete {
         hasItems = true;
       }
     }
+    const idParts = idSchema.$id.split('_');
+    let propName = idParts[idParts.length - 1];
+    if (/^\d+$/.test(propName) && idParts.length > 1) propName = idParts[idParts.length - 2];
    
     return (
       <div>
@@ -178,6 +181,16 @@ export namespace JESGOFiledTemplete {
                 } else if (subschemastyle === 'column') {
                   editItem.className += ' array-subschemastyle-column';
                 }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                const childFormContext = {
+                  ...formContext,
+                  parentPropName: propName,
+                  parentIndex: index
+                };
+                editItem.children = React.cloneElement(item.children, {
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  formContext: childFormContext
+                });
                 return JESGOComp.DefaultArrayItem(
                   editItem,
                   schema[Const.EX_VOCABULARY.NOT_EXIST_PROP] ?? false

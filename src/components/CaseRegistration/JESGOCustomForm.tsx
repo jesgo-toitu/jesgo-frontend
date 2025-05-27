@@ -27,6 +27,7 @@ import {
 } from '../../common/DBUtility';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import { Const } from '../../common/Const';
+// eslint-disable-next-line import/no-cycle
 import { JESGOObjectField } from './JESGOObjectField';
 
 interface CustomDivFormProp extends FormProps<any> {

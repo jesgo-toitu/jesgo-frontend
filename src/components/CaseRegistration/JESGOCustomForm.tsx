@@ -27,6 +27,7 @@ import {
 } from '../../common/DBUtility';
 import { dispSchemaIdAndDocumentIdDefine } from '../../store/formDataReducer';
 import { Const } from '../../common/Const';
+import { JESGOObjectField } from './JESGOObjectField';
 
 interface CustomDivFormProp extends FormProps<any> {
   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -446,6 +447,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
   // TODO OneOfFieldについては他に影響ないか確認
   const customFields = {
     OneOfField: () => null, // defaultのOneOfFieldは使わない
+    ObjectField: JESGOObjectField
   };
 
   const customWidgets = {
@@ -477,6 +479,7 @@ const CustomDivForm = (props: CustomDivFormProp) => {
       noHtml5Validate
       showErrorList={false}
       uiSchema={uiSchema}
+      formContext={{ parentFormData: formData, parentOnChange: onChange }}
       // eslint-disable-next-line react/jsx-props-no-spreading
       {...copyProps}
     >

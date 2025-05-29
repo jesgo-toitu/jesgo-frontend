@@ -116,12 +116,20 @@ export namespace JESGOFiledTemplete {
     );
   };
 
+  // jesgo:ui:visibleWhenの条件
+  type VisibleWhenItem = {
+    parentItemName: string;
+    name: string;
+    values?: JSONSchema7Type[];
+    pattern?: RegExp;
+  };
+
   // https://github.com/rjsf-team/react-jsonschema-form/blob/master/packages/core/src/components/fields/ArrayField.js
   // Latest commit 1bbd0ad
   // 配列フィールドテンプレート
   export const ArrayFieldTemplate = (props: ArrayFieldTemplateProps) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { idSchema, schema, uiSchema, required, formContext } =
+    const { idSchema, schema, uiSchema, required, DescriptionField, formData } =
       props;
 
     const id = `${idSchema.$id}__title`;
@@ -140,9 +148,94 @@ export namespace JESGOFiledTemplete {
         hasItems = true;
       }
     }
-    const idParts = idSchema.$id.split('_');
-    let propName = idParts[idParts.length - 1];
-    if (/^\d+$/.test(propName) && idParts.length > 1) propName = idParts[idParts.length - 2];
+
+    // jesgo:ui:visibleWhen
+    const visibleWhenCondition: VisibleWhenItem[] = [];
+    const propertiesItem = getPropItemsAndNames(items);
+    propertiesItem.pNames.forEach((name: string) => {
+      const item = propertiesItem.pItems[name] as JSONSchema7;
+      const visiblewhenItem = item[
+        Const.EX_VOCABULARY.UI_VISIBLE_WHEN
+      ] as JSONSchema7;
+      if (visiblewhenItem) {
+        const vPropItem = getPropItemsAndNames(visiblewhenItem);
+        vPropItem.pNames.forEach((vName: string) => {
+          const vItem = vPropItem.pItems[vName] as JSONSchema7;
+          let values;
+          let pattern;
+          if (vItem.const) {
+            values = [vItem.const];
+          } else if (vItem.enum) {
+            values = [...vItem.enum];
+          } else if (vItem.pattern) {
+            pattern = new RegExp(vItem.pattern);
+          }
+          visibleWhenCondition.push({
+            parentItemName: name,
+            name: vName,
+            values,
+            pattern,
+          });
+        });
+      }
+    });
+
+    useEffect(() => {
+
+      // jesgo:ui:visibleWhenによる項目表示/非表示制御
+      // eslint-disable-next-line react/destructuring-assignment
+      if (props.items) {
+        //  eslint-disable-next-line react/destructuring-assignment
+        props.items.forEach((item, index) => {
+          const editItem = item;
+
+          // visiblewhen
+          visibleWhenCondition.forEach((condition: VisibleWhenItem) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const inputData = formData[index][condition.name] as JSONSchema7Type;
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const itemId = editItem.children.props.idSchema[
+              condition.parentItemName
+            ].$id as string;
+            const element = document.getElementById(itemId);
+            if (element) {
+              let parentElement = element.parentElement
+              // 単位付きフィールドではもう一つ上の階層がdiv.visiblewhenとなる
+              if (parentElement?.className && parentElement.className.includes('with-units-div')) {
+                parentElement = parentElement.parentElement
+              }
+              const parentClass = parentElement?.className;
+              if (parentClass && parentClass.includes('visiblewhen')) {
+                if (
+                  !(
+                    (condition.values && condition.values.includes(inputData)) ||
+                    (condition.pattern &&
+                      typeof inputData === 'string' &&
+                      inputData.match(condition.pattern))
+                  )
+                ) {
+                  // 条件に【当てはまらなければ】非表示にするCSSを追加
+                  if (
+                    parentElement && !parentElement?.className.includes('visiblewhen-item')
+                  ) {
+                    parentElement.className += ' visiblewhen-item';
+                  }
+                } else {
+                  // 当てはまる場合は非表示用のCSSをクリア
+                  if (parentElement) {
+                    parentElement.className =
+                    parentElement.className
+                      .replace(/visiblewhen-item/g, '')
+                      .trim();
+                  }
+                }
+              }
+            }
+          });
+        });
+      }
+    });
    
     return (
       <div>
@@ -181,16 +274,6 @@ export namespace JESGOFiledTemplete {
                 } else if (subschemastyle === 'column') {
                   editItem.className += ' array-subschemastyle-column';
                 }
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const childFormContext = {
-                  ...formContext,
-                  parentPropName: propName,
-                  parentIndex: index
-                };
-                editItem.children = React.cloneElement(item.children, {
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                  formContext: childFormContext
-                });
                 return JESGOComp.DefaultArrayItem(
                   editItem,
                   schema[Const.EX_VOCABULARY.NOT_EXIST_PROP] ?? false
